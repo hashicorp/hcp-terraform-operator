@@ -1,12 +1,9 @@
-/*
-Copyright 2022.
-*/
-
 package main
 
 import (
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -16,6 +13,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -37,11 +35,19 @@ func init() {
 }
 
 func main() {
+	// GLOBAL OPTIONS
 	var configFile string
 	flag.StringVar(&configFile, "config", "",
 		"The controller will load its initial configuration from this file. "+
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
+	var syncPeriod time.Duration
+	flag.DurationVar(&syncPeriod, "sync-period", 60*time.Second,
+		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
+	// WORKSPACE CONTROLLER OPRTIONS
+	var workspaceWorkers int
+	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
+		"The number of the workspace controller workers.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -51,7 +57,15 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	var err error
-	options := ctrl.Options{Scheme: scheme}
+	options := ctrl.Options{
+		Controller: v1alpha1.ControllerConfigurationSpec{
+			GroupKindConcurrency: map[string]int{
+				"Workspace.app.terraform.io": workspaceWorkers,
+			},
+		},
+		Scheme:     scheme,
+		SyncPeriod: &(syncPeriod),
+	}
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
 		if err != nil {
