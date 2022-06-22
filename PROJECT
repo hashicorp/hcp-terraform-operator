@@ -1,0 +1,10 @@
+componentConfig: true
+domain: terraform.io
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: terraform-cloud-operator
+repo: github.com/hashicorp/terraform-cloud-operator
+version: "3"
