@@ -30,6 +30,8 @@ type WorkspaceSpec struct {
 
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
+	// Real world state generation
+	ObservedGeneration int64 `json:"observedGeneration"`
 	// Workspace ID that is managed by the controller
 	WorkspaceID string `json:"workspaceID"`
 }

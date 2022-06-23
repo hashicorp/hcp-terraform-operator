@@ -144,6 +144,11 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 	return r.Status().Update(ctx, instance)
 }
 
+func (r *WorkspaceReconciler) updateStatusGeneration(ctx context.Context, instance *appv1alpha2.Workspace) error {
+	instance.Status.ObservedGeneration = instance.Generation
+	return r.Status().Update(ctx, instance)
+}
+
 // WORKSPACES
 func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) (*tfc.Workspace, error) {
 	spec := instance.Spec
@@ -165,7 +170,12 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 		updateOptions.Name = &spec.Name
 	}
 
-	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
+	ws, err := r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
+	if err != nil {
+		return ws, err
+	}
+	err = r.updateStatusGeneration(ctx, instance)
+	return ws, err
 }
 
 func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
@@ -210,7 +220,6 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
 	workspace, err = r.readWorkspace(ctx, instance)
 	if err != nil {
-		r.log.Info("Reconcile Workspace", "msg", "error reading workspace")
 		// verify whether the workspace exists and create if it doesn't(means it was removed from the TF Cloud bypass the operator)
 		if err == tfc.ErrResourceNotFound {
 			r.log.Info("Reconcile Workspace", "msg", "workspace is not found, creating a new workspace")
