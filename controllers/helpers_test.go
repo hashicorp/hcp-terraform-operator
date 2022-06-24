@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var _ = Describe("Helpers", Ordered, Serial, func() {
+var _ = Describe("Helpers", func() {
 	Context("Returns", func() {
 		It("do not requeue", func() {
 			result, err := doNotRequeue()
