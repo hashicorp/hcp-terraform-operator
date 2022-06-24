@@ -87,18 +87,24 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TERRAFORM CLOUD PLATFORM CLIENT
-func (r *WorkspaceReconciler) getSecret(ctx context.Context, instance *appv1alpha2.Workspace) (*corev1.Secret, error) {
+// KUBERNETES HELPERS
+func (r *WorkspaceReconciler) getSecret(ctx context.Context, objectKey types.NamespacedName) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, types.NamespacedName{Namespace: instance.Namespace, Name: instance.Spec.Token.SecretKeyRef.Name}, secret)
+	err := r.Client.Get(ctx, objectKey, secret)
 
 	return secret, err
 }
 
+// TERRAFORM CLOUD PLATFORM CLIENT
 func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
 	var secret *corev1.Secret
-	secret, err := r.getSecret(ctx, instance)
+	objectKey := types.NamespacedName{
+		Namespace: instance.Namespace,
+		Name:      instance.Spec.Token.SecretKeyRef.Name,
+	}
+	secret, err := r.getSecret(ctx, objectKey)
 	if err != nil {
+		r.log.Error(err, "Reconcile workspace")
 		return "", err
 	}
 
@@ -141,10 +147,6 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *app
 // STATUS
 func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
 	instance.Status.WorkspaceID = workspace.ID
-	return r.Status().Update(ctx, instance)
-}
-
-func (r *WorkspaceReconciler) updateStatusGeneration(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	instance.Status.ObservedGeneration = instance.Generation
 	return r.Status().Update(ctx, instance)
 }
@@ -170,12 +172,7 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 		updateOptions.Name = &spec.Name
 	}
 
-	ws, err := r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
-	if err != nil {
-		return ws, err
-	}
-	err = r.updateStatusGeneration(ctx, instance)
-	return ws, err
+	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
 }
 
 func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
