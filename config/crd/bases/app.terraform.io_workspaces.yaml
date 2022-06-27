@@ -15,7 +15,11 @@ spec:
     singular: workspace
   scope: Namespaced
   versions:
-  - name: v1alpha2
+  - additionalPrinterColumns:
+    - jsonPath: .status.workspaceID
+      name: Workspace ID
+      type: string
+    name: v1alpha2
     schema:
       openAPIV3Schema:
         description: Workspace is the Schema for the workspaces API

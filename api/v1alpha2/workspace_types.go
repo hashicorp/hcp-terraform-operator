@@ -40,6 +40,7 @@ type WorkspaceStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Workspace ID",type=string,JSONPath=`.status.workspaceID`
 
 // Workspace is the Schema for the workspaces API
 type Workspace struct {
