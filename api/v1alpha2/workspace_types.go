@@ -34,6 +34,8 @@ type WorkspaceStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration"`
 	// Workspace ID that is managed by the controller
 	WorkspaceID string `json:"workspaceID"`
+	// Workspace last update timestamp
+	UpdateAt int64 `json:"updateAt"`
 }
 
 //+kubebuilder:object:root=true

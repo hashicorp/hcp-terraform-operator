@@ -71,11 +71,16 @@ spec:
                 description: Real world state generation
                 format: int64
                 type: integer
+              updateAt:
+                description: Workspace last update timestamp
+                format: int64
+                type: integer
               workspaceID:
                 description: Workspace ID that is managed by the controller
                 type: string
             required:
             - observedGeneration
+            - updateAt
             - workspaceID
             type: object
         type: object

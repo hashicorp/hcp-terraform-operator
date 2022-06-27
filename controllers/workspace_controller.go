@@ -62,7 +62,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		err := r.addFinalizer(ctx, instance)
 		if err != nil {
 			r.log.Error(err, "add finalizer")
-			return requeueOnErr(err) // ???
+			return requeueOnErr(err)
 		}
 	}
 
@@ -146,8 +146,9 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *app
 
 // STATUS
 func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
-	instance.Status.WorkspaceID = workspace.ID
 	instance.Status.ObservedGeneration = instance.Generation
+	instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
+	instance.Status.WorkspaceID = workspace.ID
 	return r.Status().Update(ctx, instance)
 }
 
@@ -232,9 +233,19 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	}
 
 	// update workspace if any changes have been made in the Kubernetes object spec
-	workspace, err = r.updateWorkspace(ctx, instance, workspace)
-	if err != nil {
-		return err
+	if instance.Generation != instance.Status.ObservedGeneration {
+		workspace, err = r.updateWorkspace(ctx, instance, workspace)
+		if err != nil {
+			return err
+		}
+	}
+
+	// update workspace if any changes have been made on the Terraform Cloud Platform
+	if workspace.UpdatedAt.Unix() != instance.Status.UpdateAt {
+		workspace, err = r.updateWorkspace(ctx, instance, workspace)
+		if err != nil {
+			return err
+		}
 	}
 
 	return r.updateStatus(ctx, instance, workspace)
