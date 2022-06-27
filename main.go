@@ -64,7 +64,7 @@ func main() {
 			},
 		},
 		Scheme:     scheme,
-		SyncPeriod: &(syncPeriod),
+		SyncPeriod: &syncPeriod,
 	}
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))

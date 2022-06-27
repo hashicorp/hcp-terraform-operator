@@ -66,7 +66,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	err = r.getClient(ctx, instance)
+	err = r.getTerraformClient(ctx, instance)
 	if err != nil {
 		return requeueAfter(requeueInterval)
 	}
@@ -111,7 +111,7 @@ func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha
 	return string(secret.Data[instance.Spec.Token.SecretKeyRef.Key]), nil
 }
 
-func (r *WorkspaceReconciler) getClient(ctx context.Context, instance *appv1alpha2.Workspace) error {
+func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	token, err := r.getToken(ctx, instance)
 	if err != nil {
 		return err

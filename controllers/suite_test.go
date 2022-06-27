@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -15,6 +17,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	//+kubebuilder:scaffold:imports
 )
@@ -27,6 +30,7 @@ var ctx context.Context
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var tfClient *tfc.Client
 
 func TestControllersAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -55,14 +59,21 @@ var _ = BeforeSuite(func() {
 
 	//+kubebuilder:scaffold:scheme
 
+	// Terraform Cloud Client
+	tfClient, err = tfc.NewClient(&tfc.Config{Token: os.Getenv("TFC_TOKEN")})
+	Expect(err).Should(Succeed())
+	Expect(tfClient).ToNot(BeNil())
+
 	// Kubernetes Client
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sClient).ToNot(BeNil())
 
 	// Kubernetes Manager
+	syncPeriod := 30 * time.Second
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
+		Scheme:     scheme.Scheme,
+		SyncPeriod: &syncPeriod,
 	})
 	Expect(err).ToNot(HaveOccurred())
 
