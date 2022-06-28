@@ -121,6 +121,7 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, instance *
 		Token: token,
 	}
 	r.tfClient.Client, err = tfc.NewClient(config)
+
 	return err
 }
 
@@ -133,14 +134,20 @@ func needToAddFinalizer(instance *appv1alpha2.Workspace) bool {
 	return instance.ObjectMeta.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(instance, workspaceFinalizer)
 }
 
+func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Workspace) bool {
+	return instance.Generation != instance.Status.ObservedGeneration || workspace.UpdatedAt.Unix() != instance.Status.UpdateAt
+}
+
 // FINALIZERS
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
+
 	return r.Update(ctx, instance)
 }
 
 func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.RemoveFinalizer(instance, workspaceFinalizer)
+
 	return r.Update(ctx, instance)
 }
 
@@ -149,6 +156,7 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
 	instance.Status.WorkspaceID = workspace.ID
+
 	return r.Status().Update(ctx, instance)
 }
 
@@ -158,6 +166,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 	options := tfc.WorkspaceCreateOptions{
 		Name: tfc.String(spec.Name),
 	}
+
 	return r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 }
 
@@ -191,6 +200,7 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *app
 		}
 		return err
 	}
+
 	return r.removeFinalizer(ctx, instance)
 }
 
@@ -232,16 +242,8 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 		}
 	}
 
-	// update workspace if any changes have been made in the Kubernetes object spec
-	if instance.Generation != instance.Status.ObservedGeneration {
-		workspace, err = r.updateWorkspace(ctx, instance, workspace)
-		if err != nil {
-			return err
-		}
-	}
-
-	// update workspace if any changes have been made on the Terraform Cloud Platform
-	if workspace.UpdatedAt.Unix() != instance.Status.UpdateAt {
+	// update workspace if any changes have been made in the Kubernetes object spec or Terraform Cloud workspace
+	if needToUpdateWorkspace(instance, workspace) {
 		workspace, err = r.updateWorkspace(ctx, instance, workspace)
 		if err != nil {
 			return err
