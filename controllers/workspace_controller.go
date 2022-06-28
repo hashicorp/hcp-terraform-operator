@@ -222,7 +222,9 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 			return err
 		}
 		// Update status with the workspace ID once a workspace has been successfully created
-		r.updateStatus(ctx, instance, workspace)
+		if err = r.updateStatus(ctx, instance, workspace); err != nil {
+			return err
+		}
 	}
 
 	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
@@ -236,7 +238,9 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 				return err
 			}
 			// Update status with the workspace ID once a workspace has been successfully created
-			r.updateStatus(ctx, instance, workspace)
+			if err = r.updateStatus(ctx, instance, workspace); err != nil {
+				return err
+			}
 		} else {
 			return err
 		}

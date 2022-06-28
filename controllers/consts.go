@@ -4,7 +4,7 @@ import "time"
 
 // SHARED CONSTANTS
 const (
-	requeueInterval = 30 * time.Second
+	requeueInterval = 15 * time.Second
 )
 
 // WORKSPACE CONTROLLER'S CONSTANTS

@@ -10,9 +10,11 @@ import (
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
@@ -37,7 +39,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	BeforeAll(func() {
 		// Set default Eventually timers
-		SetDefaultEventuallyTimeout(120 * time.Second)
+		SetDefaultEventuallyTimeout(90 * time.Second)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
 		// Create a secret object that will be used by the controller
@@ -77,14 +79,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name: workspace,
 			},
+			Status: appv1alpha2.WorkspaceStatus{},
 		}
+	})
 
-		DeferCleanup(func() {
-			// Make sure that the Terraform Cloud workspace is deleted in the end of each test
-			if instance.Status.WorkspaceID != "" {
-				tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)
-			}
-		})
+	AfterEach(func() {
+		// Take a pause before the next spec
+		time.Sleep(2 * time.Second)
 	})
 
 	Context("Workspace controller", func() {
@@ -132,6 +133,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can update a workspace", func() {
 			// Creare a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			creareWorkspace(instance, namespacedName)
+
 			// Update the Kubernetes workspace object Name
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
@@ -166,10 +168,19 @@ func creareWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 func deleteWorkspace(instance *appv1alpha2.Workspace, namespacedName types.NamespacedName) {
 	// Delete the Kubernetes workspace object
 	Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+
 	// Wait until the controller finishes the reconciliation after deletion of the object
 	Eventually(func() bool {
 		err := k8sClient.Get(ctx, namespacedName, instance)
-		// The Kubernetes client will return an error on the "Get" operation once the object is deleted
-		return err != nil
+		// The Kubernetes client will return error 'NotFound' on the "Get" operation once the object is deleted
+		return errors.IsNotFound(err)
+	}).Should(BeTrue())
+
+	// Wait until the Terraform Cloud workspace is deleted
+	Eventually(func() bool {
+		k8sClient.Get(ctx, namespacedName, instance)
+		_, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		// The Terraform Cloud client will return error 'ResourceNotFound' on the "ReadByID" operation once the workspace is deleted
+		return err == tfc.ErrResourceNotFound
 	}).Should(BeTrue())
 }
