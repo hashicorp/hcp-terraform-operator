@@ -161,13 +161,18 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 }
 
 // WORKSPACES
-func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) (*tfc.Workspace, error) {
+func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	spec := instance.Spec
 	options := tfc.WorkspaceCreateOptions{
 		Name: tfc.String(spec.Name),
 	}
 
-	return r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
+	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
+	if err != nil {
+		return err
+	}
+	// Update status once a workspace has been successfully created
+	return r.updateStatus(ctx, instance, workspace)
 }
 
 func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) (*tfc.Workspace, error) {
@@ -217,30 +222,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	// this condition will work just one time, when a new Kubernetes object is created
 	if instance.Status.WorkspaceID == "" {
 		r.log.Info("Reconcile Workspace", "msg", "workspace ID is empty, creating a new workspace")
-		workspace, err = r.createWorkspace(ctx, instance)
-		if err != nil {
-			return err
-		}
-		// Update status with the workspace ID once a workspace has been successfully created
-		if err = r.updateStatus(ctx, instance, workspace); err != nil {
-			return err
-		}
+		return r.createWorkspace(ctx, instance)
 	}
 
 	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
 	workspace, err = r.readWorkspace(ctx, instance)
 	if err != nil {
-		// verify whether the workspace exists and create if it doesn't(means it was removed from the TF Cloud bypass the operator)
+		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
 		if err == tfc.ErrResourceNotFound {
 			r.log.Info("Reconcile Workspace", "msg", "workspace is not found, creating a new workspace")
-			workspace, err = r.createWorkspace(ctx, instance)
-			if err != nil {
-				return err
-			}
-			// Update status with the workspace ID once a workspace has been successfully created
-			if err = r.updateStatus(ctx, instance, workspace); err != nil {
-				return err
-			}
+			return r.createWorkspace(ctx, instance)
 		} else {
 			return err
 		}
@@ -253,6 +244,6 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 			return err
 		}
 	}
-
+	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
 }
