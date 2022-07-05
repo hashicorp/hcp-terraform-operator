@@ -35,6 +35,7 @@ type WorkspaceReconciler struct {
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
