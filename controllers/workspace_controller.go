@@ -131,6 +131,10 @@ func isDeletionCandidate(instance *appv1alpha2.Workspace) bool {
 	return !instance.ObjectMeta.DeletionTimestamp.IsZero() && controllerutil.ContainsFinalizer(instance, workspaceFinalizer)
 }
 
+func isCreationCandidate(instance *appv1alpha2.Workspace) bool {
+	return instance.Status.WorkspaceID == ""
+}
+
 func needToAddFinalizer(instance *appv1alpha2.Workspace) bool {
 	return instance.ObjectMeta.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(instance, workspaceFinalizer)
 }
@@ -221,7 +225,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 
 	// create a new workspace if workspace ID is unknown(means it was never created by the controller)
 	// this condition will work just one time, when a new Kubernetes object is created
-	if instance.Status.WorkspaceID == "" {
+	if isCreationCandidate(instance) {
 		r.log.Info("Reconcile Workspace", "msg", "workspace ID is empty, creating a new workspace")
 		return r.createWorkspace(ctx, instance)
 	}
