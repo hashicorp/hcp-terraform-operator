@@ -90,23 +90,23 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	Context("Workspace controller", func() {
 		It("can create and delete a workspace", func() {
-			// Creare a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			creareWorkspace(instance, namespacedName)
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
 
 			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can re-create a workspace", func() {
-			// Creare a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			creareWorkspace(instance, namespacedName)
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
 
 			initWorkspaceID := instance.Status.WorkspaceID
 
 			// Delete the Terraform Cloud workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
 
-			// Wait until the controller re-creates workspace and update Status.WorkspaceID with a new valid workspace ID
+			// Wait until the controller re-creates the workspace and updates Status.WorkspaceID with a new valid workspace ID
 			Eventually(func() bool {
 				k8sClient.Get(ctx, namespacedName, instance)
 				return instance.Status.WorkspaceID != initWorkspaceID
@@ -120,8 +120,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 
 		It("can clean up a workspace", func() {
-			// Creare a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			creareWorkspace(instance, namespacedName)
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
 
 			// Delete the Terraform Cloud workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
@@ -131,8 +131,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 
 		It("can update a workspace", func() {
-			// Creare a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			creareWorkspace(instance, namespacedName)
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
 
 			// Update the Kubernetes workspace object Name
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
@@ -152,8 +152,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func creareWorkspace(instance *appv1alpha2.Workspace, namespacedName types.NamespacedName) {
-	// Creare a new Kubernetes workspace object
+func createWorkspace(instance *appv1alpha2.Workspace, namespacedName types.NamespacedName) {
+	// Create a new Kubernetes workspace object
 	Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 	// Wait until the controller finishes the reconciliation
 	Eventually(func() bool {
@@ -169,7 +169,7 @@ func deleteWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 	// Delete the Kubernetes workspace object
 	Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
 
-	// Wait until the controller finishes the reconciliation after deletion of the object
+	// Wait until the controller finishes the reconciliation after the deletion of the object
 	Eventually(func() bool {
 		err := k8sClient.Get(ctx, namespacedName, instance)
 		// The Kubernetes client will return error 'NotFound' on the "Get" operation once the object is deleted
@@ -180,7 +180,7 @@ func deleteWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 	Eventually(func() bool {
 		k8sClient.Get(ctx, namespacedName, instance)
 		_, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		// The Terraform Cloud client will return error 'ResourceNotFound' on the "ReadByID" operation once the workspace is deleted
+		// The Terraform Cloud client will return the error 'ResourceNotFound' on the "ReadByID" operation once the workspace is deleted
 		return err == tfc.ErrResourceNotFound
 	}).Should(BeTrue())
 }
