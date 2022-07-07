@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -99,9 +100,13 @@ func (r *WorkspaceReconciler) getSecret(ctx context.Context, objectKey types.Nam
 // TERRAFORM CLOUD PLATFORM CLIENT
 func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
 	var secret *corev1.Secret
+
+	secretName := instance.Spec.Token.SecretKeyRef.Name
+	secretKey := instance.Spec.Token.SecretKeyRef.Key
+
 	objectKey := types.NamespacedName{
 		Namespace: instance.Namespace,
-		Name:      instance.Spec.Token.SecretKeyRef.Name,
+		Name:      secretName,
 	}
 	secret, err := r.getSecret(ctx, objectKey)
 	if err != nil {
@@ -109,7 +114,10 @@ func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha
 		return "", err
 	}
 
-	return string(secret.Data[instance.Spec.Token.SecretKeyRef.Key]), nil
+	if token, ok := secret.Data[secretKey]; ok {
+		return string(token), nil
+	}
+	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
 }
 
 func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, instance *appv1alpha2.Workspace) error {

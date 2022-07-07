@@ -1,26 +1,18 @@
 package v1alpha2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SecretKeySelector refers to an value in a Kubernetes Secret object
-type SecretKeySelector struct {
-	Name string `json:"name"`
-	Key  string `json:"key"`
-}
-
-// SecretKeyRef refers to a Kubernetes Secret object
+// SecretKeyRef refers to a Kubernetes Secret object within the same namespace as the Workspace object
 type SecretKeyRef struct {
-	SecretKeyRef *SecretKeySelector `json:"secretKeyRef"`
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef"`
 }
 
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Organization name where the workspace will be created
+	// Organization name where the Workspace will be created
 	Organization string `json:"organization"`
 	// API Token to be used for API calls
 	Token SecretKeyRef `json:"token"`

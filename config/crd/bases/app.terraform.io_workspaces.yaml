@@ -43,22 +43,28 @@ spec:
                 description: Workspace name
                 type: string
               organization:
-                description: Organization name where the workspace will be created
+                description: Organization name where the Workspace will be created
                 type: string
               token:
                 description: API Token to be used for API calls
                 properties:
                   secretKeyRef:
-                    description: SecretKeySelector refers to an value in a Kubernetes
-                      Secret object
+                    description: SecretKeySelector selects a key of a Secret.
                     properties:
                       key:
+                        description: The key of the secret to select from.  Must be
+                          a valid secret key.
                         type: string
                       name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?'
                         type: string
+                      optional:
+                        description: Specify whether the Secret or its key must be
+                          defined
+                        type: boolean
                     required:
                     - key
-                    - name
                     type: object
                 required:
                 - secretKeyRef

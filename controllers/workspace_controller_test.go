@@ -72,9 +72,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Spec: appv1alpha2.WorkspaceSpec{
 				Organization: organization,
 				Token: appv1alpha2.SecretKeyRef{
-					SecretKeyRef: &appv1alpha2.SecretKeySelector{
-						Name: secret.Name,
-						Key:  secretKey,
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: secretKey,
 					},
 				},
 				Name: workspace,
