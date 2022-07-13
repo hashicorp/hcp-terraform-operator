@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -70,6 +71,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	err = r.getTerraformClient(ctx, instance)
 	if err != nil {
+		r.log.Error(err, "Reconcile workspace")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -115,7 +117,7 @@ func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha
 	}
 
 	if token, ok := secret.Data[secretKey]; ok {
-		return string(token), nil
+		return strings.TrimSuffix(string(token), "\n"), nil
 	}
 	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
 }
