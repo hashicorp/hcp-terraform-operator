@@ -45,9 +45,9 @@ type WorkspaceReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.1/pkg/reconcile
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.log = log.FromContext(ctx)
+	r.log = log.Log.WithValues("workspace", req.NamespacedName)
 
-	r.log.Info("Reconcile Workspace", "msg", "new reconciliation event")
+	r.log.Info("Workspace Controller", "msg", "new reconciliation event")
 
 	instance := &appv1alpha2.Workspace{}
 
@@ -58,26 +58,27 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if errors.IsNotFound(err) {
 			return doNotRequeue()
 		}
+		r.log.Error(err, "Workspace Controller", "msg", "get instance object")
 		return requeueAfter(requeueInterval)
 	}
 
 	if needToAddFinalizer(instance) {
 		err := r.addFinalizer(ctx, instance)
 		if err != nil {
-			r.log.Error(err, "add finalizer")
+			r.log.Error(err, "Workspace Controller", "msg", "add finalizer")
 			return requeueOnErr(err)
 		}
 	}
 
 	err = r.getTerraformClient(ctx, instance)
 	if err != nil {
-		r.log.Error(err, "Reconcile workspace")
+		r.log.Error(err, "Workspace Controller", "msg", "get terraform cloud client")
 		return requeueAfter(requeueInterval)
 	}
 
 	err = r.reconcileWorkspace(ctx, instance)
 	if err != nil {
-		r.log.Error(err, "Reconcile workspace")
+		r.log.Error(err, "Workspace Controller", "msg", "reconcile workspace")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -112,7 +113,6 @@ func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha
 	}
 	secret, err := r.getSecret(ctx, objectKey)
 	if err != nil {
-		r.log.Error(err, "Reconcile workspace")
 		return "", err
 	}
 
