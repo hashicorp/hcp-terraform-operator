@@ -35,8 +35,9 @@ type WorkspaceReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/events,verbs=create;patch
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
+//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -65,22 +66,29 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if needToAddFinalizer(instance) {
 		err := r.addFinalizer(ctx, instance)
 		if err != nil {
-			r.log.Error(err, "Workspace Controller", "msg", "add finalizer")
+			r.log.Error(err, "Workspace Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", workspaceFinalizer))
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", workspaceFinalizer)
 			return requeueOnErr(err)
 		}
+		r.log.Info("Workspace Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", workspaceFinalizer))
+		r.Recorder.Eventf(instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", workspaceFinalizer)
 	}
 
 	err = r.getTerraformClient(ctx, instance)
 	if err != nil {
-		r.log.Error(err, "Workspace Controller", "msg", "get terraform cloud client")
+		r.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
+		r.Recorder.Event(instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client, check logs for more details")
 		return requeueAfter(requeueInterval)
 	}
 
 	err = r.reconcileWorkspace(ctx, instance)
 	if err != nil {
 		r.log.Error(err, "Workspace Controller", "msg", "reconcile workspace")
+		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to reconcile workspace, check logs for more details")
 		return requeueAfter(requeueInterval)
 	}
+	r.log.Info("Workspace Controller", "msg", "successfully reconcilied workspace")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully reconcilied workspace ID %s", instance.Status.WorkspaceID)
 
 	return doNotRequeue()
 }
@@ -163,7 +171,13 @@ func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1a
 func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.RemoveFinalizer(instance, workspaceFinalizer)
 
-	return r.Update(ctx, instance)
+	err := r.Update(ctx, instance)
+	if err != nil {
+		r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finazlier %s", workspaceFinalizer))
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s, check logs for more details", workspaceFinalizer)
+	}
+
+	return err
 }
 
 // STATUS
@@ -184,8 +198,13 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
+		r.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
+		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace, check logs for more details")
 		return err
 	}
+	r.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", workspace.ID)
+
 	// Update status once a workspace has been successfully created
 	return r.updateStatus(ctx, instance, workspace)
 }
@@ -209,6 +228,7 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *app
 	// if the Kubernetes object doesn't have workspace ID, it means it a workspace was never created
 	// in this case, remove the finalizer and let Kubernetes remove the object permanently
 	if instance.Status.WorkspaceID == "" {
+		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("status.WorkspaceID is empty, remove finazlier %s", workspaceFinalizer))
 		return r.removeFinalizer(ctx, instance)
 	}
 	err := r.tfClient.Client.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)
@@ -216,27 +236,36 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *app
 		// if workspace wasn't found, it means it was deleted from the TF Cloud bypass the operator
 		// in this case, remove the finalizer and let Kubernetes remove the object permanently
 		if err == tfc.ErrResourceNotFound {
+			r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s was not fond, remove finazlier", workspaceFinalizer))
 			return r.removeFinalizer(ctx, instance)
 		}
+		r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to delete Workspace ID %s, retry later", instance.Status.WorkspaceID)
 		return err
 	}
 
+	r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("workspace ID %s has been deleted, remove finazlier", instance.Status.WorkspaceID))
 	return r.removeFinalizer(ctx, instance)
 }
 
 func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
+	r.log.Info("Reconcile Workspace", "msg", "reconciling workspace")
+
 	var workspace *tfc.Workspace
 	var err error
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the workspace
 	if isDeletionCandidate(instance) {
+		r.log.Info("Reconcile Workspace", "msg", "object marked as deleted, need to delete workspace first")
+		r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Object marked as deleted, need to delete workspace first")
 		return r.deleteWorkspace(ctx, instance)
 	}
 
 	// create a new workspace if workspace ID is unknown(means it was never created by the controller)
 	// this condition will work just one time, when a new Kubernetes object is created
 	if isCreationCandidate(instance) {
-		r.log.Info("Reconcile Workspace", "msg", "workspace ID is empty, creating a new workspace")
+		r.log.Info("Reconcile Workspace", "msg", "status.WorkspaceID is empty, creating a new workspace")
+		r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Status.WorkspaceID is empty, creating a new workspace")
 		return r.createWorkspace(ctx, instance)
 	}
 
@@ -245,20 +274,29 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
 		if err == tfc.ErrResourceNotFound {
-			r.log.Info("Reconcile Workspace", "msg", "workspace is not found, creating a new workspace")
+			r.log.Info("Reconcile Workspace", "msg", "workspace was not found, creating a new workspace")
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s was not found, creating a new workspace", instance.Status.WorkspaceID)
 			return r.createWorkspace(ctx, instance)
 		} else {
+			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to read workspace ID %s", instance.Status.WorkspaceID))
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to read workspace ID %s, check logs for more details", instance.Status.WorkspaceID)
 			return err
 		}
 	}
 
 	// update workspace if any changes have been made in the Kubernetes object spec or Terraform Cloud workspace
 	if needToUpdateWorkspace(instance, workspace) {
+		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are not matching, need to update workspace ID %s", instance.Status.WorkspaceID))
 		workspace, err = r.updateWorkspace(ctx, instance, workspace)
 		if err != nil {
+			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to update workspace ID %s", instance.Status.WorkspaceID))
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s, check logs for more details", instance.Status.WorkspaceID)
 			return err
 		}
+	} else {
+		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", instance.Status.WorkspaceID))
 	}
+
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
 }

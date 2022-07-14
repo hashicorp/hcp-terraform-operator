@@ -27,6 +27,13 @@ rules:
 - apiGroups:
   - app.terraform.io
   resources:
+  - workspaces/events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - app.terraform.io
+  resources:
   - workspaces/finalizers
   verbs:
   - update
