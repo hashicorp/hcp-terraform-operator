@@ -77,14 +77,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = r.getTerraformClient(ctx, instance)
 	if err != nil {
 		r.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client, check logs for more details")
+		r.Recorder.Event(instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
 	err = r.reconcileWorkspace(ctx, instance)
 	if err != nil {
 		r.log.Error(err, "Workspace Controller", "msg", "reconcile workspace")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to reconcile workspace, check logs for more details")
+		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to reconcile workspace")
 		return requeueAfter(requeueInterval)
 	}
 	r.log.Info("Workspace Controller", "msg", "successfully reconcilied workspace")
@@ -174,7 +174,7 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *app
 	err := r.Update(ctx, instance)
 	if err != nil {
 		r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finazlier %s", workspaceFinalizer))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s, check logs for more details", workspaceFinalizer)
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", workspaceFinalizer)
 	}
 
 	return err
@@ -199,7 +199,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
 		r.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace, check logs for more details")
+		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
 		return err
 	}
 	r.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
@@ -279,7 +279,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 			return r.createWorkspace(ctx, instance)
 		} else {
 			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to read workspace ID %s", instance.Status.WorkspaceID))
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to read workspace ID %s, check logs for more details", instance.Status.WorkspaceID)
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to read workspace ID %s", instance.Status.WorkspaceID)
 			return err
 		}
 	}
@@ -290,7 +290,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 		workspace, err = r.updateWorkspace(ctx, instance, workspace)
 		if err != nil {
 			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to update workspace ID %s", instance.Status.WorkspaceID))
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s, check logs for more details", instance.Status.WorkspaceID)
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s", instance.Status.WorkspaceID)
 			return err
 		}
 	} else {

@@ -8,7 +8,9 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,8 +19,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/go-logr/zapr"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"github.com/hashicorp/terraform-cloud-operator/controllers"
 	//+kubebuilder:scaffold:imports
@@ -51,16 +53,22 @@ func main() {
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
 		"The number of the workspace controller workers.")
 
-	opts := zap.Options{
-		Development: true,
-		TimeEncoder: zapcore.RFC3339TimeEncoder,
-	}
-	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	zapConfig := zap.NewProductionConfig()
+	zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	zapConfig.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	zapConfig.Encoding = "console"
+	zapConfig.DisableCaller = true
+	zapConfig.DisableStacktrace = true
 
-	var err error
+	logger, err := zapConfig.Build()
+	if err != nil {
+		setupLog.Error(err, "unable to set up logging")
+		os.Exit(1)
+	}
+	ctrl.SetLogger(zapr.NewLogger(logger))
+
 	options := ctrl.Options{
 		Controller: v1alpha1.ControllerConfigurationSpec{
 			GroupKindConcurrency: map[string]int{
