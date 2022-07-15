@@ -62,7 +62,7 @@ func main() {
 	zapConfig.DisableCaller = true
 	zapConfig.DisableStacktrace = true
 
-	logger, err := zapConfig.Build()
+	logger, err := zapConfig.Build(zap.AddStacktrace(zapcore.DPanicLevel))
 	if err != nil {
 		setupLog.Error(err, "unable to set up logging")
 		os.Exit(1)
