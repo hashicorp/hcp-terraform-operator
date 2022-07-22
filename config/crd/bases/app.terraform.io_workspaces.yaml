@@ -39,14 +39,44 @@ spec:
           spec:
             description: WorkspaceSpec defines the desired state of Workspace
             properties:
+              applyMethod:
+                default: manual
+                description: 'Define either change will be applied automatically(auto)
+                  or require an operator to confirm(manual). More information: https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
+                pattern: ^(auto|manual)$
+                type: string
+              description:
+                description: Workspace description
+                type: string
+              executionMode:
+                default: remote
+                description: 'Define where the Terraform code will be executed. More
+                  information: https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode'
+                pattern: ^(agent|local|remote)$
+                type: string
               name:
-                description: Workspace name
+                description: 'The display name of the workspace. More information:
+                  https://www.terraform.io/cloud-docs/workspaces/settings#name'
+                pattern: ^[a-zA-Z0-9_-]+$
                 type: string
               organization:
-                description: Organization name where the Workspace will be created
+                description: 'Organization name where the Workspace will be created
+                  More information: https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                type: string
+              terraformVersion:
+                description: 'The version of Terraform to use for this workspace.
+                  If not specified, the latest available version will be used. More
+                  information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version'
+                pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
+                type: string
+              terraformWorkingDirectory:
+                description: 'The directory where Terraform will execute, specified
+                  as a relative path from the root of the configuration directory.
+                  More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory'
                 type: string
               token:
-                description: API Token to be used for API calls
+                description: 'API Token to be used for API calls More information:
+                  https://www.terraform.io/cloud-docs/users-teams-organizations/api-tokens'
                 properties:
                   secretKeyRef:
                     description: SecretKeySelector selects a key of a Secret.
@@ -77,10 +107,24 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace
             properties:
+              applyMethod:
+                description: Define either change will be applied automatically(auto)
+                  or require an operator to confirm(manual).
+                type: string
+              executionMode:
+                description: Define where the Terraform code will be executed.
+                type: string
               observedGeneration:
                 description: Real world state generation
                 format: int64
                 type: integer
+              terraformVersion:
+                description: The version of Terraform to use for this workspace.
+                type: string
+              terraformWorkingDirectory:
+                description: The directory where Terraform will execute, specified
+                  as a relative path from the root of the configuration directory.
+                type: string
               updateAt:
                 description: Workspace last update timestamp
                 format: int64
@@ -89,7 +133,11 @@ spec:
                 description: Workspace ID that is managed by the controller
                 type: string
             required:
+            - applyMethod
+            - executionMode
             - observedGeneration
+            - terraformVersion
+            - terraformWorkingDirectory
             - updateAt
             - workspaceID
             type: object
