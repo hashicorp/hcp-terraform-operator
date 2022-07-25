@@ -48,6 +48,82 @@ spec:
               description:
                 description: Workspace description
                 type: string
+              environmentVariables:
+                description: 'Terraform Environment variables for all plans and applies
+                  in this workspace. Variables defined within a workspace always overwrite
+                  variables from variable sets that have the same type and the same
+                  key. More information: - https://www.terraform.io/cloud-docs/workspaces/variables
+                  - https://www.terraform.io/cloud-docs/workspaces/variables##environment-variables'
+                items:
+                  description: 'Variables let you customize configurations, modify
+                    Terraform''s behavior, and store information like provider credentials.
+                    More information: - https://www.terraform.io/cloud-docs/workspaces/variables'
+                  properties:
+                    description:
+                      description: Description of the variable.
+                      type: string
+                    hcl:
+                      default: false
+                      description: Parse this field as HashiCorp Configuration Language
+                        (HCL). This allows you to interpolate values at runtime.
+                      type: boolean
+                    name:
+                      description: Name of the variable.
+                      type: string
+                    sensitive:
+                      default: false
+                      description: Sensitive variables are never shown in the UI or
+                        API. They may appear in Terraform logs if your configuration
+                        is designed to output them.
+                      type: boolean
+                    value:
+                      description: Value of the variable.
+                      type: string
+                    valueFrom:
+                      description: Source for the variable's value. Cannot be used
+                        if value is not empty.
+                      properties:
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                        secretKeyRef:
+                          description: Selects a key of a secret in the workspace's
+                            namespace
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                      type: object
+                  required:
+                  - name
+                  type: object
+                type: array
               executionMode:
                 default: remote
                 description: 'Define where the Terraform code will be executed. More
@@ -55,9 +131,7 @@ spec:
                 pattern: ^(agent|local|remote)$
                 type: string
               name:
-                description: 'The display name of the workspace. More information:
-                  https://www.terraform.io/cloud-docs/workspaces/settings#name'
-                pattern: ^[a-zA-Z0-9_-]+$
+                description: Workspace name
                 type: string
               organization:
                 description: 'Organization name where the Workspace will be created
@@ -69,6 +143,82 @@ spec:
                 items:
                   type: string
                 type: array
+              terraformVariables:
+                description: 'Terraform variables for all plans and applies in this
+                  workspace. Variables defined within a workspace always overwrite
+                  variables from variable sets that have the same type and the same
+                  key. More information: - https://www.terraform.io/cloud-docs/workspaces/variables
+                  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables'
+                items:
+                  description: 'Variables let you customize configurations, modify
+                    Terraform''s behavior, and store information like provider credentials.
+                    More information: - https://www.terraform.io/cloud-docs/workspaces/variables'
+                  properties:
+                    description:
+                      description: Description of the variable.
+                      type: string
+                    hcl:
+                      default: false
+                      description: Parse this field as HashiCorp Configuration Language
+                        (HCL). This allows you to interpolate values at runtime.
+                      type: boolean
+                    name:
+                      description: Name of the variable.
+                      type: string
+                    sensitive:
+                      default: false
+                      description: Sensitive variables are never shown in the UI or
+                        API. They may appear in Terraform logs if your configuration
+                        is designed to output them.
+                      type: boolean
+                    value:
+                      description: Value of the variable.
+                      type: string
+                    valueFrom:
+                      description: Source for the variable's value. Cannot be used
+                        if value is not empty.
+                      properties:
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                        secretKeyRef:
+                          description: Selects a key of a secret in the workspace's
+                            namespace
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                      type: object
+                  required:
+                  - name
+                  type: object
+                type: array
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
                   If not specified, the latest available version will be used. More
@@ -76,11 +226,10 @@ spec:
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                 type: string
               token:
-                description: 'API Token to be used for API calls More information:
-                  https://www.terraform.io/cloud-docs/users-teams-organizations/api-tokens'
+                description: API Token to be used for API calls
                 properties:
                   secretKeyRef:
-                    description: SecretKeySelector selects a key of a Secret.
+                    description: Selects a key of a secret in the workspace's namespace
                     properties:
                       key:
                         description: The key of the secret to select from.  Must be

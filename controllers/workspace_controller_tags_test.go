@@ -21,7 +21,8 @@ var _ = Describe("Helpers", func() {
 				{Name: "A"},
 			}
 			d := tagDifference(leftTags, rightTags)
-			Expect(d).Should(Equal(expect))
+
+			Expect(d).Should(ConsistOf(expect))
 		})
 		It("returns leftTags as difference between unintersectioned tags sets", func() {
 			leftTags := map[string]bool{

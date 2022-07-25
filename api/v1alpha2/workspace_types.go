@@ -5,23 +5,56 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SecretKeyRef refers to a Kubernetes Secret object within the same namespace as the Workspace object
-type SecretKeyRef struct {
+// Token refers to a Kubernetes Secret object within the same namespace as the Workspace object
+type Token struct {
+	// Selects a key of a secret in the workspace's namespace
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef"`
+}
+
+// Source for the variable's value. Cannot be used if value is not empty.
+type ValueFrom struct {
+	// Selects a key of a ConfigMap.
+	//+optional
+	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a secret in the workspace's namespace
+	//+optional
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+}
+
+// Variables let you customize configurations, modify Terraform's behavior, and store information like provider credentials.
+// More information:
+//  - https://www.terraform.io/cloud-docs/workspaces/variables
+type Variable struct {
+	// Name of the variable.
+	Name string `json:"name"`
+	// Description of the variable.
+	//+optional
+	Description string `json:"description,omitempty"`
+	// Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
+	//+kubebuilder:default:=false
+	//+optional
+	HCL bool `json:"hcl"`
+	// Sensitive variables are never shown in the UI or API. They may appear in Terraform logs if your configuration is designed to output them.
+	//+kubebuilder:default:=false
+	//+optional
+	Sensitive bool `json:"sensitive"`
+	// Value of the variable.
+	//+optional
+	Value string `json:"value,omitempty"`
+	// Source for the variable's value. Cannot be used if value is not empty.
+	//+optional
+	ValueFrom *ValueFrom `json:"valueFrom,omitempty"`
 }
 
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
+	// API Token to be used for API calls
+	Token Token `json:"token"`
+	// Workspace name
+	Name string `json:"name"`
 	// Organization name where the Workspace will be created
 	// More information: https://www.terraform.io/cloud-docs/users-teams-organizations/organizations
 	Organization string `json:"organization"`
-	// API Token to be used for API calls
-	// More information: https://www.terraform.io/cloud-docs/users-teams-organizations/api-tokens
-	Token SecretKeyRef `json:"token"`
-	// The display name of the workspace.
-	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#name
-	//+kubebuilder:validation:Pattern="^[a-zA-Z0-9_-]+$"
-	Name string `json:"name"`
 
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
@@ -51,6 +84,20 @@ type WorkspaceSpec struct {
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
 	//+optional
 	WorkingDirectory string `json:"workingDirectory,omitempty"`
+	// Terraform Environment variables for all plans and applies in this workspace.
+	// Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/variables
+	//  - https://www.terraform.io/cloud-docs/workspaces/variables##environment-variables
+	//+optional
+	EnvironmentVariables []Variable `json:"environmentVariables,omitempty"`
+	// Terraform variables for all plans and applies in this workspace.
+	// Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/variables
+	//  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables
+	//+optional
+	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace

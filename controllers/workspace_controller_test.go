@@ -43,17 +43,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
 		// Create a secret object that will be used by the controller
-		secret = &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      namespacedName.Name,
-				Namespace: namespacedName.Namespace,
-			},
-			Type: corev1.SecretTypeOpaque,
-			Data: map[string][]byte{
-				secretKey: []byte(terraformToken),
-			},
-		}
-		Expect(k8sClient.Create(ctx, secret)).Should(Succeed())
+		secret = createSecretToken(secretKey, terraformToken, namespacedName)
+	})
+
+	AfterAll(func() {
+		Expect(k8sClient.Delete(ctx, secret)).Should(Succeed())
 	})
 
 	BeforeEach(func() {
@@ -71,7 +65,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			},
 			Spec: appv1alpha2.WorkspaceSpec{
 				Organization: organization,
-				Token: appv1alpha2.SecretKeyRef{
+				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
 							Name: secret.Name,
@@ -92,7 +86,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Take a pause before the next spec
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 	})
 
 	Context("Workspace controller", func() {
@@ -306,4 +300,21 @@ func listWorkspaceTags(workspaceID string) []tfc.Tag {
 	}
 
 	return tags
+}
+
+func createSecretToken(secretKey, terraformToken string, namespacedName types.NamespacedName) *corev1.Secret {
+	// Create a secret object that will be used by the controller
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      namespacedName.Name,
+			Namespace: namespacedName.Namespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			secretKey: []byte(terraformToken),
+		},
+	}
+	Expect(k8sClient.Create(ctx, secret)).Should(Succeed())
+
+	return secret
 }
