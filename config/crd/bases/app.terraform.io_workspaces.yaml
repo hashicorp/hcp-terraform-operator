@@ -63,6 +63,12 @@ spec:
                 description: 'Organization name where the Workspace will be created
                   More information: https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
                 type: string
+              tags:
+                description: Workspace tags are used to help identify and group together
+                  workspaces.
+                items:
+                  type: string
+                type: array
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
                   If not specified, the latest available version will be used. More

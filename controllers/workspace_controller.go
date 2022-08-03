@@ -339,6 +339,15 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", instance.Status.WorkspaceID))
 	}
 
+	err = r.reconcileTags(ctx, instance, workspace)
+	if err != nil {
+		r.log.Error(err, "Reconcile Tags", "msg", "reconcile tags")
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileTags", "Failed to reconcile tags in workspace ID %s", instance.Status.WorkspaceID)
+		return err
+	}
+	r.log.Info("Reconcile Tags", "msg", "successfully reconcilied tags")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", instance.Status.WorkspaceID)
+
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
 }
