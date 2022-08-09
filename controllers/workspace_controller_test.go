@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -23,31 +22,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		ctx = context.TODO()
 
 		instance *appv1alpha2.Workspace
-		secret   *corev1.Secret
 
-		organization   = os.Getenv("TFC_ORG")
-		terraformToken = os.Getenv("TFC_TOKEN")
-
-		secretKey = "token"
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 	)
-
-	namespacedName := types.NamespacedName{
-		Name:      "this",
-		Namespace: "default",
-	}
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(90 * time.Second)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-
-		// Create a secret object that will be used by the controller
-		secret = createSecretToken(secretKey, terraformToken, namespacedName)
-	})
-
-	AfterAll(func() {
-		Expect(k8sClient.Delete(ctx, secret)).Should(Succeed())
 	})
 
 	BeforeEach(func() {
@@ -68,7 +50,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
+							Name: namespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -82,11 +64,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
-	})
-
-	AfterEach(func() {
-		// Take a pause before the next spec
-		time.Sleep(5 * time.Second)
 	})
 
 	Context("Workspace controller", func() {
@@ -109,7 +86,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Wait until the controller re-creates the workspace and updates Status.WorkspaceID with a new valid workspace ID
 			Eventually(func() bool {
-				k8sClient.Get(ctx, namespacedName, instance)
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				return instance.Status.WorkspaceID != initWorkspaceID
 			}).Should(BeTrue())
 
@@ -239,7 +216,7 @@ func createWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 	Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 	// Wait until the controller finishes the reconciliation
 	Eventually(func() bool {
-		k8sClient.Get(ctx, namespacedName, instance)
+		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		return instance.Status.ObservedGeneration == instance.Generation
 	}).Should(BeTrue())
 
@@ -258,12 +235,11 @@ func deleteWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 		return errors.IsNotFound(err)
 	}).Should(BeTrue())
 
-	// Wait until the Terraform Cloud workspace is deleted
+	// Make sure that the Terraform Cloud workspace is deleted
 	Eventually(func() bool {
-		k8sClient.Get(ctx, namespacedName, instance)
-		_, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		// The Terraform Cloud client will return the error 'ResourceNotFound' on the "ReadByID" operation once the workspace is deleted
-		return err == tfc.ErrResourceNotFound
+		err := tfClient.Workspaces.Delete(ctx, instance.Spec.Organization, instance.Spec.Name)
+		// The Terraform Cloud client will return the error 'ResourceNotFound' once the workspace does not exist
+		return err == tfc.ErrResourceNotFound || err == nil
 	}).Should(BeTrue())
 }
 

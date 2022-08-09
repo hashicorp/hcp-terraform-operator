@@ -38,7 +38,7 @@ var _ = Describe("Helpers", func() {
 				{Name: "B"},
 			}
 			d := tagDifference(leftTags, rightTags)
-			Expect(d).Should(Equal(expect))
+			Expect(d).Should(ConsistOf(expect))
 		})
 		It("returns leftTags as difference between tags sets when rightTags set is empty", func() {
 			leftTags := map[string]bool{
@@ -51,7 +51,7 @@ var _ = Describe("Helpers", func() {
 				{Name: "B"},
 			}
 			d := tagDifference(leftTags, rightTags)
-			Expect(d).Should(Equal(expect))
+			Expect(d).Should(ConsistOf(expect))
 		})
 		It("returns no difference between tags sets when leftTags set is empty", func() {
 			leftTags := map[string]bool{}
@@ -61,7 +61,7 @@ var _ = Describe("Helpers", func() {
 			}
 			var expect []*tfc.Tag
 			d := tagDifference(leftTags, rightTags)
-			Expect(d).Should(Equal(expect))
+			Expect(d).Should(ConsistOf(expect))
 		})
 		It("returns no difference between equal tags sets", func() {
 			leftTags := map[string]bool{
@@ -74,14 +74,14 @@ var _ = Describe("Helpers", func() {
 			}
 			var expect []*tfc.Tag
 			d := tagDifference(leftTags, rightTags)
-			Expect(d).Should(Equal(expect))
+			Expect(d).Should(ConsistOf(expect))
 		})
 		It("returns no difference between empty tags sets", func() {
 			leftTags := map[string]bool{}
 			rightTags := map[string]bool{}
 			var expect []*tfc.Tag
 			d := tagDifference(leftTags, rightTags)
-			Expect(d).Should(Equal(expect))
+			Expect(d).Should(ConsistOf(expect))
 		})
 	})
 })

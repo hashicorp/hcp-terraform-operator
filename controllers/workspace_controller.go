@@ -165,7 +165,19 @@ func needToAddFinalizer(instance *appv1alpha2.Workspace) bool {
 }
 
 func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Workspace) bool {
-	return instance.Generation != instance.Status.ObservedGeneration || workspace.UpdatedAt.Unix() != instance.Status.UpdateAt
+	// generation changed
+	if instance.Generation != instance.Status.ObservedGeneration {
+		return true
+	}
+	// timestamp changed
+	if workspace.UpdatedAt.Unix() != instance.Status.UpdateAt {
+		return true
+	}
+	// agent pool added
+	if instance.Spec.AgentPool != nil && workspace.AgentPool == nil {
+		return true
+	}
+	return false
 }
 
 // applyMethodToBool turns spec.applyMethod field into bool to align with the Workspace AutoApply field
@@ -220,14 +232,27 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	spec := instance.Spec
 	options := tfc.WorkspaceCreateOptions{
-		Name: tfc.String(spec.Name),
-
+		Name:             tfc.String(spec.Name),
 		AutoApply:        tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
 		Description:      tfc.String(spec.Description),
 		ExecutionMode:    tfc.String(spec.ExecutionMode),
 		TerraformVersion: tfc.String(spec.TerraformVersion),
 		WorkingDirectory: tfc.String(spec.WorkingDirectory),
 	}
+
+	if spec.ExecutionMode == "agent" {
+		agentPoolID, err := r.getAgentPoolID(ctx, instance)
+		if err != nil {
+			r.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
+			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
+			return err
+		}
+		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
+		options.AgentPoolID = tfc.String(agentPoolID)
+	}
+
+	options.Name = tfc.String(spec.Name)
+	options.ExecutionMode = tfc.String(spec.ExecutionMode)
 
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
@@ -247,8 +272,19 @@ func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, instance *appv1
 }
 
 func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) (*tfc.Workspace, error) {
-	var updateOptions tfc.WorkspaceUpdateOptions
+	updateOptions := tfc.WorkspaceUpdateOptions{}
 	spec := instance.Spec
+
+	if spec.ExecutionMode == "agent" {
+		agentPoolID, err := r.getAgentPoolID(ctx, instance)
+		if err != nil {
+			r.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
+			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
+			return nil, err
+		}
+		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
+		updateOptions.AgentPoolID = tfc.String(agentPoolID)
+	}
 
 	if workspace.Name != spec.Name {
 		updateOptions.Name = tfc.String(spec.Name)
@@ -268,6 +304,11 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 	}
 	if workspace.WorkingDirectory != spec.WorkingDirectory {
 		updateOptions.WorkingDirectory = tfc.String(spec.WorkingDirectory)
+		updateOptions.Name = tfc.String(spec.Name)
+	}
+
+	if workspace.ExecutionMode != spec.ExecutionMode {
+		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
 	}
 
 	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
