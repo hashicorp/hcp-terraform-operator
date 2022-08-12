@@ -275,6 +275,16 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 	r.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", workspace.ID)
 
+	ws, err := r.reconcileSSHKey(ctx, instance, workspace)
+	if err != nil {
+		r.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
+	} else {
+		r.log.Info("Reconcile SSH Key", "msg", "successfully assigned ssh key to the workspace")
+		r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully assigned SSH Key to the workspace with ID %s", workspace.ID)
+		workspace = ws
+	}
+
 	// Update status once a workspace has been successfully created
 	return r.updateStatus(ctx, instance, workspace)
 }
@@ -409,6 +419,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to update workspace ID %s", instance.Status.WorkspaceID))
 			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s", instance.Status.WorkspaceID)
 			return err
+		}
+		// reconcile SSH key
+		workspace, err = r.reconcileSSHKey(ctx, instance, workspace)
+		if err != nil {
+			r.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
+			return err
+		} else {
+			r.log.Info("Reconcile SSH Key", "msg", "successfully reconcile ssh key")
+			r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully reconcile SSH Key")
 		}
 	} else {
 		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", instance.Status.WorkspaceID))

@@ -170,6 +170,16 @@ spec:
                       type: string
                   type: object
                 type: array
+              sshKey:
+                description: 'SSH key used to clone Terraform modules. More information:
+                  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys'
+                properties:
+                  id:
+                    pattern: ^sshkey-[a-zA-Z0-9]+$
+                    type: string
+                  name:
+                    type: string
+                type: object
               tags:
                 description: Workspace tags are used to help identify and group together
                   workspaces.

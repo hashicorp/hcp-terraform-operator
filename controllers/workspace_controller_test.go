@@ -64,13 +64,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		}
 	})
 
+	AfterEach(func() {
+		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+		deleteWorkspace(instance, namespacedName)
+	})
+
 	Context("Workspace controller", func() {
 		It("can create and delete a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can re-create a workspace", func() {
@@ -90,9 +92,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// The Kubernetes workspace object should have Status.WorkspaceID with the valid workspace ID
 			Expect(instance.Status.WorkspaceID).Should(HavePrefix("ws-"))
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can clean up a workspace", func() {
@@ -101,9 +100,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Delete the Terraform Cloud workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can change workspace name", func() {
@@ -121,9 +117,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(err).Should(Succeed())
 				return ws.Name == instance.Spec.Name
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can change basic workspace attributes", func() {
@@ -149,9 +142,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					ws.TerraformVersion == instance.Spec.TerraformVersion &&
 					ws.WorkingDirectory == instance.Spec.WorkingDirectory
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can handle workspace tags", func() {
@@ -202,9 +192,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
 				return compareTags(wsTags, expectTags)
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 	})
 })
