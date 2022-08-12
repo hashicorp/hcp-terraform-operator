@@ -18,6 +18,10 @@ type AgentPool struct {
 	Name string `json:"name,omitempty"`
 }
 
+// RunTrigger allows you to connect this workspace to one or more source workspaces.
+// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
+// More information:
+// - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
 	// Source Workspace ID.
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
@@ -34,7 +38,7 @@ type Token struct {
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef"`
 }
 
-// Source for the variable's value. Cannot be used if value is not empty.
+// ValueFrom source for the variable's value. Cannot be used if value is not empty.
 type ValueFrom struct {
 	// Selects a key of a ConfigMap.
 	//+optional
@@ -67,6 +71,22 @@ type Variable struct {
 	// Source for the variable's value. Cannot be used if value is not empty.
 	//+optional
 	ValueFrom *ValueFrom `json:"valueFrom,omitempty"`
+}
+
+// VersionControl settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
+// Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.
+// More information:
+//  - https://www.terraform.io/cloud-docs/run/ui
+//  - https://www.terraform.io/cloud-docs/vcs
+type VersionControl struct {
+	// The VCS Connection (OAuth Connection + Token) to use.
+	//+kubebuilder:validation:Pattern="^ot-[a-zA-Z0-9]+$"
+	OAuthTokenID string `json:"oAuthTokenID,omitempty"`
+	// A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider.
+	Repository string `json:"repository,omitempty"`
+	// The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main).
+	//+optional
+	Branch string `json:"branch,omitempty"`
 }
 
 // WorkspaceSpec defines the desired state of Workspace
@@ -130,6 +150,13 @@ type WorkspaceSpec struct {
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
 	//+optional
 	RunTriggers []RunTrigger `json:"runTriggers,omitempty"`
+	// Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
+	// Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/run/ui
+	//  - https://www.terraform.io/cloud-docs/vcs
+	//+optional
+	VersionControl *VersionControl `json:"versionControl,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace

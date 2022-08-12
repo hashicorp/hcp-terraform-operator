@@ -1,0 +1,178 @@
+package controllers
+
+import (
+	"fmt"
+	"os"
+	"time"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
+	tfc "github.com/hashicorp/go-tfe"
+	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+)
+
+var _ = Describe("Workspace controller", Ordered, func() {
+	var (
+		instance     *appv1alpha2.Workspace
+		workspace    = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		oAuthTokenID = os.Getenv("TFC_OAUTH_TOKEN")
+		repository   = os.Getenv("TFC_VCS_REPO")
+	)
+
+	namespacedName := types.NamespacedName{
+		Name:      "this",
+		Namespace: "default",
+	}
+
+	BeforeAll(func() {
+		// Set default Eventually timers
+		SetDefaultEventuallyTimeout(90 * time.Second)
+		SetDefaultEventuallyPollingInterval(2 * time.Second)
+	})
+
+	BeforeEach(func() {
+		// Create a new workspace object for each test
+		instance = &appv1alpha2.Workspace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "app.terraform.io/v1alpha2",
+				Kind:       "Workspace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              namespacedName.Name,
+				Namespace:         namespacedName.Namespace,
+				DeletionTimestamp: nil,
+				Finalizers:        []string{},
+			},
+			Spec: appv1alpha2.WorkspaceSpec{
+				Organization: organization,
+				Token: appv1alpha2.Token{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: namespacedName.Name,
+						},
+						Key: secretKey,
+					},
+				},
+				Name: workspace,
+				VersionControl: &appv1alpha2.VersionControl{
+					OAuthTokenID: oAuthTokenID,
+					Repository:   repository,
+					Branch:       "operator",
+				},
+			},
+			Status: appv1alpha2.WorkspaceStatus{},
+		}
+	})
+
+	Context("Workspace controller", func() {
+		It("can attach VCS to the workspace", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
+					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
+					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
+
+		It("can update VCS", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			instance.Spec.VersionControl.Branch = "main"
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
+					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
+					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
+
+		It("can revert manual changes VCS", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
+				VCSRepo: &tfc.VCSRepoOptions{
+					Branch: tfc.String("main"),
+				},
+			})
+			Expect(ws).ShouldNot(BeNil())
+			Expect(err).Should(Succeed())
+
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
+					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
+					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
+
+		It("can revert manual detach of VCS from the workspace", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			ws, err := tfClient.Workspaces.RemoveVCSConnectionByID(ctx, instance.Status.WorkspaceID)
+			Expect(ws).ShouldNot(BeNil())
+			Expect(err).Should(Succeed())
+
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				if ws.VCSRepo == nil {
+					return false
+				} else {
+					return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
+						ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
+						ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+				}
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
+
+		It("can detach VCS from the workspace", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			instance.Spec.VersionControl = nil
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return ws.VCSRepo == nil
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
+	})
+})

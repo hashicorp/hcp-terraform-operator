@@ -177,6 +177,13 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 	if instance.Spec.AgentPool != nil && workspace.AgentPool == nil {
 		return true
 	}
+	// When it comes to validation of VCS there is an inconsistent behavior of the TFC API:
+	//  - once a VCS is attached to a Workspace, the 'UpdateAt' attribute is updated
+	//  - once attached to a Workspace VCS is updated, for instance, change a branch name, the 'UpdateAt' attribute is updated
+	//  - once a VCS is detached from a Workspace, the 'UpdateAt' attribute is not updated, because of that we have to have this condition here
+	if instance.Spec.VersionControl != nil && workspace.VCSRepo == nil {
+		return true
+	}
 	return false
 }
 
@@ -194,7 +201,6 @@ func autoApplyToStr(autoApply bool) string {
 	if autoApply {
 		return "auto"
 	}
-
 	return "manual"
 }
 
@@ -251,8 +257,14 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 		options.AgentPoolID = tfc.String(agentPoolID)
 	}
 
-	options.Name = tfc.String(spec.Name)
-	options.ExecutionMode = tfc.String(spec.ExecutionMode)
+	if spec.VersionControl != nil {
+		options.VCSRepo = &tfc.VCSRepoOptions{
+			OAuthTokenID: tfc.String(spec.VersionControl.OAuthTokenID),
+			Identifier:   tfc.String(spec.VersionControl.Repository),
+			Branch:       tfc.String(spec.VersionControl.Branch),
+		}
+		options.FileTriggersEnabled = tfc.Bool(false)
+	}
 
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
@@ -309,6 +321,21 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 
 	if workspace.ExecutionMode != spec.ExecutionMode {
 		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
+	}
+
+	if spec.VersionControl == nil && workspace.VCSRepo != nil {
+		ws, err := r.tfClient.Client.Workspaces.RemoveVCSConnectionByID(ctx, workspace.ID)
+		if err != nil {
+			return ws, err
+		}
+	}
+	if spec.VersionControl != nil {
+		updateOptions.VCSRepo = &tfc.VCSRepoOptions{
+			OAuthTokenID: tfc.String(spec.VersionControl.OAuthTokenID),
+			Identifier:   tfc.String(spec.VersionControl.Repository),
+			Branch:       tfc.String(spec.VersionControl.Branch),
+		}
+		updateOptions.FileTriggersEnabled = tfc.Bool(false)
 	}
 
 	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
