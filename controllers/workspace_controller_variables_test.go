@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -20,8 +19,6 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		ctx = context.TODO()
-
 		instance        *appv1alpha2.Workspace
 		secretVariables *corev1.Secret
 

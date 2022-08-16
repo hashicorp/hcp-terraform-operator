@@ -16,8 +16,6 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		// ctx = context.TODO()
-
 		instance  *appv1alpha2.Workspace
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 
