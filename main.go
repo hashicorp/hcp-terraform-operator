@@ -23,6 +23,7 @@ import (
 	"github.com/go-logr/zapr"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"github.com/hashicorp/terraform-cloud-operator/controllers"
+	"github.com/patrickmn/go-cache"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -46,7 +47,7 @@ func main() {
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
 	var syncPeriod time.Duration
-	flag.DurationVar(&syncPeriod, "sync-period", 60*time.Second,
+	flag.DurationVar(&syncPeriod, "sync-period", 20*time.Second,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
 	// WORKSPACE CONTROLLER OPRTIONS
 	var workspaceWorkers int
@@ -96,6 +97,7 @@ func main() {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("WorkspaceController"),
+		Cache:    cache.New(2*time.Minute, 4*time.Minute),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)

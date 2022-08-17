@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-logr/logr"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/patrickmn/go-cache"
 
 	tfc "github.com/hashicorp/go-tfe"
 )
@@ -32,6 +33,7 @@ type WorkspaceReconciler struct {
 	Recorder record.EventRecorder
 	Scheme   *runtime.Scheme
 	tfClient TerraformCloudClient
+	Cache    *cache.Cache
 }
 
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -131,17 +133,30 @@ func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha
 }
 
 func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	token, err := r.getToken(ctx, instance)
-	if err != nil {
-		return err
+	k := fmt.Sprintf("%s/%s", instance.Namespace, instance.Name)
+	if c, ok := r.Cache.Get(k); ok {
+		r.tfClient.Client = c.(*tfc.Client)
+		r.log.Info("Workspace Controller", "msg", "using TFC client from the cache")
+	} else {
+		r.log.Info("Workspace Controller", "msg", "creating a new cache record for TFC client")
+		token, err := r.getToken(ctx, instance)
+		if err != nil {
+			return err
+		}
+
+		config := &tfc.Config{
+			Token: token,
+		}
+
+		tc, err := tfc.NewClient(config)
+		if err != nil {
+			return err
+		}
+		r.Cache.Set(k, tc, cache.DefaultExpiration)
+		r.tfClient.Client = tc
 	}
 
-	config := &tfc.Config{
-		Token: token,
-	}
-	r.tfClient.Client, err = tfc.NewClient(config)
-
-	return err
+	return nil
 }
 
 // HELPERS

@@ -8,6 +8,7 @@ require (
 	github.com/hashicorp/go-tfe v1.3.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	go.uber.org/zap v1.19.1
 	k8s.io/api v0.24.2
 	k8s.io/apimachinery v0.24.2
