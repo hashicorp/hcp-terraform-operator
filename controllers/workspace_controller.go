@@ -199,13 +199,11 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *app
 }
 
 // STATUS
+// TODO need to update this to update the spec with default values from TFC API
+// change this function to updateObject?
 func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
-	instance.Status.ApplyMethod = autoApplyToStr(workspace.AutoApply)
-	instance.Status.ExecutionMode = workspace.ExecutionMode
 	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
-	instance.Status.TerraformVersion = workspace.TerraformVersion
-	instance.Status.TerraformWorkingDirectory = workspace.WorkingDirectory
 	instance.Status.WorkspaceID = workspace.ID
 
 	return r.Status().Update(ctx, instance)

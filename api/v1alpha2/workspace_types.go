@@ -52,16 +52,8 @@ type WorkspaceSpec struct {
 
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
-	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
-	ApplyMethod string `json:"applyMethod"`
-	// Define where the Terraform code will be executed.
-	ExecutionMode string `json:"executionMode"`
 	// Real world state generation
 	ObservedGeneration int64 `json:"observedGeneration"`
-	// The version of Terraform to use for this workspace.
-	TerraformVersion string `json:"terraformVersion"`
-	// The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.
-	TerraformWorkingDirectory string `json:"terraformWorkingDirectory"`
 	// Workspace last update timestamp
 	UpdateAt int64 `json:"updateAt"`
 	// Workspace ID that is managed by the controller
