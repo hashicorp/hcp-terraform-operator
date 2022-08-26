@@ -38,6 +38,9 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=remote
 	//+optional
 	ExecutionMode string `json:"executionMode"`
+	// Workspace tags are used to help identify and group together workspaces.
+	//+optional
+	Tags []string `json:"tags,omitempty"`
 	// The version of Terraform to use for this workspace.
 	// If not specified, the latest available version will be used.
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version

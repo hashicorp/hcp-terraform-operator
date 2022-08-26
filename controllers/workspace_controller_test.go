@@ -184,6 +184,59 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 			deleteWorkspace(instance, namespacedName)
 		})
+
+		It("can handle workspace tags", func() {
+			expectTags := []tfc.Tag{
+				{Name: "kubernetes-operator"},
+				{Name: "env:dev"},
+			}
+
+			instance.Spec.Tags = []string{"kubernetes-operator"}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			// Make sure that the TFC Workspace has all desired tags
+			Eventually(func() bool {
+				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
+				expectTags := []tfc.Tag{
+					{Name: "kubernetes-operator"},
+				}
+				return compareTags(wsTags, expectTags)
+			}).Should(BeTrue())
+
+			// Update the Kubernetes workspace tags
+			instance.Spec.Tags = []string{"kubernetes-operator", "env:dev"}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			// Wait until the controller updates Terraform Cloud workspace correcly
+			Eventually(func() bool {
+				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
+				return compareTags(wsTags, expectTags)
+			}).Should(BeTrue())
+
+			// Delete some tags manually
+			err := tfClient.Workspaces.RemoveTags(ctx, instance.Status.WorkspaceID, tfc.WorkspaceRemoveTagsOptions{Tags: []*tfc.Tag{
+				{Name: "kubernetes-operator"},
+			}})
+			Expect(err).Should(Succeed())
+			// Make sure the controller restores all tags
+			Eventually(func() bool {
+				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
+				return compareTags(wsTags, expectTags)
+			}).Should(BeTrue())
+
+			// Add some tags manually
+			err = tfClient.Workspaces.AddTags(ctx, instance.Status.WorkspaceID, tfc.WorkspaceAddTagsOptions{Tags: []*tfc.Tag{
+				{Name: "new-tag"},
+			}})
+			Expect(err).Should(Succeed())
+			// Make sure the controller restores all tags
+			Eventually(func() bool {
+				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
+				return compareTags(wsTags, expectTags)
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
 	})
 })
 
@@ -218,4 +271,39 @@ func deleteWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 		// The Terraform Cloud client will return the error 'ResourceNotFound' on the "ReadByID" operation once the workspace is deleted
 		return err == tfc.ErrResourceNotFound
 	}).Should(BeTrue())
+}
+
+// compareTags compares two slices of tags and returns 'true' if they are equal and 'false' otherwise
+func compareTags(aTags, bTags []tfc.Tag) bool {
+	if len(aTags) != len(bTags) {
+		return false
+	}
+
+	// TODO find a better way to do this, i.e DeepEqual
+	for _, at := range aTags {
+		found := false
+		for _, bt := range bTags {
+			if at.Name == bt.Name {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+// listWorkspaceTags returns a list of all tags assigned to the workspace
+func listWorkspaceTags(workspaceID string) []tfc.Tag {
+	ws, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+	Expect(ws).ShouldNot(BeNil())
+	Expect(err).Should(Succeed())
+	tags := make([]tfc.Tag, len(ws.TagNames))
+	for i, t := range ws.TagNames {
+		tags[i] = tfc.Tag{Name: t}
+	}
+
+	return tags
 }
