@@ -161,6 +161,24 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 	return instance.Generation != instance.Status.ObservedGeneration || workspace.UpdatedAt.Unix() != instance.Status.UpdateAt
 }
 
+// applyMethodToBool turns spec.applyMethod field into bool to align with the Workspace AutoApply field
+// `spec.applyMethod: auto` is equal to `AutoApply: true`
+// `spec.applyMethod: manual` is equal to `AutoApply: false`
+func applyMethodToBool(applyMethod string) bool {
+	return applyMethod == "auto"
+}
+
+// autoApplyToStr turns the Workspace AutoApply field into string to align with spec.applyMethod
+// `AutoApply: true` is equal to `spec.applyMethod: auto`
+// `AutoApply: false` is equal to `spec.applyMethod: manual`
+func autoApplyToStr(autoApply bool) string {
+	if autoApply {
+		return "auto"
+	}
+
+	return "manual"
+}
+
 // FINALIZERS
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
@@ -181,6 +199,8 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *app
 }
 
 // STATUS
+// TODO need to update this to update the spec with default values from TFC API
+// change this function to updateObject?
 func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
 	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
@@ -194,6 +214,12 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 	spec := instance.Spec
 	options := tfc.WorkspaceCreateOptions{
 		Name: tfc.String(spec.Name),
+
+		AutoApply:        tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
+		Description:      tfc.String(spec.Description),
+		ExecutionMode:    tfc.String(spec.ExecutionMode),
+		TerraformVersion: tfc.String(spec.TerraformVersion),
+		WorkingDirectory: tfc.String(spec.WorkingDirectory),
 	}
 
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
@@ -218,7 +244,23 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 	spec := instance.Spec
 
 	if workspace.Name != spec.Name {
-		updateOptions.Name = &spec.Name
+		updateOptions.Name = tfc.String(spec.Name)
+	}
+
+	if workspace.AutoApply != applyMethodToBool(spec.ApplyMethod) {
+		updateOptions.AutoApply = tfc.Bool(applyMethodToBool(spec.ApplyMethod))
+	}
+	if workspace.Description != spec.Description {
+		updateOptions.Description = tfc.String(spec.Description)
+	}
+	if workspace.ExecutionMode != spec.ExecutionMode {
+		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
+	}
+	if workspace.TerraformVersion != spec.TerraformVersion {
+		updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
+	}
+	if workspace.WorkingDirectory != spec.WorkingDirectory {
+		updateOptions.WorkingDirectory = tfc.String(spec.WorkingDirectory)
 	}
 
 	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)

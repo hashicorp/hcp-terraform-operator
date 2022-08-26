@@ -79,7 +79,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name: workspace,
+				Name:             workspace,
+				ApplyMethod:      "auto",
+				Description:      "Description",
+				ExecutionMode:    "remote",
+				TerraformVersion: "1.2.3",
+				WorkingDirectory: "aws/us-west-1/vpc",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
@@ -132,7 +137,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			deleteWorkspace(instance, namespacedName)
 		})
 
-		It("can update a workspace", func() {
+		It("can change workspace name", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
 
@@ -146,6 +151,34 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
 				return ws.Name == instance.Spec.Name
+			}).Should(BeTrue())
+
+			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+			deleteWorkspace(instance, namespacedName)
+		})
+
+		It("can change basic workspace attributes", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			// Update the Kubernetes workspace object fields(basic workspace attributes)
+			instance.Spec.ApplyMethod = "manual"
+			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
+			instance.Spec.ExecutionMode = "local"
+			instance.Spec.TerraformVersion = "1.2.1"
+			instance.Spec.WorkingDirectory = fmt.Sprintf("%v/new", instance.Spec.WorkingDirectory)
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			// Wait until the controller updates Terraform Cloud workspace
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return ws.AutoApply == applyMethodToBool(instance.Spec.ApplyMethod) &&
+					ws.Description == instance.Spec.Description &&
+					ws.ExecutionMode == instance.Spec.ExecutionMode &&
+					ws.TerraformVersion == instance.Spec.TerraformVersion &&
+					ws.WorkingDirectory == instance.Spec.WorkingDirectory
 			}).Should(BeTrue())
 
 			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
