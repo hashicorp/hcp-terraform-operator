@@ -47,7 +47,7 @@ type WorkspaceSpec struct {
 	// The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
 	//+optional
-	TerraformWorkingDirectory string `json:"terraformWorkingDirectory,omitempty"`
+	WorkingDirectory string `json:"workingDirectory,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace

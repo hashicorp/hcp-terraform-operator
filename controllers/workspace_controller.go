@@ -219,7 +219,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 		Description:      tfc.String(spec.Description),
 		ExecutionMode:    tfc.String(spec.ExecutionMode),
 		TerraformVersion: tfc.String(spec.TerraformVersion),
-		WorkingDirectory: tfc.String(spec.TerraformWorkingDirectory),
+		WorkingDirectory: tfc.String(spec.WorkingDirectory),
 	}
 
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
@@ -259,8 +259,8 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 	if workspace.TerraformVersion != spec.TerraformVersion {
 		updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
 	}
-	if workspace.WorkingDirectory != spec.TerraformWorkingDirectory {
-		updateOptions.WorkingDirectory = tfc.String(spec.TerraformWorkingDirectory)
+	if workspace.WorkingDirectory != spec.WorkingDirectory {
+		updateOptions.WorkingDirectory = tfc.String(spec.WorkingDirectory)
 	}
 
 	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)

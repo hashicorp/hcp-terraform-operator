@@ -79,12 +79,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name:                      workspace,
-				ApplyMethod:               "auto",
-				Description:               "Description",
-				ExecutionMode:             "remote",
-				TerraformVersion:          "1.2.3",
-				TerraformWorkingDirectory: "aws/us-west-1/vpc",
+				Name:             workspace,
+				ApplyMethod:      "auto",
+				Description:      "Description",
+				ExecutionMode:    "remote",
+				TerraformVersion: "1.2.3",
+				WorkingDirectory: "aws/us-west-1/vpc",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
@@ -166,7 +166,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
 			instance.Spec.ExecutionMode = "local"
 			instance.Spec.TerraformVersion = "1.2.1"
-			instance.Spec.TerraformWorkingDirectory = fmt.Sprintf("%v/new", instance.Spec.TerraformWorkingDirectory)
+			instance.Spec.WorkingDirectory = fmt.Sprintf("%v/new", instance.Spec.WorkingDirectory)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
 			// Wait until the controller updates Terraform Cloud workspace
@@ -178,7 +178,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					ws.Description == instance.Spec.Description &&
 					ws.ExecutionMode == instance.Spec.ExecutionMode &&
 					ws.TerraformVersion == instance.Spec.TerraformVersion &&
-					ws.WorkingDirectory == instance.Spec.TerraformWorkingDirectory
+					ws.WorkingDirectory == instance.Spec.WorkingDirectory
 			}).Should(BeTrue())
 
 			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
