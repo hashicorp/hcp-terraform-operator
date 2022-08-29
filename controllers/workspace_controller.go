@@ -101,9 +101,16 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // KUBERNETES HELPERS
-func (r *WorkspaceReconciler) getSecret(ctx context.Context, objectKey types.NamespacedName) (*corev1.Secret, error) {
+func (r *WorkspaceReconciler) getConfigMap(ctx context.Context, name types.NamespacedName) (*corev1.ConfigMap, error) {
+	cm := &corev1.ConfigMap{}
+	err := r.Client.Get(ctx, name, cm)
+
+	return cm, err
+}
+
+func (r *WorkspaceReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, objectKey, secret)
+	err := r.Client.Get(ctx, name, secret)
 
 	return secret, err
 }
@@ -347,6 +354,15 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	}
 	r.log.Info("Reconcile Tags", "msg", "successfully reconcilied tags")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", instance.Status.WorkspaceID)
+
+	err = r.reconcileVariables(ctx, instance, workspace)
+	if err != nil {
+		r.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", instance.Status.WorkspaceID))
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to reconcile variables in workspace ID %s", instance.Status.WorkspaceID)
+		return err
+	}
+	r.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", instance.Status.WorkspaceID)
 
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
