@@ -5,6 +5,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
+// More information:
+// - https://www.terraform.io/cloud-docs/agents
+type AgentPool struct {
+	// Agent Pool ID.
+	//+kubebuilder:validation:Pattern="^apool-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Agent Pool name.
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
 // Token refers to a Kubernetes Secret object within the same namespace as the Workspace object
 type Token struct {
 	// Selects a key of a secret in the workspace's namespace
@@ -65,6 +78,10 @@ type WorkspaceSpec struct {
 	// Workspace description
 	//+optional
 	Description string `json:"description,omitempty"`
+	// Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
+	// More information: https://www.terraform.io/cloud-docs/agents
+	//+optional
+	AgentPool *AgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode
 	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"

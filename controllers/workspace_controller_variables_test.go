@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -24,13 +23,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		ctx = context.TODO()
 
 		instance        *appv1alpha2.Workspace
-		secret          *corev1.Secret
 		secretVariables *corev1.Secret
 
-		organization   = os.Getenv("TFC_ORG")
-		terraformToken = os.Getenv("TFC_TOKEN")
-
-		secretKey = "token"
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 	)
 
@@ -44,9 +38,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyTimeout(90 * time.Second)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
-		// Create a secret object that will be used by the controller to get TFC token
-		secret = createSecretToken(secretKey, terraformToken, namespacedName)
-
 		// Create a secret object that will be used by the controller to get variables
 		secretVariables = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -59,10 +50,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			},
 		}
 		Expect(k8sClient.Create(ctx, secretVariables)).Should(Succeed())
-	})
-
-	AfterAll(func() {
-		Expect(k8sClient.Delete(ctx, secret)).Should(Succeed())
 	})
 
 	BeforeEach(func() {
@@ -83,7 +70,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
+							Name: namespacedName.Name,
 						},
 						Key: secretKey,
 					},

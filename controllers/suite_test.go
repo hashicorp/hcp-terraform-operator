@@ -9,6 +9,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,10 +35,24 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var tfClient *tfc.Client
 
+var organization = os.Getenv("TFC_ORG")
+var terraformToken = os.Getenv("TFC_TOKEN")
+
+var secretKey = "token"
+var namespacedName = types.NamespacedName{
+	Name:      "this",
+	Namespace: "default",
+}
+
 func TestControllersAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "Controller Suite")
+	suiteConfig, reporterConfig := GinkgoConfiguration()
+	reporterConfig.NoColor = true
+	reporterConfig.Succinct = true
+	reporterConfig.SlowSpecThreshold = 60 * time.Second
+
+	RunSpecs(t, "Controller Suite", suiteConfig, reporterConfig)
 }
 
 var _ = BeforeSuite(func() {
@@ -90,6 +107,18 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
+	// Create a secret object with a TFC token that will be used by the controller
+	err = k8sClient.Create(ctx, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      namespacedName.Name,
+			Namespace: namespacedName.Namespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			secretKey: []byte(terraformToken),
+		},
+	})
+	Expect(err).ToNot(HaveOccurred(), "failed to create a token secret")
 })
 
 var _ = AfterSuite(func() {

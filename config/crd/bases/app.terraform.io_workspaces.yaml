@@ -39,6 +39,19 @@ spec:
           spec:
             description: WorkspaceSpec defines the desired state of Workspace
             properties:
+              agentPool:
+                description: 'Terraform Cloud Agents allow Terraform Cloud to communicate
+                  with isolated, private, or on-premises infrastructure. More information:
+                  https://www.terraform.io/cloud-docs/agents'
+                properties:
+                  id:
+                    description: Agent Pool ID.
+                    pattern: ^apool-[a-zA-Z0-9]+$
+                    type: string
+                  name:
+                    description: Agent Pool name.
+                    type: string
+                type: object
               applyMethod:
                 default: manual
                 description: 'Define either change will be applied automatically(auto)
