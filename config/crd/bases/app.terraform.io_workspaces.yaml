@@ -150,6 +150,22 @@ spec:
                 description: 'Organization name where the Workspace will be created
                   More information: https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
                 type: string
+              runTriggers:
+                description: 'Run triggers allow you to connect this workspace to
+                  one or more source workspaces. These connections allow runs to queue
+                  automatically in this workspace on successful apply of runs in any
+                  of the source workspaces. More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
+                items:
+                  properties:
+                    id:
+                      description: Source Workspace ID.
+                      pattern: ^ws-[a-zA-Z0-9]+$
+                      type: string
+                    name:
+                      description: Source Workspace Name.
+                      type: string
+                  type: object
+                type: array
               tags:
                 description: Workspace tags are used to help identify and group together
                   workspaces.

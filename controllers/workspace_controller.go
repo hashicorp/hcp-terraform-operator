@@ -405,6 +405,15 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	r.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", instance.Status.WorkspaceID)
 
+	err = r.reconcileRunTriggers(ctx, instance)
+	if err != nil {
+		r.log.Error(err, "Reconcile Run Triggers", "msg", fmt.Sprintf("failed to reconcile run triggers in workspace ID %s", instance.Status.WorkspaceID))
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileRunTriggers", "Failed to reconcile run triggers in workspace ID %s", instance.Status.WorkspaceID)
+		return err
+	}
+	r.log.Info("Reconcile Run Triggers", "msg", "successfully reconcilied run triggers")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileRunTriggers", "Reconcilied run triggers in workspace ID %s", instance.Status.WorkspaceID)
+
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
 }

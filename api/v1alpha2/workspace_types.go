@@ -18,6 +18,16 @@ type AgentPool struct {
 	Name string `json:"name,omitempty"`
 }
 
+type RunTrigger struct {
+	// Source Workspace ID.
+	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Source Workspace Name.
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
 // Token refers to a Kubernetes Secret object within the same namespace as the Workspace object
 type Token struct {
 	// Selects a key of a secret in the workspace's namespace
@@ -74,7 +84,7 @@ type WorkspaceSpec struct {
 	//+kubebuilder:validation:Pattern="^(auto|manual)$"
 	//+kubebuilder:default=manual
 	//+optional
-	ApplyMethod string `json:"applyMethod"`
+	ApplyMethod string `json:"applyMethod,omitempty"`
 	// Workspace description
 	//+optional
 	Description string `json:"description,omitempty"`
@@ -87,7 +97,7 @@ type WorkspaceSpec struct {
 	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"
 	//+kubebuilder:default=remote
 	//+optional
-	ExecutionMode string `json:"executionMode"`
+	ExecutionMode string `json:"executionMode,omitempty"`
 	// Workspace tags are used to help identify and group together workspaces.
 	//+optional
 	Tags []string `json:"tags,omitempty"`
@@ -115,6 +125,11 @@ type WorkspaceSpec struct {
 	//  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables
 	//+optional
 	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
+	// Run triggers allow you to connect this workspace to one or more source workspaces.
+	// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
+	// More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
+	//+optional
+	RunTriggers []RunTrigger `json:"runTriggers,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace
