@@ -156,6 +156,10 @@ spec:
                   automatically in this workspace on successful apply of runs in any
                   of the source workspaces. More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
                 items:
+                  description: 'RunTrigger allows you to connect this workspace to
+                    one or more source workspaces. These connections allow runs to
+                    queue automatically in this workspace on successful apply of runs
+                    in any of the source workspaces. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
                       description: Source Workspace ID.
@@ -277,6 +281,28 @@ spec:
                     type: object
                 required:
                 - secretKeyRef
+                type: object
+              versionControl:
+                description: 'Settings for the workspace''s VCS repository, enabling
+                  the UI/VCS-driven run workflow. Omit this argument to utilize the
+                  CLI-driven and API-driven workflows, where runs are not driven by
+                  webhooks on your VCS provider. More information: - https://www.terraform.io/cloud-docs/run/ui
+                  - https://www.terraform.io/cloud-docs/vcs'
+                properties:
+                  branch:
+                    description: The repository branch that Run will execute from.
+                      This defaults to the repository's default branch (e.g. main).
+                    type: string
+                  oAuthTokenID:
+                    description: The VCS Connection (OAuth Connection + Token) to
+                      use.
+                    pattern: ^ot-[a-zA-Z0-9]+$
+                    type: string
+                  repository:
+                    description: A reference to your VCS repository in the format
+                      <organization>/<repository> where <organization> and <repository>
+                      refer to the organization and repository in your VCS provider.
+                    type: string
                 type: object
               workingDirectory:
                 description: 'The directory where Terraform will execute, specified
