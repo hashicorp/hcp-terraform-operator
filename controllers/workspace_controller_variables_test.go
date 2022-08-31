@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -20,8 +19,6 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		ctx = context.TODO()
-
 		instance        *appv1alpha2.Workspace
 		secretVariables *corev1.Secret
 
@@ -84,8 +81,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Take a pause before the next spec
-		time.Sleep(2 * time.Second)
+		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+		deleteWorkspace(instance, namespacedName)
 	})
 
 	Context("Reconcile terraform variables", func() {
@@ -145,8 +142,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can make workspace terraform variables sensitive", func() {
@@ -185,8 +180,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can make workspace terraform variables no sensitive", func() {
@@ -225,9 +218,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 	})
 
@@ -288,8 +278,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can make workspace environment variables sensitive", func() {
@@ -328,8 +316,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can make workspace environment variables no sensitive", func() {
@@ -368,9 +354,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 	})
 })

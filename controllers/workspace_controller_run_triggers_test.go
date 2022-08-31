@@ -16,8 +16,6 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		// ctx = context.TODO()
-
 		instance  *appv1alpha2.Workspace
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 
@@ -88,7 +86,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		}
 	})
 
-	AfterEach(func() {})
+	AfterEach(func() {
+		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
+		deleteWorkspace(instance, namespacedName)
+	})
 
 	Context("Workspace controller", func() {
 		It("can handle run triggers by name", func() {
@@ -107,9 +108,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(err).Should(Succeed())
 				return hasWorkspaceSource(sourceWorkspaceID, rt) && hasWorkspaceSource(sourceWorkspaceID2, rt)
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can handle run triggers by ID", func() {
@@ -128,9 +126,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(err).Should(Succeed())
 				return hasWorkspaceSource(sourceWorkspaceID, rt) && hasWorkspaceSource(sourceWorkspaceID2, rt)
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 
 		It("can handle run triggers by mix of Name and ID", func() {
@@ -149,9 +144,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(err).Should(Succeed())
 				return hasWorkspaceSource(sourceWorkspaceID, rt) && hasWorkspaceSource(sourceWorkspaceID2, rt)
 			}).Should(BeTrue())
-
-			// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-			deleteWorkspace(instance, namespacedName)
 		})
 	})
 })
