@@ -72,9 +72,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name:          workspace,
-				ExecutionMode: "remote",
-				ApplyMethod:   "auto",
+				Name: workspace,
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
