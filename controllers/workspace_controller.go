@@ -177,7 +177,7 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 	if instance.Spec.AgentPool != nil && workspace.AgentPool == nil {
 		return true
 	}
-	// When it comes to validation of VCS there is an inconsistent behavior of the TFC API:
+	// The TFC API VCS behavior is inconsistent:
 	//  - once a VCS is attached to a Workspace, the 'UpdateAt' attribute is updated
 	//  - once attached to a Workspace VCS is updated, for instance, change a branch name, the 'UpdateAt' attribute is updated
 	//  - once a VCS is detached from a Workspace, the 'UpdateAt' attribute is not updated, because of that we have to have this condition here

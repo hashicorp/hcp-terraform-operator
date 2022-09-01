@@ -260,20 +260,3 @@ func listWorkspaceTags(workspaceID string) []tfc.Tag {
 
 	return tags
 }
-
-func createSecretToken(secretKey, terraformToken string, namespacedName types.NamespacedName) *corev1.Secret {
-	// Create a secret object that will be used by the controller
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      namespacedName.Name,
-			Namespace: namespacedName.Namespace,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			secretKey: []byte(terraformToken),
-		},
-	}
-	Expect(k8sClient.Create(ctx, secret)).Should(Succeed())
-
-	return secret
-}
