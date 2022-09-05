@@ -19,11 +19,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		instance  *appv1alpha2.Workspace
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 
-		sourceWorkspaceName = fmt.Sprintf("kubernetes-operator-source-%v", GinkgoRandomSeed())
-		sourceWorkspaceID   = ""
-
-		sourceWorkspaceName2 = fmt.Sprintf("kubernetes-operator-source2-%v", GinkgoRandomSeed())
-		sourceWorkspaceID2   = ""
+		wsName  = fmt.Sprintf("kubernetes-operator-source-%v", GinkgoRandomSeed())
+		wsName2 = fmt.Sprintf("kubernetes-operator-source2-%v", GinkgoRandomSeed())
+		wsID    = ""
+		wsID2   = ""
 	)
 
 	BeforeAll(func() {
@@ -32,28 +31,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
 		// Create two new workspaces to act as a source for Run Triggers
-		// Workspace[1]
-		ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-			Name: tfc.String(sourceWorkspaceName),
-		})
-		Expect(ws).ShouldNot(BeNil())
-		Expect(err).Should(Succeed())
-		sourceWorkspaceID = ws.ID
-
-		// Workspace[2]
-		ws, err = tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-			Name: tfc.String(sourceWorkspaceName2),
-		})
-		Expect(ws).ShouldNot(BeNil())
-		Expect(err).Should(Succeed())
-		sourceWorkspaceID2 = ws.ID
+		wsID = createWorkspaceForTests(wsName)
+		wsID2 = createWorkspaceForTests(wsName2)
 	})
 
 	AfterAll(func() {
-		err := tfClient.Workspaces.DeleteByID(ctx, sourceWorkspaceID)
+		err := tfClient.Workspaces.DeleteByID(ctx, wsID)
 		Expect(err).Should(Succeed())
 
-		err = tfClient.Workspaces.DeleteByID(ctx, sourceWorkspaceID2)
+		err = tfClient.Workspaces.DeleteByID(ctx, wsID2)
 		Expect(err).Should(Succeed())
 	})
 
@@ -94,8 +80,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	Context("Workspace controller", func() {
 		It("can handle run triggers by name", func() {
 			instance.Spec.RunTriggers = []appv1alpha2.RunTrigger{
-				{Name: sourceWorkspaceName},
-				{Name: sourceWorkspaceName2},
+				{Name: wsName},
+				{Name: wsName2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
@@ -106,14 +92,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				})
 				Expect(rt).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
-				return hasWorkspaceSource(sourceWorkspaceID, rt) && hasWorkspaceSource(sourceWorkspaceID2, rt)
+				return hasWorkspaceSource(wsID, rt) && hasWorkspaceSource(wsID2, rt)
 			}).Should(BeTrue())
 		})
 
 		It("can handle run triggers by ID", func() {
 			instance.Spec.RunTriggers = []appv1alpha2.RunTrigger{
-				{ID: sourceWorkspaceID},
-				{ID: sourceWorkspaceID2},
+				{ID: wsID},
+				{ID: wsID2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
@@ -124,14 +110,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				})
 				Expect(rt).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
-				return hasWorkspaceSource(sourceWorkspaceID, rt) && hasWorkspaceSource(sourceWorkspaceID2, rt)
+				return hasWorkspaceSource(wsID, rt) && hasWorkspaceSource(wsID2, rt)
 			}).Should(BeTrue())
 		})
 
 		It("can handle run triggers by mix of Name and ID", func() {
 			instance.Spec.RunTriggers = []appv1alpha2.RunTrigger{
-				{ID: sourceWorkspaceID},
-				{Name: sourceWorkspaceName2},
+				{ID: wsID},
+				{Name: wsName2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
@@ -142,7 +128,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				})
 				Expect(rt).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
-				return hasWorkspaceSource(sourceWorkspaceID, rt) && hasWorkspaceSource(sourceWorkspaceID2, rt)
+				return hasWorkspaceSource(wsID, rt) && hasWorkspaceSource(wsID2, rt)
 			}).Should(BeTrue())
 		})
 	})

@@ -175,7 +175,7 @@ func (r *WorkspaceReconciler) getValueFrom(ctx context.Context, instance *appv1a
 		if k, ok := v.Data[cm.Key]; ok {
 			return string(k), nil
 		}
-		return "", fmt.Errorf("key %s was not found in ConfigMap %s", cm.Key, cm.Name)
+		return "", fmt.Errorf("key %s not found in ConfigMap %s", cm.Key, cm.Name)
 	}
 
 	s := valueFrom.SecretKeyRef
@@ -188,7 +188,7 @@ func (r *WorkspaceReconciler) getValueFrom(ctx context.Context, instance *appv1a
 		if k, ok := v.Data[s.Key]; ok {
 			return string(k), nil
 		}
-		return "", fmt.Errorf("key %s was not found in Secret %s", s.Key, s.Name)
+		return "", fmt.Errorf("key %s not found in Secret %s", s.Key, s.Name)
 	}
 
 	return "", nil

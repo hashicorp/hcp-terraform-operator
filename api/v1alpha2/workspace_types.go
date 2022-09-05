@@ -18,6 +18,33 @@ type AgentPool struct {
 	Name string `json:"name,omitempty"`
 }
 
+// ConsumerWorkspace allows access to the state for specific workspaces within the same organization.
+// More information:
+//   - https://www.terraform.io/cloud-docs/workspaces/state#remote-state-access-controls
+type ConsumerWorkspace struct {
+	// Consumer Workspace ID.
+	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Consumer Workspace name.
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
+// RemoteStateSharing allows remote state access between workspaces.
+// By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
+// More information:
+//   - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
+type RemoteStateSharing struct {
+	// Allow access to the state for all workspaces within the same organization.
+	//+kubebuilder:default:=false
+	//+optional
+	AllWorkspaces bool `json:"allWorkspaces,omitempty"`
+	// Allow access to the state for specific workspaces within the same organization.
+	//+optional
+	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
+}
+
 // RunTrigger allows you to connect this workspace to one or more source workspaces.
 // These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 // More information:
@@ -237,6 +264,12 @@ type WorkspaceSpec struct {
 	//  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables
 	//+optional
 	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
+	// Remote state access between workspaces.
+	// By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
+	//+optional
+	RemoteStateSharing *RemoteStateSharing `json:"remoteStateSharing,omitempty"`
 	// Run triggers allow you to connect this workspace to one or more source workspaces.
 	// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 	// More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers

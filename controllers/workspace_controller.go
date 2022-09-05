@@ -58,7 +58,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
 		if errors.IsNotFound(err) {
-			r.log.Info("Workspace Controller", "msg", "object was not found")
+			r.log.Info("Workspace Controller", "msg", "the object is removed no further action is required")
 			return doNotRequeue()
 		}
 		r.log.Error(err, "Workspace Controller", "msg", "get instance object")
@@ -281,6 +281,10 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 		options.FileTriggersEnabled = tfc.Bool(false)
 	}
 
+	if spec.RemoteStateSharing != nil {
+		options.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
+	}
+
 	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
 		r.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
@@ -330,15 +334,25 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 	if workspace.AutoApply != applyMethodToBool(spec.ApplyMethod) {
 		updateOptions.AutoApply = tfc.Bool(applyMethodToBool(spec.ApplyMethod))
 	}
+
 	if workspace.Description != spec.Description {
 		updateOptions.Description = tfc.String(spec.Description)
 	}
+
 	if workspace.ExecutionMode != spec.ExecutionMode {
 		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
 	}
+
+	if spec.RemoteStateSharing != nil {
+		if workspace.GlobalRemoteState != spec.RemoteStateSharing.AllWorkspaces {
+			updateOptions.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
+		}
+	}
+
 	if workspace.TerraformVersion != spec.TerraformVersion {
 		updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
 	}
+
 	if workspace.WorkingDirectory != spec.WorkingDirectory {
 		updateOptions.WorkingDirectory = tfc.String(spec.WorkingDirectory)
 		updateOptions.Name = tfc.String(spec.Name)
@@ -378,7 +392,7 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *app
 		// if workspace wasn't found, it means it was deleted from the TF Cloud bypass the operator
 		// in this case, remove the finalizer and let Kubernetes remove the object permanently
 		if err == tfc.ErrResourceNotFound {
-			r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s was not fond, remove finazlier", workspaceFinalizer))
+			r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not fond, remove finazlier", workspaceFinalizer))
 			return r.removeFinalizer(ctx, instance)
 		}
 		r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
@@ -416,8 +430,8 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
 		if err == tfc.ErrResourceNotFound {
-			r.log.Info("Reconcile Workspace", "msg", "workspace was not found, creating a new workspace")
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s was not found, creating a new workspace", instance.Status.WorkspaceID)
+			r.log.Info("Reconcile Workspace", "msg", "workspace not found, creating a new workspace")
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s not found, creating a new workspace", instance.Status.WorkspaceID)
 			return r.createWorkspace(ctx, instance)
 		} else {
 			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to read workspace ID %s", instance.Status.WorkspaceID))
@@ -498,6 +512,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	}
 	r.log.Info("Reconcile Team Access", "msg", "successfully reconcilied team access")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTeamAccess", "Reconcilied team access in workspace ID %s", instance.Status.WorkspaceID)
+
+	// Reconcile Remote State Sharing
+	err = r.reconcileRemoteStateSharing(ctx, instance)
+	if err != nil {
+		r.log.Error(err, "Reconcile Remote State Sharing", "msg", fmt.Sprintf("failed to reconcile remote state sharing in workspace ID %s", instance.Status.WorkspaceID))
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileRemoteStateSharing", "Failed to reconcile remote state sharing in workspace ID %s", instance.Status.WorkspaceID)
+		return err
+	}
+	r.log.Info("Reconcile Remote State Sharing", "msg", "successfully reconcilied remote state sharing")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileRemoteStateSharing", "Reconcilied remote state sharing in workspace ID %s", instance.Status.WorkspaceID)
 
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
