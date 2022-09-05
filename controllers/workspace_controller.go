@@ -489,6 +489,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	r.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", instance.Status.WorkspaceID)
 
+	// Reconcile Team Access
+	err = r.reconcileTeamAccess(ctx, instance, workspace)
+	if err != nil {
+		r.log.Error(err, "Reconcile Team Access", "msg", fmt.Sprintf("failed to reconcile team access in workspace ID %s", instance.Status.WorkspaceID))
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileTeamAccess", "Failed to reconcile team access in workspace ID %s", instance.Status.WorkspaceID)
+		return err
+	}
+	r.log.Info("Reconcile Team Access", "msg", "successfully reconcilied team access")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTeamAccess", "Reconcilied team access in workspace ID %s", instance.Status.WorkspaceID)
+
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)
 }
