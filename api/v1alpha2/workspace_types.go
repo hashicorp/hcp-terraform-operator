@@ -89,6 +89,17 @@ type VersionControl struct {
 	Branch string `json:"branch,omitempty"`
 }
 
+// SSH key used to clone Terraform modules
+// More information:
+//  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys
+type SSHKey struct {
+	//+kubebuilder:validation:Pattern="^sshkey-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
 	// API Token to be used for API calls
@@ -157,6 +168,11 @@ type WorkspaceSpec struct {
 	//  - https://www.terraform.io/cloud-docs/vcs
 	//+optional
 	VersionControl *VersionControl `json:"versionControl,omitempty"`
+	// SSH key used to clone Terraform modules.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys
+	//+optional
+	SSHKey *SSHKey `json:"sshKey,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace
