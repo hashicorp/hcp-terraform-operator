@@ -37,7 +37,8 @@ func getNamespacedName(instance *appv1alpha2.Workspace) types.NamespacedName {
 	}
 }
 
-func (r *WorkspaceReconciler) canCreateOrUseConfigMap(ctx context.Context, instance *appv1alpha2.Workspace) bool {
+// configMapAvailable validates whether a Kubernetes ConfigMap is available for creation or update by the operator
+func (r *WorkspaceReconciler) configMapAvailable(ctx context.Context, instance *appv1alpha2.Workspace) bool {
 	o := &corev1.ConfigMap{}
 	err := r.Client.Get(ctx, getNamespacedName(instance), o)
 	if err != nil {
@@ -47,7 +48,8 @@ func (r *WorkspaceReconciler) canCreateOrUseConfigMap(ctx context.Context, insta
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
 }
 
-func (r *WorkspaceReconciler) canCreateOrUseSecret(ctx context.Context, instance *appv1alpha2.Workspace) bool {
+// secretAvailable validates whether a Kubernetes Secret is available for creation or update by the operator
+func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *appv1alpha2.Workspace) bool {
 	o := &corev1.Secret{}
 	err := r.Client.Get(ctx, getNamespacedName(instance), o)
 	if err != nil {
@@ -58,29 +60,38 @@ func (r *WorkspaceReconciler) canCreateOrUseSecret(ctx context.Context, instance
 }
 
 func trimDoubleQuotes(bytes []byte) []byte {
-	s := string(bytes)
-	s = strings.TrimPrefix(s, `"`)
-	s = strings.TrimSuffix(s, `"`)
-	return []byte(s)
+	return []byte(strings.Trim(string(bytes), `"`))
 }
 
-func (r *WorkspaceReconciler) updateOrCreateOutputs(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) setOutputs(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
+	if workspace.CurrentStateVersion == nil {
+		return nil
+	}
+
 	oName := outputObjectName(instance.Name)
 
-	if !r.canCreateOrUseConfigMap(ctx, instance) {
+	if !r.configMapAvailable(ctx, instance) {
 		return fmt.Errorf("configMap %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	if !r.canCreateOrUseSecret(ctx, instance) {
+	if !r.secretAvailable(ctx, instance) {
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
 
-	outputs, _ := r.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
+	outputs, err := r.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
+	if err != nil {
+		return err
+	}
 	for _, o := range outputs.Items {
-		bytes, _ := json.Marshal(o.Value)
+		bytes, err := json.Marshal(o.Value)
+		if err != nil {
+			r.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
+			continue
+		}
 		if o.Sensitive {
 			sensitiveOutput[o.Name] = trimDoubleQuotes(bytes)
 		} else {
@@ -99,7 +110,7 @@ func (r *WorkspaceReconciler) updateOrCreateOutputs(ctx context.Context, instanc
 
 	// update ConfigMap output
 	cm := &corev1.ConfigMap{ObjectMeta: om}
-	err := controllerutil.SetControllerReference(instance, cm, r.Scheme)
+	err = controllerutil.SetControllerReference(instance, cm, r.Scheme)
 	if err != nil {
 		return err
 	}
@@ -136,7 +147,7 @@ func (r *WorkspaceReconciler) updateOrCreateOutputs(ctx context.Context, instanc
 	return nil
 }
 
-func (r *WorkspaceReconciler) hasRunApplied(ctx context.Context, workspace *tfc.Workspace) (bool, error) {
+func (r *WorkspaceReconciler) runApplied(ctx context.Context, workspace *tfc.Workspace) (bool, error) {
 	run, err := r.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
 	if err != nil {
 		r.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to read current run ID %s", workspace.CurrentRun.ID))
@@ -154,13 +165,13 @@ func (r *WorkspaceReconciler) reconcileOutputs(ctx context.Context, instance *ap
 	r.log.Info("Reconcile Outputs", "mgs", "new reconciliation event")
 
 	if workspace.CurrentRun != nil {
-		runFinished, err := r.hasRunApplied(ctx, workspace)
+		runApplied, err := r.runApplied(ctx, workspace)
 		if err != nil {
 			return err
 		}
-		if runFinished && instance.Status.OutputRunID != workspace.CurrentRun.ID {
+		if runApplied && instance.Status.Run.OutputRunID != workspace.CurrentRun.ID {
 			r.log.Info("Reconcile Outputs", "mgs", "creating or updating outputs")
-			return r.updateOrCreateOutputs(ctx, instance, workspace)
+			return r.setOutputs(ctx, instance, workspace)
 		}
 	}
 	return nil

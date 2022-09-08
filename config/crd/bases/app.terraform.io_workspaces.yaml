@@ -317,21 +317,25 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace
             properties:
-              currentRunID:
-                description: Current(both active and finished) Terraform Cloud run
-                  ID.
-                type: string
-              currentRunStatus:
-                description: Current(both active and finished) Terraform Cloud run
-                  status.
-                type: string
               observedGeneration:
                 description: Real world state generation
                 format: int64
                 type: integer
-              outputRunID:
-                description: Run ID of the latest run that could update the outputs.
-                type: string
+              runStatus:
+                description: Workspace Runs status
+                properties:
+                  currentRunID:
+                    description: Current(both active and finished) Terraform Cloud
+                      run ID.
+                    type: string
+                  currentRunStatus:
+                    description: Current(both active and finished) Terraform Cloud
+                      run status.
+                    type: string
+                  outputRunID:
+                    description: Run ID of the latest run that could update the outputs.
+                    type: string
+                type: object
               updateAt:
                 description: Workspace last update timestamp
                 format: int64

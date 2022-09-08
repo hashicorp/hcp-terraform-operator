@@ -134,14 +134,17 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(err).Should(Succeed())
 
 				for _, r := range runs.Items {
-					if r.ConfigurationVersion.ID == cv.ID && r.ID == instance.Status.OutputRunID {
+					if r.ConfigurationVersion.ID == cv.ID && r.ID == instance.Status.Run.OutputRunID {
 						return true
 					}
 				}
 				return false
 			}).Should(BeTrue())
 
-			outputsNamespacedName := types.NamespacedName{Name: outputObjectName(namespacedName.Name), Namespace: namespacedName.Namespace}
+			outputsNamespacedName := types.NamespacedName{
+				Name:      outputObjectName(namespacedName.Name),
+				Namespace: namespacedName.Namespace,
+			}
 
 			s := &corev1.Secret{}
 			By("Validating sensitive outputs")

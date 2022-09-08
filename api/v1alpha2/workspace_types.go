@@ -159,15 +159,8 @@ type WorkspaceSpec struct {
 	VersionControl *VersionControl `json:"versionControl,omitempty"`
 }
 
-// WorkspaceStatus defines the observed state of Workspace
-type WorkspaceStatus struct {
-	// Real world state generation
-	ObservedGeneration int64 `json:"observedGeneration"`
-	// Workspace last update timestamp
-	UpdateAt int64 `json:"updateAt"`
-	// Workspace ID that is managed by the controller
-	WorkspaceID string `json:"workspaceID"`
-
+// Workspace Runs status
+type RunStatus struct {
 	// Current(both active and finished) Terraform Cloud run ID.
 	//+optional
 	CurrentRunID string `json:"currentRunID,omitempty"`
@@ -177,6 +170,20 @@ type WorkspaceStatus struct {
 	// Run ID of the latest run that could update the outputs.
 	//+optional
 	OutputRunID string `json:"outputRunID,omitempty"`
+}
+
+// WorkspaceStatus defines the observed state of Workspace
+type WorkspaceStatus struct {
+	// Real world state generation
+	ObservedGeneration int64 `json:"observedGeneration"`
+	// Workspace last update timestamp
+	UpdateAt int64 `json:"updateAt"`
+	// Workspace ID that is managed by the controller
+	WorkspaceID string `json:"workspaceID"`
+
+	// Workspace Runs status
+	//+optional
+	Run RunStatus `json:"runStatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true

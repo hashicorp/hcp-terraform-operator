@@ -234,15 +234,15 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 	instance.Status.WorkspaceID = workspace.ID
 
 	if workspace.CurrentRun != nil {
-		instance.Status.CurrentRunID = workspace.CurrentRun.ID
+		instance.Status.Run.CurrentRunID = workspace.CurrentRun.ID
 		run, err := r.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
 		if err != nil {
 			return err
 		}
-		instance.Status.CurrentRunStatus = string(run.Status)
+		instance.Status.Run.CurrentRunStatus = string(run.Status)
 
 		if run.Status == tfc.RunApplied {
-			instance.Status.OutputRunID = workspace.CurrentRun.ID
+			instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
 		}
 	}
 
