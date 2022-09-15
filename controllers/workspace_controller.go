@@ -38,7 +38,8 @@ type WorkspaceReconciler struct {
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/events,verbs=create;patch
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=list;watch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
+//+kubebuilder:rbac:groups="",resources=configmap,verbs=create;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -57,6 +58,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
 		if errors.IsNotFound(err) {
+			r.log.Info("Workspace Controller", "msg", "object was not found")
 			return doNotRequeue()
 		}
 		r.log.Error(err, "Workspace Controller", "msg", "get instance object")
@@ -230,6 +232,19 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
 	instance.Status.WorkspaceID = workspace.ID
+
+	if workspace.CurrentRun != nil {
+		instance.Status.Run.CurrentRunID = workspace.CurrentRun.ID
+		run, err := r.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
+		if err != nil {
+			return err
+		}
+		instance.Status.Run.CurrentRunStatus = string(run.Status)
+
+		if run.Status == tfc.RunApplied {
+			instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
+		}
+	}
 
 	return r.Status().Update(ctx, instance)
 }
@@ -434,6 +449,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", instance.Status.WorkspaceID))
 	}
 
+	// Reconcile Tags
 	err = r.reconcileTags(ctx, instance, workspace)
 	if err != nil {
 		r.log.Error(err, "Reconcile Tags", "msg", "reconcile tags")
@@ -443,6 +459,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	r.log.Info("Reconcile Tags", "msg", "successfully reconcilied tags")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", instance.Status.WorkspaceID)
 
+	// Reconcile Variables
 	err = r.reconcileVariables(ctx, instance, workspace)
 	if err != nil {
 		r.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", instance.Status.WorkspaceID))
@@ -452,6 +469,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	r.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", instance.Status.WorkspaceID)
 
+	// Reconcile Run Triggers
 	err = r.reconcileRunTriggers(ctx, instance)
 	if err != nil {
 		r.log.Error(err, "Reconcile Run Triggers", "msg", fmt.Sprintf("failed to reconcile run triggers in workspace ID %s", instance.Status.WorkspaceID))
@@ -460,6 +478,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *
 	}
 	r.log.Info("Reconcile Run Triggers", "msg", "successfully reconcilied run triggers")
 	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileRunTriggers", "Reconcilied run triggers in workspace ID %s", instance.Status.WorkspaceID)
+
+	// Reconcile Outputs
+	err = r.reconcileOutputs(ctx, instance, workspace)
+	if err != nil {
+		r.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", instance.Status.WorkspaceID)
+		return err
+	}
+	r.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", instance.Status.WorkspaceID)
 
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, instance, workspace)

@@ -1,6 +1,6 @@
 // Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
-//+kubebuilder:object:generate=true
-//+groupName=app.terraform.io
+// +kubebuilder:object:generate=true
+// +groupName=app.terraform.io
 package v1alpha2
 
 import (

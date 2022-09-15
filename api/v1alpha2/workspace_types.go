@@ -50,7 +50,7 @@ type ValueFrom struct {
 
 // Variables let you customize configurations, modify Terraform's behavior, and store information like provider credentials.
 // More information:
-//  - https://www.terraform.io/cloud-docs/workspaces/variables
+//   - https://www.terraform.io/cloud-docs/workspaces/variables
 type Variable struct {
 	// Name of the variable.
 	Name string `json:"name"`
@@ -76,8 +76,8 @@ type Variable struct {
 // VersionControl settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
 // Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.
 // More information:
-//  - https://www.terraform.io/cloud-docs/run/ui
-//  - https://www.terraform.io/cloud-docs/vcs
+//   - https://www.terraform.io/cloud-docs/run/ui
+//   - https://www.terraform.io/cloud-docs/vcs
 type VersionControl struct {
 	// The VCS Connection (OAuth Connection + Token) to use.
 	//+kubebuilder:validation:Pattern="^ot-[a-zA-Z0-9]+$"
@@ -175,6 +175,19 @@ type WorkspaceSpec struct {
 	SSHKey *SSHKey `json:"sshKey,omitempty"`
 }
 
+// Workspace Runs status
+type RunStatus struct {
+	// Current(both active and finished) Terraform Cloud run ID.
+	//+optional
+	CurrentRunID string `json:"currentRunID,omitempty"`
+	// Current(both active and finished) Terraform Cloud run status.
+	//+optional
+	CurrentRunStatus string `json:"currentRunStatus,omitempty"`
+	// Run ID of the latest run that could update the outputs.
+	//+optional
+	OutputRunID string `json:"outputRunID,omitempty"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	// Real world state generation
@@ -183,6 +196,10 @@ type WorkspaceStatus struct {
 	UpdateAt int64 `json:"updateAt"`
 	// Workspace ID that is managed by the controller
 	WorkspaceID string `json:"workspaceID"`
+
+	// Workspace Runs status
+	//+optional
+	Run RunStatus `json:"runStatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true
