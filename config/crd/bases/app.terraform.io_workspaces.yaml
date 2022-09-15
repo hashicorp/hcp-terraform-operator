@@ -42,7 +42,7 @@ spec:
               agentPool:
                 description: 'Terraform Cloud Agents allow Terraform Cloud to communicate
                   with isolated, private, or on-premises infrastructure. More information:
-                  https://www.terraform.io/cloud-docs/agents'
+                  - https://www.terraform.io/cloud-docs/agents'
                 properties:
                   id:
                     description: Agent Pool ID.
@@ -55,7 +55,7 @@ spec:
               applyMethod:
                 default: manual
                 description: 'Define either change will be applied automatically(auto)
-                  or require an operator to confirm(manual). More information: https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
+                  or require an operator to confirm(manual). More information: - https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
                 pattern: ^(auto|manual)$
                 type: string
               description:
@@ -140,7 +140,7 @@ spec:
               executionMode:
                 default: remote
                 description: 'Define where the Terraform code will be executed. More
-                  information: https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode'
+                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode'
                 pattern: ^(agent|local|remote)$
                 type: string
               name:
@@ -148,7 +148,7 @@ spec:
                 type: string
               organization:
                 description: 'Organization name where the Workspace will be created
-                  More information: https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                  More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
                 type: string
               runTriggers:
                 description: 'Run triggers allow you to connect this workspace to
@@ -185,6 +185,70 @@ spec:
                   workspaces.
                 items:
                   type: string
+                type: array
+              teamAccess:
+                description: 'Terraform Cloud workspaces can only be accessed by users
+                  with the correct permissions. You can manage permissions for a workspace
+                  on a per-team basis. When a workspace is created, only the owners
+                  team and teams with the "manage workspaces" permission can access
+                  it, with full admin permissions. These teams'' access can''t be
+                  removed from a workspace. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/access'
+                items:
+                  description: 'Terraform Cloud workspaces can only be accessed by
+                    users with the correct permissions. You can manage permissions
+                    for a workspace on a per-team basis. When a workspace is created,
+                    only the owners team and teams with the "manage workspaces" permission
+                    can access it, with full admin permissions. These teams'' access
+                    can''t be removed from a workspace. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/access'
+                  properties:
+                    access:
+                      description: 'There are two ways to choose which permissions
+                        a given team has on a workspace: fixed permission sets, and
+                        custom permissions. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
+                      pattern: ^(admin|custom|plan|read|write)$
+                      type: string
+                    custom:
+                      description: 'Custom permissions let you assign specific, finer-grained
+                        permissions to a team than the broader fixed permission sets
+                        provide. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions'
+                      properties:
+                        runTasks:
+                          type: boolean
+                        runs:
+                          default: read
+                          pattern: ^(apply|plan|read)$
+                          type: string
+                        sentinel:
+                          default: none
+                          pattern: ^(none|read)$
+                          type: string
+                        stateVersions:
+                          default: none
+                          pattern: ^(none|read|read-outputs|write)$
+                          type: string
+                        variables:
+                          default: none
+                          pattern: ^(none|read|write)$
+                          type: string
+                        workspaceLocking:
+                          default: false
+                          type: boolean
+                      type: object
+                    team:
+                      description: 'Team to grant access. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/teams'
+                      properties:
+                        id:
+                          description: Team ID.
+                          pattern: ^team-[a-zA-Z0-9]+$
+                          type: string
+                        name:
+                          description: Team name.
+                          type: string
+                      type: object
+                  required:
+                  - access
+                  - team
+                  type: object
                 type: array
               terraformVariables:
                 description: 'Terraform variables for all plans and applies in this
@@ -265,7 +329,7 @@ spec:
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
                   If not specified, the latest available version will be used. More
-                  information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version'
+                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version'
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                 type: string
               token:
@@ -317,7 +381,7 @@ spec:
               workingDirectory:
                 description: 'The directory where Terraform will execute, specified
                   as a relative path from the root of the configuration directory.
-                  More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory'
+                  More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory'
                 type: string
             required:
             - name

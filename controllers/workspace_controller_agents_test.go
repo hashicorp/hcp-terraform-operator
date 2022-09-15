@@ -70,7 +70,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name:          workspace,
 				ExecutionMode: "agent",
-				ApplyMethod:   "auto",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}

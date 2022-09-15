@@ -21,7 +21,7 @@ type AgentPool struct {
 // RunTrigger allows you to connect this workspace to one or more source workspaces.
 // These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 // More information:
-// - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
+//   - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
 	// Source Workspace ID.
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
@@ -30,6 +30,73 @@ type RunTrigger struct {
 	// Source Workspace Name.
 	//+optional
 	Name string `json:"name,omitempty"`
+}
+
+// Teams are groups of Terraform Cloud users within an organization.
+// If a user belongs to at least one team in an organization, they are considered a member of that organization.
+// More information:
+//   - https://www.terraform.io/cloud-docs/users-teams-organizations/teams
+type Team struct {
+	// Team ID.
+	//+kubebuilder:validation:Pattern="^team-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Team name.
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
+// Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
+// More information:
+//   - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
+//
+// +optional
+type CustomPermissions struct {
+	//+kubebuilder:validation:Pattern="^(apply|plan|read)$"
+	//+kubebuilder:default:=read
+	//+optional
+	Runs string `json:"runs,omitempty"`
+	//+kubebuilder:validation:default:=false
+	//+optional
+	RunTasks bool `json:"runTasks,omitempty"`
+	//+kubebuilder:validation:Pattern="^(none|read)$"
+	//+kubebuilder:default:=none
+	//+optional
+	Sentinel string `json:"sentinel,omitempty"`
+	//+kubebuilder:validation:Pattern="^(none|read|read-outputs|write)$"
+	//+kubebuilder:default:=none
+	//+optional
+	StateVersions string `json:"stateVersions,omitempty"`
+	//+kubebuilder:validation:Pattern="^(none|read|write)$"
+	//+kubebuilder:default:=none
+	//+optional
+	Variables string `json:"variables,omitempty"`
+	//+kubebuilder:default:=false
+	//+optional
+	WorkspaceLocking bool `json:"workspaceLocking,omitempty"`
+}
+
+// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+// You can manage permissions for a workspace on a per-team basis.
+// When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
+// with full admin permissions. These teams' access can't be removed from a workspace.
+// More information:
+//   - https://www.terraform.io/cloud-docs/workspaces/settings/access
+type TeamAccess struct {
+	// Team to grant access.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/teams
+	Team Team `json:"team"`
+	// There are two ways to choose which permissions a given team has on a workspace: fixed permission sets, and custom permissions.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#workspace-permissions
+	//+kubebuilder:validation:Pattern="^(admin|custom|plan|read|write)$"
+	Access string `json:"access"`
+	// Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
+	//+optional
+	Custom CustomPermissions `json:"custom,omitempty"`
 }
 
 // Token refers to a Kubernetes Secret object within the same namespace as the Workspace object
@@ -91,7 +158,7 @@ type VersionControl struct {
 
 // SSH key used to clone Terraform modules
 // More information:
-//  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys
+//   - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys
 type SSHKey struct {
 	//+kubebuilder:validation:Pattern="^sshkey-[a-zA-Z0-9]+$"
 	//+optional
@@ -107,11 +174,13 @@ type WorkspaceSpec struct {
 	// Workspace name
 	Name string `json:"name"`
 	// Organization name where the Workspace will be created
-	// More information: https://www.terraform.io/cloud-docs/users-teams-organizations/organizations
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations
 	Organization string `json:"organization"`
 
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
-	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
 	//+kubebuilder:validation:Pattern="^(auto|manual)$"
 	//+kubebuilder:default=manual
 	//+optional
@@ -120,11 +189,13 @@ type WorkspaceSpec struct {
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
-	// More information: https://www.terraform.io/cloud-docs/agents
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/agents
 	//+optional
 	AgentPool *AgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
-	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode
 	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"
 	//+kubebuilder:default=remote
 	//+optional
@@ -132,14 +203,24 @@ type WorkspaceSpec struct {
 	// Workspace tags are used to help identify and group together workspaces.
 	//+optional
 	Tags []string `json:"tags,omitempty"`
+	// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+	// You can manage permissions for a workspace on a per-team basis.
+	// When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
+	// with full admin permissions. These teams' access can't be removed from a workspace.
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/settings/access
+	//+optional
+	TeamAccess []*TeamAccess `json:"teamAccess,omitempty"`
 	// The version of Terraform to use for this workspace.
 	// If not specified, the latest available version will be used.
-	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
 	//+kubebuilder:validation:Pattern="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
 	// The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.
-	// More information: https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
+	// More information:
+	//  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
 	//+optional
 	WorkingDirectory string `json:"workingDirectory,omitempty"`
 	// Terraform Environment variables for all plans and applies in this workspace.
