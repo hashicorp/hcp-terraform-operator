@@ -150,6 +150,34 @@ spec:
                 description: 'Organization name where the Workspace will be created
                   More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
                 type: string
+              remoteStateSharing:
+                description: 'Remote state access between workspaces. By default,
+                  new workspaces in Terraform Cloud do not allow other workspaces
+                  to access their state. More information: - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces'
+                properties:
+                  allWorkspaces:
+                    default: false
+                    description: Allow access to the state for all workspaces within
+                      the same organization.
+                    type: boolean
+                  workspaces:
+                    description: Allow access to the state for specific workspaces
+                      within the same organization.
+                    items:
+                      description: 'ConsumerWorkspace allows access to the state for
+                        specific workspaces within the same organization. More information:
+                        - https://www.terraform.io/cloud-docs/workspaces/state#remote-state-access-controls'
+                      properties:
+                        id:
+                          description: Consumer Workspace ID.
+                          pattern: ^ws-[a-zA-Z0-9]+$
+                          type: string
+                        name:
+                          description: Consumer Workspace name.
+                          type: string
+                      type: object
+                    type: array
+                type: object
               runTriggers:
                 description: 'Run triggers allow you to connect this workspace to
                   one or more source workspaces. These connections allow runs to queue

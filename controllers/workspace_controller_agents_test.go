@@ -16,8 +16,7 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance *appv1alpha2.Workspace
-
+		instance  *appv1alpha2.Workspace
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 
 		agentPoolName  = fmt.Sprintf("kubernetes-operator-agent-%v", GinkgoRandomSeed())

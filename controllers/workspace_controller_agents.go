@@ -25,7 +25,7 @@ func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, instance
 		}
 	}
 
-	return "", fmt.Errorf("agent pool ID was not found for agent pool name %q", agentPoolName)
+	return "", fmt.Errorf("agent pool ID not found for agent pool name %q", agentPoolName)
 }
 
 func (r *WorkspaceReconciler) getAgentPoolID(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
