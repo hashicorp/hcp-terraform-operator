@@ -53,6 +53,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name:             workspace,
 				ApplyMethod:      "auto",
+				AllowDestroyPlan: true,
 				Description:      "Description",
 				ExecutionMode:    "remote",
 				TerraformVersion: "1.2.3",
@@ -123,6 +124,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Update the Kubernetes workspace object fields(basic workspace attributes)
 			instance.Spec.ApplyMethod = "manual"
+			instance.Spec.AllowDestroyPlan = false
 			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
 			instance.Spec.ExecutionMode = "local"
 			instance.Spec.TerraformVersion = "1.2.1"
@@ -135,6 +137,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
 				return ws.AutoApply == applyMethodToBool(instance.Spec.ApplyMethod) &&
+					ws.AllowDestroyPlan == instance.Spec.AllowDestroyPlan &&
 					ws.Description == instance.Spec.Description &&
 					ws.ExecutionMode == instance.Spec.ExecutionMode &&
 					ws.TerraformVersion == instance.Spec.TerraformVersion &&
