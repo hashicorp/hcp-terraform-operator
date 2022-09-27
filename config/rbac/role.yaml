@@ -31,6 +31,32 @@ rules:
 - apiGroups:
   - app.terraform.io
   resources:
+  - modules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - modules/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - modules/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - app.terraform.io
+  resources:
   - workspaces
   verbs:
   - create

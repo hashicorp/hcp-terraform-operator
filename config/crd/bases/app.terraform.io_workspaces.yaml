@@ -431,16 +431,18 @@ spec:
               runStatus:
                 description: Workspace Runs status
                 properties:
-                  currentRunID:
+                  configurationVersion:
+                    type: string
+                  id:
                     description: Current(both active and finished) Terraform Cloud
                       run ID.
                     type: string
-                  currentRunStatus:
-                    description: Current(both active and finished) Terraform Cloud
-                      run status.
-                    type: string
                   outputRunID:
                     description: Run ID of the latest run that could update the outputs.
+                    type: string
+                  status:
+                    description: Current(both active and finished) Terraform Cloud
+                      run status.
                     type: string
                 type: object
               updateAt:

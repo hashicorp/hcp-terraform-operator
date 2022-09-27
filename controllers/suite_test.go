@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	tfc "github.com/hashicorp/go-tfe"
+
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	//+kubebuilder:scaffold:imports
 )
@@ -52,7 +53,7 @@ func TestControllersAPIs(t *testing.T) {
 	reporterConfig.Succinct = true
 	reporterConfig.SlowSpecThreshold = 60 * time.Second
 
-	RunSpecs(t, "Controller Suite", suiteConfig, reporterConfig)
+	RunSpecs(t, "Controllers Suite", suiteConfig, reporterConfig)
 }
 
 var _ = BeforeSuite(func() {
@@ -73,6 +74,9 @@ var _ = BeforeSuite(func() {
 
 	err = appv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).ToNot(HaveOccurred())
+
+	err = appv1alpha2.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
 
@@ -98,6 +102,13 @@ var _ = BeforeSuite(func() {
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
 		Recorder: k8sManager.GetEventRecorderFor("WorkspaceController"),
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&ModuleReconciler{
+		Client:   k8sManager.GetClient(),
+		Scheme:   k8sManager.GetScheme(),
+		Recorder: k8sManager.GetEventRecorderFor("ModuleController"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

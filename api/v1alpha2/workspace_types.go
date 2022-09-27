@@ -154,11 +154,11 @@ type Variable struct {
 	// Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
 	//+kubebuilder:default:=false
 	//+optional
-	HCL bool `json:"hcl"`
+	HCL bool `json:"hcl,omitempty"`
 	// Sensitive variables are never shown in the UI or API. They may appear in Terraform logs if your configuration is designed to output them.
 	//+kubebuilder:default:=false
 	//+optional
-	Sensitive bool `json:"sensitive"`
+	Sensitive bool `json:"sensitive,omitempty"`
 	// Value of the variable.
 	//+optional
 	Value string `json:"value,omitempty"`
@@ -295,14 +295,15 @@ type WorkspaceSpec struct {
 	SSHKey *SSHKey `json:"sshKey,omitempty"`
 }
 
-// Workspace Runs status
 type RunStatus struct {
 	// Current(both active and finished) Terraform Cloud run ID.
 	//+optional
-	CurrentRunID string `json:"currentRunID,omitempty"`
+	ID string `json:"id,omitempty"`
 	// Current(both active and finished) Terraform Cloud run status.
 	//+optional
-	CurrentRunStatus string `json:"currentRunStatus,omitempty"`
+	Status string `json:"status,omitempty"`
+	//+optional
+	ConfigurationVersion string `json:"configurationVersion"`
 	// Run ID of the latest run that could update the outputs.
 	//+optional
 	OutputRunID string `json:"outputRunID,omitempty"`
