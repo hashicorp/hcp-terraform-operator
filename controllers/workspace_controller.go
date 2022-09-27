@@ -254,6 +254,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 	spec := instance.Spec
 	options := tfc.WorkspaceCreateOptions{
 		Name:             tfc.String(spec.Name),
+		AllowDestroyPlan: tfc.Bool(spec.AllowDestroyPlan),
 		AutoApply:        tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
 		Description:      tfc.String(spec.Description),
 		ExecutionMode:    tfc.String(spec.ExecutionMode),
@@ -333,6 +334,10 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 
 	if workspace.AutoApply != applyMethodToBool(spec.ApplyMethod) {
 		updateOptions.AutoApply = tfc.Bool(applyMethodToBool(spec.ApplyMethod))
+	}
+
+	if workspace.AllowDestroyPlan != spec.AllowDestroyPlan {
+		updateOptions.AllowDestroyPlan = tfc.Bool(spec.AllowDestroyPlan)
 	}
 
 	if workspace.Description != spec.Description {

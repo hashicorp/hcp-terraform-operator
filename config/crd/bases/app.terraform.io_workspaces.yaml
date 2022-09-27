@@ -52,6 +52,11 @@ spec:
                     description: Agent Pool name.
                     type: string
                 type: object
+              allowDestroyPlan:
+                default: true
+                description: 'Allows a destroy plan to be created and applied. More
+                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#destruction-and-deletion'
+                type: boolean
               applyMethod:
                 default: manual
                 description: 'Define either change will be applied automatically(auto)
