@@ -46,7 +46,7 @@ func main() {
 			"Omit this flag to use the default configuration values. "+
 			"Command-line flags override configuration from this file.")
 	var syncPeriod time.Duration
-	flag.DurationVar(&syncPeriod, "sync-period", 60*time.Second,
+	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
 	// WORKSPACE CONTROLLER OPRTIONS
 	var workspaceWorkers int

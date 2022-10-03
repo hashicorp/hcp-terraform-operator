@@ -35,17 +35,12 @@ type WorkspaceReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/events,verbs=create;patch
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
 //+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
 //+kubebuilder:rbac:groups="",resources=configmap,verbs=create;list;watch
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.1/pkg/reconcile
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log = log.Log.WithValues("workspace", req.NamespacedName)
 

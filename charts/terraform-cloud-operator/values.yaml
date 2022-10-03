@@ -1,0 +1,29 @@
+replicaCount: 2
+
+operator:
+  image:
+    repository: hashicorp/terraform-cloud-operator
+    pullPolicy: IfNotPresent
+    tag: "0.0.1"
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # Operator-global options.    
+  # The minimum frequency at which watched resources are reconciled.
+  # Format: 5s, 1m, etc.
+  syncPeriod: "5m"
+
+# Controllers-specific options.
+controllers:
+  module:
+    # The number of the Module controller workers.
+    workers: 1
+  workspace:
+    # The number of the Workspace controller workers.
+    workers: 1
