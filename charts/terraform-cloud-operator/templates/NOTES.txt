@@ -1,0 +1,15 @@
+Thank you for installing HashiCorp Terraform Cloud Operator!
+
+Documentation:
+ - https://github.com/hashicorp/terraform-cloud-operator
+
+Your release is named {{ .Release.Name }}.
+
+To get the release status, run:
+  $ helm status {{ .Release.Name }}
+
+To get the release values, run:
+  $ helm get values {{ .Release.Name }}
+
+To read this notes again, run:
+  $ helm get notes {{ .Release.Name }}
