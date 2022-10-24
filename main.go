@@ -49,7 +49,7 @@ func main() {
 	var syncPeriod time.Duration
 	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
-	// WORKSPACE CONTROLLER OPRTIONS
+	// OPERATOR OPRTIONS
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
 		"The number of the workspace controller workers.")
