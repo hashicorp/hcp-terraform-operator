@@ -124,13 +124,11 @@ func (r *ModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 						return false
 					}
 
-					// if Generations and ResourceVersions of new and old objects are equal this is a periodic reconciliation
-					if e.ObjectOld.GetGeneration() == e.ObjectNew.GetGeneration() &&
-						e.ObjectOld.GetResourceVersion() == e.ObjectNew.GetResourceVersion() {
-						return true
-					}
 					// if Generations of new and old objects are not equal this is an update of the object
+					// if Generations and ResourceVersions of new and old objects are equal this is a periodic reconciliation
 					if e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration() {
+						return true
+					} else if e.ObjectOld.GetResourceVersion() == e.ObjectNew.GetResourceVersion() {
 						return true
 					}
 
