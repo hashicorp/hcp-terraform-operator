@@ -29,9 +29,14 @@ import (
 // ModuleReconciler reconciles a Module object
 type ModuleReconciler struct {
 	client.Client
-	log      logr.Logger
 	Recorder record.EventRecorder
 	Scheme   *runtime.Scheme
+}
+
+type moduleInstance struct {
+	instance appv1alpha2.Module
+
+	log      logr.Logger
 	tfClient TerraformCloudClient
 }
 
@@ -43,63 +48,64 @@ type ModuleReconciler struct {
 // +kubebuilder:rbac:groups="",resources=configmap,verbs=create;list;watch
 
 func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.log = log.Log.WithValues("module", req.NamespacedName)
-	r.log.Info("Module Controller", "msg", "new reconciliation event")
+	m := moduleInstance{}
 
-	instance := &appv1alpha2.Module{}
-	err := r.Client.Get(ctx, req.NamespacedName, instance)
+	m.log = log.Log.WithValues("module", req.NamespacedName)
+	m.log.Info("Module Controller", "msg", "new reconciliation event")
+
+	err := r.Client.Get(ctx, req.NamespacedName, &m.instance)
 	if err != nil {
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
 		if errors.IsNotFound(err) {
-			r.log.Info("Module Controller", "msg", "the instance was removed no further action is required")
+			m.log.Info("Module Controller", "msg", "the instance was removed no further action is required")
 			return doNotRequeue()
 		}
-		r.log.Error(err, "Module Controller", "msg", "get instance object")
+		m.log.Error(err, "Module Controller", "msg", "get instance object")
 		return requeueAfter(requeueInterval)
 	}
 
-	if instance.NeedToAddFinalizer(moduleFinalizer) {
-		err := r.addFinalizer(ctx, instance)
+	if m.instance.NeedToAddFinalizer(moduleFinalizer) {
+		err := r.addFinalizer(ctx, &m.instance)
 		if err != nil {
-			r.log.Error(err, "Module Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", moduleFinalizer))
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", moduleFinalizer)
+			m.log.Error(err, "Module Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", moduleFinalizer))
+			r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", moduleFinalizer)
 			return requeueOnErr(err)
 		}
-		r.log.Info("Module Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", moduleFinalizer))
-		r.Recorder.Eventf(instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", moduleFinalizer)
+		m.log.Info("Module Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", moduleFinalizer))
+		r.Recorder.Eventf(&m.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", moduleFinalizer)
 	}
 
-	err = r.getTerraformClient(ctx, instance)
+	err = r.getTerraformClient(ctx, &m)
 	if err != nil {
-		r.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		m.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
-	err = r.reconcileModule(ctx, instance)
+	err = r.reconcileModule(ctx, &m)
 	if err != nil {
-		r.log.Error(err, "Module Controller", "msg", "reconcile module")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to reconcile module")
+		m.log.Error(err, "Module Controller", "msg", "reconcile module")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to reconcile module")
 		return requeueAfter(requeueInterval)
 	}
 
-	if waitForUploadModule(instance) {
-		r.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
+	if waitForUploadModule(&m.instance) {
+		m.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
 		return requeueAfter(requeueConfigurationUploadInterval)
 	}
 
-	if needNewRun(instance) {
-		r.log.Info("Module Controller", "msg", "new config version is available, need a new run")
+	if needNewRun(&m.instance) {
+		m.log.Info("Module Controller", "msg", "new config version is available, need a new run")
 		return requeueAfter(requeueNewRunInterval)
 	}
 
-	if waitRunToFinish(instance) {
-		r.log.Info("Module Controller", "msg", "waiting for run to finish")
+	if waitRunToFinish(&m.instance) {
+		m.log.Info("Module Controller", "msg", "waiting for run to finish")
 		return requeueAfter(requeueRunStatusInterval)
 	}
 
-	r.log.Info("Module Controller", "msg", "successfully reconcilied module")
+	m.log.Info("Module Controller", "msg", "successfully reconcilied module")
 
 	return doNotRequeue()
 }
@@ -157,7 +163,6 @@ func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1al
 
 func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace, run *tfc.Run) error {
 	instance.Status.WorkspaceID = workspace.ID
-	// instance.Status.ConfigurationVersion.Status = string(tfc.ConfigurationUploaded)
 	instance.Status.Run = &appv1alpha2.RunStatus{
 		ID:                   run.ID,
 		Status:               string(run.Status),
@@ -215,8 +220,8 @@ func (r *ModuleReconciler) getToken(ctx context.Context, instance *appv1alpha2.M
 	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
 }
 
-func (r *ModuleReconciler) getTerraformClient(ctx context.Context, instance *appv1alpha2.Module) error {
-	token, err := r.getToken(ctx, instance)
+func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInstance) error {
+	token, err := r.getToken(ctx, &m.instance)
 	if err != nil {
 		return err
 	}
@@ -224,68 +229,68 @@ func (r *ModuleReconciler) getTerraformClient(ctx context.Context, instance *app
 	config := &tfc.Config{
 		Token: token,
 	}
-	r.tfClient.Client, err = tfc.NewClient(config)
+	m.tfClient.Client, err = tfc.NewClient(config)
 
 	return err
 }
 
-func (r *ModuleReconciler) removeFinalizer(ctx context.Context, instance *appv1alpha2.Module) error {
-	controllerutil.RemoveFinalizer(instance, moduleFinalizer)
+func (r *ModuleReconciler) removeFinalizer(ctx context.Context, m *moduleInstance) error {
+	controllerutil.RemoveFinalizer(&m.instance, moduleFinalizer)
 
-	err := r.Update(ctx, instance)
+	err := r.Update(ctx, &m.instance)
 	if err != nil {
-		r.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finazlier %s", moduleFinalizer))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", moduleFinalizer)
+		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finazlier %s", moduleFinalizer))
+		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", moduleFinalizer)
 	}
 
 	return err
 }
 
-func (r *ModuleReconciler) deleteModule(ctx context.Context, instance *appv1alpha2.Module) error {
+func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) error {
 	// if 'DestroyOnDeletion' is false, delete the Kubernetes object without running the 'Destroy' run
-	if !instance.Spec.DestroyOnDeletion {
-		r.log.Info("Delete Module", "msg", "no need to run destroy run, deleting object")
-		return r.removeFinalizer(ctx, instance)
+	if !m.instance.Spec.DestroyOnDeletion {
+		m.log.Info("Delete Module", "msg", "no need to run destroy run, deleting object")
+		return r.removeFinalizer(ctx, m)
 	}
 
 	// check whether a Run was ever running, if no, delete the Kubernetes object without running the 'Destroy' run
-	if instance.Status.Run == nil {
-		r.log.Info("Delete Module", "msg", "run is empty, removing finalizer")
-		return r.removeFinalizer(ctx, instance)
+	if m.instance.Status.Run == nil {
+		m.log.Info("Delete Module", "msg", "run is empty, removing finalizer")
+		return r.removeFinalizer(ctx, m)
 	}
 
 	// if 'DestroyOnDeletion' is true and 'status.destroyRunID' is empty execute a new 'Destroy' run
-	if instance.Spec.DestroyOnDeletion && instance.Status.DestroyRunID == "" {
-		r.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
-		run, err := r.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
+	if m.instance.Spec.DestroyOnDeletion && m.instance.Status.DestroyRunID == "" {
+		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
+		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			IsDestroy: tfc.Bool(true),
 			Message:   tfc.String("Triggered by the Kubernetes Operator"),
 			Workspace: &tfc.Workspace{
-				ID: instance.Status.WorkspaceID,
+				ID: m.instance.Status.WorkspaceID,
 			},
 		})
 		if err != nil {
-			r.log.Error(err, "Delete Module", "msg", "failed to create a new destroy run")
+			m.log.Error(err, "Delete Module", "msg", "failed to create a new destroy run")
 			return err
 		}
-		r.log.Info("Delete Module", "msg", "successfully created a new destroy run")
-		return r.updateStatusDestroy(ctx, instance, run)
+		m.log.Info("Delete Module", "msg", "successfully created a new destroy run")
+		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
-	if waitRunToFinish(instance) {
-		r.log.Info("Delete Module", "msg", "get destroy run status")
-		run, err := r.tfClient.Client.Runs.Read(ctx, instance.Status.Run.ID)
+	if waitRunToFinish(&m.instance) {
+		m.log.Info("Delete Module", "msg", "get destroy run status")
+		run, err := m.tfClient.Client.Runs.Read(ctx, m.instance.Status.Run.ID)
 		if err != nil {
-			r.log.Error(err, "Delete Module", "msg", "failed to get destroy run status")
+			m.log.Error(err, "Delete Module", "msg", "failed to get destroy run status")
 			return err
 		}
-		r.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
-		return r.updateStatusDestroy(ctx, instance, run)
+		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
+		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
-	if instance.Status.Run.Status == string(tfc.RunApplied) {
-		r.log.Info("Delete Module", "msg", "destroy run finished")
-		return r.removeFinalizer(ctx, instance)
+	if m.instance.Status.Run.Status == string(tfc.RunApplied) {
+		m.log.Info("Delete Module", "msg", "destroy run finished")
+		return r.removeFinalizer(ctx, m)
 	}
 
 	return nil
@@ -395,116 +400,116 @@ func waitRunToFinish(instance *appv1alpha2.Module) bool {
 	return true
 }
 
-func (r *ModuleReconciler) reconcileModule(ctx context.Context, instance *appv1alpha2.Module) error {
-	r.log.Info("Reconcile Module", "msg", "reconciling module")
+func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstance) error {
+	m.log.Info("Reconcile Module", "msg", "reconciling module")
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the module
-	if instance.IsDeletionCandidate(moduleFinalizer) {
-		r.log.Info("Reconcile Module", "msg", "object marked as deleted, need to delete module first")
-		r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted, need to delete module first")
-		return r.deleteModule(ctx, instance)
+	if m.instance.IsDeletionCandidate(moduleFinalizer) {
+		m.log.Info("Reconcile Module", "msg", "object marked as deleted, need to delete module first")
+		r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted, need to delete module first")
+		return r.deleteModule(ctx, m)
 	}
 
-	workspace, err := r.getWorkspace(ctx, instance)
+	workspace, err := r.getWorkspace(ctx, m)
 	if err != nil {
-		r.log.Info("Reconcile Module Workspace", "msg", "failed to get workspace")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to get workspace")
+		m.log.Info("Reconcile Module Workspace", "msg", "failed to get workspace")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to get workspace")
 		return err
 	}
-	r.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully get workspace ID %s", workspace.ID))
+	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully get workspace ID %s", workspace.ID))
 
 	// checks if a new version of the CV needs to be uploaded
-	if needToUploadModule(instance) {
-		r.log.Info("Reconcile Configuration Version", "msg", "generate a new module code")
-		path, err := generateModule(&instance.Spec)
+	if needToUploadModule(&m.instance) {
+		m.log.Info("Reconcile Configuration Version", "msg", "generate a new module code")
+		path, err := generateModule(&m.instance.Spec)
 		defer os.RemoveAll(path)
 		if err != nil {
-			r.log.Error(err, "Reconcile Configuration Version", "msg", "failed to generate a new module code")
+			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to generate a new module code")
 			return err
 		}
-		r.log.Info("Reconcile Configuration Version", "msg", "successfully generated a new module code")
+		m.log.Info("Reconcile Configuration Version", "msg", "successfully generated a new module code")
 
-		r.log.Info("Reconcile Configuration Version", "msg", "create a new configuration versions")
-		cv, err := r.tfClient.Client.ConfigurationVersions.Create(ctx, workspace.ID, tfc.ConfigurationVersionCreateOptions{
+		m.log.Info("Reconcile Configuration Version", "msg", "create a new configuration versions")
+		cv, err := m.tfClient.Client.ConfigurationVersions.Create(ctx, workspace.ID, tfc.ConfigurationVersionCreateOptions{
 			AutoQueueRuns: tfc.Bool(false),
 		})
 		if err != nil {
-			r.log.Error(err, "Reconcile Configuration Version", "msg", "failed to create a new configuration versions")
+			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to create a new configuration versions")
 			return err
 		}
-		r.log.Info("Reconcile Configuration Version", "msg", "successfully created new config version")
+		m.log.Info("Reconcile Configuration Version", "msg", "successfully created new config version")
 
-		r.log.Info("Reconcile Configuration Version", "msg", "upload a new config version")
-		err = r.tfClient.Client.ConfigurationVersions.Upload(ctx, cv.UploadURL, path)
+		m.log.Info("Reconcile Configuration Version", "msg", "upload a new config version")
+		err = m.tfClient.Client.ConfigurationVersions.Upload(ctx, cv.UploadURL, path)
 		if err != nil {
-			r.log.Error(err, "Reconcile Configuration Version", "msg", "failed to upload a new config version")
+			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to upload a new config version")
 			return err
 		}
-		r.log.Info("Reconcile Configuration Version", "msg", "successfully uploaded a new config version")
+		m.log.Info("Reconcile Configuration Version", "msg", "successfully uploaded a new config version")
 
 		// It can take a few seconds to proceed with a new upload
 		// To unblock a worker we return the object back to the queue
 		// and validate the upload status during the next reconciliation
-		return r.updateStatusCV(ctx, instance, workspace, cv)
+		return r.updateStatusCV(ctx, &m.instance, workspace, cv)
 	}
 
 	// checks if a new version of the CV is uploaded
-	if waitForUploadModule(instance) {
-		r.log.Info("Reconcile Configuration Version", "msg", "check the upload status")
-		cv, err := r.tfClient.Client.ConfigurationVersions.Read(ctx, instance.Status.ConfigurationVersion.ID)
+	if waitForUploadModule(&m.instance) {
+		m.log.Info("Reconcile Configuration Version", "msg", "check the upload status")
+		cv, err := m.tfClient.Client.ConfigurationVersions.Read(ctx, m.instance.Status.ConfigurationVersion.ID)
 		if err != nil {
-			r.log.Error(err, "Reconcile Configuration Version", "msg", "failed to get the upload status")
+			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to get the upload status")
 			return err
 		}
-		r.log.Info("Reconcile Configuration Version", "msg", fmt.Sprintf("successfully got the upload status: %s", cv.Status))
-		return r.updateStatusCV(ctx, instance, workspace, cv)
+		m.log.Info("Reconcile Configuration Version", "msg", fmt.Sprintf("successfully got the upload status: %s", cv.Status))
+		return r.updateStatusCV(ctx, &m.instance, workspace, cv)
 	}
 
 	// checks if a new Run needs to be initialized
-	if needNewRun(instance) {
-		r.log.Info("Reconcile Run", "msg", "create a new run")
-		run, err := r.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
+	if needNewRun(&m.instance) {
+		m.log.Info("Reconcile Run", "msg", "create a new run")
+		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			Message:   tfc.String("Triggered by the Kubernetes Operator"),
 			Workspace: workspace,
 			// Execute a new Run once it is created
 			AutoApply: tfc.Bool(true),
 		})
 		if err != nil {
-			r.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")
+			m.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")
 			return err
 		}
-		r.log.Info("Reconcile Run", "msg", "successfully created a new run")
+		m.log.Info("Reconcile Run", "msg", "successfully created a new run")
 
 		// It can take a while to proceed with a new run
 		// To unblock a worker we return the object back to the queue
 		// and validate the run status during the next reconciliation
-		return r.updateStatusRun(ctx, instance, workspace, run)
+		return r.updateStatusRun(ctx, &m.instance, workspace, run)
 	}
 
 	// checks if a new version of the Run is finished
-	if waitRunToFinish(instance) {
-		r.log.Info("Reconcile Run", "msg", "check the run status")
-		run, err := r.tfClient.Client.Runs.Read(ctx, instance.Status.Run.ID)
+	if waitRunToFinish(&m.instance) {
+		m.log.Info("Reconcile Run", "msg", "check the run status")
+		run, err := m.tfClient.Client.Runs.Read(ctx, m.instance.Status.Run.ID)
 		if err != nil {
-			r.log.Error(err, "Reconcile Run", "msg", "failed to get run status")
+			m.log.Error(err, "Reconcile Run", "msg", "failed to get run status")
 			return err
 		}
-		r.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", run.Status))
-		return r.updateStatusRun(ctx, instance, workspace, run)
+		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", run.Status))
+		return r.updateStatusRun(ctx, &m.instance, workspace, run)
 	}
 
 	// Reconcile Outputs
-	runID, err := r.reconcileOutputs(ctx, instance, workspace)
+	runID, err := r.reconcileOutputs(ctx, m, workspace)
 	if err != nil {
-		r.log.Error(err, "Reconcile Module Outputs", "msg", "failed to reconcile outputs")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileModuleOutputs", "Failed to reconcile outputs")
+		m.log.Error(err, "Reconcile Module Outputs", "msg", "failed to reconcile outputs")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModuleOutputs", "Failed to reconcile outputs")
 		return err
 	}
-	r.log.Info("Reconcile Module Outputs", "msg", "successfully reconcilied outputs")
-	r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileModuleOutputs", "Successfully reconcilied outputs")
+	m.log.Info("Reconcile Module Outputs", "msg", "successfully reconcilied outputs")
+	r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModuleOutputs", "Successfully reconcilied outputs")
 	if runID == "" {
 		return nil
 	}
 
-	return r.updateStatusOutputs(ctx, instance, workspace, runID)
+	return r.updateStatusOutputs(ctx, &m.instance, workspace, runID)
 }

@@ -113,7 +113,7 @@ type ModuleStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="CV Status",type=string,JSONPath=`.status.configurationVersion.status`
-//+kubebuilder:printcolumn:name="Run Status",type=string,JSONPath=`.status.run.runStatus`
+//+kubebuilder:printcolumn:name="Run Status",type=string,JSONPath=`.status.run.status`
 
 // Module is the Schema for the modules API
 // Module implements the API-driven Run Workflow

@@ -54,7 +54,7 @@ func main() {
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
 		"The number of the workspace controller workers.")
 	var moduleWorkers int
-	flag.IntVar(&moduleWorkers, "module-workers", 1,
+	flag.IntVar(&moduleWorkers, "module-workers", 2,
 		"The number of the module controller workers.")
 
 	flag.Parse()

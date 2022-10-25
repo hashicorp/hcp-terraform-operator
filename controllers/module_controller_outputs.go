@@ -48,33 +48,33 @@ func (r *ModuleReconciler) secretAvailable(ctx context.Context, instance *appv1a
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
 }
 
-func (r *ModuleReconciler) setOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace) error {
+func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) error {
 	if workspace.CurrentStateVersion == nil {
 		return nil
 	}
 
-	oName := moduleOutputObjectName(instance.Name)
+	oName := moduleOutputObjectName(m.instance.Name)
 
-	if !r.configMapAvailable(ctx, instance) {
+	if !r.configMapAvailable(ctx, &m.instance) {
 		return fmt.Errorf("configMap %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	if !r.secretAvailable(ctx, instance) {
+	if !r.secretAvailable(ctx, &m.instance) {
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
 
-	outputs, err := r.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
+	outputs, err := m.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
 	if err != nil {
 		return err
 	}
 	for _, o := range outputs.Items {
 		bytes, err := json.Marshal(o.Value)
 		if err != nil {
-			r.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
-			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
+			m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+			r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
 			continue
 		}
 		if o.Sensitive {
@@ -86,16 +86,16 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, instance *appv1alpha2
 
 	om := metav1.ObjectMeta{
 		Name:      oName,
-		Namespace: instance.Namespace,
+		Namespace: m.instance.Namespace,
 	}
 	labels := map[string]string{
-		"workspaceID": instance.Status.WorkspaceID,
-		"ModuleName":  instance.ObjectMeta.Name,
+		"workspaceID": m.instance.Status.WorkspaceID,
+		"ModuleName":  m.instance.ObjectMeta.Name,
 	}
 
 	// update ConfigMap output
 	cm := &corev1.ConfigMap{ObjectMeta: om}
-	err = controllerutil.SetControllerReference(instance, cm, r.Scheme)
+	err = controllerutil.SetControllerReference(&m.instance, cm, r.Scheme)
 	if err != nil {
 		return err
 	}
@@ -106,14 +106,14 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, instance *appv1alpha2
 		return nil
 	})
 	if err != nil {
-		r.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to create or update ConfigMap %s", oName))
+		m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to create or update ConfigMap %s", oName))
 		return err
 	}
-	r.log.Info("Reconcile Module Outputs", "mgs", fmt.Sprintf("configMap create or update result: %s", ur))
+	m.log.Info("Reconcile Module Outputs", "mgs", fmt.Sprintf("configMap create or update result: %s", ur))
 
 	// update Secrets output
 	secret := &corev1.Secret{ObjectMeta: om}
-	err = controllerutil.SetControllerReference(instance, secret, r.Scheme)
+	err = controllerutil.SetControllerReference(&m.instance, secret, r.Scheme)
 	if err != nil {
 		return err
 	}
@@ -124,10 +124,10 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, instance *appv1alpha2
 		return nil
 	})
 	if err != nil {
-		r.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to create or update Secret %s", oName))
+		m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to create or update Secret %s", oName))
 		return err
 	}
-	r.log.Info("Reconcile Module Outputs", "mgs", fmt.Sprintf("secret create or update result: %s", ur))
+	m.log.Info("Reconcile Module Outputs", "mgs", fmt.Sprintf("secret create or update result: %s", ur))
 
 	return nil
 }
@@ -148,13 +148,13 @@ func needToUpdateOutput(instance *appv1alpha2.Module) bool {
 	return false
 }
 
-func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace) (string, error) {
-	r.log.Info("Reconcile Module Outputs", "mgs", "new reconciliation event")
+func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) (string, error) {
+	m.log.Info("Reconcile Module Outputs", "mgs", "new reconciliation event")
 
 	if workspace.CurrentRun != nil {
-		if needToUpdateOutput(instance) {
-			r.log.Info("Reconcile Module Outputs", "mgs", "creating or updating outputs")
-			return workspace.CurrentRun.ID, r.setOutputs(ctx, instance, workspace)
+		if needToUpdateOutput(&m.instance) {
+			m.log.Info("Reconcile Module Outputs", "mgs", "creating or updating outputs")
+			return workspace.CurrentRun.ID, r.setOutputs(ctx, m, workspace)
 		}
 	}
 	return "", nil
