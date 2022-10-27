@@ -8,7 +8,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - configmap
+  - configmaps
   verbs:
   - create
   - list

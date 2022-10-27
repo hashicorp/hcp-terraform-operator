@@ -39,7 +39,7 @@ type WorkspaceReconciler struct {
 // +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
-// +kubebuilder:rbac:groups="",resources=configmap,verbs=create;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=create;list;watch
 
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log = log.Log.WithValues("workspace", req.NamespacedName)

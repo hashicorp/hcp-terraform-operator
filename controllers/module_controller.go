@@ -45,7 +45,7 @@ type moduleInstance struct {
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
-// +kubebuilder:rbac:groups="",resources=configmap,verbs=create;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=create;list;watch
 
 func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	m := moduleInstance{}
@@ -301,12 +301,7 @@ func (r *ModuleReconciler) addFinalizer(ctx context.Context, instance *appv1alph
 }
 
 func generateModule(spec *appv1alpha2.ModuleSpec) (string, error) {
-	cd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	td, err := os.MkdirTemp(cd, "tf-*")
+	td, err := os.MkdirTemp("/tmp", "tf-*")
 	if err != nil {
 		return td, err
 	}
