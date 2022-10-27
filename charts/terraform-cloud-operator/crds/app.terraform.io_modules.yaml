@@ -19,7 +19,7 @@ spec:
     - jsonPath: .status.configurationVersion.status
       name: CV Status
       type: string
-    - jsonPath: .status.run.runStatus
+    - jsonPath: .status.run.status
       name: Run Status
       type: string
     name: v1alpha2
