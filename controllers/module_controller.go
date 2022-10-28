@@ -301,7 +301,7 @@ func (r *ModuleReconciler) addFinalizer(ctx context.Context, instance *appv1alph
 }
 
 func generateModule(spec *appv1alpha2.ModuleSpec) (string, error) {
-	td, err := os.MkdirTemp("/tmp", "tf-*")
+	td, err := os.MkdirTemp("", "tf-*")
 	if err != nil {
 		return td, err
 	}
