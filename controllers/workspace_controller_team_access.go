@@ -30,23 +30,23 @@ func getTeamID(teams map[string]*tfc.Team, instanceTeam appv1alpha2.Team) (strin
 	return "", fmt.Errorf("team ID was not found by ID %q", instanceTeam.ID)
 }
 
-func (r *WorkspaceReconciler) getInstanceTeamAccess(ctx context.Context, instance *appv1alpha2.Workspace) (map[string]*tfc.TeamAccess, error) {
+func (r *WorkspaceReconciler) getInstanceTeamAccess(ctx context.Context, w *workspaceInstance) (map[string]*tfc.TeamAccess, error) {
 	o := map[string]*tfc.TeamAccess{}
 
-	if instance.Spec.TeamAccess == nil {
+	if w.instance.Spec.TeamAccess == nil {
 		return o, nil
 	}
 
-	teams, err := r.getTeams(ctx, instance)
+	teams, err := r.getTeams(ctx, w)
 	if err != nil {
 		return o, err
 	}
 
-	for _, ta := range instance.Spec.TeamAccess {
+	for _, ta := range w.instance.Spec.TeamAccess {
 		tID, err := getTeamID(teams, ta.Team)
 		if err != nil {
-			r.log.Error(err, "Reconcile Team Access", "msg", "failed to get team ID")
-			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileTeamAccess", "Failed to get team ID")
+			w.log.Error(err, "Reconcile Team Access", "msg", "failed to get team ID")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileTeamAccess", "Failed to get team ID")
 			return o, err
 		}
 
@@ -55,7 +55,7 @@ func (r *WorkspaceReconciler) getInstanceTeamAccess(ctx context.Context, instanc
 				ID: tID,
 			},
 			Workspace: &tfc.Workspace{
-				ID: instance.Status.WorkspaceID,
+				ID: w.instance.Status.WorkspaceID,
 			},
 			Access:           tfc.AccessType(ta.Access),
 			Runs:             tfc.RunsPermissionType(ta.Custom.Runs),
@@ -70,10 +70,10 @@ func (r *WorkspaceReconciler) getInstanceTeamAccess(ctx context.Context, instanc
 	return o, nil
 }
 
-func (r *WorkspaceReconciler) getWorkspaceTeamAccess(ctx context.Context, instance *appv1alpha2.Workspace) (map[string]*tfc.TeamAccess, error) {
+func (r *WorkspaceReconciler) getWorkspaceTeamAccess(ctx context.Context, w *workspaceInstance) (map[string]*tfc.TeamAccess, error) {
 	o := map[string]*tfc.TeamAccess{}
 
-	t, err := r.tfClient.Client.TeamAccess.List(ctx, &tfc.TeamAccessListOptions{WorkspaceID: instance.Status.WorkspaceID})
+	t, err := w.tfClient.Client.TeamAccess.List(ctx, &tfc.TeamAccessListOptions{WorkspaceID: w.instance.Status.WorkspaceID})
 	if err != nil {
 		return o, err
 	}
@@ -84,17 +84,17 @@ func (r *WorkspaceReconciler) getWorkspaceTeamAccess(ctx context.Context, instan
 	return o, nil
 }
 
-func (r *WorkspaceReconciler) getTeams(ctx context.Context, instance *appv1alpha2.Workspace) (map[string]*tfc.Team, error) {
+func (r *WorkspaceReconciler) getTeams(ctx context.Context, w *workspaceInstance) (map[string]*tfc.Team, error) {
 	teams := make(map[string]*tfc.Team)
 
 	fTeams := []string{}
-	for _, t := range instance.Spec.TeamAccess {
+	for _, t := range w.instance.Spec.TeamAccess {
 		if t.Team.Name != "" {
 			fTeams = append(fTeams, t.Team.Name)
 		}
 	}
 
-	tl, err := r.tfClient.Client.Teams.List(ctx, instance.Spec.Organization, &tfc.TeamListOptions{
+	tl, err := w.tfClient.Client.Teams.List(ctx, w.instance.Spec.Organization, &tfc.TeamListOptions{
 		Names: fTeams,
 	})
 	if err != nil {
@@ -153,7 +153,8 @@ func getTeamAccessToUpdate(ctx context.Context, specTeamAccess, workspaceTeamAcc
 	return ta
 }
 
-func (r *WorkspaceReconciler) createTeamAccess(ctx context.Context, workspaceID string, createTeamAccess map[string]*tfc.TeamAccess) error {
+func (r *WorkspaceReconciler) createTeamAccess(ctx context.Context, w *workspaceInstance, createTeamAccess map[string]*tfc.TeamAccess) error {
+	workspaceID := w.instance.Status.WorkspaceID
 	for tID, v := range createTeamAccess {
 		option := tfc.TeamAccessAddOptions{
 			Workspace: &tfc.Workspace{
@@ -174,9 +175,9 @@ func (r *WorkspaceReconciler) createTeamAccess(ctx context.Context, workspaceID 
 			option.WorkspaceLocking = &v.WorkspaceLocking
 		}
 
-		_, err := r.tfClient.Client.TeamAccess.Add(ctx, option)
+		_, err := w.tfClient.Client.TeamAccess.Add(ctx, option)
 		if err != nil {
-			r.log.Error(err, "Reconcile Team Access", "msg", "failed to create a new team access")
+			w.log.Error(err, "Reconcile Team Access", "msg", "failed to create a new team access")
 			return err
 		}
 	}
@@ -184,11 +185,11 @@ func (r *WorkspaceReconciler) createTeamAccess(ctx context.Context, workspaceID 
 	return nil
 }
 
-func (r *WorkspaceReconciler) deleteTeamAccess(ctx context.Context, deleteTeamAccess map[string]*tfc.TeamAccess) error {
+func (r *WorkspaceReconciler) deleteTeamAccess(ctx context.Context, w *workspaceInstance, deleteTeamAccess map[string]*tfc.TeamAccess) error {
 	for _, v := range deleteTeamAccess {
-		err := r.tfClient.Client.TeamAccess.Remove(ctx, v.ID)
+		err := w.tfClient.Client.TeamAccess.Remove(ctx, v.ID)
 		if err != nil {
-			r.log.Error(err, "Reconcile Team Access", "msg", "failed to delete team access")
+			w.log.Error(err, "Reconcile Team Access", "msg", "failed to delete team access")
 			return err
 		}
 	}
@@ -196,9 +197,9 @@ func (r *WorkspaceReconciler) deleteTeamAccess(ctx context.Context, deleteTeamAc
 	return nil
 }
 
-func (r *WorkspaceReconciler) updateTeamAccess(ctx context.Context, updateTeamAccess map[string]*tfc.TeamAccess) error {
+func (r *WorkspaceReconciler) updateTeamAccess(ctx context.Context, w *workspaceInstance, updateTeamAccess map[string]*tfc.TeamAccess) error {
 	for _, v := range updateTeamAccess {
-		r.log.Info("Reconcile Team Access", "msg", "updating team access")
+		w.log.Info("Reconcile Team Access", "msg", "updating team access")
 		option := tfc.TeamAccessUpdateOptions{
 			Access: &v.Access,
 		}
@@ -212,9 +213,9 @@ func (r *WorkspaceReconciler) updateTeamAccess(ctx context.Context, updateTeamAc
 			option.WorkspaceLocking = &v.WorkspaceLocking
 		}
 
-		_, err := r.tfClient.Client.TeamAccess.Update(ctx, v.ID, option)
+		_, err := w.tfClient.Client.TeamAccess.Update(ctx, v.ID, option)
 		if err != nil {
-			r.log.Error(err, "Reconcile Team Access", "msg", "failed to update team access")
+			w.log.Error(err, "Reconcile Team Access", "msg", "failed to update team access")
 			return err
 		}
 	}
@@ -222,25 +223,25 @@ func (r *WorkspaceReconciler) updateTeamAccess(ctx context.Context, updateTeamAc
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
-	r.log.Info("Reconcile Team Access", "msg", "new reconciliation event")
+func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+	w.log.Info("Reconcile Team Access", "msg", "new reconciliation event")
 
-	specTeamAccess, err := r.getInstanceTeamAccess(ctx, instance)
+	specTeamAccess, err := r.getInstanceTeamAccess(ctx, w)
 	if err != nil {
-		r.log.Error(err, "Reconcile Team Access", "msg", "failed to get instance team access")
+		w.log.Error(err, "Reconcile Team Access", "msg", "failed to get instance team access")
 		return err
 	}
 
-	workspaceTeamAccess, err := r.getWorkspaceTeamAccess(ctx, instance)
+	workspaceTeamAccess, err := r.getWorkspaceTeamAccess(ctx, w)
 	if err != nil {
-		r.log.Error(err, "Reconcile Team Access", "msg", "failed to get workspace team access")
+		w.log.Error(err, "Reconcile Team Access", "msg", "failed to get workspace team access")
 		return err
 	}
 
 	createTeamAccess := getTeamAccessToCreate(ctx, specTeamAccess, workspaceTeamAccess)
 	if len(createTeamAccess) > 0 {
-		r.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("creating %d team accesses", len(createTeamAccess)))
-		err := r.createTeamAccess(ctx, instance.Status.WorkspaceID, createTeamAccess)
+		w.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("creating %d team accesses", len(createTeamAccess)))
+		err := r.createTeamAccess(ctx, w, createTeamAccess)
 		if err != nil {
 			return err
 		}
@@ -248,8 +249,8 @@ func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, instance 
 
 	updateTeamAccess := getTeamAccessToUpdate(ctx, specTeamAccess, workspaceTeamAccess)
 	if len(updateTeamAccess) > 0 {
-		r.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("updating %d team accesses", len(updateTeamAccess)))
-		err := r.updateTeamAccess(ctx, updateTeamAccess)
+		w.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("updating %d team accesses", len(updateTeamAccess)))
+		err := r.updateTeamAccess(ctx, w, updateTeamAccess)
 		if err != nil {
 			return err
 		}
@@ -257,8 +258,8 @@ func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, instance 
 
 	deleteTeamAccess := getTeamAccessToDelete(ctx, specTeamAccess, workspaceTeamAccess)
 	if len(deleteTeamAccess) > 0 {
-		r.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("deleting %d team accesses", len(deleteTeamAccess)))
-		err := r.deleteTeamAccess(ctx, deleteTeamAccess)
+		w.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("deleting %d team accesses", len(deleteTeamAccess)))
+		err := r.deleteTeamAccess(ctx, w, deleteTeamAccess)
 		if err != nil {
 			return err
 		}

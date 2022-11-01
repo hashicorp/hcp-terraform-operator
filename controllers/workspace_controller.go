@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 
 	tfc "github.com/hashicorp/go-tfe"
+	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
 type TerraformCloudClient struct {
@@ -28,9 +28,14 @@ type TerraformCloudClient struct {
 // WorkspaceReconciler reconciles a Workspace object
 type WorkspaceReconciler struct {
 	client.Client
-	log      logr.Logger
 	Recorder record.EventRecorder
 	Scheme   *runtime.Scheme
+}
+
+type workspaceInstance struct {
+	instance appv1alpha2.Workspace
+
+	log      logr.Logger
 	tfClient TerraformCloudClient
 }
 
@@ -42,48 +47,49 @@ type WorkspaceReconciler struct {
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=create;list;watch
 
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.log = log.Log.WithValues("workspace", req.NamespacedName)
-	r.log.Info("Workspace Controller", "msg", "new reconciliation event")
+	w := workspaceInstance{}
 
-	instance := &appv1alpha2.Workspace{}
-	err := r.Client.Get(ctx, req.NamespacedName, instance)
+	w.log = log.Log.WithValues("workspace", req.NamespacedName)
+	w.log.Info("Workspace Controller", "msg", "new reconciliation event")
+
+	err := r.Client.Get(ctx, req.NamespacedName, &w.instance)
 	if err != nil {
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
 		if errors.IsNotFound(err) {
-			r.log.Info("Workspace Controller", "msg", "the object is removed no further action is required")
+			w.log.Info("Workspace Controller", "msg", "the object is removed no further action is required")
 			return doNotRequeue()
 		}
-		r.log.Error(err, "Workspace Controller", "msg", "get instance object")
+		w.log.Error(err, "Workspace Controller", "msg", "get instance object")
 		return requeueAfter(requeueInterval)
 	}
 
-	if needToAddFinalizer(instance) {
-		err := r.addFinalizer(ctx, instance)
+	if w.instance.NeedToAddFinalizer(workspaceFinalizer) {
+		err := r.addFinalizer(ctx, &w.instance)
 		if err != nil {
-			r.log.Error(err, "Workspace Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", workspaceFinalizer))
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", workspaceFinalizer)
+			w.log.Error(err, "Workspace Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", workspaceFinalizer))
+			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", workspaceFinalizer)
 			return requeueOnErr(err)
 		}
-		r.log.Info("Workspace Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", workspaceFinalizer))
-		r.Recorder.Eventf(instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", workspaceFinalizer)
+		w.log.Info("Workspace Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", workspaceFinalizer))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", workspaceFinalizer)
 	}
 
-	err = r.getTerraformClient(ctx, instance)
+	err = r.getTerraformClient(ctx, &w)
 	if err != nil {
-		r.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		w.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
-	err = r.reconcileWorkspace(ctx, instance)
+	err = r.reconcileWorkspace(ctx, &w)
 	if err != nil {
-		r.log.Error(err, "Workspace Controller", "msg", "reconcile workspace")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to reconcile workspace")
+		w.log.Error(err, "Workspace Controller", "msg", "reconcile workspace")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to reconcile workspace")
 		return requeueAfter(requeueInterval)
 	}
-	r.log.Info("Workspace Controller", "msg", "successfully reconcilied workspace")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully reconcilied workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Workspace Controller", "msg", "successfully reconcilied workspace")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully reconcilied workspace ID %s", w.instance.Status.WorkspaceID)
 
 	return doNotRequeue()
 }
@@ -132,8 +138,8 @@ func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha
 	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
 }
 
-func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	token, err := r.getToken(ctx, instance)
+func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspaceInstance) error {
+	token, err := r.getToken(ctx, &w.instance)
 	if err != nil {
 		return err
 	}
@@ -141,22 +147,9 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, instance *
 	config := &tfc.Config{
 		Token: token,
 	}
-	r.tfClient.Client, err = tfc.NewClient(config)
+	w.tfClient.Client, err = tfc.NewClient(config)
 
 	return err
-}
-
-// HELPERS
-func isDeletionCandidate(instance *appv1alpha2.Workspace) bool {
-	return !instance.ObjectMeta.DeletionTimestamp.IsZero() && controllerutil.ContainsFinalizer(instance, workspaceFinalizer)
-}
-
-func isCreationCandidate(instance *appv1alpha2.Workspace) bool {
-	return instance.Status.WorkspaceID == ""
-}
-
-func needToAddFinalizer(instance *appv1alpha2.Workspace) bool {
-	return instance.ObjectMeta.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(instance, workspaceFinalizer)
 }
 
 func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Workspace) bool {
@@ -206,13 +199,13 @@ func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1a
 	return r.Update(ctx, instance)
 }
 
-func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	controllerutil.RemoveFinalizer(instance, workspaceFinalizer)
+func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, w *workspaceInstance) error {
+	controllerutil.RemoveFinalizer(&w.instance, workspaceFinalizer)
 
-	err := r.Update(ctx, instance)
+	err := r.Update(ctx, &w.instance)
 	if err != nil {
-		r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finazlier %s", workspaceFinalizer))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", workspaceFinalizer)
+		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finazlier %s", workspaceFinalizer))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", workspaceFinalizer)
 	}
 
 	return err
@@ -221,30 +214,29 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, instance *app
 // STATUS
 // TODO need to update this to update the spec with default values from TFC API
 // change this function to updateObject?
-func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
-	instance.Status.ObservedGeneration = instance.Generation
-	instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
-	instance.Status.WorkspaceID = workspace.ID
+func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+	w.instance.Status.ObservedGeneration = w.instance.Generation
+	w.instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
+	w.instance.Status.WorkspaceID = workspace.ID
 
 	if workspace.CurrentRun != nil {
-		instance.Status.Run.ID = workspace.CurrentRun.ID
-		run, err := r.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
+		w.instance.Status.Run.ID = workspace.CurrentRun.ID
+		run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
 		if err != nil {
 			return err
 		}
-		instance.Status.Run.Status = string(run.Status)
-		instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
+		w.instance.Status.Run.Status = string(run.Status)
 		if run.Status == tfc.RunApplied {
-			instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
+			w.instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
 		}
 	}
 
-	return r.Status().Update(ctx, instance)
+	return r.Status().Update(ctx, &w.instance)
 }
 
 // WORKSPACES
-func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	spec := instance.Spec
+func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) error {
+	spec := w.instance.Spec
 	options := tfc.WorkspaceCreateOptions{
 		Name:             tfc.String(spec.Name),
 		AllowDestroyPlan: tfc.Bool(spec.AllowDestroyPlan),
@@ -256,13 +248,13 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 	}
 
 	if spec.ExecutionMode == "agent" {
-		agentPoolID, err := r.getAgentPoolID(ctx, instance)
+		agentPoolID, err := r.getAgentPoolID(ctx, w)
 		if err != nil {
-			r.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
-			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
+			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
 			return err
 		}
-		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
 		options.AgentPoolID = tfc.String(agentPoolID)
 	}
 
@@ -279,45 +271,45 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, instance *app
 		options.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
 	}
 
-	workspace, err := r.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
+	workspace, err := w.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
-		r.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
-		r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
+		w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
 		return err
 	}
-	r.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", workspace.ID)
+	w.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", workspace.ID)
 
-	ws, err := r.reconcileSSHKey(ctx, instance, workspace)
+	ws, err := r.reconcileSSHKey(ctx, w, workspace)
 	if err != nil {
-		r.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
+		w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
 	} else {
-		r.log.Info("Reconcile SSH Key", "msg", "successfully assigned ssh key to the workspace")
-		r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully assigned SSH Key to the workspace with ID %s", workspace.ID)
+		w.log.Info("Reconcile SSH Key", "msg", "successfully assigned ssh key to the workspace")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully assigned SSH Key to the workspace with ID %s", workspace.ID)
 		workspace = ws
 	}
 
 	// Update status once a workspace has been successfully created
-	return r.updateStatus(ctx, instance, workspace)
+	return r.updateStatus(ctx, w, workspace)
 }
 
-func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) (*tfc.Workspace, error) {
-	return r.tfClient.Client.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
+	return w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
 }
 
-func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) (*tfc.Workspace, error) {
+func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
 	updateOptions := tfc.WorkspaceUpdateOptions{}
-	spec := instance.Spec
+	spec := w.instance.Spec
 
 	if spec.ExecutionMode == "agent" {
-		agentPoolID, err := r.getAgentPoolID(ctx, instance)
+		agentPoolID, err := r.getAgentPoolID(ctx, w)
 		if err != nil {
-			r.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
-			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
+			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
 			return nil, err
 		}
-		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
 		updateOptions.AgentPoolID = tfc.String(agentPoolID)
 	}
 
@@ -361,7 +353,7 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 	}
 
 	if spec.VersionControl == nil && workspace.VCSRepo != nil {
-		ws, err := r.tfClient.Client.Workspaces.RemoveVCSConnectionByID(ctx, workspace.ID)
+		ws, err := w.tfClient.Client.Workspaces.RemoveVCSConnectionByID(ctx, workspace.ID)
 		if err != nil {
 			return ws, err
 		}
@@ -375,152 +367,152 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, instance *app
 		updateOptions.FileTriggersEnabled = tfc.Bool(false)
 	}
 
-	return r.tfClient.Client.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, updateOptions)
+	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
 }
 
-func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
+func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceInstance) error {
 	// if the Kubernetes object doesn't have workspace ID, it means it a workspace was never created
 	// in this case, remove the finalizer and let Kubernetes remove the object permanently
-	if instance.Status.WorkspaceID == "" {
-		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("status.WorkspaceID is empty, remove finazlier %s", workspaceFinalizer))
-		return r.removeFinalizer(ctx, instance)
+	if w.instance.Status.WorkspaceID == "" {
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("status.WorkspaceID is empty, remove finazlier %s", workspaceFinalizer))
+		return r.removeFinalizer(ctx, w)
 	}
-	err := r.tfClient.Client.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)
+	err := w.tfClient.Client.Workspaces.DeleteByID(ctx, w.instance.Status.WorkspaceID)
 	if err != nil {
 		// if workspace wasn't found, it means it was deleted from the TF Cloud bypass the operator
 		// in this case, remove the finalizer and let Kubernetes remove the object permanently
 		if err == tfc.ErrResourceNotFound {
-			r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not fond, remove finazlier", workspaceFinalizer))
-			return r.removeFinalizer(ctx, instance)
+			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not fond, remove finazlier", workspaceFinalizer))
+			return r.removeFinalizer(ctx, w)
 		}
-		r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to delete Workspace ID %s, retry later", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to delete Workspace ID %s, retry later", w.instance.Status.WorkspaceID)
 		return err
 	}
 
-	r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("workspace ID %s has been deleted, remove finazlier", instance.Status.WorkspaceID))
-	return r.removeFinalizer(ctx, instance)
+	w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("workspace ID %s has been deleted, remove finazlier", w.instance.Status.WorkspaceID))
+	return r.removeFinalizer(ctx, w)
 }
 
-func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	r.log.Info("Reconcile Workspace", "msg", "reconciling workspace")
+func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspaceInstance) error {
+	w.log.Info("Reconcile Workspace", "msg", "reconciling workspace")
 
 	var workspace *tfc.Workspace
 	var err error
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the workspace
-	if isDeletionCandidate(instance) {
-		r.log.Info("Reconcile Workspace", "msg", "object marked as deleted, need to delete workspace first")
-		r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Object marked as deleted, need to delete workspace first")
-		return r.deleteWorkspace(ctx, instance)
+	if w.instance.IsDeletionCandidate(workspaceFinalizer) {
+		w.log.Info("Reconcile Workspace", "msg", "object marked as deleted, need to delete workspace first")
+		r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Object marked as deleted, need to delete workspace first")
+		return r.deleteWorkspace(ctx, w)
 	}
 
 	// create a new workspace if workspace ID is unknown(means it was never created by the controller)
 	// this condition will work just one time, when a new Kubernetes object is created
-	if isCreationCandidate(instance) {
-		r.log.Info("Reconcile Workspace", "msg", "status.WorkspaceID is empty, creating a new workspace")
-		r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Status.WorkspaceID is empty, creating a new workspace")
-		return r.createWorkspace(ctx, instance)
+	if w.instance.IsCreationCandidate() {
+		w.log.Info("Reconcile Workspace", "msg", "status.WorkspaceID is empty, creating a new workspace")
+		r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Status.WorkspaceID is empty, creating a new workspace")
+		return r.createWorkspace(ctx, w)
 	}
 
 	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
-	workspace, err = r.readWorkspace(ctx, instance)
+	workspace, err = r.readWorkspace(ctx, w)
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
 		if err == tfc.ErrResourceNotFound {
-			r.log.Info("Reconcile Workspace", "msg", "workspace not found, creating a new workspace")
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s not found, creating a new workspace", instance.Status.WorkspaceID)
-			return r.createWorkspace(ctx, instance)
+			w.log.Info("Reconcile Workspace", "msg", "workspace not found, creating a new workspace")
+			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s not found, creating a new workspace", w.instance.Status.WorkspaceID)
+			return r.createWorkspace(ctx, w)
 		} else {
-			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to read workspace ID %s", instance.Status.WorkspaceID))
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to read workspace ID %s", instance.Status.WorkspaceID)
+			w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to read workspace ID %s", w.instance.Status.WorkspaceID))
+			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to read workspace ID %s", w.instance.Status.WorkspaceID)
 			return err
 		}
 	}
 
 	// update workspace if any changes have been made in the Kubernetes object spec or Terraform Cloud workspace
-	if needToUpdateWorkspace(instance, workspace) {
-		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are not matching, need to update workspace ID %s", instance.Status.WorkspaceID))
-		workspace, err = r.updateWorkspace(ctx, instance, workspace)
+	if needToUpdateWorkspace(&w.instance, workspace) {
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are not matching, need to update workspace ID %s", w.instance.Status.WorkspaceID))
+		workspace, err = r.updateWorkspace(ctx, w, workspace)
 		if err != nil {
-			r.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to update workspace ID %s", instance.Status.WorkspaceID))
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s", instance.Status.WorkspaceID)
+			w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to update workspace ID %s", w.instance.Status.WorkspaceID))
+			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s", w.instance.Status.WorkspaceID)
 			return err
 		}
 		// reconcile SSH key
-		workspace, err = r.reconcileSSHKey(ctx, instance, workspace)
+		workspace, err = r.reconcileSSHKey(ctx, w, workspace)
 		if err != nil {
-			r.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
-			r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
+			w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
+			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
 			return err
 		} else {
-			r.log.Info("Reconcile SSH Key", "msg", "successfully reconcile ssh key")
-			r.Recorder.Event(instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully reconcile SSH Key")
+			w.log.Info("Reconcile SSH Key", "msg", "successfully reconcile ssh key")
+			r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully reconcile SSH Key")
 		}
 	} else {
-		r.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", instance.Status.WorkspaceID))
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", w.instance.Status.WorkspaceID))
 	}
 
 	// Reconcile Tags
-	err = r.reconcileTags(ctx, instance, workspace)
+	err = r.reconcileTags(ctx, w, workspace)
 	if err != nil {
-		r.log.Error(err, "Reconcile Tags", "msg", "reconcile tags")
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileTags", "Failed to reconcile tags in workspace ID %s", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Tags", "msg", "reconcile tags")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileTags", "Failed to reconcile tags in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
-	r.log.Info("Reconcile Tags", "msg", "successfully reconcilied tags")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Reconcile Tags", "msg", "successfully reconcilied tags")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Variables
-	err = r.reconcileVariables(ctx, instance, workspace)
+	err = r.reconcileVariables(ctx, w, workspace)
 	if err != nil {
-		r.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", instance.Status.WorkspaceID))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to reconcile variables in workspace ID %s", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
-	r.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Run Triggers
-	err = r.reconcileRunTriggers(ctx, instance)
+	err = r.reconcileRunTriggers(ctx, w)
 	if err != nil {
-		r.log.Error(err, "Reconcile Run Triggers", "msg", fmt.Sprintf("failed to reconcile run triggers in workspace ID %s", instance.Status.WorkspaceID))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileRunTriggers", "Failed to reconcile run triggers in workspace ID %s", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Run Triggers", "msg", fmt.Sprintf("failed to reconcile run triggers in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileRunTriggers", "Failed to reconcile run triggers in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
-	r.log.Info("Reconcile Run Triggers", "msg", "successfully reconcilied run triggers")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileRunTriggers", "Reconcilied run triggers in workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Reconcile Run Triggers", "msg", "successfully reconcilied run triggers")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRunTriggers", "Reconcilied run triggers in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Outputs
-	err = r.reconcileOutputs(ctx, instance, workspace)
+	err = r.reconcileOutputs(ctx, w, workspace)
 	if err != nil {
-		r.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
-	r.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Team Access
-	err = r.reconcileTeamAccess(ctx, instance, workspace)
+	err = r.reconcileTeamAccess(ctx, w, workspace)
 	if err != nil {
-		r.log.Error(err, "Reconcile Team Access", "msg", fmt.Sprintf("failed to reconcile team access in workspace ID %s", instance.Status.WorkspaceID))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileTeamAccess", "Failed to reconcile team access in workspace ID %s", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Team Access", "msg", fmt.Sprintf("failed to reconcile team access in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileTeamAccess", "Failed to reconcile team access in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
-	r.log.Info("Reconcile Team Access", "msg", "successfully reconcilied team access")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileTeamAccess", "Reconcilied team access in workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Reconcile Team Access", "msg", "successfully reconcilied team access")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileTeamAccess", "Reconcilied team access in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Remote State Sharing
-	err = r.reconcileRemoteStateSharing(ctx, instance)
+	err = r.reconcileRemoteStateSharing(ctx, w)
 	if err != nil {
-		r.log.Error(err, "Reconcile Remote State Sharing", "msg", fmt.Sprintf("failed to reconcile remote state sharing in workspace ID %s", instance.Status.WorkspaceID))
-		r.Recorder.Eventf(instance, corev1.EventTypeWarning, "ReconcileRemoteStateSharing", "Failed to reconcile remote state sharing in workspace ID %s", instance.Status.WorkspaceID)
+		w.log.Error(err, "Reconcile Remote State Sharing", "msg", fmt.Sprintf("failed to reconcile remote state sharing in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileRemoteStateSharing", "Failed to reconcile remote state sharing in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
-	r.log.Info("Reconcile Remote State Sharing", "msg", "successfully reconcilied remote state sharing")
-	r.Recorder.Eventf(instance, corev1.EventTypeNormal, "ReconcileRemoteStateSharing", "Reconcilied remote state sharing in workspace ID %s", instance.Status.WorkspaceID)
+	w.log.Info("Reconcile Remote State Sharing", "msg", "successfully reconcilied remote state sharing")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRemoteStateSharing", "Reconcilied remote state sharing in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Update status once a workspace has been successfully updated
-	return r.updateStatus(ctx, instance, workspace)
+	return r.updateStatus(ctx, w, workspace)
 }
