@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -17,6 +19,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
@@ -49,6 +52,8 @@ func main() {
 	var syncPeriod time.Duration
 	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
+	var watchNamespaces cliNamespaces
+	flag.Var(&watchNamespaces, "namespace", "Namespace to watch")
 	// OPERATOR OPRTIONS
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
@@ -90,6 +95,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if len(watchNamespaces) != 0 {
+		setupLog.Info("Watching namespaces: " + strings.Join(watchNamespaces, " "))
+		options.NewCache = cache.MultiNamespacedCacheBuilder(watchNamespaces)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
@@ -129,4 +138,23 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+type cliNamespaces []string
+
+func (n *cliNamespaces) String() string {
+	return strings.Join(*n, ",")
+}
+
+func (n *cliNamespaces) Set(s string) error {
+	if len(s) == 0 {
+		return fmt.Errorf("namespace cannot be empty")
+	}
+	for _, v := range *n {
+		if v == s {
+			return nil
+		}
+	}
+	*n = append(*n, s)
+	return nil
 }
