@@ -26,6 +26,9 @@ spec:
           - --config=controller_manager_config.yaml
           - --sync-period={{ .Values.operator.syncPeriod }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
+          {{- range .Values.operator.watchedNamespaces }}
+          - --namespace={{ . }}
+          {{- end }}
           command:
           - /manager
           livenessProbe:
