@@ -89,9 +89,9 @@ func varDifference(a, b map[string]tfc.Variable) map[string]tfc.Variable {
 	return variables
 }
 
-func (r *WorkspaceReconciler) createWorkspaceVariables(ctx context.Context, instance *appv1alpha2.Workspace, variables map[string]tfc.Variable, category tfc.CategoryType) error {
+func (r *WorkspaceReconciler) createWorkspaceVariables(ctx context.Context, w *workspaceInstance, variables map[string]tfc.Variable, category tfc.CategoryType) error {
 	for _, v := range variables {
-		_, err := r.tfClient.Client.Variables.Create(ctx, instance.Status.WorkspaceID, tfc.VariableCreateOptions{
+		_, err := w.tfClient.Client.Variables.Create(ctx, w.instance.Status.WorkspaceID, tfc.VariableCreateOptions{
 			Key:         &v.Key,
 			Description: &v.Description,
 			Value:       &v.Value,
@@ -108,17 +108,17 @@ func (r *WorkspaceReconciler) createWorkspaceVariables(ctx context.Context, inst
 }
 
 // getWorkspaceVariables returns a list of all variables associated with the workspace.
-func (r *WorkspaceReconciler) getWorkspaceVariables(ctx context.Context, instance *appv1alpha2.Workspace) ([]*tfc.Variable, error) {
-	v, err := r.tfClient.Client.Variables.List(ctx, instance.Status.WorkspaceID, &tfc.VariableListOptions{})
+func (r *WorkspaceReconciler) getWorkspaceVariables(ctx context.Context, w *workspaceInstance) ([]*tfc.Variable, error) {
+	v, err := w.tfClient.Client.Variables.List(ctx, w.instance.Status.WorkspaceID, &tfc.VariableListOptions{})
 	if err != nil {
 		return []*tfc.Variable{}, err
 	}
 	return v.Items, nil
 }
 
-func (r *WorkspaceReconciler) updateWorkspaceVariables(ctx context.Context, instance *appv1alpha2.Workspace, variables map[string]tfc.Variable) error {
+func (r *WorkspaceReconciler) updateWorkspaceVariables(ctx context.Context, w *workspaceInstance, variables map[string]tfc.Variable) error {
 	for _, v := range variables {
-		_, err := r.tfClient.Client.Variables.Update(ctx, instance.Status.WorkspaceID, v.ID, tfc.VariableUpdateOptions{
+		_, err := w.tfClient.Client.Variables.Update(ctx, w.instance.Status.WorkspaceID, v.ID, tfc.VariableUpdateOptions{
 			Key:         &v.Key,
 			Description: &v.Description,
 			Value:       &v.Value,
@@ -136,12 +136,12 @@ func (r *WorkspaceReconciler) updateWorkspaceVariables(ctx context.Context, inst
 
 // updateWorkspaceSensitiveVariables treats a special case when the attribute 'Sensitive' of the variable changed from 'true' to 'false'.
 // In this case, we have to delete the variable and create a new one.
-func (r *WorkspaceReconciler) updateWorkspaceSensitiveVariables(ctx context.Context, instance *appv1alpha2.Workspace, variables map[string]tfc.Variable, category tfc.CategoryType) error {
-	err := r.deleteWorkspaceVariables(ctx, instance.Status.WorkspaceID, variables)
+func (r *WorkspaceReconciler) updateWorkspaceSensitiveVariables(ctx context.Context, w *workspaceInstance, variables map[string]tfc.Variable, category tfc.CategoryType) error {
+	err := r.deleteWorkspaceVariables(ctx, w, variables)
 	if err != nil {
 		return err
 	}
-	err = r.createWorkspaceVariables(ctx, instance, variables, category)
+	err = r.createWorkspaceVariables(ctx, w, variables, category)
 	if err != nil {
 		return err
 	}
@@ -149,9 +149,10 @@ func (r *WorkspaceReconciler) updateWorkspaceSensitiveVariables(ctx context.Cont
 	return nil
 }
 
-func (r *WorkspaceReconciler) deleteWorkspaceVariables(ctx context.Context, workspaceID string, variables map[string]tfc.Variable) error {
+func (r *WorkspaceReconciler) deleteWorkspaceVariables(ctx context.Context, w *workspaceInstance, variables map[string]tfc.Variable) error {
+	workspaceID := w.instance.Status.WorkspaceID
 	for _, v := range variables {
-		err := r.tfClient.Client.Variables.Delete(ctx, workspaceID, v.ID)
+		err := w.tfClient.Client.Variables.Delete(ctx, workspaceID, v.ID)
 		if err != nil {
 			return err
 		}
@@ -195,14 +196,14 @@ func (r *WorkspaceReconciler) getValueFrom(ctx context.Context, instance *appv1a
 }
 
 // getVariablesByCategory returns a map of all instance variables by type.
-func (r *WorkspaceReconciler) getVariablesByCategory(ctx context.Context, instance *appv1alpha2.Workspace, category tfc.CategoryType) map[string]tfc.Variable {
+func (r *WorkspaceReconciler) getVariablesByCategory(ctx context.Context, w *workspaceInstance, category tfc.CategoryType) map[string]tfc.Variable {
 	variables := make(map[string]tfc.Variable)
 	var instanceVariables []appv1alpha2.Variable
 	switch category {
 	case tfc.CategoryEnv:
-		instanceVariables = instance.Spec.EnvironmentVariables
+		instanceVariables = w.instance.Spec.EnvironmentVariables
 	case tfc.CategoryTerraform:
-		instanceVariables = instance.Spec.TerraformVariables
+		instanceVariables = w.instance.Spec.TerraformVariables
 	}
 
 	if len(instanceVariables) == 0 {
@@ -213,10 +214,10 @@ func (r *WorkspaceReconciler) getVariablesByCategory(ctx context.Context, instan
 		var err error
 		value := v.Value
 		if v.ValueFrom != nil {
-			value, err = r.getValueFrom(ctx, instance, v.ValueFrom)
+			value, err = r.getValueFrom(ctx, &w.instance, v.ValueFrom)
 			if err != nil {
-				r.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to get value for the variable %s", v.Name))
-				r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to get value for a variable")
+				w.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to get value for the variable %s", v.Name))
+				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to get value for a variable")
 				continue
 			}
 		}
@@ -255,15 +256,15 @@ func getWorkspaceVariablesByCategory(workspaceVariables []*tfc.Variable, categor
 	return variables
 }
 
-func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, instance *appv1alpha2.Workspace, variables []*tfc.Variable, category tfc.CategoryType) error {
-	workspaceID := instance.Status.WorkspaceID
-	instanceVariables := r.getVariablesByCategory(ctx, instance, category)
+func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, w *workspaceInstance, variables []*tfc.Variable, category tfc.CategoryType) error {
+	workspaceID := w.instance.Status.WorkspaceID
+	instanceVariables := r.getVariablesByCategory(ctx, w, category)
 	workspaceVariables := getWorkspaceVariablesByCategory(variables, category)
 
 	daleteVariables := getVariablesToDelete(instanceVariables, workspaceVariables)
 	if len(daleteVariables) > 0 {
-		r.log.Info("Reconcile Variables", "msg", fmt.Sprintf("deleting %d %s variables from the workspace ID %s", len(daleteVariables), category, workspaceID))
-		err := r.deleteWorkspaceVariables(ctx, workspaceID, daleteVariables)
+		w.log.Info("Reconcile Variables", "msg", fmt.Sprintf("deleting %d %s variables from the workspace ID %s", len(daleteVariables), category, workspaceID))
+		err := r.deleteWorkspaceVariables(ctx, w, daleteVariables)
 		if err != nil {
 			return err
 		}
@@ -271,8 +272,8 @@ func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, 
 
 	createVariables := getVariablesToCreate(instanceVariables, workspaceVariables)
 	if len(createVariables) > 0 {
-		r.log.Info("Reconcile Variables", "msg", fmt.Sprintf("creating %d new %s variables to the workspace ID %s", len(createVariables), category, workspaceID))
-		err := r.createWorkspaceVariables(ctx, instance, createVariables, category)
+		w.log.Info("Reconcile Variables", "msg", fmt.Sprintf("creating %d new %s variables to the workspace ID %s", len(createVariables), category, workspaceID))
+		err := r.createWorkspaceVariables(ctx, w, createVariables, category)
 		if err != nil {
 			return err
 		}
@@ -280,8 +281,8 @@ func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, 
 
 	updateVariables := getVariablesToUpdate(instanceVariables, workspaceVariables)
 	if len(updateVariables) > 0 {
-		r.log.Info("Reconcile Variables", "msg", fmt.Sprintf("updating %d %s variables in the workspace ID %s", len(updateVariables), category, workspaceID))
-		err := r.updateWorkspaceVariables(ctx, instance, updateVariables)
+		w.log.Info("Reconcile Variables", "msg", fmt.Sprintf("updating %d %s variables in the workspace ID %s", len(updateVariables), category, workspaceID))
+		err := r.updateWorkspaceVariables(ctx, w, updateVariables)
 		if err != nil {
 			return err
 		}
@@ -289,8 +290,8 @@ func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, 
 
 	recreateVariables := getVariablesRequiringRecreate(instanceVariables, workspaceVariables)
 	if len(recreateVariables) > 0 {
-		r.log.Info("Reconcile Variables", "msg", fmt.Sprintf("making %d %s variables no sensitive in the workspace ID %s", len(recreateVariables), category, workspaceID))
-		err := r.updateWorkspaceSensitiveVariables(ctx, instance, recreateVariables, category)
+		w.log.Info("Reconcile Variables", "msg", fmt.Sprintf("making %d %s variables no sensitive in the workspace ID %s", len(recreateVariables), category, workspaceID))
+		err := r.updateWorkspaceSensitiveVariables(ctx, w, recreateVariables, category)
 		if err != nil {
 			return err
 		}
@@ -299,21 +300,21 @@ func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, 
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileVariables(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
-	r.log.Info("Reconcile Variables", "msg", "new reconciliation event")
+func (r *WorkspaceReconciler) reconcileVariables(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+	w.log.Info("Reconcile Variables", "msg", "new reconciliation event")
 
-	workspaceVariables, err := r.getWorkspaceVariables(ctx, instance)
+	workspaceVariables, err := r.getWorkspaceVariables(ctx, w)
 	if err != nil {
 		return err
 	}
 
 	// Reconcilt Terraform Variables
-	if err = r.reconcileVariablesByCategory(ctx, instance, workspaceVariables, tfc.CategoryTerraform); err != nil {
+	if err = r.reconcileVariablesByCategory(ctx, w, workspaceVariables, tfc.CategoryTerraform); err != nil {
 		return err
 	}
 
 	// Reconcilt Environment Variables
-	if err = r.reconcileVariablesByCategory(ctx, instance, workspaceVariables, tfc.CategoryEnv); err != nil {
+	if err = r.reconcileVariablesByCategory(ctx, w, workspaceVariables, tfc.CategoryEnv); err != nil {
 		return err
 	}
 

@@ -66,33 +66,33 @@ func tagDifference(leftTags, rightTags map[string]bool) []*tfc.Tag {
 }
 
 // addWorkspaceTags adds tags to workspace
-func (r *WorkspaceReconciler) addWorkspaceTags(ctx context.Context, instance *appv1alpha2.Workspace, tags []*tfc.Tag) error {
+func (r *WorkspaceReconciler) addWorkspaceTags(ctx context.Context, w *workspaceInstance, tags []*tfc.Tag) error {
 	if len(tags) == 0 {
 		return nil
 	}
 
-	return r.tfClient.Client.Workspaces.AddTags(ctx, instance.Status.WorkspaceID, tfc.WorkspaceAddTagsOptions{Tags: tags})
+	return w.tfClient.Client.Workspaces.AddTags(ctx, w.instance.Status.WorkspaceID, tfc.WorkspaceAddTagsOptions{Tags: tags})
 }
 
 // removeWorkspaceTags removes tags from workspace
-func (r *WorkspaceReconciler) removeWorkspaceTags(ctx context.Context, instance *appv1alpha2.Workspace, tags []*tfc.Tag) error {
+func (r *WorkspaceReconciler) removeWorkspaceTags(ctx context.Context, w *workspaceInstance, tags []*tfc.Tag) error {
 	if len(tags) == 0 {
 		return nil
 	}
 
-	return r.tfClient.Client.Workspaces.RemoveTags(ctx, instance.Status.WorkspaceID, tfc.WorkspaceRemoveTagsOptions{Tags: tags})
+	return w.tfClient.Client.Workspaces.RemoveTags(ctx, w.instance.Status.WorkspaceID, tfc.WorkspaceRemoveTagsOptions{Tags: tags})
 }
 
-func (r *WorkspaceReconciler) reconcileTags(ctx context.Context, instance *appv1alpha2.Workspace, workspace *tfc.Workspace) error {
-	r.log.Info("Reconcile Tags", "msg", "new reconciliation event")
+func (r *WorkspaceReconciler) reconcileTags(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+	w.log.Info("Reconcile Tags", "msg", "new reconciliation event")
 
-	instanceTags := getTags(instance)
+	instanceTags := getTags(&w.instance)
 	workspaceTags := getWorkspaceTags(workspace)
 
 	removeTags := getTagsToRemove(instanceTags, workspaceTags)
 	if len(removeTags) > 0 {
-		r.log.Info("Reconcile Tags", "msg", "removing tags from the workspace")
-		err := r.removeWorkspaceTags(ctx, instance, removeTags)
+		w.log.Info("Reconcile Tags", "msg", "removing tags from the workspace")
+		err := r.removeWorkspaceTags(ctx, w, removeTags)
 		if err != nil {
 			return err
 		}
@@ -100,8 +100,8 @@ func (r *WorkspaceReconciler) reconcileTags(ctx context.Context, instance *appv1
 
 	addTags := getTagsToAdd(instanceTags, workspaceTags)
 	if len(addTags) > 0 {
-		r.log.Info("Reconcile Tags", "msg", "adding tags from the workspace")
-		err := r.addWorkspaceTags(ctx, instance, addTags)
+		w.log.Info("Reconcile Tags", "msg", "adding tags from the workspace")
+		err := r.addWorkspaceTags(ctx, w, addTags)
 		if err != nil {
 			return err
 		}

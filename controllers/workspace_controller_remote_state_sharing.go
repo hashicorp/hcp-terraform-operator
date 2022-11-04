@@ -9,8 +9,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (r *WorkspaceReconciler) getWorkspaces(ctx context.Context, organization string) (map[string]string, error) {
-	ws, err := r.tfClient.Client.Workspaces.List(ctx, organization, &tfc.WorkspaceListOptions{})
+func (r *WorkspaceReconciler) getWorkspaces(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
+	ws, err := w.tfClient.Client.Workspaces.List(ctx, w.instance.Spec.Organization, &tfc.WorkspaceListOptions{})
 	if err != nil {
 		return map[string]string{}, err
 	}
@@ -42,23 +42,23 @@ func getWorkspaceID(workspaces map[string]string, instanceWorkspace *appv1alpha2
 	return "", errors.New("workspace ID not found")
 }
 
-func (r *WorkspaceReconciler) getInstanceRemoteStateSharing(ctx context.Context, instance *appv1alpha2.Workspace) ([]*tfc.Workspace, error) {
+func (r *WorkspaceReconciler) getInstanceRemoteStateSharing(ctx context.Context, w *workspaceInstance) ([]*tfc.Workspace, error) {
 	iw := []*tfc.Workspace{}
 
-	if len(instance.Spec.RemoteStateSharing.Workspaces) == 0 {
+	if len(w.instance.Spec.RemoteStateSharing.Workspaces) == 0 {
 		return iw, nil
 	}
 
-	workspaces, err := r.getWorkspaces(ctx, instance.Spec.Organization)
+	workspaces, err := r.getWorkspaces(ctx, w)
 	if err != nil {
 		return iw, err
 	}
 
-	for _, w := range instance.Spec.RemoteStateSharing.Workspaces {
-		wID, err := getWorkspaceID(workspaces, w)
+	for _, workspace := range w.instance.Spec.RemoteStateSharing.Workspaces {
+		wID, err := getWorkspaceID(workspaces, workspace)
 		if err != nil {
-			r.log.Error(err, "Reconcile Remote State Sharing", "msg", "failed to get workspace ID")
-			r.Recorder.Event(instance, corev1.EventTypeWarning, "ReconcileRemoteStateSharing", "Failed to get workspace ID")
+			w.log.Error(err, "Reconcile Remote State Sharing", "msg", "failed to get workspace ID")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileRemoteStateSharing", "Failed to get workspace ID")
 			return iw, err
 		}
 		iw = append(iw, &tfc.Workspace{ID: wID})
@@ -67,21 +67,21 @@ func (r *WorkspaceReconciler) getInstanceRemoteStateSharing(ctx context.Context,
 	return iw, nil
 }
 
-func (r *WorkspaceReconciler) reconcileRemoteStateSharing(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	r.log.Info("Reconcile Remote State Sharing", "msg", "new reconciliation event")
+func (r *WorkspaceReconciler) reconcileRemoteStateSharing(ctx context.Context, w *workspaceInstance) error {
+	w.log.Info("Reconcile Remote State Sharing", "msg", "new reconciliation event")
 
-	if instance.Spec.RemoteStateSharing == nil {
+	if w.instance.Spec.RemoteStateSharing == nil {
 		return nil
 	}
 
-	instanceRemoteStateSharing, err := r.getInstanceRemoteStateSharing(ctx, instance)
+	instanceRemoteStateSharing, err := r.getInstanceRemoteStateSharing(ctx, w)
 	if err != nil {
-		r.log.Error(err, "Reconcile Remote State Sharing", "msg", "failed to get instance remote state sharing workspace sources")
+		w.log.Error(err, "Reconcile Remote State Sharing", "msg", "failed to get instance remote state sharing workspace sources")
 		return err
 	}
 
 	if len(instanceRemoteStateSharing) > 0 {
-		err = r.tfClient.Client.Workspaces.UpdateRemoteStateConsumers(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateRemoteStateConsumersOptions{
+		err = w.tfClient.Client.Workspaces.UpdateRemoteStateConsumers(ctx, w.instance.Status.WorkspaceID, tfc.WorkspaceUpdateRemoteStateConsumersOptions{
 			Workspaces: instanceRemoteStateSharing,
 		})
 		if err != nil {

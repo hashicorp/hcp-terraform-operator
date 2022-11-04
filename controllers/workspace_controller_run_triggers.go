@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, instance *appv1alpha2.Workspace) (map[string]string, error) {
+func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
 	runTriggersIDs := make(map[string]string)
 	runTriggersNames := []string{}
 
-	for _, rt := range instance.Spec.RunTriggers {
+	for _, rt := range w.instance.Spec.RunTriggers {
 		if rt.Name != "" {
 			runTriggersNames = append(runTriggersNames, rt.Name)
 		}
@@ -26,7 +25,7 @@ func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, instanc
 	}
 
 	// Get Workspace IDs for the Run Triggers that we passed by Name
-	workspaces, err := r.tfClient.Client.Workspaces.List(ctx, instance.Spec.Organization, &tfc.WorkspaceListOptions{})
+	workspaces, err := w.tfClient.Client.Workspaces.List(ctx, w.instance.Spec.Organization, &tfc.WorkspaceListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +45,8 @@ func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, instanc
 	return runTriggersIDs, nil
 }
 
-func (r *WorkspaceReconciler) getRunTriggersWorkspace(ctx context.Context, instance *appv1alpha2.Workspace) (map[string]string, error) {
-	runTriggers, err := r.tfClient.Client.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
+func (r *WorkspaceReconciler) getRunTriggersWorkspace(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
+	runTriggers, err := w.tfClient.Client.RunTriggers.List(ctx, w.instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
 		RunTriggerType: tfc.RunTriggerInbound,
 		Include:        []tfc.RunTriggerIncludeOpt{tfc.RunTriggerSourceable},
 	})
@@ -83,14 +82,14 @@ func workspaceDifference(leftWorkspace, rightWorkspace map[string]string) map[st
 	return d
 }
 
-func (r *WorkspaceReconciler) addRunTriggers(ctx context.Context, instance *appv1alpha2.Workspace, workspaces map[string]string) error {
+func (r *WorkspaceReconciler) addRunTriggers(ctx context.Context, w *workspaceInstance, workspaces map[string]string) error {
 	if len(workspaces) == 0 {
 		return nil
 	}
 
-	for w := range workspaces {
-		_, err := r.tfClient.Client.RunTriggers.Create(ctx, instance.Status.WorkspaceID, tfc.RunTriggerCreateOptions{
-			Sourceable: &tfc.Workspace{ID: w},
+	for workspace := range workspaces {
+		_, err := w.tfClient.Client.RunTriggers.Create(ctx, w.instance.Status.WorkspaceID, tfc.RunTriggerCreateOptions{
+			Sourceable: &tfc.Workspace{ID: workspace},
 		})
 		if err != nil {
 			return err
@@ -100,13 +99,13 @@ func (r *WorkspaceReconciler) addRunTriggers(ctx context.Context, instance *appv
 	return nil
 }
 
-func (r *WorkspaceReconciler) removeRunTriggers(ctx context.Context, instance *appv1alpha2.Workspace, workspaces map[string]string) error {
+func (r *WorkspaceReconciler) removeRunTriggers(ctx context.Context, w *workspaceInstance, workspaces map[string]string) error {
 	if len(workspaces) == 0 {
 		return nil
 	}
 
-	for _, w := range workspaces {
-		err := r.tfClient.Client.RunTriggers.Delete(ctx, w)
+	for _, workspace := range workspaces {
+		err := w.tfClient.Client.RunTriggers.Delete(ctx, workspace)
 		if err != nil {
 			return err
 		}
@@ -115,22 +114,22 @@ func (r *WorkspaceReconciler) removeRunTriggers(ctx context.Context, instance *a
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileRunTriggers(ctx context.Context, instance *appv1alpha2.Workspace) error {
-	r.log.Info("Reconcile Run Triggers", "msg", "new reconciliation event")
+func (r *WorkspaceReconciler) reconcileRunTriggers(ctx context.Context, w *workspaceInstance) error {
+	w.log.Info("Reconcile Run Triggers", "msg", "new reconciliation event")
 
-	instanceRunTriggers, err := r.getRunTriggersSources(ctx, instance)
+	instanceRunTriggers, err := r.getRunTriggersSources(ctx, w)
 	if err != nil {
 		return nil
 	}
-	workspaceRunTriggers, err := r.getRunTriggersWorkspace(ctx, instance)
+	workspaceRunTriggers, err := r.getRunTriggersWorkspace(ctx, w)
 	if err != nil {
 		return nil
 	}
 
 	addWorkspaces := getWorkspacesToAdd(instanceRunTriggers, workspaceRunTriggers)
 	if len(addWorkspaces) > 0 {
-		r.log.Info("Reconcile Run Triggers", "msg", "adding run triggers workspaces to the workspace")
-		err = r.addRunTriggers(ctx, instance, addWorkspaces)
+		w.log.Info("Reconcile Run Triggers", "msg", "adding run triggers workspaces to the workspace")
+		err = r.addRunTriggers(ctx, w, addWorkspaces)
 		if err != nil {
 			return err
 		}
@@ -138,8 +137,8 @@ func (r *WorkspaceReconciler) reconcileRunTriggers(ctx context.Context, instance
 
 	deleteWorkspaces := getWorkspacesToDelete(instanceRunTriggers, workspaceRunTriggers)
 	if len(deleteWorkspaces) > 0 {
-		r.log.Info("Reconcile Run Triggers", "msg", "deleting run triggers workspaces from the workspace")
-		err = r.removeRunTriggers(ctx, instance, deleteWorkspaces)
+		w.log.Info("Reconcile Run Triggers", "msg", "deleting run triggers workspaces from the workspace")
+		err = r.removeRunTriggers(ctx, w, deleteWorkspaces)
 		if err != nil {
 			return err
 		}

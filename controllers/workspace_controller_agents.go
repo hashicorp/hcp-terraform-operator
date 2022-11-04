@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
-
 	tfc "github.com/hashicorp/go-tfe"
 )
 
-func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
-	agentPoolName := instance.Spec.AgentPool.Name
+func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, w *workspaceInstance) (string, error) {
+	agentPoolName := w.instance.Spec.AgentPool.Name
 
-	agentPoolIDs, err := r.tfClient.Client.AgentPools.List(ctx, instance.Spec.Organization, &tfc.AgentPoolListOptions{
+	agentPoolIDs, err := w.tfClient.Client.AgentPools.List(ctx, w.instance.Spec.Organization, &tfc.AgentPoolListOptions{
 		Query: agentPoolName,
 	})
 	if err != nil {
@@ -28,14 +26,14 @@ func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, instance
 	return "", fmt.Errorf("agent pool ID not found for agent pool name %q", agentPoolName)
 }
 
-func (r *WorkspaceReconciler) getAgentPoolID(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
-	specAgentPool := instance.Spec.AgentPool
+func (r *WorkspaceReconciler) getAgentPoolID(ctx context.Context, w *workspaceInstance) (string, error) {
+	specAgentPool := w.instance.Spec.AgentPool
 
 	if specAgentPool.Name != "" {
-		r.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID by name")
-		return r.getAgentPoolIDByName(ctx, instance)
+		w.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID by name")
+		return r.getAgentPoolIDByName(ctx, w)
 	}
 
-	r.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID from the spec.AgentPool.ID")
+	w.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID from the spec.AgentPool.ID")
 	return specAgentPool.ID, nil
 }
