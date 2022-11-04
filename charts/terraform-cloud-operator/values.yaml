@@ -20,7 +20,7 @@ operator:
   syncPeriod: "5m"
 
   # List of namespaces the controllers should monitor
-  watchedNamespaces:
+  watchedNamespaces: []
 
 # Controllers-specific options.
 controllers:
