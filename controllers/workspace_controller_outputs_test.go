@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"time"
@@ -13,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	slug "github.com/hashicorp/go-slug"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
@@ -26,7 +24,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	BeforeAll(func() {
 		// Set default Eventually timers
-		SetDefaultEventuallyTimeout(90 * time.Second)
+		SetDefaultEventuallyTimeout(120 * time.Second)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
@@ -92,20 +90,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Save the Terraform code to the temporary file
 			_, err = f.WriteString(tf)
 			Expect(err).Should(Succeed())
-			// Make a new slug
-			b := bytes.NewBuffer(nil)
-			_, err = slug.Pack(td, b, false)
-			Expect(err).Should(Succeed())
-			// Create a temporry archive file to store the slug
-			tgz, err := os.CreateTemp(td, "*.tar.gz")
-			Expect(err).Should(Succeed())
-			defer os.Remove(tgz.Name())
-			// Write slug to the archive
-			_, err = tgz.Write(b.Bytes())
-			Expect(err).Should(Succeed())
 
 			// Enable AutoApply to automatically apply the code that will be uploaded
-			_, err = tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{AutoApply: tfc.Bool(true)})
+			_, err = tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
+				AutoApply: tfc.Bool(true),
+			})
 			Expect(err).Should(Succeed())
 
 			cv, err := tfClient.ConfigurationVersions.Create(ctx, instance.Status.WorkspaceID, tfc.ConfigurationVersionCreateOptions{})

@@ -34,20 +34,18 @@ type WorkspaceReconciler struct {
 	tfClient TerraformCloudClient
 }
 
-//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
-//+kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
-//+kubebuilder:rbac:groups="",resources=configmap,verbs=create;list;watch
+// +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
+// +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=create;list;watch
 
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.log = log.Log.WithValues("workspace", req.NamespacedName)
-
 	r.log.Info("Workspace Controller", "msg", "new reconciliation event")
 
 	instance := &appv1alpha2.Workspace{}
-
 	err := r.Client.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		// 'Not found' error occurs when an object is removed from the Kubernetes
@@ -229,13 +227,13 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, instance *appv1a
 	instance.Status.WorkspaceID = workspace.ID
 
 	if workspace.CurrentRun != nil {
-		instance.Status.Run.CurrentRunID = workspace.CurrentRun.ID
+		instance.Status.Run.ID = workspace.CurrentRun.ID
 		run, err := r.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
 		if err != nil {
 			return err
 		}
-		instance.Status.Run.CurrentRunStatus = string(run.Status)
-
+		instance.Status.Run.Status = string(run.Status)
+		instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
 		if run.Status == tfc.RunApplied {
 			instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
 		}

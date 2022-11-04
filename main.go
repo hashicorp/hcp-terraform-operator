@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"github.com/go-logr/zapr"
+
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"github.com/hashicorp/terraform-cloud-operator/controllers"
 	//+kubebuilder:scaffold:imports
@@ -48,10 +49,13 @@ func main() {
 	var syncPeriod time.Duration
 	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
-	// WORKSPACE CONTROLLER OPRTIONS
+	// OPERATOR OPRTIONS
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
 		"The number of the workspace controller workers.")
+	var moduleWorkers int
+	flag.IntVar(&moduleWorkers, "module-workers", 1,
+		"The number of the module controller workers.")
 
 	flag.Parse()
 
@@ -73,6 +77,7 @@ func main() {
 		Controller: v1alpha1.ControllerConfigurationSpec{
 			GroupKindConcurrency: map[string]int{
 				"Workspace.app.terraform.io": workspaceWorkers,
+				"Module.app.terraform.io":    moduleWorkers,
 			},
 		},
 		Scheme:     scheme,
@@ -98,6 +103,14 @@ func main() {
 		Recorder: mgr.GetEventRecorderFor("WorkspaceController"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
+		os.Exit(1)
+	}
+	if err = (&controllers.ModuleReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("ModuleController"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Module")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

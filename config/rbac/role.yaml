@@ -8,7 +8,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - configmap
+  - configmaps
   verbs:
   - create
   - list
@@ -28,6 +28,32 @@ rules:
   - create
   - list
   - watch
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - modules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - modules/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - modules/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - app.terraform.io
   resources:
