@@ -205,19 +205,24 @@ helm install \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
+  --set 'operator.watchedNamespaces={white,blue,red}' \
   --set controllers.module.workers=5 \
   --set controllers.workspace.workers=5
 ```
+
+In this example, the Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `red`, and `blue`.
 
 ### Upgrade with options
 ```
 helm upgrade \
   demo hashicorp/terraform-cloud-operator \
+  --namespace tfc-operator-system \
   --set operator.syncPeriod=5m \
-  --set 'operator.watchedNamespaces={white,blue,red}' \
   --set controllers.module.workers=10 \
   --set controllers.workspace.workers=20
 ```
+
+In this example, the Operator will watch all namespaces in the Kubernetes cluster.
 
 ## Troubleshooting
 
