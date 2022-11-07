@@ -35,7 +35,7 @@ The operator provides Helm charts as a first-class method of installation on Kub
 
 ### Prerequisites
 
-- The Operator requires to provide it with the Terraform Cloud [organization](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations) name and the [token](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens) to access the Terraform Cloud API.
+- The Operator requires a Terraform Cloud [organization](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations) name and a [token](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens) in order to access the Terraform Cloud API.
 - The API token must be stored in a Kubernetes secret.
 - A single instance of the Operator can manage Terraform Cloud resources for different organizations and/or different API tokens. For that purpose, the organization name and a reference to the corresponding Kubernetes secret are shipped within the custom resource.
 
