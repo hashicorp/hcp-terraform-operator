@@ -2,14 +2,14 @@
 
 Kubernetes Operator allows managing Terraform Cloud resources via Kubernetes Custom Resources.
 
-The Operator consists of the following controllers:
+The Operator can manage the following types of resources:
 
 - `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 
 ## Installation
 
-The operator provides Helm charts as a first-class method of installation on Kubernetes.
+The Operator provides Helm charts as a first-class method of installation on Kubernetes.
 
 ### Steps
 
@@ -210,7 +210,7 @@ helm install \
   --set controllers.workspace.workers=5
 ```
 
-In this example, the Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `red`, and `blue`.
+In this example, the Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `blue`, and `red`.
 
 ### Upgrade with options
 ```
