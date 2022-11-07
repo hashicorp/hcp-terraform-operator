@@ -134,7 +134,7 @@ spec:
       key: token
   destroyOnDeletion: true
   module:
-    source: app.terraform.io/strategic-integrations/module-random/provider
+    source: app.terraform.io/kubernetes-operator/module-random/provider
     version: 0.0.5
   variables:
   - name: counter
@@ -152,7 +152,7 @@ The above CR will be transformed to the following terraform code and then execut
 variable "counter" {}
 
 module "this" {
-  source  = "app.terraform.io/strategic-integrations/module-random/provider"
+  source  = "app.terraform.io/kubernetes-operator/module-random/provider"
   version = "0.0.5"
 
   counter = var.counter
