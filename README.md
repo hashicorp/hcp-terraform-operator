@@ -19,7 +19,7 @@ The Operator provides Helm charts as a first-class method of installation on Kub
 
 1. Add the Helm repository
     ```
-    helm repo add tfc-operator https://helm.releases.hashicorp.com
+    helm repo add hashicorp https://helm.releases.hashicorp.com
     ```
 
 2. Update your local Helm chart repository cache
