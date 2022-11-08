@@ -4,6 +4,9 @@
 
 # Kubernetes Operator for Terraform Cloud
 
+> **Warning**
+> Please note that this is a beta version still undergoing final testing before the official release.
+
 Kubernetes Operator allows managing Terraform Cloud resources via Kubernetes Custom Resources.
 
 The Operator can manage the following types of resources:
