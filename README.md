@@ -20,7 +20,7 @@ Welcome to the `v2-beta` version of the Kubernetes Operator for Terraform Cloud 
 
 We are still working on finalizing the project's life-cycle processes and thus we ask you to use the following instructions to install and upgrade the Helm chart for the Operator beta. The rest instructions remain valid.
 
-Please, take into account the beta stage of this project and avoid using it in your production or critical environment.
+Please, take into account the beta stage of this project and DO NOT use it in your production or critical environment. It has not been "battle tested" yet.
 
 We deeply appreciate everyone who is participating in the Operator beta and looking forward to hearing your feedback.
 
