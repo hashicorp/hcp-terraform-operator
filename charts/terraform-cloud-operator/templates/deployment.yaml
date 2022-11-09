@@ -25,6 +25,7 @@ spec:
           args:
           - --config=controller_manager_config.yaml
           - --sync-period={{ .Values.operator.syncPeriod }}
+          - --module-workers={{ .Values.controllers.module.workers }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
           {{- range .Values.operator.watchedNamespaces }}
           - --namespace={{ . }}
