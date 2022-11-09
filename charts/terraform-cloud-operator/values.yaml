@@ -1,11 +1,11 @@
-replicaCount: 1
+replicaCount: 2
 
 operator:
   image:
     repository: hashicorp/terraform-cloud-operator
     pullPolicy: IfNotPresent
     tag: "0.0.1"
-  
+
   resources:
     limits:
       cpu: 500m
