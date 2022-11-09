@@ -26,7 +26,7 @@ We deeply appreciate everyone who is participating in the Operator beta and look
 
 ### Install beta version
 
-In this example, Helm will create a new namespace `tfc-operator-system` and install the Operator to it. The Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `blue`, and `red`. All other Helm values remain with their default values.
+In this example, Helm will create a new namespace `tfc-operator-system` and install the Operator into it. The Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `blue`, and `red`. All other Helm values remain with their default values.
 
 ```
 helm install \
