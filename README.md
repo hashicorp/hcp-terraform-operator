@@ -14,6 +14,52 @@ The Operator can manage the following types of resources:
 - `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 
+## :warning: Beta :warning:
+
+Welcome to the `v2-beta` version of the Kubernetes Operator for Terraform Cloud the successor of [`v1`](https://github.com/hashicorp/terraform-k8s). The second version of the Operator is developing with feedback and issues that practitioners might experience with the first version.
+
+We still work on finalizing project life-cycle processes and thus we ask you to use the following instructions to install and upgrade the Helm chart for the Operator beta. The rest instructions remain valid.
+
+Please, take into account the beta stage of this project and avoid using it in your production or critical environment.
+
+We deeply appreciate everyone who is participating in the Operator beta and looking forward to hearing your feedback.
+
+### Install beta version
+
+In this example, Helm will create a new namespace `tfc-operator-system` and install the Operator to it. The Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `blue`, and `red`. All other Helm values remain with their default values.
+
+```
+helm install \
+  beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
+  --version 0.0.1 \
+  --namespace tfc-operator-system \
+  --create-namespace \
+  --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
+  --set operator.image.tag=2.0.0-beta1 \
+  --set 'operator.watchedNamespaces={white,blue,red}'
+```
+
+> **Note**
+> Please pay attention to the repository name, chart version, and image tag.
+
+### Upgrade beta version
+
+In this example, Helm will upgrade the existing operator installation in the `tfc-operator-system` namespace. The Operator will watch all namespaces(default value) in the Kubernetes cluster and run 5 workers for `Module` and `Workspace` controllers. All other Helm values remain with their default values.
+
+```
+helm upgrade \
+  beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
+  --version 0.0.1 \
+  --namespace tfc-operator-system \
+  --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
+  --set operator.image.tag=2.0.0-beta1 \
+  --set controllers.module.workers=5 \
+  --set controllers.workspace.workers=5
+```
+
+> **Note**
+> Please pay attention to the repository name, chart version, and image tag.
+
 ## Installation
 
 The Operator provides Helm charts as a first-class method of installation on Kubernetes.
@@ -64,7 +110,6 @@ Below are examples of how to create a Kubernetes secret and store the API token 
         kind: Secret
         metadata:
           name: operator
-          namespace: hashistack
         type: Opaque
         data:
           token: QVBJdDBrM24=
