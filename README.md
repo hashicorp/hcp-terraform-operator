@@ -16,7 +16,7 @@ The Operator can manage the following types of resources:
 
 ## :warning: Beta :warning:
 
-Welcome to the `v2-beta` version of the Kubernetes Operator for Terraform Cloud the successor of [`v1`](https://github.com/hashicorp/terraform-k8s). The second version of the Operator is developing with feedback and issues that practitioners might experience with the first version.
+Welcome to the `v2-beta` version of the Kubernetes Operator for Terraform Cloud the successor of [`v1`](https://github.com/hashicorp/terraform-k8s). This new iteration of the Operator is being developed based on feedback from issues that practitioners have experienced with the first version.
 
 We still work on finalizing project life-cycle processes and thus we ask you to use the following instructions to install and upgrade the Helm chart for the Operator beta. The rest instructions remain valid.
 
