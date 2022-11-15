@@ -31,7 +31,7 @@ In this example, Helm will create a new namespace `tfc-operator-system` and inst
 ```
 helm install \
   beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --version 0.0.1 \
+  --version 0.0.2 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
@@ -49,7 +49,7 @@ In this example, Helm will upgrade the existing operator installation in the `tf
 ```
 helm upgrade \
   beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --version 0.0.1 \
+  --version 0.0.2 \
   --namespace tfc-operator-system \
   --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
   --set operator.image.tag=2.0.0-beta1 \
