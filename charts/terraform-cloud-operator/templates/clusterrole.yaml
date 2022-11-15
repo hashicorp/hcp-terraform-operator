@@ -11,6 +11,7 @@ rules:
   verbs:
   - create
   - list
+  - update
   - watch
 - apiGroups:
   - ""
@@ -26,6 +27,7 @@ rules:
   verbs:
   - create
   - list
+  - update
   - watch
 - apiGroups:
   - app.terraform.io

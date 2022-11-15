@@ -44,8 +44,8 @@ type moduleInstance struct {
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/finalizers,verbs=update
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;watch
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=create;list;watch
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;update;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=create;list;update;watch
 
 func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	m := moduleInstance{}
