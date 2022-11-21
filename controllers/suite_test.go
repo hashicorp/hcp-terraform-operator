@@ -51,7 +51,6 @@ func TestControllersAPIs(t *testing.T) {
 	suiteConfig, reporterConfig := GinkgoConfiguration()
 	reporterConfig.NoColor = true
 	reporterConfig.Succinct = true
-	reporterConfig.SlowSpecThreshold = 60 * time.Second
 
 	RunSpecs(t, "Controllers Suite", suiteConfig, reporterConfig)
 }
