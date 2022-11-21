@@ -7,6 +7,12 @@ on:
         description: Number of concurrent runs
         default: "5"
 
+env:
+  TFC_ORG: ${{ secrets.TFC_ORG }}
+  TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+  TFC_OAUTH_TOKEN: ${{ secrets.TFC_OAUTH_TOKEN }}
+  TFC_VCS_REPO: ${{ secrets.TFC_VCS_REPO }}
+
 jobs:
   tests:
     runs-on: ubuntu-latest
