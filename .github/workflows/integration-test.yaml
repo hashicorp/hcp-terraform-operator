@@ -23,5 +23,9 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version-file: 'go.mod'
+      - name: Install Ginkgo
+        run: go install github.com/onsi/ginkgo/v2/ginkgo
       - name: Run integration test suite
-        run: make test
+        env:
+          GINKGO_CONCURRENT_RUNS: ${{ github.event.inputs.concurrentRuns }}
+        run: make ginkgo-test
