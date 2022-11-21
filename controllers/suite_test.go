@@ -92,8 +92,9 @@ var _ = BeforeSuite(func() {
 	// Kubernetes Manager
 	syncPeriod := 30 * time.Second
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:     scheme.Scheme,
-		SyncPeriod: &syncPeriod,
+		Scheme:             scheme.Scheme,
+		SyncPeriod:         &syncPeriod,
+		MetricsBindAddress: "0",
 	})
 	Expect(err).ToNot(HaveOccurred())
 
