@@ -1,0 +1,21 @@
+name: Intergation tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      concurrentRuns:
+        description: Number of concurrent runs
+        default: "5"
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+      - name: Run integration test suite
+        run: make test
