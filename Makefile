@@ -110,7 +110,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -timeout 15m -v ./controllers -coverprofile cover.out
 
 .PHONY: ginkgo-test
-test: manifests generate fmt vet envtest ## Run Ginkgo tests.
+ginkgo-test: manifests generate fmt vet envtest ## Run Ginkgo tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" ginkgo run -p --nodes ${GINKGO_CONCURRENT_RUNS} --timeout 30m ./controllers
 ##@ Build
 
