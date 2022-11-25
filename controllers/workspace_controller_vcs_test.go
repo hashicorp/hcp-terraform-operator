@@ -30,6 +30,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	}
 
 	BeforeAll(func() {
+		if _, ok := os.LookupEnv("TFC_OAUTH_TOKEN"); !ok {
+			Skip("Environment variable TFC_OAUTH_TOKEN is required for this test")
+		}
+
+		if _, ok := os.LookupEnv("TFC_VCS_REPO"); !ok {
+			Skip("Environment variable TFC_VCS_REPO is required for this test")
+		}
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(90 * time.Second)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
