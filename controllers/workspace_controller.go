@@ -226,9 +226,6 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 			return err
 		}
 		w.instance.Status.Run.Status = string(run.Status)
-		if run.Status == tfc.RunApplied {
-			w.instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
-		}
 	}
 
 	return r.Status().Update(ctx, &w.instance)

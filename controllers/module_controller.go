@@ -170,11 +170,8 @@ func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1a
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) updateStatusOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace, runID string) error {
+func (r *ModuleReconciler) updateStatusOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace) error {
 	instance.Status.WorkspaceID = workspace.ID
-	instance.Status.Output = &appv1alpha2.OutputStatus{
-		RunID: runID,
-	}
 
 	return r.Status().Update(ctx, instance)
 }
@@ -492,7 +489,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	}
 
 	// Reconcile Outputs
-	runID, err := r.reconcileOutputs(ctx, m, workspace)
+	err = r.reconcileOutputs(ctx, m, workspace)
 	if err != nil {
 		m.log.Error(err, "Reconcile Module Outputs", "msg", "failed to reconcile outputs")
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModuleOutputs", "Failed to reconcile outputs")
@@ -500,9 +497,6 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	}
 	m.log.Info("Reconcile Module Outputs", "msg", "successfully reconcilied outputs")
 	r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModuleOutputs", "Successfully reconcilied outputs")
-	if runID == "" {
-		return nil
-	}
 
-	return r.updateStatusOutputs(ctx, &m.instance, workspace, runID)
+	return r.updateStatusOutputs(ctx, &m.instance, workspace)
 }

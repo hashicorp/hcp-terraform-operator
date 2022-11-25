@@ -37,7 +37,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Skip("Environment variable TFC_VCS_REPO is either not set or empty")
 		}
 		// Set default Eventually timers
-		SetDefaultEventuallyTimeout(90 * time.Second)
+		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 

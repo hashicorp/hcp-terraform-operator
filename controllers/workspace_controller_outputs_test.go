@@ -24,7 +24,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	BeforeAll(func() {
 		// Set default Eventually timers
-		SetDefaultEventuallyTimeout(120 * time.Second)
+		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
@@ -51,7 +51,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name: workspace,
+				Name:        workspace,
+				ApplyMethod: "auto",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
@@ -72,7 +73,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Expect(err).Should(Succeed())
 			td, err := os.MkdirTemp(cd, "tf-*")
 			Expect(err).Should(Succeed())
-			defer os.Remove(td)
+			defer os.RemoveAll(td)
 			// Create a temporary file in the temporary dir
 			f, err := os.CreateTemp(td, "*.tf")
 			Expect(err).Should(Succeed())
@@ -91,13 +92,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			_, err = f.WriteString(tf)
 			Expect(err).Should(Succeed())
 
-			// Enable AutoApply to automatically apply the code that will be uploaded
-			_, err = tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
-				AutoApply: tfc.Bool(true),
+			cv, err := tfClient.ConfigurationVersions.Create(ctx, instance.Status.WorkspaceID, tfc.ConfigurationVersionCreateOptions{
+				AutoQueueRuns: tfc.Bool(true),
+				Speculative:   tfc.Bool(false),
 			})
-			Expect(err).Should(Succeed())
-
-			cv, err := tfClient.ConfigurationVersions.Create(ctx, instance.Status.WorkspaceID, tfc.ConfigurationVersionCreateOptions{})
 			Expect(cv).ShouldNot(BeNil())
 			Expect(err).Should(Succeed())
 
