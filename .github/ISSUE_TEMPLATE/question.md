@@ -1,8 +1,8 @@
 ---
-name: 🐛 Bug report
-about: Create a report to help us improve
-title: '🐛 '
-labels: 'bug'
+name: 🤔 Question
+about: If you need help figuring something out
+title: '🤔 '
+labels: 'question'
 assignees: ''
 
 ---
@@ -15,35 +15,27 @@ Please DO NOT remove any fields from this template. If there is nothing to add, 
  - Kubernetes version:
 
 ### YAML Manifest File
+<!---
+Please let us know if you have a question about YAML manifest.
+--->
 ```yaml
 # Copy-paste your YAML manifest here
 ```
 
 ### Output Log
 <!---
-Please provider a link to a GitHub Gist containing the complete output log.
-Please DO NOT paste the debug output in the issue; just paste a link to the Gist.
+Please let us know if you have a question about logs.
 --->
 
 ### Kubectl Outputs
 <!---
-Please provider a link to a GitHub Gist containing the complete kubectl outputs.
-Please DO NOT paste the kubectl output in the issue; just paste a link to the Gist.
+Please let us know if you have a question about kubectl output.
 --->
 
-### Steps To Reproduce
-Steps to reproduce the behavior:
-1. `kubectl apply -f workspace.yaml`
-2. `kubectl describe workspace this`
-
-### Expected Behavior
-What should have happened?
-
-### Actual Behavior
-What actually happened?
-
-### Additional Context
-Add any other context about the problem here.
+### Question
+<!---
+A clear and concise description of the question.
+--->
 
 ### References
 <!---
