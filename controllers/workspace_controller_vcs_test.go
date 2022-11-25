@@ -30,12 +30,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	}
 
 	BeforeAll(func() {
-		if _, ok := os.LookupEnv("TFC_OAUTH_TOKEN"); !ok {
-			Skip("Environment variable TFC_OAUTH_TOKEN is required for this test")
+		if oAuthTokenID == "" {
+			Skip("Environment variable TFC_OAUTH_TOKEN is either not set or empty")
 		}
-
-		if _, ok := os.LookupEnv("TFC_VCS_REPO"); !ok {
-			Skip("Environment variable TFC_VCS_REPO is required for this test")
+		if repository == "" {
+			Skip("Environment variable TFC_VCS_REPO is either not set or empty")
 		}
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(90 * time.Second)
