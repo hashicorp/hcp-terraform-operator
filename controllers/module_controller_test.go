@@ -51,7 +51,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					},
 				},
 				Module: &appv1alpha2.ModuleSource{
-					Source:  "app.terraform.io/strategic-integrations/module-random/provider",
+					Source:  fmt.Sprintf("app.terraform.io/%v/module-random/provider", organization),
 					Version: "0.0.4",
 				},
 				DestroyOnDeletion: true,

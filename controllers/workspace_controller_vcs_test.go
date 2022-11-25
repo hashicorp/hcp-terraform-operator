@@ -30,6 +30,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	}
 
 	BeforeAll(func() {
+		if oAuthTokenID == "" {
+			Skip("Environment variable TFC_OAUTH_TOKEN is either not set or empty")
+		}
+		if repository == "" {
+			Skip("Environment variable TFC_VCS_REPO is either not set or empty")
+		}
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(90 * time.Second)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
