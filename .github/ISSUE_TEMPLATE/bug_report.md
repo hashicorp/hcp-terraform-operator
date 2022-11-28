@@ -21,7 +21,7 @@ Please DO NOT remove any fields from this template. If there is nothing to add, 
 
 ### Output Log
 <!---
-Please provider a link to a GitHub Gist containing the complete output log.
+Please provide a link to a GitHub Gist containing the complete output log.
 Please DO NOT paste the debug output in the issue; just paste a link to the Gist.
 --->
 
