@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 <!---
-Please DO NOT remove any fields from this template. If there is nothing to add, leave N/A.
+Please DO NOT remove any fields from this template. If there is nothing to add, fill in N/A.
 --->
 ### Operator Version, Kind and Kubernetes Version
  - Operator version:
