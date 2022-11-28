@@ -32,9 +32,12 @@ Please DO NOT paste the kubectl output in the issue; just paste a link to the Gi
 --->
 
 ### Steps To Reproduce
-Steps to reproduce the behavior:
+<!---
+Please share steps to reproduce the behavior.
+For example:
 1. `kubectl apply -f workspace.yaml`
 2. `kubectl describe workspace this`
+--->
 
 ### Expected Behavior
 What should have happened?
