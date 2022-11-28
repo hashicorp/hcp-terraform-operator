@@ -27,7 +27,7 @@ Please DO NOT paste the debug output in the issue; just paste a link to the Gist
 
 ### Kubectl Outputs
 <!---
-Please provider a link to a GitHub Gist containing the complete kubectl outputs.
+Please provide a link to a GitHub Gist containing the complete kubectl outputs.
 Please DO NOT paste the kubectl output in the issue; just paste a link to the Gist.
 --->
 
