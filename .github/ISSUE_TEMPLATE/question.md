@@ -16,7 +16,7 @@ Please DO NOT remove any fields from this template. If there is nothing to add, 
 
 ### YAML Manifest File
 <!---
-Please let us know if you have a question about YAML manifest.
+Please let us know if you have a question about a specific YAML manifest.
 --->
 ```yaml
 # Copy-paste your YAML manifest here
