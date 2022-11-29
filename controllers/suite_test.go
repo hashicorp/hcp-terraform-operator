@@ -84,7 +84,7 @@ var _ = BeforeSuite(func() {
 	//+kubebuilder:scaffold:scheme
 
 	if organization == "" {
-		Fail("Environment variable TFC_ORG is either not set or empty but required")
+		Fail("Environment variable TFC_ORG is required, but either not set or empty")
 	}
 	if terraformToken == "" {
 		Fail("Environment variable TFC_TOKEN is either not set or empty but required")
