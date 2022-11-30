@@ -32,7 +32,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	BeforeAll(func() {
 		// Set default Eventually timers
-		SetDefaultEventuallyTimeout(90 * time.Second)
+		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
 		// Create an SSH keys

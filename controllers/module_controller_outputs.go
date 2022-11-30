@@ -48,9 +48,13 @@ func (r *ModuleReconciler) secretAvailable(ctx context.Context, instance *appv1a
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
 }
 
-func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) error {
+func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) error {
+	workspace, err := m.tfClient.Client.Workspaces.ReadByID(ctx, m.instance.Status.WorkspaceID)
+	if err != nil {
+		return err
+	}
 	if workspace.CurrentStateVersion == nil {
-		return nil
+		return fmt.Errorf("current workspace state version is not available")
 	}
 
 	oName := moduleOutputObjectName(m.instance.Name)
@@ -148,14 +152,23 @@ func needToUpdateOutput(instance *appv1alpha2.Module) bool {
 	return false
 }
 
-func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) (string, error) {
+func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) error {
 	m.log.Info("Reconcile Module Outputs", "mgs", "new reconciliation event")
 
 	if workspace.CurrentRun != nil {
 		if needToUpdateOutput(&m.instance) {
+			m.log.Info("Reconcile Module Outputs", "mgs", "run successfully applied")
 			m.log.Info("Reconcile Module Outputs", "mgs", "creating or updating outputs")
-			return workspace.CurrentRun.ID, r.setOutputs(ctx, m, workspace)
+			err := r.setOutputs(ctx, m)
+			if err != nil {
+				return err
+			}
+			m.instance.Status.Output = &appv1alpha2.OutputStatus{
+				RunID: workspace.CurrentRun.ID,
+			}
+			return nil
 		}
+		m.log.Info("Reconcile Module Outputs", "mgs", "no need to update outputs")
 	}
-	return "", nil
+	return nil
 }

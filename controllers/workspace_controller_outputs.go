@@ -63,9 +63,14 @@ func trimDoubleQuotes(bytes []byte) []byte {
 	return []byte(strings.Trim(string(bytes), `"`))
 }
 
-func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+// func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance) error {
+	workspace, err := w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
+	if err != nil {
+		return err
+	}
 	if workspace.CurrentStateVersion == nil {
-		return nil
+		return fmt.Errorf("current workspace state version is not available")
 	}
 
 	oName := outputObjectName(w.instance.Name)
@@ -169,9 +174,18 @@ func (r *WorkspaceReconciler) reconcileOutputs(ctx context.Context, w *workspace
 		if err != nil {
 			return err
 		}
-		if runApplied && w.instance.Status.Run.OutputRunID != workspace.CurrentRun.ID {
-			w.log.Info("Reconcile Outputs", "mgs", "creating or updating outputs")
-			return r.setOutputs(ctx, w, workspace)
+		if runApplied {
+			w.log.Info("Reconcile Outputs", "mgs", "run successfully applied")
+			if w.instance.Status.Run.OutputRunID != workspace.CurrentRun.ID {
+				w.log.Info("Reconcile Outputs", "mgs", "creating or updating outputs")
+				err = r.setOutputs(ctx, w)
+				if err != nil {
+					return err
+				}
+				w.instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
+				return nil
+			}
+			w.log.Info("Reconcile Outputs", "mgs", "no need to update outputs")
 		}
 	}
 	return nil

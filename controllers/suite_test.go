@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -38,6 +39,8 @@ var tfClient *tfc.Client
 
 var organization = os.Getenv("TFC_ORG")
 var terraformToken = os.Getenv("TFC_TOKEN")
+
+var syncPeriod = 30 * time.Second
 
 var secretKey = "token"
 var namespacedName = types.NamespacedName{
@@ -80,6 +83,12 @@ var _ = BeforeSuite(func() {
 
 	//+kubebuilder:scaffold:scheme
 
+	if organization == "" {
+		Fail("Environment variable TFC_ORG is required, but either not set or empty")
+	}
+	if terraformToken == "" {
+		Fail("Environment variable TFC_TOKEN is required, but either not set or empty")
+	}
 	// Terraform Cloud Client
 	tfClient, err = tfc.NewClient(&tfc.Config{Token: os.Getenv("TFC_TOKEN")})
 	Expect(err).Should(Succeed())
@@ -91,10 +100,15 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).ToNot(BeNil())
 
 	// Kubernetes Manager
-	syncPeriod := 30 * time.Second
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:     scheme.Scheme,
 		SyncPeriod: &syncPeriod,
+		Controller: v1alpha1.ControllerConfigurationSpec{
+			GroupKindConcurrency: map[string]int{
+				"Workspace.app.terraform.io": 5,
+				"Module.app.terraform.io":    5,
+			},
+		},
 	})
 	Expect(err).ToNot(HaveOccurred())
 
