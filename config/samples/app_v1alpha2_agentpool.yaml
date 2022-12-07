@@ -1,0 +1,12 @@
+apiVersion: app.terraform.io/v1alpha2
+kind: AgentPool
+metadata:
+  labels:
+    app.kubernetes.io/name: agentpool
+    app.kubernetes.io/instance: agentpool-sample
+    app.kubernetes.io/part-of: terraform-cloud-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: terraform-cloud-operator
+  name: agentpool-sample
+spec:
+  # TODO(user): Add fields here

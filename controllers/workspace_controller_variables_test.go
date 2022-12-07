@@ -49,6 +49,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		Expect(k8sClient.Create(ctx, secretVariables)).Should(Succeed())
 	})
 
+	AfterAll(func() {
+		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
+	})
+
 	BeforeEach(func() {
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{

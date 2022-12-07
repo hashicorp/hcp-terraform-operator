@@ -7,6 +7,11 @@ const (
 	requeueInterval = 15 * time.Second
 )
 
+// AGENT POOL CONTROLLER'S CONSTANTS
+const (
+	agentPoolFinalizer = "agentpool.app.terraform.io/finalizer"
+)
+
 // MODULE CONTROLLER'S CONSTANTS
 const (
 	requeueConfigurationUploadInterval = 10 * time.Second

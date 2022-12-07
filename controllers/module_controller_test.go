@@ -15,7 +15,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Module controller", Ordered, func() {
 	var (
 		instance  *appv1alpha2.Module
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
@@ -79,6 +79,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
+		// Delete the Kubernetes Module object and wait until the controller finishes the reconciliation after deletion of the object
+		Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, namespacedName, instance)
+			// The Kubernetes client will return error 'NotFound' on the "Get" operation once the object is deleted
+			return errors.IsNotFound(err)
+		}).Should(BeTrue())
+
+		// Delete workspace
 		err := tfClient.Workspaces.Delete(ctx, organization, workspace)
 		Expect(err).Should(Succeed())
 	})
@@ -134,14 +143,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
-
-			// Delete the Kubernetes Module object and wait until the controller finishes the reconciliation after deletion of the object
-			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, namespacedName, instance)
-				// The Kubernetes client will return error 'NotFound' on the "Get" operation once the object is deleted
-				return errors.IsNotFound(err)
-			}).Should(BeTrue())
 		})
 	})
 })
