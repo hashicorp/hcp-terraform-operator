@@ -31,11 +31,11 @@ In this example, Helm will create a new namespace `tfc-operator-system` and inst
 ```
 helm install \
   beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --version 0.0.2 \
+  --version 0.0.3 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --set operator.image.tag=2.0.0-beta1 \
+  --set operator.image.tag=2.0.0-beta2 \
   --set 'operator.watchedNamespaces={white,blue,red}'
 ```
 
@@ -44,15 +44,16 @@ helm install \
 
 ### Upgrade beta version
 
-In this example, Helm will upgrade the existing operator installation in the `tfc-operator-system` namespace. The Operator will watch all namespaces(default value) in the Kubernetes cluster and run 5 workers for `Module` and `Workspace` controllers. All other Helm values remain with their default values.
+In this example, Helm will upgrade the existing operator installation in the `tfc-operator-system` namespace. The Operator will watch all namespaces(default value) in the Kubernetes cluster and run 5 workers for `AgentPool`, `Module`, and `Workspace` controllers. All other Helm values remain with their default values.
 
 ```
 helm upgrade \
   beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --version 0.0.2 \
+  --version 0.0.3 \
   --namespace tfc-operator-system \
   --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --set operator.image.tag=2.0.0-beta1 \
+  --set operator.image.tag=2.0.0-beta2 \
+  --set controllers.agentPool.workers=5 \
   --set controllers.module.workers=5 \
   --set controllers.workspace.workers=5
 ```
