@@ -24,6 +24,9 @@ operator:
 
 # Controllers-specific options.
 controllers:
+  agentPool:
+    # The number of the AgentPool controller workers.
+    workers: 1
   module:
     # The number of the Module controller workers.
     workers: 1
