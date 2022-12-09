@@ -33,6 +33,32 @@ rules:
 - apiGroups:
   - app.terraform.io
   resources:
+  - agentpools
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - agentpools/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - agentpools/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - app.terraform.io
+  resources:
   - modules
   verbs:
   - create

@@ -8,7 +8,7 @@ import (
 // AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
 // More information:
 // - https://www.terraform.io/cloud-docs/agents
-type AgentPool struct {
+type WorkspaceAgentPool struct {
 	// Agent Pool ID.
 	//+kubebuilder:validation:Pattern="^apool-[a-zA-Z0-9]+$"
 	//+optional
@@ -225,7 +225,7 @@ type WorkspaceSpec struct {
 	// More information:
 	//  - https://www.terraform.io/cloud-docs/agents
 	//+optional
-	AgentPool *AgentPool `json:"agentPool,omitempty"`
+	AgentPool *WorkspaceAgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
 	// More information:
 	//  - https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode

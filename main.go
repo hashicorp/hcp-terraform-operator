@@ -55,12 +55,15 @@ func main() {
 	var watchNamespaces cliNamespaces
 	flag.Var(&watchNamespaces, "namespace", "Namespace to watch")
 	// OPERATOR OPRTIONS
+	var agentPoolWorkers int
+	flag.IntVar(&agentPoolWorkers, "agent-pool-workers", 1,
+		"The number of the Agent Pool controller workers.")
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
-		"The number of the workspace controller workers.")
+		"The number of the Workspace controller workers.")
 	var moduleWorkers int
 	flag.IntVar(&moduleWorkers, "module-workers", 1,
-		"The number of the module controller workers.")
+		"The number of the Module controller workers.")
 
 	flag.Parse()
 
@@ -83,6 +86,7 @@ func main() {
 			GroupKindConcurrency: map[string]int{
 				"Workspace.app.terraform.io": workspaceWorkers,
 				"Module.app.terraform.io":    moduleWorkers,
+				"AgentPool.app.terraform.io": agentPoolWorkers,
 			},
 		},
 		Scheme:     scheme,
@@ -120,6 +124,14 @@ func main() {
 		Recorder: mgr.GetEventRecorderFor("ModuleController"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Module")
+		os.Exit(1)
+	}
+	if err = (&controllers.AgentPoolReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("AgentPoolController"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AgentPool")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

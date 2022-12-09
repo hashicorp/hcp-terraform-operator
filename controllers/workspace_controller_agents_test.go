@@ -81,27 +81,27 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	Context("Workspace controller", func() {
 		It("can handle agent pool by name", func() {
-			instance.Spec.AgentPool = &appv1alpha2.AgentPool{Name: agentPoolName}
+			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{Name: agentPoolName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
 			isReconciledAgentPoolByName(instance)
 
 			// Update the Agent Pool by Name
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.AgentPool = &appv1alpha2.AgentPool{Name: agentPoolName2}
+			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{Name: agentPoolName2}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			isReconciledAgentPoolByName(instance)
 		})
 
 		It("can handle agent pool by id", func() {
-			instance.Spec.AgentPool = &appv1alpha2.AgentPool{ID: agentPoolID}
+			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{ID: agentPoolID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
 			isReconciledAgentPoolByID(instance)
 
 			// Update the Agent Pool by ID
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.AgentPool = &appv1alpha2.AgentPool{ID: agentPoolID2}
+			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{ID: agentPoolID2}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			isReconciledAgentPoolByID(instance)
 		})

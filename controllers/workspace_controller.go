@@ -379,7 +379,7 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceI
 		// if workspace wasn't found, it means it was deleted from the TF Cloud bypass the operator
 		// in this case, remove the finalizer and let Kubernetes remove the object permanently
 		if err == tfc.ErrResourceNotFound {
-			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not fond, remove finazlier", workspaceFinalizer))
+			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not found, remove finazlier", workspaceFinalizer))
 			return r.removeFinalizer(ctx, w)
 		}
 		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
