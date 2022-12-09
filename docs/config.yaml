@@ -1,0 +1,10 @@
+# Configuration file for CRD Reference Documentation Generator: https://github.com/elastic/crd-ref-docs
+processor:
+  ignoreTypes:
+    - "AgentPoolList$"
+    - "ModuleList$"
+    - "WorkspaceList$"
+  ignoreFields:
+    - "status$"
+render:
+  kubernetesVersion: 1.25
