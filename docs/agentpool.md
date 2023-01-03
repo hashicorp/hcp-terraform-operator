@@ -1,6 +1,6 @@
 # `AgentPool`
 
-`AgentPool` controller allows managing Terraform Cloud Agent Pools via Kubernetes Custom Resources.
+`AgentPool` controller allows managing Terraform Cloud Agent Pools via Kubernetes Custom Resources. The controller does not manage the lifecycle of the Agents.
 
 Below is an example of a Workspace Custom Resource:
 
