@@ -9,7 +9,7 @@
 
 Please refer to the [CRD](../config/crd/bases/app.terraform.io_agentpools.yaml) and [API Reference](./api-reference.md#agentpool) to get the full list of available options.
 
-In the following example, we are going to create a new Terraform Cloud Agent Pool with 3 agent tokens. Refer to [Prerequisites](./usage.md#prerequisites) before proceeding further.
+In the following example, we are going to create a new Terraform Cloud Agent Pool with 3 agent tokens. Take a look at the [Prerequisites](./usage.md#prerequisites) before proceeding further.
 
 1. Create a YAML manifest.
 
@@ -109,4 +109,86 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
     type: Opaque
     ```
 
-5. If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
+5. If you want to add a new agent token, you need to modify the YAML manifest and then apply changes. Wait till the Operator applies changes and then you can find a new token in Kubernetes Secrets:
+
+    ```yaml
+    apiVersion: app.terraform.io/v1alpha2
+    kind: AgentPool
+    metadata:
+      name: this
+      namespace: default
+    spec:
+      organization: kubernetes-operator
+      token:
+        secretKeyRef:
+          name: tfc-operator
+          key: token
+      name: agent-pool-demo
+      agentTokens:
+        - name: white
+        - name: blue
+        - name: red
+        - name: green
+    ```
+
+    ```console
+    $ kubectl apply -f agentpool.yaml
+    ```
+
+    ```console
+    $ kubectl get secret this-agent-pool -o yaml
+    apiVersion: v1
+    data:
+      blue: clhWNHE2eH...82cGt0akNZ
+      green: SVZ0dEZ5UF...lyTFYyM29B
+      red: YXpTcXkzUE...NKUkdweTVZ
+      white: eDVnbGZwT2...o0SFBacHpZ
+    kind: Secret
+    metadata:
+      creationTimestamp: "2023-01-05T10:54:39Z"
+      labels:
+        agentPoolID: apool-mVnndtTUzdgUsRR3
+      name: this-agent-pool
+      namespace: default
+      ...
+    ```
+
+6. If you want to delete an existing agent token, you need to modify the YAML manifest and then apply changes. Wait till the Operator applies changes:
+
+    ```yaml
+    apiVersion: app.terraform.io/v1alpha2
+    kind: AgentPool
+    metadata:
+      name: this
+      namespace: default
+    spec:
+      organization: kubernetes-operator
+      token:
+        secretKeyRef:
+          name: tfc-operator
+          key: token
+      name: agent-pool-demo
+      agentTokens:
+        - name: blue
+    ```
+
+    ```console
+    $ kubectl apply -f agentpool.yaml
+    ```
+
+    ```console
+    $ kubectl get secret this-agent-pool -o yaml
+    apiVersion: v1
+    data:
+      blue: clhWNHE2eH...82cGt0akNZ
+    kind: Secret
+    metadata:
+      creationTimestamp: "2023-01-05T10:54:39Z"
+      labels:
+        agentPoolID: apool-mVnndtTUzdgUsRR3
+      name: this-agent-pool
+      namespace: default
+      ...
+    ```
+
+If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).

@@ -81,7 +81,7 @@ Controllers usage guides:
 
 API reference documentation can be found [here](./docs/api-reference.md).
 
-### Frequently Asked Questions (FAQ)
+### Frequently Asked Questions
 
 FAQ can be found [here](./docs/faq.md).
 
