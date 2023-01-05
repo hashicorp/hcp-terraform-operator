@@ -1,0 +1,30 @@
+name: Check Markdown links
+
+on:
+  schedule:
+    - cron: '30 4 * * *'
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run Markdown links checker
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: yes
+          use-verbose-mode: yes
+          folder-path: './, ./docs'
+          max-depth: 0
+          base-branch: main
