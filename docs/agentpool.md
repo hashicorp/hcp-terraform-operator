@@ -26,4 +26,4 @@ Once the above CR is applied, the Operator creates a new agent pool `agent-pool-
 
 Generated agent tokens are sensitive and thus will be saved in Kubernetes Secrets. The name of the Kubernetes Secret object will be generated automatically and has the following pattern: `<metadata.name>-agent-pool`. For the above example, the name of Secret will be `this-agent-pool`.
 
-Please refer to the [CRD](../config/crd/bases/app.terraform.io_agentpool.yaml) to get the full list of available options.
+Please refer to the [CRD](../config/crd/bases/app.terraform.io_agentpools.yaml) to get the full list of available options.
