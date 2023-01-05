@@ -73,9 +73,10 @@ Installation documentation can be found [here](./docs/installation.md).
 General usage documentation can be found [here](./docs/usage.md).
 
 Controllers usage guides:
-  - [AgentPool](./docs/agentpool.md)
-  - [Module](./docs/module.md)
-  - [Workspace](./docs/workspace.md)
+
+- [AgentPool](./docs/agentpool.md)
+- [Module](./docs/module.md)
+- [Workspace](./docs/workspace.md)
 
 ### API reference
 
@@ -123,7 +124,8 @@ If you encounter any issues with the Operator there are a number of ways how to 
     ```
 
     For example:
-    ```msg
+
+    ```text
     2023-01-05T12:11:31Z	INFO	Agent Pool Controller	{"agentpool": "default/this", "msg": "successfully reconcilied agent pool"}
     ```
 
