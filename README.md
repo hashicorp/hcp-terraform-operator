@@ -126,7 +126,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     For example:
 
     ```text
-    2023-01-05T12:11:31Z	INFO	Agent Pool Controller	{"agentpool": "default/this", "msg": "successfully reconcilied agent pool"}
+    2023-01-05T12:11:31Z INFO Agent Pool Controller	{"agentpool": "default/this", "msg": "successfully reconcilied agent pool"}
     ```
 
 - check the CR:
