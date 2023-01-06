@@ -103,6 +103,38 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			validateAgentPoolTestTokens(ctx, instance)
 		})
 
+		It("can remove manually added tokens", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
+			// ADD A NEW TOKEN MANUALLY
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			tfClient.AgentTokens.Create(ctx, instance.Status.AgentPoolID, tfc.AgentTokenCreateOptions{
+				Description: tfc.String("DeleteMe"),
+			})
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				l, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
+				Expect(err).Should(Succeed())
+				Expect(l).ShouldNot(BeNil())
+				at := make(map[string]struct{})
+				for _, t := range l.Items {
+					at[t.ID] = struct{}{}
+				}
+				for _, st := range instance.Status.AgentTokens {
+					if _, ok := at[st.ID]; !ok {
+						return false
+					}
+				}
+				return true
+			}).Should(BeTrue())
+		})
+
 		It("can recreate agent token", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
