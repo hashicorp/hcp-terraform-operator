@@ -36,7 +36,7 @@ func getTokensToRemove(ctx context.Context, ap *agentPoolInstance) ([]string, er
 	}
 
 	for _, t := range ap.instance.Status.AgentTokens {
-		if !s[t.Name] {
+		if _, ok := s[t.Name]; !ok {
 			d = append(d, t.ID)
 		}
 	}
@@ -50,8 +50,8 @@ func getTokensToRemove(ctx context.Context, ap *agentPoolInstance) ([]string, er
 	if err != nil {
 		return nil, err
 	}
-	for t := range st {
-		if !agentPoolTokens[t] {
+	for t := range agentPoolTokens {
+		if _, ok := st[t]; !ok {
 			d = append(d, t)
 		}
 	}
@@ -69,7 +69,7 @@ func getTokensToCreate(ctx context.Context, ap *agentPoolInstance) (map[string]b
 	}
 
 	for _, t := range ap.instance.Status.AgentTokens {
-		if !at[t.ID] {
+		if _, ok := at[t.ID]; !ok {
 			removeTokenFromStatus(ap, t.ID)
 		}
 	}
@@ -81,7 +81,7 @@ func getTokensToCreate(ctx context.Context, ap *agentPoolInstance) (map[string]b
 	}
 
 	for _, t := range ap.instance.Spec.AgentTokens {
-		if !st[t.Name] {
+		if _, ok := st[t.Name]; !ok {
 			a[t.Name] = true
 		}
 	}
