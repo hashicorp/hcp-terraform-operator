@@ -1,0 +1,12 @@
+api:
+- api/**/*.go
+
+controller:
+- controllers/*.go
+
+crd:
+- config/crd/bases/*.yaml
+
+documentation:
+- README.md
+- docs/*.md
