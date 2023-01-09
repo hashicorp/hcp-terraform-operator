@@ -14,6 +14,6 @@ jobs:
     - name: Label Pull Request
       uses: actions/labeler@v4
       with:
-        configuration-path: .guthub/pr-labeler.yml
+        configuration-path: .github/pr-labeler.yml
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true
