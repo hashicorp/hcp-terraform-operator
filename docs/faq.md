@@ -12,6 +12,10 @@
 
 ## Terminology
 
+- **What is a Kubernetes Operator?**
+
+  Operators are software extensions to Kubernetes that make use of custom resources to manage applications and their components. More information is in the [Kubernetes Documentation](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
+
 ## General Questions
 
 - **Can a single deployment of the Operator watch single, multiple, or all namespaces?**
@@ -39,3 +43,7 @@
 ## Module Controller
 
 ## Agent Pool Controller
+
+- **What will happen if I delete an Agent Pool CR?**
+
+  The Agent Pool controller will delete Agent Pool from Terraform Cloud, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.

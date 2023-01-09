@@ -191,4 +191,6 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
       ...
     ```
 
+If you have any questions, please check out the [FAQ](./faq.md#agent-pool-controller) to see if you can find answers there.
+
 If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
