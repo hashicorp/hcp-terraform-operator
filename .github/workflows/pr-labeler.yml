@@ -17,3 +17,18 @@ jobs:
         configuration-path: .github/pr-labeler.yml
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true
+
+    - name: Label the PR size
+      uses: codelytv/pr-size-labeler@v1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        xs_label: 'size/XS'
+        xs_max_size: '30'
+        s_label: 'size/S'
+        s_max_size: '60'
+        m_label: 'size/M'
+        m_max_size: '150'
+        l_label: 'size/L'
+        l_max_size: '300'
+        xl_label: 'size/XL'
+        message_if_xl: ''
