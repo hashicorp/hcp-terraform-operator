@@ -10,3 +10,6 @@ crd:
 documentation:
 - README.md
 - docs/*.md
+
+golang:
+- '**/*.go'
