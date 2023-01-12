@@ -9,6 +9,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
     - name: Label Pull Request
@@ -21,7 +22,7 @@ jobs:
     - name: Label the PR size
       uses: codelytv/pr-size-labeler@v1
       with:
-        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         xs_label: 'size/XS'
         xs_max_size: '30'
         s_label: 'size/S'
@@ -35,3 +36,4 @@ jobs:
           This PR exceeds the recommended size of 1000 lines.
           Please make sure you are NOT addressing multiple issues with one PR.
           Note this PR might be rejected due to its size.
+        github_api_url: 'api.github.com'
