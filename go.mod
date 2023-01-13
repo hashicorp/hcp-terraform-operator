@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/zapr v1.2.3
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-slug v0.10.1
-	github.com/hashicorp/go-tfe v1.16.0
+	github.com/hashicorp/go-tfe v1.17.0
 	github.com/onsi/ginkgo/v2 v2.7.0
 	github.com/onsi/gomega v1.24.2
 	go.uber.org/zap v1.24.0
@@ -35,7 +35,7 @@ require (
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/jsonapi v0.0.0-20210826224640-ee7dae0fb22d // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
