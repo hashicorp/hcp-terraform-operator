@@ -7,4 +7,4 @@ processor:
   ignoreFields:
     - "status$"
 render:
-  kubernetesVersion: 1.25
+  kubernetesVersion: 1.26
