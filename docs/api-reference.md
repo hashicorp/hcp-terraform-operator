@@ -27,8 +27,8 @@ AgentPool is the Schema for the agentpools API
 | --- | --- |
 | `apiVersion` _string_ | `app.terraform.io/v1alpha2`
 | `kind` _string_ | `AgentPool`
-| `TypeMeta` _[TypeMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#typemeta-v1-meta)_ |  |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `TypeMeta` _[TypeMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#typemeta-v1-meta)_ |  |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[AgentPoolSpec](#agentpoolspec)_ |  |
 
 
@@ -129,8 +129,8 @@ Module is the Schema for the modules API Module implements the API-driven Run Wo
 | --- | --- |
 | `apiVersion` _string_ | `app.terraform.io/v1alpha2`
 | `kind` _string_ | `Module`
-| `TypeMeta` _[TypeMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#typemeta-v1-meta)_ |  |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `TypeMeta` _[TypeMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#typemeta-v1-meta)_ |  |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[ModuleSpec](#modulespec)_ |  |
 
 
@@ -336,7 +336,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
+| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
 
 
 #### ValueFrom
@@ -350,8 +350,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `configMapKeyRef` _[ConfigMapKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#configmapkeyselector-v1-core)_ | Selects a key of a ConfigMap. |
-| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
+| `configMapKeyRef` _[ConfigMapKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#configmapkeyselector-v1-core)_ | Selects a key of a ConfigMap. |
+| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
 
 
 #### Variable
@@ -401,8 +401,8 @@ Workspace is the Schema for the workspaces API
 | --- | --- |
 | `apiVersion` _string_ | `app.terraform.io/v1alpha2`
 | `kind` _string_ | `Workspace`
-| `TypeMeta` _[TypeMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#typemeta-v1-meta)_ |  |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `TypeMeta` _[TypeMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#typemeta-v1-meta)_ |  |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[WorkspaceSpec](#workspacespec)_ |  |
 
 
