@@ -1,6 +1,9 @@
 api:
 - api/**/*.go
 
+helm-chart:
+- charts/**/*.yaml
+
 controller:
 - controllers/*.go
 
