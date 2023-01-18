@@ -7,7 +7,7 @@ import (
 
 // AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
 // More information:
-// - https://www.terraform.io/cloud-docs/agents
+//   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 type WorkspaceAgentPool struct {
 	// Agent Pool ID.
 	//+kubebuilder:validation:Pattern="^apool-[a-zA-Z0-9]+$"
@@ -20,7 +20,7 @@ type WorkspaceAgentPool struct {
 
 // ConsumerWorkspace allows access to the state for specific workspaces within the same organization.
 // More information:
-//   - https://www.terraform.io/cloud-docs/workspaces/state#remote-state-access-controls
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 type ConsumerWorkspace struct {
 	// Consumer Workspace ID.
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
@@ -34,7 +34,7 @@ type ConsumerWorkspace struct {
 // RemoteStateSharing allows remote state access between workspaces.
 // By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
 // More information:
-//   - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 type RemoteStateSharing struct {
 	// Allow access to the state for all workspaces within the same organization.
 	//+kubebuilder:default:=false
@@ -48,7 +48,7 @@ type RemoteStateSharing struct {
 // RunTrigger allows you to connect this workspace to one or more source workspaces.
 // These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 // More information:
-//   - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
 	// Source Workspace ID.
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
@@ -62,7 +62,7 @@ type RunTrigger struct {
 // Teams are groups of Terraform Cloud users within an organization.
 // If a user belongs to at least one team in an organization, they are considered a member of that organization.
 // More information:
-//   - https://www.terraform.io/cloud-docs/users-teams-organizations/teams
+//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 type Team struct {
 	// Team ID.
 	//+kubebuilder:validation:Pattern="^team-[a-zA-Z0-9]+$"
@@ -75,7 +75,7 @@ type Team struct {
 
 // Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
 // More information:
-//   - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
+//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
 //
 // +optional
 type CustomPermissions struct {
@@ -108,20 +108,20 @@ type CustomPermissions struct {
 // When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
 // with full admin permissions. These teams' access can't be removed from a workspace.
 // More information:
-//   - https://www.terraform.io/cloud-docs/workspaces/settings/access
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
 type TeamAccess struct {
 	// Team to grant access.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/teams
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 	Team Team `json:"team"`
 	// There are two ways to choose which permissions a given team has on a workspace: fixed permission sets, and custom permissions.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#workspace-permissions
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions
 	//+kubebuilder:validation:Pattern="^(admin|custom|plan|read|write)$"
 	Access string `json:"access"`
 	// Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
 	//+optional
 	Custom CustomPermissions `json:"custom,omitempty"`
 }
@@ -144,7 +144,7 @@ type ValueFrom struct {
 
 // Variables let you customize configurations, modify Terraform's behavior, and store information like provider credentials.
 // More information:
-//   - https://www.terraform.io/cloud-docs/workspaces/variables
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 type Variable struct {
 	// Name of the variable.
 	Name string `json:"name"`
@@ -170,8 +170,8 @@ type Variable struct {
 // VersionControl settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
 // Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.
 // More information:
-//   - https://www.terraform.io/cloud-docs/run/ui
-//   - https://www.terraform.io/cloud-docs/vcs
+//   - https://developer.hashicorp.com/terraform/cloud-docs/run/ui
+//   - https://developer.hashicorp.com/terraform/cloud-docs/vcs
 type VersionControl struct {
 	// The VCS Connection (OAuth Connection + Token) to use.
 	//+kubebuilder:validation:Pattern="^ot-[a-zA-Z0-9]+$"
@@ -185,7 +185,7 @@ type VersionControl struct {
 
 // SSH key used to clone Terraform modules
 // More information:
-//   - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 type SSHKey struct {
 	//+kubebuilder:validation:Pattern="^sshkey-[a-zA-Z0-9]+$"
 	//+optional
@@ -202,19 +202,19 @@ type WorkspaceSpec struct {
 	Name string `json:"name"`
 	// Organization name where the Workspace will be created
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
 	Organization string `json:"organization"`
 
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
 	//+kubebuilder:validation:Pattern="^(auto|manual)$"
 	//+kubebuilder:default=manual
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
 	// Allows a destroy plan to be created and applied.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings#destruction-and-deletion
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
 	//+kubebuilder:default=true
 	//+optional
 	AllowDestroyPlan bool `json:"allowDestroyPlan,omitempty"`
@@ -223,12 +223,12 @@ type WorkspaceSpec struct {
 	Description string `json:"description,omitempty"`
 	// Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/agents
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 	//+optional
 	AgentPool *WorkspaceAgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode
+	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode
 	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"
 	//+kubebuilder:default=remote
 	//+optional
@@ -241,7 +241,7 @@ type WorkspaceSpec struct {
 	// When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
 	// with full admin permissions. These teams' access can't be removed from a workspace.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings/access
+	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
 	//+optional
 	TeamAccess []*TeamAccess `json:"teamAccess,omitempty"`
 	// The version of Terraform to use for this workspace.
@@ -259,26 +259,27 @@ type WorkspaceSpec struct {
 	// Terraform Environment variables for all plans and applies in this workspace.
 	// Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/variables
-	//  - https://www.terraform.io/cloud-docs/workspaces/variables##environment-variables
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables
 	//+optional
 	EnvironmentVariables []Variable `json:"environmentVariables,omitempty"`
 	// Terraform variables for all plans and applies in this workspace.
 	// Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/variables
-	//  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables
 	//+optional
 	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
 	// Remote state access between workspaces.
 	// By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 	//+optional
 	RemoteStateSharing *RemoteStateSharing `json:"remoteStateSharing,omitempty"`
 	// Run triggers allow you to connect this workspace to one or more source workspaces.
 	// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
-	// More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 	//+optional
 	RunTriggers []RunTrigger `json:"runTriggers,omitempty"`
 	// Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
@@ -290,7 +291,7 @@ type WorkspaceSpec struct {
 	VersionControl *VersionControl `json:"versionControl,omitempty"`
 	// SSH key used to clone Terraform modules.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 	//+optional
 	SSHKey *SSHKey `json:"sshKey,omitempty"`
 }

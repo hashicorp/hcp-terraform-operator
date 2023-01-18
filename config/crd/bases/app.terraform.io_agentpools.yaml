@@ -66,7 +66,7 @@ spec:
                 type: string
               organization:
                 description: 'Organization name where the Workspace will be created.
-                  More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
                 type: string
               token:
                 description: API Token to be used for API calls.

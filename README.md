@@ -64,6 +64,10 @@ $ helm upgrade \
 
 ## Documentation
 
+### Supported Features
+
+The full list of supported Terraform Cloud features can be found [here](./docs/features.md).
+
 ### Installation
 
 Installation documentation can be found [here](./docs/installation.md).
