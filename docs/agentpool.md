@@ -43,7 +43,7 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
     Here is an example of the Status and Events outputs of the successfully created Agent Pool and Agent Tokens:
 
     ```console
-    $ kubects describe agentpool this
+    $ kubectl describe agentpool this
     ...
     Status:
       Agent Pool ID:  apool-mVnndtTUzdgUsRR3
