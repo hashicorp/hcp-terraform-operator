@@ -11,7 +11,7 @@ Kubernetes Operator allows managing Terraform Cloud resources via Kubernetes Cus
 
 The Operator can manage the following types of resources:
 
-- `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools) and [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/agents)
+- `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools) and [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 - `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
@@ -73,13 +73,18 @@ Installation documentation can be found [here](./docs/installation.md).
 General usage documentation can be found [here](./docs/usage.md).
 
 Controllers usage guides:
-  - [AgentPool](./docs/agentpool.md)
-  - [Module](./docs/module.md)
-  - [Workspace](./docs/workspace.md)
+
+- [AgentPool](./docs/agentpool.md)
+- [Module](./docs/module.md)
+- [Workspace](./docs/workspace.md)
 
 ### API reference
 
 API reference documentation can be found [here](./docs/api-reference.md).
+
+### Frequently Asked Questions
+
+FAQ can be found [here](./docs/faq.md).
 
 ## Operator Options
 
@@ -110,6 +115,18 @@ If you encounter any issues with the Operator there are a number of ways how to 
 
     ```console
     $ kubectl logs -f <POD_NAME>
+    ```
+
+    Logs for a specific CR can be identified with the following pattern:
+
+    ```json
+    {"<KIND>": "<NAMESPACE>/<METADATA.NAME>", "msg": "..."}
+    ```
+
+    For example:
+
+    ```text
+    2023-01-05T12:11:31Z INFO Agent Pool Controller	{"agentpool": "default/this", "msg": "successfully reconcilied agent pool"}
     ```
 
 - check the CR:
