@@ -92,7 +92,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
     - The value of the `sync-period` option;
 
-    - the values of `*-workers` options;
+    - The values of `*-workers` options.
 
     - type of the Customer Resources;
 
