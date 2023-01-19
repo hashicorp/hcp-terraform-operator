@@ -78,7 +78,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
   The `*-workers` options allow configuration of the number of concurrent workers available to process changes to resources. In certain cases increasing this number can improve performance.
 
-- **What does the `sync-period` option?**
+- **What does the `sync-period` option do?**
 
   The sync-period option specifies the minimum frequency at which watched resources are reconciled. That is necessary to make sure that managed resource is in the desired state. The synchronization period should be aligned with the number of managed Customer Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
 
