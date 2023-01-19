@@ -74,7 +74,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
   It is definitely better to avoid such situations.
 
-- **What do the `*-workers` options?**
+- **What do the `*-workers` options do?**
 
   The `*-workers` options configure the number of specific controller workers that are concurrently processing Customer Resources. In certain cases increasing this number can improve performance.
 
