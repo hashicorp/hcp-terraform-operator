@@ -44,7 +44,8 @@
 
   - Additional technical improvements:
 
-    - better logging, as well as event messages for each Custom Resource;
+    - More detailed logging
+    - Controllers produce event messages for each Custom Resource
 
     - more Terraform Cloud features supported, more information [here](./features.md);
 
