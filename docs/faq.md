@@ -34,7 +34,7 @@
 
   - A new operator option `--namespace` allows configuration of namespaces to watch. It can be one of the following: all, single, or multiple namespaces. By default, the Operator watches all namespaces, and as your setup grows, you can have multiple deployments of the Operator to better handle the load.
 
-  - A new operator option `--sync-period` allows configure the minimum frequency at which all watched resources are reconciled. This will allow keeping Custom Resources synchronized with the Terraform Cloud and react to changes faster.
+  - A new operator option `--sync-period` allows configuration of the minimum frequency at which all watched resources are reconciled. This allows faster synchronization of the state between Custom Resources and Terraform Cloud.
 
   - The Operator creates Terraform Cloud clients per Custom Resource. It means that a single deployment of the Operator can work with different organizations or tokens.
 
