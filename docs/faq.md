@@ -90,7 +90,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
   The number of API calls the Operator does depends on multiple factors:
 
-    - the value of the `sync-period` option;
+    - The value of the `sync-period` option;
 
     - the values of `*-workers` options;
 
