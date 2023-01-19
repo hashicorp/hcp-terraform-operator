@@ -47,7 +47,7 @@
     - More detailed logging
     - Controllers produce event messages for each Custom Resource
 
-    - more Terraform Cloud features supported, more information [here](./features.md);
+    - Better coverage of features supported by Terraform Cloud, more information [here](./features.md);
 
     - better test coverage;
 
