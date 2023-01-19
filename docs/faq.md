@@ -42,7 +42,7 @@
 
   - Each controller has the option to manage the number of workers it has. By default, each controller has 1 worker. A worker is a thread that runs the control loop for a given Custom Resource. The more workers the controller has, the more Customer Resources it can handle concurrently. This improves the Operator's performance. Please refer to the [performance FAQ section](./faq.md#performance) to better understand the pros and cons.
 
-  - Some more technical improvements:
+  - Additional technical improvements:
 
     - better logging, as well as event messages for each Custom Resource;
 
