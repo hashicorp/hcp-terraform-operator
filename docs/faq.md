@@ -94,7 +94,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
     - The values of `*-workers` options.
 
-    - type of the Customer Resources;
+    - The type of the resource.
 
     - the features managed by Customer Resources.
 
