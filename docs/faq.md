@@ -38,7 +38,7 @@
 
   - The Operator manages a Terraform Cloud client for each Custom Resource. This means that a single deployment of the Operator can work across multiple Terraform Cloud organizations.
 
-  - The Operator consists of different controllers that manage different Terraform Cloud resources. This provides additional flexibility. For example, a module can be executed in a workspace that is not managed by the Operator. More details about controllers you can find in the [README](../README.md) file.
+  - The Operator consists of multiple controllers that manage different Terraform Cloud resources. This provides additional flexibility, e.g. a module can be executed in a workspace that is not managed by the Operator. More details about controllers you can find in the [README](../README.md) file.
 
   - Each controller has the option to manage the number of workers it has. By default, each controller has 1 worker. The worker is a thread that processes the Custom Resource. The more workers the controller has, the more Customer Resources it can handle concurrently. That improves the Operator's performance. Please refer to the [performance FAQ section](./faq.md#performance) to better understand the pros and cons.
 
