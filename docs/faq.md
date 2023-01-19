@@ -128,7 +128,7 @@
 
 - **Where can I find Agent tokens?**
 
-  The Agent tokens are sensitive and will be saved in Kubernetes Secret. The name of the Kubernetes Secret object will be generated automatically and has the following pattern: `<CR.metadata.name>-agent-pool`.
+  The Agent tokens are sensitive and will be saved in a Secret. The name of the Secret object will be generated automatically and has the following pattern: `<metadata.name>-agent-pool`.
 
 - **Does the Operator restore tokens if I delete the whole Secret containing the Agent Tokens or a single token from it?**
 
