@@ -32,7 +32,7 @@
 
   Here is the list of major improvements in the version 2:
 
-  - A new operator option `--namespace` allows configure namespaces to watch. It can be one of the following: all, single, or multiple namespaces. By default, the Operator watches all namespaces, and as your setup grows, you can have more deployment of the Operator to better handle the load.
+  - A new operator option `--namespace` allows configuration of namespaces to watch. It can be one of the following: all, single, or multiple namespaces. By default, the Operator watches all namespaces, and as your setup grows, you can have multiple deployments of the Operator to better handle the load.
 
   - A new operator option `--sync-period` allows configure the minimum frequency at which all watched resources are reconciled. This will allow keeping Custom Resources synchronized with the Terraform Cloud and react to changes faster.
 
