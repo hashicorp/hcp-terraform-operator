@@ -86,7 +86,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
 - **How many Custom Resources can be managed by a single deployment of the Operator?**
 
-  In theory, a single deployment of the Operator can manage thousands of Customer Resources, but more accurately it would be to answer how many Customer Resources can be managed with a single token. The Operator's performance depends on the number of API calls it does and the Terraform Cloud API [rate limit](https://developer.hashicorp.com/terraform/cloud-docs/api-docs#rate-limiting).
+  In theory, a single deployment of the Operator can manage thousands of resources. However, the Operator's performance depends on the number of API calls it does and the Terraform Cloud API [rate limit](https://developer.hashicorp.com/terraform/cloud-docs/api-docs#rate-limiting) for the token used.
 
   The number of API calls the Operator does depends on multiple factors:
 
