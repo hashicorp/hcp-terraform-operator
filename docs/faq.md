@@ -118,7 +118,7 @@
 
 - **Can I execute a new Run without changing any Workspace or Module attributes?**
 
-  Yes, you can. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
+Yes. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
 
 	```console
   $ kubectl patch module <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
