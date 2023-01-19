@@ -104,7 +104,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
 - **Can a single deployment of the Operator manage the Workspaces of different Organizations?**
 
-  Yes, it can. Workspace Customer Resource has mandatory fields `spec.organization` and `spec.token`. The Operator manages workspaces based on these credentials.
+  Yes. The Workspace resource has mandatory fields `spec.organization` and `spec.token`. The Operator manages workspaces based on these credentials.
 
 - **Where can I find Workspace outputs?**
 
