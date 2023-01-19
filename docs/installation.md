@@ -43,6 +43,12 @@ $ helm install \
 
 In the above example, the Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `blue`, and `red`.
 
+If targeting a TFE instance rather than Terraform Cloud, set the API URL using this variable:
+
+```
+  --set operator.tfe_address="https://tfe-api.my-company.com"
+```
+
 ### Upgrade with options
 
 ```console

@@ -22,6 +22,9 @@ operator:
   # List of namespaces the controllers should monitor
   watchedNamespaces: []
 
+  # The API URL of a TFE instance
+  tfe_address: ""
+
 # Controllers-specific options.
 controllers:
   agentPool:
