@@ -37,4 +37,4 @@ The following Terraform Cloud Workspace features are supported by the `Workspace
 
 More information about each feature you can find in the [Terraform Cloud documentation](https://developer.hashicorp.com/terraform/cloud-docs/workspaces).
 
-In the case, a feature you are looking for is not implemented yet, please let us know by issuing a feature request or upvoting an existing one.
+If a feature you are looking for is not implemented yet please let us know by opening an issue with a feature request, or adding your reaction to an existing one.
