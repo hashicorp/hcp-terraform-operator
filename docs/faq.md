@@ -108,7 +108,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
 - **Where can I find Workspace outputs?**
 
-  Non-sensitive outputs will be saved in Kubernetes ConfigMap. Sensitive outputs will be saved in Kubernetes Secret. In both cases, the name of the corresponding Kubernetes object will be generated automatically and has the following pattern: `<CR.metadata.name>-outputs`.
+  Non-sensitive outputs will be saved in a ConfigMap. Sensitive outputs will be saved in a Secret. In both cases, the name of the corresponding Kubernetes resource will be generated automatically and has the following pattern: `<metadata.name>-outputs`.
 
 ## Module Controller
 
