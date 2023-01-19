@@ -70,7 +70,7 @@
 
 - **What will happen if I have multiple deployments of the Operator watching the same namespace(s)?**
 
-  Behavior may vary from controller to controller. Most probably you will notice that Customer Resource objects are constantly reconciled and that might cause constant updates of Terraform Cloud objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue will grow infinitely and consume all resources.
+Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Customer Resource objects are constantly reconciled and this can cause constant updates of Terraform Cloud objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
 
   It is definitely better to avoid such situations.
 
