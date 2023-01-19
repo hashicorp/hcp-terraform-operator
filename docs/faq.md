@@ -130,7 +130,7 @@
 
   The Agent tokens are sensitive and will be saved in Kubernetes Secret. The name of the Kubernetes Secret object will be generated automatically and has the following pattern: `<CR.metadata.name>-agent-pool`.
 
-- **Does the Operator restore tokens, if I delete the whole Kubernetes Secret with Agent Tokens or a single token from it?**
+- **Does the Operator restore tokens if I delete the whole Secret containing the Agent Tokens or a single token from it?**
 
   No. You will have to update the Custom Resource to re-create tokens.
 
