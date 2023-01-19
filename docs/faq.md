@@ -53,7 +53,6 @@
 
     - A leaner "Distroless" container image for deployment that is built for more platforms. More information [here](https://github.com/GoogleContainerTools/distroless).
 
-    - a container image is available for more platforms.
 
 - **Can a single deployment of the Operator watch single, multiple, or all namespaces?**
 
