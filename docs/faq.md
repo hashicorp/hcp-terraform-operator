@@ -114,7 +114,7 @@
 
 - **Where can I find Module outputs?**
 
-  Non-sensitive outputs will be saved in Kubernetes ConfigMap. Sensitive outputs will be saved in Kubernetes Secret. In both cases, the name of the corresponding Kubernetes object will be generated automatically and has the following pattern: `<CR.metadata.name>-module-outputs`. In the case the underlying Workspace is managed by the Operator, all outputs will be duplicated in the corresponding ConfigMap/Secret.
+  Non-sensitive outputs will be saved in a ConfigMap. Sensitive outputs will be saved in a Secret. In both cases, the name of the corresponding Kubernetes object will be generated automatically and has the following pattern: `<metadata.name>-module-outputs`. When the underlying workspace is managed by the operator, all outputs will be duplicated in the corresponding ConfigMap or Secret.
 
 - **Can I execute a new Run without changing any Workspace or Module attributes?**
 
