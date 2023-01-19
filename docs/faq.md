@@ -96,7 +96,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
     - The type of the resource.
 
-    - the features managed by Customer Resources.
+    - The Terraform Cloud features being used.
 
   With the default values of `sync-period`(5 minutes) and `*-workers`(1 worker per controller), we recommend managing 100 Customer Resources per token. This number can vary based on previously mentioned factors. The number can be updated later with new versions or changes in the Terraform Cloud API.
 
