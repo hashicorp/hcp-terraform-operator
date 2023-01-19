@@ -49,7 +49,7 @@
 
     - Better coverage of features supported by Terraform Cloud, more information [here](./features.md);
 
-    - better test coverage;
+    - Better test coverage 
 
     - a container image is "Distroless", more information [here](https://github.com/GoogleContainerTools/distroless);
 
