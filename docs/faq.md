@@ -44,15 +44,15 @@
 
   - Additional technical improvements:
 
-    - More detailed logging
-    - Controllers produce event messages for each Custom Resource
+    - More detailed logging.
 
-    - Better coverage of features supported by Terraform Cloud, more information [here](./features.md);
+    - Controllers produce event messages for each Custom Resource.
 
-    - Better test coverage 
+    - Better coverage of features supported by Terraform Cloud, more information [here](./features.md).
+
+    - Better test coverage.
 
     - A leaner "Distroless" container image for deployment that is built for more platforms. More information [here](https://github.com/GoogleContainerTools/distroless).
-
 
 - **Can a single deployment of the Operator watch single, multiple, or all namespaces?**
 
@@ -70,7 +70,7 @@
 
 - **What will happen if I have multiple deployments of the Operator watching the same namespace(s)?**
 
-Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Customer Resource objects are constantly reconciled and this can cause constant updates of Terraform Cloud objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
+  Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Customer Resource objects are constantly reconciled and this can cause constant updates of Terraform Cloud objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
 
   It is definitely better to avoid such situations.
 
@@ -90,7 +90,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
   The number of API calls the Operator does depends on multiple factors:
 
-    - The value of the `sync-period` option;
+    - The value of the `sync-period` option.
 
     - The values of `*-workers` options.
 
@@ -118,7 +118,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
 - **Can I execute a new Run without changing any Workspace or Module attributes?**
 
-Yes. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
+  Yes. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
 
 	```console
   $ kubectl patch module <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
