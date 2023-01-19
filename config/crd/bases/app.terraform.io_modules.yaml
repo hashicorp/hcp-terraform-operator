@@ -26,7 +26,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'Module is the Schema for the modules API Module implements the
-          API-driven Run Workflow More information: - https://www.terraform.io/cloud-docs/run/api'
+          API-driven Run Workflow More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/api'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -53,7 +53,7 @@ spec:
                 properties:
                   source:
                     description: 'Non local Terraform module source. More information:
-                      - https://www.terraform.io/language/modules/sources'
+                      - https://developer.hashicorp.com/terraform/language/modules/sources'
                     type: string
                   version:
                     description: Terraform module version.
@@ -63,7 +63,7 @@ spec:
                 type: object
               organization:
                 description: 'Organization name where the Workspace will be created.
-                  More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
                 type: string
               outputs:
                 description: Module outputs to store in ConfigMap(non-sensitive) or
@@ -148,8 +148,8 @@ spec:
             properties:
               configurationVersion:
                 description: 'A configuration version is a resource used to reference
-                  the uploaded configuration files. More information: - https://www.terraform.io/cloud-docs/api-docs/configuration-versions
-                  - https://www.terraform.io/cloud-docs/run/api'
+                  the uploaded configuration files. More information: - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
+                  - https://developer.hashicorp.com/terraform/cloud-docs/run/api'
                 properties:
                   id:
                     description: Configuration Version ID.
@@ -177,7 +177,7 @@ spec:
                 - runID
                 type: object
               run:
-                description: 'Workspace Runs status. More information: - https://www.terraform.io/cloud-docs/run/states'
+                description: 'Workspace Runs status. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/states'
                 properties:
                   configurationVersion:
                     type: string

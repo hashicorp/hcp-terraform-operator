@@ -8,7 +8,7 @@ import (
 type ModuleSource struct {
 	// Non local Terraform module source.
 	// More information:
-	//  - https://www.terraform.io/language/modules/sources
+	//   - https://developer.hashicorp.com/terraform/language/modules/sources
 	Source string `json:"source"`
 	// Terraform module version.
 	//+optional
@@ -29,8 +29,8 @@ type ModuleWorkspace struct {
 
 // A configuration version is a resource used to reference the uploaded configuration files.
 // More information:
-//   - https://www.terraform.io/cloud-docs/api-docs/configuration-versions
-//   - https://www.terraform.io/cloud-docs/run/api
+//   - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
+//   - https://developer.hashicorp.com/terraform/cloud-docs/run/api
 type ConfigurationVersionStatus struct {
 	// Configuration Version ID.
 	ID string `json:"id"`
@@ -66,7 +66,7 @@ type ModuleSpec struct {
 	Token Token `json:"token"`
 	// Organization name where the Workspace will be created.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
 	Organization string `json:"organization"`
 	// Module source and version to execute.
 	Module *ModuleSource `json:"module"`
@@ -96,12 +96,12 @@ type ModuleStatus struct {
 
 	// A configuration version is a resource used to reference the uploaded configuration files.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/api-docs/configuration-versions
-	//  - https://www.terraform.io/cloud-docs/run/api
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/run/api
 	ConfigurationVersion *ConfigurationVersionStatus `json:"configurationVersion,omitempty"`
 	// Workspace Runs status.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/run/states
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/run/states
 	Run *RunStatus `json:"run,omitempty"`
 	// Module Outputs status.
 	Output *OutputStatus `json:"output,omitempty"`
@@ -118,7 +118,7 @@ type ModuleStatus struct {
 // Module is the Schema for the modules API
 // Module implements the API-driven Run Workflow
 // More information:
-//   - https://www.terraform.io/cloud-docs/run/api
+//   - https://developer.hashicorp.com/terraform/cloud-docs/run/api
 type Module struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

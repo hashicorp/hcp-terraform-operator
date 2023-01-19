@@ -31,7 +31,7 @@ type AgentPoolSpec struct {
 	Token Token `json:"token"`
 	// Organization name where the Workspace will be created.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations
+	//  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
 	Organization string `json:"organization"`
 
 	// List of the agent tokens to generate.

@@ -42,7 +42,7 @@ spec:
               agentPool:
                 description: 'Terraform Cloud Agents allow Terraform Cloud to communicate
                   with isolated, private, or on-premises infrastructure. More information:
-                  - https://www.terraform.io/cloud-docs/agents'
+                  - https://developer.hashicorp.com/terraform/cloud-docs/agents'
                 properties:
                   id:
                     description: Agent Pool ID.
@@ -55,12 +55,12 @@ spec:
               allowDestroyPlan:
                 default: true
                 description: 'Allows a destroy plan to be created and applied. More
-                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#destruction-and-deletion'
+                  information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion'
                 type: boolean
               applyMethod:
                 default: manual
                 description: 'Define either change will be applied automatically(auto)
-                  or require an operator to confirm(manual). More information: - https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
+                  or require an operator to confirm(manual). More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
                 pattern: ^(auto|manual)$
                 type: string
               description:
@@ -70,12 +70,12 @@ spec:
                 description: 'Terraform Environment variables for all plans and applies
                   in this workspace. Variables defined within a workspace always overwrite
                   variables from variable sets that have the same type and the same
-                  key. More information: - https://www.terraform.io/cloud-docs/workspaces/variables
-                  - https://www.terraform.io/cloud-docs/workspaces/variables##environment-variables'
+                  key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables'
                 items:
                   description: 'Variables let you customize configurations, modify
                     Terraform''s behavior, and store information like provider credentials.
-                    More information: - https://www.terraform.io/cloud-docs/workspaces/variables'
+                    More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables'
                   properties:
                     description:
                       description: Description of the variable.
@@ -147,7 +147,7 @@ spec:
               executionMode:
                 default: remote
                 description: 'Define where the Terraform code will be executed. More
-                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode'
+                  information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode'
                 pattern: ^(agent|local|remote)$
                 type: string
               name:
@@ -155,12 +155,12 @@ spec:
                 type: string
               organization:
                 description: 'Organization name where the Workspace will be created
-                  More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
                 type: string
               remoteStateSharing:
                 description: 'Remote state access between workspaces. By default,
                   new workspaces in Terraform Cloud do not allow other workspaces
-                  to access their state. More information: - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces'
+                  to access their state. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces'
                 properties:
                   allWorkspaces:
                     default: false
@@ -173,7 +173,7 @@ spec:
                     items:
                       description: 'ConsumerWorkspace allows access to the state for
                         specific workspaces within the same organization. More information:
-                        - https://www.terraform.io/cloud-docs/workspaces/state#remote-state-access-controls'
+                        - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
                       properties:
                         id:
                           description: Consumer Workspace ID.
@@ -189,12 +189,12 @@ spec:
                 description: 'Run triggers allow you to connect this workspace to
                   one or more source workspaces. These connections allow runs to queue
                   automatically in this workspace on successful apply of runs in any
-                  of the source workspaces. More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
+                  of the source workspaces. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                 items:
                   description: 'RunTrigger allows you to connect this workspace to
                     one or more source workspaces. These connections allow runs to
                     queue automatically in this workspace on successful apply of runs
-                    in any of the source workspaces. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
+                    in any of the source workspaces. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
                       description: Source Workspace ID.
@@ -207,7 +207,7 @@ spec:
                 type: array
               sshKey:
                 description: 'SSH key used to clone Terraform modules. More information:
-                  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys'
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys'
                 properties:
                   id:
                     pattern: ^sshkey-[a-zA-Z0-9]+$
@@ -227,25 +227,25 @@ spec:
                   on a per-team basis. When a workspace is created, only the owners
                   team and teams with the "manage workspaces" permission can access
                   it, with full admin permissions. These teams'' access can''t be
-                  removed from a workspace. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/access'
+                  removed from a workspace. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access'
                 items:
                   description: 'Terraform Cloud workspaces can only be accessed by
                     users with the correct permissions. You can manage permissions
                     for a workspace on a per-team basis. When a workspace is created,
                     only the owners team and teams with the "manage workspaces" permission
                     can access it, with full admin permissions. These teams'' access
-                    can''t be removed from a workspace. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/access'
+                    can''t be removed from a workspace. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access'
                   properties:
                     access:
                       description: 'There are two ways to choose which permissions
                         a given team has on a workspace: fixed permission sets, and
-                        custom permissions. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
+                        custom permissions. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
                       pattern: ^(admin|custom|plan|read|write)$
                       type: string
                     custom:
                       description: 'Custom permissions let you assign specific, finer-grained
                         permissions to a team than the broader fixed permission sets
-                        provide. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions'
+                        provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions'
                       properties:
                         runTasks:
                           type: boolean
@@ -270,7 +270,7 @@ spec:
                           type: boolean
                       type: object
                     team:
-                      description: 'Team to grant access. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/teams'
+                      description: 'Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams'
                       properties:
                         id:
                           description: Team ID.
@@ -289,12 +289,12 @@ spec:
                 description: 'Terraform variables for all plans and applies in this
                   workspace. Variables defined within a workspace always overwrite
                   variables from variable sets that have the same type and the same
-                  key. More information: - https://www.terraform.io/cloud-docs/workspaces/variables
-                  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables'
+                  key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables'
                 items:
                   description: 'Variables let you customize configurations, modify
                     Terraform''s behavior, and store information like provider credentials.
-                    More information: - https://www.terraform.io/cloud-docs/workspaces/variables'
+                    More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables'
                   properties:
                     description:
                       description: Description of the variable.
