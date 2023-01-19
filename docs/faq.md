@@ -36,7 +36,7 @@
 
   - A new operator option `--sync-period` allows configuration of the minimum frequency at which all watched resources are reconciled. This allows faster synchronization of the state between Custom Resources and Terraform Cloud.
 
-  - The Operator creates Terraform Cloud clients per Custom Resource. It means that a single deployment of the Operator can work with different organizations or tokens.
+  - The Operator manages a Terraform Cloud client for each Custom Resource. This means that a single deployment of the Operator can work across multiple Terraform Cloud organizations.
 
   - The Operator consists of different controllers that manage different Terraform Cloud resources. This provides additional flexibility. For example, a module can be executed in a workspace that is not managed by the Operator. More details about controllers you can find in the [README](../README.md) file.
 
