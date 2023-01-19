@@ -76,7 +76,7 @@ Unexpected behaviour is likely when multiple deployments of the operator try to 
 
 - **What do the `*-workers` options do?**
 
-  The `*-workers` options configure the number of specific controller workers that are concurrently processing Customer Resources. In certain cases increasing this number can improve performance.
+  The `*-workers` options allow configuration of the number of concurrent workers available to process changes to resources. In certain cases increasing this number can improve performance.
 
 - **What does the `sync-period` option?**
 
