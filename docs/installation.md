@@ -46,7 +46,7 @@ In the above example, the Operator will watch 3 namespaces in the Kubernetes clu
 If targeting a TFE instance rather than Terraform Cloud, set the API URL using this variable:
 
 ```
-  --set operator.tfe_address="https://tfe-api.my-company.com"
+  --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
 ### Upgrade with options
