@@ -90,6 +90,11 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		It("can update agent pool with a new token", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
 			// ADD ONE MORE AGENT TOKEN
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.Spec.AgentTokens = append(instance.Spec.AgentTokens, &appv1alpha2.AgentToken{Name: "third"})
@@ -138,6 +143,11 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		It("can recreate agent token", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
 			// DELETE ONE AGENT TOKEN
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.Spec.AgentTokens = instance.Spec.AgentTokens[:len(instance.Spec.AgentTokens)-1]
@@ -154,6 +164,11 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		It("can recreate agent pool", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
 			// DELETE AGENT POOL FROM THE TFC AND WAIT FOR RECREATION
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)).Should(Succeed())
@@ -179,6 +194,11 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		It("can delete agent tokens", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
 			// DELETE AGENT TOKENS AND WAIT FOR RECREATION
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			for _, t := range instance.Status.AgentTokens {
@@ -238,17 +258,21 @@ func validateAgentPoolTestStatus(ctx context.Context, instance *appv1alpha2.Agen
 		Name:      instance.Name,
 		Namespace: instance.Namespace,
 	}
-	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-	spt := make([]string, len(instance.Spec.AgentTokens))
-	for i, t := range instance.Spec.AgentTokens {
-		spt[i] = t.Name
-	}
-	st := make([]string, len(instance.Status.AgentTokens))
-	for i, t := range instance.Status.AgentTokens {
-		st[i] = t.Name
-	}
-	Expect(spt).Should(ConsistOf(st))
 
+	Eventually(func() bool {
+		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		spt := make([]string, len(instance.Spec.AgentTokens))
+		for i, t := range instance.Spec.AgentTokens {
+			spt[i] = t.Name
+		}
+
+		st := make([]string, len(instance.Status.AgentTokens))
+		for i, t := range instance.Status.AgentTokens {
+			st[i] = t.Name
+		}
+
+		return compareAgentTokens(spt, st)
+	}).Should(BeTrue())
 }
 
 func validateAgentPoolTestTokens(ctx context.Context, instance *appv1alpha2.AgentPool) {
@@ -257,18 +281,43 @@ func validateAgentPoolTestTokens(ctx context.Context, instance *appv1alpha2.Agen
 		Name:      instance.Name,
 		Namespace: instance.Namespace,
 	}
-	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-	at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
-	Expect(err).Should(Succeed())
-	Expect(at).ShouldNot(BeNil())
-	ct := make([]string, len(at.Items))
-	for i, t := range at.Items {
-		ct[i] = t.ID
+
+	Eventually(func() bool {
+		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
+		Expect(err).Should(Succeed())
+		Expect(at).ShouldNot(BeNil())
+		ct := make([]string, len(at.Items))
+		for i, t := range at.Items {
+			ct[i] = t.ID
+		}
+
+		kt := make([]string, len(instance.Status.AgentTokens))
+		for i, t := range instance.Status.AgentTokens {
+			kt[i] = t.ID
+		}
+
+		return compareAgentTokens(ct, kt)
+	}).Should(BeTrue())
+
+}
+
+func compareAgentTokens(aTokens, bTokens []string) bool {
+	if len(aTokens) != len(bTokens) {
+		return false
 	}
 
-	kt := make([]string, len(instance.Status.AgentTokens))
-	for i, t := range instance.Status.AgentTokens {
-		kt[i] = t.ID
+	for _, at := range aTokens {
+		found := false
+		for _, bt := range bTokens {
+			if at == bt {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
 	}
-	Expect(ct).Should(ConsistOf(kt))
+
+	return true
 }
