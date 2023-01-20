@@ -32,9 +32,9 @@ spec:
           - --namespace={{ . }}
           {{- end }}
           env:
-          {{- if .Values.operator.tfe_address -}}
+          {{- if .Values.operator.tfeAddress -}}
           - name: TFE_ADDRESS
-            value: {{ .Values.operator.tfe_address }}
+            value: {{ .Values.operator.tfeAddress }}
           {{- end -}}
           command:
           - /manager

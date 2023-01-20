@@ -58,12 +58,14 @@
 
   Yes, a single deployment of the Operator can either watch a single namespace, multiple namespaces, or all namespaces in the Kubernetes cluster. By default, the Operator watches all namespaces. If you want to specify single or multiple namespaces, you need to pass the following option when installing or upgrading the Helm chart.
 
-  *watch a single namespace*
+  _watch a single namespace_
+
   ```console
   $ helm ... --set 'operator.watchedNamespaces={red}'
   ```
 
-  *watch multiple namespaces*
+  _watch multiple namespaces_
+
   ```console
   $ helm ... --set 'operator.watchedNamespaces={white,blue,red}'
   ```
@@ -82,6 +84,10 @@
 
   The `--sync-period` option specifies the minimum frequency at which watched resources are reconciled. The synchronization period should be aligned with the number of managed Customer Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
 
+- **Does the Operator work with Terraform Enterprise?**
+
+  Yes, the operator can be configured for custom TFE API endpoints using the `operator.tfeAddress`. This value should be a valid URL, for the API of a Terraform Enterprise instance. Once the `tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
+
 ## Performance
 
 - **How many Custom Resources can be managed by a single deployment of the Operator?**
@@ -90,15 +96,15 @@
 
   The number of API calls the Operator does depends on multiple factors:
 
-    - The value of the `sync-period` option.
+  - The value of the `sync-period` option.
 
-    - The values of `*-workers` options.
+  - The values of `*-workers` options.
 
-    - The type of the resource.
+  - The type of the resource.
 
-    - The Terraform Cloud features being used.
+  - The Terraform Cloud features being used.
 
-  With the default values of `sync-period` (5 minutes) and `*-workers` (1 worker per controller), we recommend managing **100 resources per token**. This number can vary based on previously mentioned factors. This number can be updated later to accommodate  changes in the Terraform Cloud API.
+  With the default values of `sync-period` (5 minutes) and `*-workers` (1 worker per controller), we recommend managing **100 resources per token**. This number can vary based on previously mentioned factors. This number can be updated later to accommodate changes in the Terraform Cloud API.
 
 ## Workspace Controller
 
@@ -120,7 +126,7 @@
 
   Yes. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
 
-	```console
+  ```console
   $ kubectl patch module <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
   ```
 

@@ -23,7 +23,7 @@ operator:
   watchedNamespaces: []
 
   # The API URL of a TFE instance
-  tfe_address: ""
+  tfeAddress: ""
 
 # Controllers-specific options.
 controllers:
