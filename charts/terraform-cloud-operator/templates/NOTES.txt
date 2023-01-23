@@ -6,10 +6,10 @@ Documentation:
 Your release is named {{ .Release.Name }}.
 
 To get the release status, run:
-  $ helm status {{ .Release.Name }}
+  $ helm --namespace {{ .Release.Namespace }} status {{ .Release.Name }}
 
 To get the release values, run:
-  $ helm get values {{ .Release.Name }}
+  $ helm --namespace {{ .Release.Namespace }} get values {{ .Release.Name }}
 
 To read this notes again, run:
-  $ helm get notes {{ .Release.Name }}
+  $ helm --namespace {{ .Release.Namespace }} get notes {{ .Release.Name }}
