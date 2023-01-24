@@ -82,6 +82,10 @@ Controllers usage guides:
 - [Module](./docs/module.md)
 - [Workspace](./docs/workspace.md)
 
+### Metrics
+
+The Operator exposes metrics in the [Prometheus](https://prometheus.io/) format for each controller. More information can be found [here](./docs/metrics.md).
+
 ### API reference
 
 API reference documentation can be found [here](./docs/api-reference.md).
