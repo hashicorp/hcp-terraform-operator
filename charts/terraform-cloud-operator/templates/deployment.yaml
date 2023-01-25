@@ -31,11 +31,17 @@ spec:
           {{- range .Values.operator.watchedNamespaces }}
           - --namespace={{ . }}
           {{- end }}
+          {{- $envVars := dict }}
+          {{- if .Values.operator.tfeAddress }}
+            {{- $_ := set $envVars "TFE_ADDRESS" .Values.operator.tfeAddress }}
+          {{- end }}
+          {{- if gt (len (keys $envVars)) 0 }}
           env:
-          {{- if .Values.operator.tfeAddress -}}
-          - name: TFE_ADDRESS
-            value: {{ .Values.operator.tfeAddress }}
-          {{- end -}}
+            {{- range $ek, $ev := $envVars }}
+            - name: {{ $ek }}
+              value: {{ $ev -}}
+            {{ end }}
+          {{- end }}
           command:
           - /manager
           livenessProbe:
