@@ -10,4 +10,6 @@ BUG FIXES:
 
 DOCS:
 
-* Add FAQ and reorganize documentation structure.
+* Update documentation.
+* Add FAQ.
+* Reorganize documentation structure.
