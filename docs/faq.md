@@ -88,6 +88,10 @@
 
   Yes, the operator can be configured for custom TFE API endpoints using the `operator.tfeAddress`. This value should be a valid URL, for the API of a Terraform Enterprise instance. Once the `tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
 
+- **What does `kube-rbac-proxy` do?**
+
+  The `kube-rbac-proxy` is a small HTTP proxy for a single upstream, that can perform RBAC authorization against the Kubernetes API. More information is in the author's [blog post](https://www.brancz.com/2018/02/27/using-kube-rbac-proxy-to-secure-kubernetes-workloads/).
+
 ## Performance
 
 - **How many Custom Resources can be managed by a single deployment of the Operator?**
