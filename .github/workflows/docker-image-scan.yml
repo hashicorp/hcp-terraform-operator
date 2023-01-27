@@ -1,0 +1,42 @@
+name: Scan Docker image for vulnerabilities
+
+on:
+  schedule:
+    - cron: '30 7 * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  scan-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker image metadata
+        id: meta
+        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # v4.3.0
+        with:
+          images: operator
+          tags: |
+            type=sha,format=long
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
+        with:
+          platforms: amd64,arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325 # v2.2.1
+
+      - name: Build and load Docker image
+        uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3 # v3.3.0
+        with:
+          platforms: linux/amd64,linux/arm64
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Scan Docker image for vulnerabilities
+        uses: crazy-max/ghaction-container-scan@f58bb18143ac42b827b11b553b68ec967da4db8d # v2.0.0
+        with:
+          image: ${{ steps.meta.outputs.tags }}
