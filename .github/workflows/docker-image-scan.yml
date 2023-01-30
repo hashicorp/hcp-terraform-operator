@@ -37,6 +37,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Scan Docker image for vulnerabilities
-        uses: crazy-max/ghaction-container-scan@f58bb18143ac42b827b11b553b68ec967da4db8d # v2.0.0
+        uses: crazy-max/ghaction-container-scan@cdc6facb764848d60ab7ea4b7cbaac409140e37d # v2.1.0
         with:
           image: ${{ steps.meta.outputs.tags }}
