@@ -111,7 +111,7 @@ var _ = Describe("Module controller", Ordered, func() {
 			})
 			Expect(err).Should(Succeed())
 
-			instance.Spec.Workspace.Name = ws.Name
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{Name: ws.Name}
 			// Create a new Module
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
@@ -163,7 +163,7 @@ var _ = Describe("Module controller", Ordered, func() {
 			})
 			Expect(err).Should(Succeed())
 
-			instance.Spec.Workspace.ID = ws.ID
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
 			// Create a new Module
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
