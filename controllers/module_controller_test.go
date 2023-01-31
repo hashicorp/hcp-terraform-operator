@@ -73,9 +73,6 @@ var _ = Describe("Module controller", Ordered, func() {
 						Sensitive: true,
 					},
 				},
-				Workspace: &appv1alpha2.ModuleWorkspace{
-					Name: workspace,
-				},
 			},
 			Status: appv1alpha2.ModuleStatus{},
 		}
@@ -96,7 +93,7 @@ var _ = Describe("Module controller", Ordered, func() {
 	})
 
 	Context("Module controller", func() {
-		It("can create, run and destroy module", func() {
+		It("can create, run and destroy module, ref to Workspace by Name", func() {
 			// Create a new TFC Workspace
 			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
 				Name:      &workspace,
@@ -114,6 +111,59 @@ var _ = Describe("Module controller", Ordered, func() {
 			})
 			Expect(err).Should(Succeed())
 
+			instance.Spec.Workspace.Name = ws.Name
+			// Create a new Module
+			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+
+			// Make sure a new module is created and executed
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				return instance.Status.ObservedGeneration == instance.Generation
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.ConfigurationVersion == nil {
+					return false
+				}
+				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded) ||
+					// If the Configuration Version upload is errored then exit from the Eventually and validate it after
+					instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationErrored)
+			}).Should(BeTrue())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo(string(tfc.ConfigurationErrored)))
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.Run.Status == string(tfc.RunApplied) ||
+					// If the Run execution is errored then exit from the Eventually and validate it after
+					instance.Status.Run.Status == string(tfc.RunErrored)
+			}).Should(BeTrue())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
+		})
+		It("can create, run and destroy module, ref to Workspace by ID", func() {
+			// Create a new TFC Workspace
+			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+				Name:      &workspace,
+				AutoApply: tfc.Bool(true),
+			})
+			Expect(err).Should(Succeed())
+			Expect(ws).ShouldNot(BeNil())
+
+			// Create TFC Workspace variables
+			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+				Key:      tfc.String("string_length"),
+				Value:    tfc.String("512"),
+				HCL:      tfc.Bool(true),
+				Category: tfc.Category(tfc.CategoryTerraform),
+			})
+			Expect(err).Should(Succeed())
+
+			instance.Spec.Workspace.ID = ws.ID
 			// Create a new Module
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
