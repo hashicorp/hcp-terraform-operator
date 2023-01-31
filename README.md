@@ -94,6 +94,10 @@ API reference documentation can be found [here](./docs/api-reference.md).
 
 FAQ can be found [here](./docs/faq.md).
 
+### Examples
+
+YAML manifests examples live [here](./docs/examples/README.md).
+
 ## Operator Options
 
 Global options:

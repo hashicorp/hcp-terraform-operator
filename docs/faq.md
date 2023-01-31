@@ -110,6 +110,27 @@
 
   With the default values of `sync-period` (5 minutes) and `*-workers` (1 worker per controller), we recommend managing **100 resources per token**. This number can vary based on previously mentioned factors. This number can be updated later to accommodate changes in the Terraform Cloud API.
 
+- **What can be done to improve performance?**
+
+  The Operator allows referring to a TFC object by the ID or name. For example, the `Workspace` controller supports the Run Triggers option.   It accepts a list of Workspaces that will be triggered. An item can be referred to either by `ID` or `Name`. When you use a name, the Operator does an API call on each reconciliation in order to get the ID of the target Workspace. It makes it more dynamic but causes extra API calls.
+
+  One way to improve performance is to use the referred object ID. In this example, by the Workspace ID. In this case, the Operator will use the ID directly without trying to resolve it.
+
+  Here is a short example to demonstrate both options:
+
+  ```yaml
+  apiVersion: app.terraform.io/v1alpha2
+  kind: Workspace
+  metadata:
+  name: this
+  spec:
+    runTriggers:
+      - id: ws-NUVHA9feCXzAmPHx
+      - name: target-workspace
+  ```
+
+  Please refer to the [CRDs](../config/crd/bases) and [API Reference](./api-reference.md) to see if the feature you use supports `ID` or `Name`.
+
 ## Workspace Controller
 
 - **Can a single deployment of the Operator manage the Workspaces of different Organizations?**

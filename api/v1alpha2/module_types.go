@@ -19,7 +19,7 @@ type ModuleSource struct {
 }
 
 // Workspace to execute the module.
-// Either 'ID' or 'Name' must be specified.
+// Only one of the fields `ID` or `Name` is allowed.
 type ModuleWorkspace struct {
 	// Module Workspace ID.
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
