@@ -15,7 +15,7 @@ func (r *ModuleReconciler) getWorkspaceByName(ctx context.Context, m *moduleInst
 }
 
 func (r *ModuleReconciler) getWorkspaceByID(ctx context.Context, m *moduleInstance) (*tfc.Workspace, error) {
-	return m.tfClient.Client.Workspaces.Read(ctx, m.instance.Spec.Organization, m.instance.Spec.Workspace.ID)
+	return m.tfClient.Client.Workspaces.ReadByID(ctx, m.instance.Spec.Workspace.ID)
 }
 
 func (r *ModuleReconciler) getWorkspace(ctx context.Context, m *moduleInstance) (*tfc.Workspace, error) {
