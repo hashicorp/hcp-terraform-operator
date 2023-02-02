@@ -2,6 +2,8 @@
 
 `Module` controller allows executing arbitrary Terraform Modules code in Terraform Cloud Workspace via Kubernetes Custom Resources.
 
+Please refer to the [CRD](../config/crd/bases/app.terraform.io_modules.yaml) and [API Reference](./api-reference.md#module) to get the full list of available options.
+
 Below is an example of a Module Custom Resource:
 
 ```yaml
@@ -63,4 +65,6 @@ $ kubectl patch module <NAME> \
   --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
 ```
 
-Please refer to the [CRD](../config/crd/bases/app.terraform.io_modules.yaml) to get the full list of available options.
+If you have any questions, please check out the [FAQ](./faq.md#module-controller).
+
+If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
