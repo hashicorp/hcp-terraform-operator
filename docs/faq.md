@@ -112,7 +112,7 @@
 
 - **What can be done to improve performance?**
 
-  The Operator allows referring to a TFC object by the ID or name. For example, the `Workspace` controller supports the Run Triggers option.   It accepts a list of Workspaces that will be triggered. An item can be referred to either by `ID` or `Name`. When you use a name, the Operator does an API call on each reconciliation in order to get the ID of the target Workspace. It makes it more dynamic but causes extra API calls.
+  The Operator allows you to refer to Terraform Cloud resources by their name or ID. For example, the `Workspace` controller allows you to specify another workspace to use as a [Run Trigger](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers).  It accepts a list of workspaces that will be triggered where each item can either be the `ID` or `Name` of the workspace. When you use a name, the Operator does an API call on each reconciliation in order to get the ID of the target Workspace. This makes configurations easier to read, but causes more API calls to be as the operator needs to figure out what the ID of workspace is from the name. 
 
   One way to improve performance is to use the referred object ID. In this example, by the Workspace ID. In this case, the Operator will use the ID directly without trying to resolve it.
 
