@@ -42,6 +42,6 @@ Once the above CR is applied, the Operator creates a new workspace `workspace-de
 
 Non-sensitive outputs of the workspace runs will be saved in Kubernetes ConfigMaps. Sensitive outputs of the workspace runs will be saved in Kubernetes Secrets. In both cases, the name of the corresponding Kubernetes object will be generated automatically and has the following pattern: `<metadata.name>-outputs`. For the above example, the name of ConfigMap and Secret will be `this-outputs`.
 
-If you have any questions, please check out the [FAQ](./faq.md#workspace-controller) to see if you can find answers there.
+If you have any questions, please check out the [FAQ](./faq.md#workspace-controller).
 
 If you encounter any issues with the `Workspace` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
