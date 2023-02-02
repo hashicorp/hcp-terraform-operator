@@ -65,6 +65,6 @@ $ kubectl patch module <NAME> \
   --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
 ```
 
-If you have any questions, please check out the [FAQ](./faq.md#module-controller) to see if you can find answers there.
+If you have any questions, please check out the [FAQ](./faq.md#module-controller).
 
 If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
