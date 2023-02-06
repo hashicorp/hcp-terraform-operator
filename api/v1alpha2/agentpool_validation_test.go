@@ -44,7 +44,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 				AgentTokens: []*AgentToken{
 					{
 						Name:      "this",
-						CreatedAt: pointerOf(int64(1984)),
+						CreatedAt: PointerOf(int64(1984)),
 					},
 				},
 			},
@@ -54,7 +54,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 				AgentTokens: []*AgentToken{
 					{
 						Name:       "this",
-						LastUsedAt: pointerOf(int64(1984)),
+						LastUsedAt: PointerOf(int64(1984)),
 					},
 				},
 			},

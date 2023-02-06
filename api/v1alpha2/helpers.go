@@ -3,6 +3,6 @@
 
 package v1alpha2
 
-func pointerOf[A any](a A) *A {
+func PointerOf[A any](a A) *A {
 	return &a
 }
