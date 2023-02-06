@@ -171,9 +171,10 @@ spec:
                     description: Allow access to the state for specific workspaces
                       within the same organization.
                     items:
-                      description: 'ConsumerWorkspace allows access to the state for
-                        specific workspaces within the same organization. More information:
-                        - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
+                      description: "ConsumerWorkspace allows access to the state for
+                        specific workspaces within the same organization. Only one
+                        of the fields `ID` or `Name` is allowed. \n More information:
+                        - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls"
                       properties:
                         id:
                           description: Consumer Workspace ID.
@@ -191,10 +192,11 @@ spec:
                   automatically in this workspace on successful apply of runs in any
                   of the source workspaces. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                 items:
-                  description: 'RunTrigger allows you to connect this workspace to
+                  description: "RunTrigger allows you to connect this workspace to
                     one or more source workspaces. These connections allow runs to
                     queue automatically in this workspace on successful apply of runs
-                    in any of the source workspaces. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
+                    in any of the source workspaces. Only one of the fields `ID` or
+                    `Name` is allowed. \n More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers"
                   properties:
                     id:
                       description: Source Workspace ID.

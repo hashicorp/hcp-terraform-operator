@@ -7,7 +7,8 @@ import "time"
 
 // SHARED CONSTANTS
 const (
-	requeueInterval = 15 * time.Second
+	requeueInterval             = 15 * time.Second
+	requeueIntervalOnValidation = 5 * time.Minute
 )
 
 // AGENT POOL CONTROLLER'S CONSTANTS

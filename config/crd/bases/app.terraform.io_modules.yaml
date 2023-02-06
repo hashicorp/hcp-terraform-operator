@@ -135,6 +135,7 @@ spec:
                     type: string
                   name:
                     description: Module Workspace Name.
+                    minLength: 1
                     type: string
                 type: object
             required:

@@ -26,6 +26,7 @@ type ModuleWorkspace struct {
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Module Workspace Name.
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
