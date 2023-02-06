@@ -1,9 +1,6 @@
 api:
 - api/**/*.go
 
-helm-chart:
-- charts/**/*.yaml
-
 controller:
 - controllers/*.go
 
@@ -16,3 +13,9 @@ documentation:
 
 golang:
 - '**/*.go'
+
+helm-chart:
+- charts/**/*.yaml
+
+test:
+- '**/*_test.go'
