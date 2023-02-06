@@ -21,3 +21,7 @@ func requeueAfter(duration time.Duration) (reconcile.Result, error) {
 func requeueOnErr(err error) (reconcile.Result, error) {
 	return reconcile.Result{}, err
 }
+
+func pointerOf[A any](a A) *A {
+	return &a
+}

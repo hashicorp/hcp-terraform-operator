@@ -18,10 +18,10 @@ type AgentToken struct {
 	ID string `json:"id,omitempty"`
 	// Timestamp of when the agent token was created.
 	// +optional
-	CreatedAt int64 `json:"createdAt,omitempty"`
+	CreatedAt *int64 `json:"createdAt,omitempty"`
 	// Timestamp of when the agent token was last used.
 	// +optional
-	LastUsedAt int64 `json:"lastUsedAt,omitempty"`
+	LastUsedAt *int64 `json:"lastUsedAt,omitempty"`
 }
 
 // AgentPoolSpec defines the desired state of AgentPool.
