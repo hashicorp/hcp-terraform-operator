@@ -163,9 +163,11 @@ type Token struct {
 // ValueFrom source for the variable's value. Cannot be used if value is not empty.
 type ValueFrom struct {
 	// Selects a key of a ConfigMap.
+	//
 	//+optional
 	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
 	// Selects a key of a secret in the workspace's namespace
+	//
 	//+optional
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
@@ -180,6 +182,7 @@ type Variable struct {
 	Name string `json:"name"`
 	// Description of the variable.
 	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
@@ -194,6 +197,7 @@ type Variable struct {
 	Sensitive bool `json:"sensitive,omitempty"`
 	// Value of the variable.
 	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Value string `json:"value,omitempty"`
 	// Source for the variable's value. Cannot be used if value is not empty.
@@ -213,9 +217,11 @@ type VersionControl struct {
 	//+kubebuilder:validation:Pattern="^ot-[a-zA-Z0-9]+$"
 	OAuthTokenID string `json:"oAuthTokenID,omitempty"`
 	// A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider.
+	//
+	//+kubebuilder:validation:MinLength=1
 	Repository string `json:"repository,omitempty"`
 	// The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main).
-	//+kubebuilder:validation:MinLength=1
+	//
 	//+optional
 	Branch string `json:"branch,omitempty"`
 }
@@ -239,10 +245,14 @@ type WorkspaceSpec struct {
 	// API Token to be used for API calls
 	Token Token `json:"token"`
 	// Workspace name
+	//
+	//+kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 	// Organization name where the Workspace will be created
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
+	//
+	//+kubebuilder:validation:MinLength=1
 	Organization string `json:"organization"`
 
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
@@ -331,6 +341,7 @@ type WorkspaceSpec struct {
 	// By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
+	//
 	//+optional
 	RemoteStateSharing *RemoteStateSharing `json:"remoteStateSharing,omitempty"`
 	// Run triggers allow you to connect this workspace to one or more source workspaces.
@@ -359,14 +370,17 @@ type WorkspaceSpec struct {
 
 type RunStatus struct {
 	// Current(both active and finished) Terraform Cloud run ID.
+	//
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Current(both active and finished) Terraform Cloud run status.
+	//
 	//+optional
 	Status string `json:"status,omitempty"`
 	//+optional
 	ConfigurationVersion string `json:"configurationVersion"`
 	// Run ID of the latest run that could update the outputs.
+	//
 	//+optional
 	OutputRunID string `json:"outputRunID,omitempty"`
 }

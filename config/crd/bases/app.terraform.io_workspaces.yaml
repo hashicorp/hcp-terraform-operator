@@ -81,6 +81,7 @@ spec:
                   properties:
                     description:
                       description: Description of the variable.
+                      minLength: 1
                       type: string
                     hcl:
                       default: false
@@ -99,6 +100,7 @@ spec:
                       type: boolean
                     value:
                       description: Value of the variable.
+                      minLength: 1
                       type: string
                     valueFrom:
                       description: Source for the variable's value. Cannot be used
@@ -156,10 +158,12 @@ spec:
                 type: string
               name:
                 description: Workspace name
+                minLength: 1
                 type: string
               organization:
                 description: 'Organization name where the Workspace will be created
                   More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
+                minLength: 1
                 type: string
               remoteStateSharing:
                 description: 'Remote state access between workspaces. By default,
@@ -312,6 +316,7 @@ spec:
                   properties:
                     description:
                       description: Description of the variable.
+                      minLength: 1
                       type: string
                     hcl:
                       default: false
@@ -330,6 +335,7 @@ spec:
                       type: boolean
                     value:
                       description: Value of the variable.
+                      minLength: 1
                       type: string
                     valueFrom:
                       description: Source for the variable's value. Cannot be used
@@ -420,7 +426,6 @@ spec:
                   branch:
                     description: The repository branch that Run will execute from.
                       This defaults to the repository's default branch (e.g. main).
-                    minLength: 1
                     type: string
                   oAuthTokenID:
                     description: The VCS Connection (OAuth Connection + Token) to
@@ -431,6 +436,7 @@ spec:
                     description: A reference to your VCS repository in the format
                       <organization>/<repository> where <organization> and <repository>
                       refer to the organization and repository in your VCS provider.
+                    minLength: 1
                     type: string
                 type: object
               workingDirectory:

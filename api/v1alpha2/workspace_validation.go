@@ -33,6 +33,10 @@ func (w *Workspace) ValidateSpec() error {
 func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	if w.Spec.AgentPool == nil {
+		return allErrs
+	}
+
 	if w.Spec.AgentPool.ID == "" && w.Spec.AgentPool.Name == "" {
 		allErrs = append(allErrs, field.Invalid(
 			field.NewPath("spec"),
@@ -54,6 +58,10 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 
 func (w *Workspace) validateSpecRemoteStateSharing() field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	if w.Spec.RemoteStateSharing == nil {
+		return allErrs
+	}
 
 	if !w.Spec.RemoteStateSharing.AllWorkspaces && len(w.Spec.RemoteStateSharing.Workspaces) == 0 {
 		allErrs = append(allErrs, field.Invalid(
@@ -175,6 +183,10 @@ func (w *Workspace) validateSpecRunTrigger() field.ErrorList {
 func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	if w.Spec.SSHKey == nil {
+		return allErrs
+	}
+
 	if w.Spec.SSHKey.ID == "" && w.Spec.SSHKey.Name == "" {
 		allErrs = append(allErrs, field.Invalid(
 			field.NewPath("spec"),
@@ -186,7 +198,7 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 	if w.Spec.SSHKey.ID != "" && w.Spec.SSHKey.Name != "" {
 		allErrs = append(allErrs, field.Invalid(
 			field.NewPath("spec"),
-			"sshKey",
+			"SSHKey",
 			"only one of ID or Name can be used at a time, not both"),
 		)
 	}
