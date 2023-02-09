@@ -29,7 +29,6 @@ func (ap *AgentPool) ValidateSpec() error {
 
 func (ap *AgentPool) validateSpecAgentToken() field.ErrorList {
 	allErrs := field.ErrorList{}
-
 	atn := make(map[string]int)
 
 	for i, at := range ap.Spec.AgentTokens {

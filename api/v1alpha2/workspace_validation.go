@@ -97,10 +97,9 @@ func (w *Workspace) validateSpecRemoteStateSharingWorkspaces() field.ErrorList {
 
 	wi := make(map[string]int)
 	wn := make(map[string]int)
-	f := field.NewPath("spec").Child("remoteStateSharing")
 
 	for i, ws := range w.Spec.RemoteStateSharing.Workspaces {
-		f.Child(fmt.Sprintf("workspaces[%d]", i))
+		f := field.NewPath("spec").Child("remoteStateSharing").Child(fmt.Sprintf("workspaces[%d]", i))
 		if ws.ID == "" && ws.Name == "" {
 			allErrs = append(allErrs, field.Invalid(
 				f,
@@ -140,10 +139,9 @@ func (w *Workspace) validateSpecRunTrigger() field.ErrorList {
 
 	rti := make(map[string]int)
 	rtn := make(map[string]int)
-	f := field.NewPath("spec")
 
 	for i, rt := range w.Spec.RunTriggers {
-		f.Child(fmt.Sprintf("runTriggers[%d]", i))
+		f := field.NewPath("spec").Child(fmt.Sprintf("runTriggers[%d]", i))
 		if rt.ID == "" && rt.Name == "" {
 			allErrs = append(allErrs, field.Invalid(
 				f,
