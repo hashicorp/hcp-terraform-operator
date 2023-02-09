@@ -24,7 +24,7 @@ func (w *Workspace) ValidateSpec() error {
 	}
 
 	return apierrors.NewInvalid(
-		schema.GroupKind{Group: GroupVersion.Group, Kind: "Module"},
+		schema.GroupKind{Group: "", Kind: "Workspace"},
 		w.Name,
 		allErrs,
 	)
@@ -44,7 +44,7 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"one of ID or Name must be set"),
+			"one of the field ID or Name must be set"),
 		)
 	}
 
@@ -52,7 +52,7 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"only one of ID or Name can be used at a time, not both"),
+			"only one of the field ID or Name is allowed"),
 		)
 	}
 
@@ -105,7 +105,7 @@ func (w *Workspace) validateSpecRemoteStateSharingWorkspaces() field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(
 				f,
 				"",
-				"one of ID or Name must be set"),
+				"one of the field ID or Name must be set"),
 			)
 		}
 
@@ -113,7 +113,7 @@ func (w *Workspace) validateSpecRemoteStateSharingWorkspaces() field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(
 				f,
 				"",
-				"only one of ID or Name can be used at a time, not both"),
+				"only one of the field ID or Name is allowed"),
 			)
 		}
 
@@ -148,7 +148,7 @@ func (w *Workspace) validateSpecRunTrigger() field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(
 				f,
 				"",
-				"one of ID or Name must be set"),
+				"one of the field ID or Name must be set"),
 			)
 		}
 
@@ -156,7 +156,7 @@ func (w *Workspace) validateSpecRunTrigger() field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(
 				f,
 				"",
-				"only one of ID or Name can be used at a time, not both"),
+				"only one of the field ID or Name is allowed"),
 			)
 		}
 
@@ -192,7 +192,7 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"one of ID or Name must be set"),
+			"one of the field ID or Name must be set"),
 		)
 	}
 
@@ -200,7 +200,7 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"only one of ID or Name can be used at a time, not both"),
+			"only one of the field ID or Name is allowed"),
 		)
 	}
 
