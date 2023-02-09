@@ -67,7 +67,7 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := ap.instance.ValidateSpec(); err != nil {
 		ap.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
 		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
-		return requeueAfter(requeueIntervalOnValidation)
+		return doNotRequeue()
 	}
 	ap.log.Info("Spec Validation", "msg", "spec is valid")
 

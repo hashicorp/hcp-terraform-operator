@@ -71,7 +71,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := w.instance.ValidateSpec(); err != nil {
 		w.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
-		return requeueAfter(requeueIntervalOnValidation)
+		return doNotRequeue()
 	}
 	w.log.Info("Spec Validation", "msg", "spec is valid")
 

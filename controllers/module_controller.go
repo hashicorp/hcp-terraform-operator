@@ -72,7 +72,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err := m.instance.ValidateSpec(); err != nil {
 		m.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
-		return requeueAfter(requeueIntervalOnValidation)
+		return doNotRequeue()
 	}
 	m.log.Info("Spec Validation", "msg", "spec is valid")
 
