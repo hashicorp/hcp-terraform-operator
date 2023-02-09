@@ -19,7 +19,7 @@ func (m *Module) ValidateSpec() error {
 	}
 
 	return apierrors.NewInvalid(
-		schema.GroupKind{Group: GroupVersion.Group, Kind: "Module"},
+		schema.GroupKind{Group: "", Kind: "Module"},
 		m.Name,
 		allErrs,
 	)
@@ -27,22 +27,29 @@ func (m *Module) ValidateSpec() error {
 
 func (m *Module) validateSpecWorkspace() field.ErrorList {
 	allErrs := field.ErrorList{}
+	spec := m.Spec.Workspace
+	f := field.NewPath("spec").Child("workspace")
 
-	if m.Spec.Workspace.ID == "" && m.Spec.Workspace.Name == "" {
+	if spec.ID == "" && spec.Name == "" {
 		allErrs = append(allErrs, field.Invalid(
-			field.NewPath("spec"),
-			"workspace",
+			f,
+			"",
 			"one of ID or Name must be set"),
 		)
 	}
 
-	if m.Spec.Workspace.ID != "" && m.Spec.Workspace.Name != "" {
+	if spec.ID != "" && spec.Name != "" {
 		allErrs = append(allErrs, field.Invalid(
-			field.NewPath("spec"),
-			"workspace",
+			f,
+			"",
 			"only one of ID or Name can be used at a time, not both"),
 		)
 	}
 
 	return allErrs
 }
+
+// TODO:Validation
+//
+// + Variables names duplicate: spec.variables[].name
+// + Outputs names duplicate: spec.outputs[].name

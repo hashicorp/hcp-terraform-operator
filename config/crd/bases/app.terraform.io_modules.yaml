@@ -54,9 +54,11 @@ spec:
                   source:
                     description: 'Non local Terraform module source. More information:
                       - https://developer.hashicorp.com/terraform/language/modules/sources'
+                    minLength: 1
                     type: string
                   version:
                     description: Terraform module version.
+                    minLength: 1
                     type: string
                 required:
                 - source
@@ -74,6 +76,7 @@ spec:
                   properties:
                     name:
                       description: Output name must match with the module output.
+                      minLength: 1
                       type: string
                     sensitive:
                       default: false
@@ -82,11 +85,13 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               restartedAt:
                 description: 'Allows executing a new Run without changing any Workspace
                   or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge
                   --patch ''{"spec": {"restartedAt": "''`date -u -Iseconds`''"}}'''
+                minLength: 1
                 type: string
               token:
                 description: API Token to be used for API calls.
@@ -121,10 +126,12 @@ spec:
                   properties:
                     name:
                       description: Variable name must exist in the Workspace.
+                      minLength: 1
                       type: string
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               workspace:
                 description: Workspace to execute the module.

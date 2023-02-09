@@ -55,7 +55,7 @@ _Appears in:_
 
 
 
-Agent Token is a secret token that a Terraform Cloud Agent is used to connect to the Terraform Cloud Agent Pool. More infromation:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
+Agent Token is a secret token that a Terraform Cloud Agent is used to connect to the Terraform Cloud Agent Pool. In `spec` only the field `Name` is allowed, the rest are used in `status`. More infromation:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 
 _Appears in:_
 - [AgentPoolSpec](#agentpoolspec)
@@ -206,7 +206,7 @@ _Appears in:_
 
 
 
-Workspace to execute the module. Only one of the fields `ID` or `Name` is allowed.
+Workspace to execute the module. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory.
 
 _Appears in:_
 - [ModuleSpec](#modulespec)
