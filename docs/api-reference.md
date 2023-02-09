@@ -19,7 +19,7 @@ Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
 
 
 
-AgentPool is the Schema for the agentpools API
+AgentPool is the Schema for the agentpools API.
 
 
 
@@ -43,7 +43,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Agent Pool name: More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools |
+| `name` _string_ | Agent Pool name. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `organization` _string_ | Organization name where the Workspace will be created. More information:  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `agentTokens` _[AgentToken](#agenttoken) array_ | List of the agent tokens to generate. |

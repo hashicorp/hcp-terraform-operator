@@ -21,7 +21,7 @@ func (ap *AgentPool) ValidateSpec() error {
 	}
 
 	return apierrors.NewInvalid(
-		schema.GroupKind{Group: GroupVersion.Group, Kind: "AgentPool"},
+		schema.GroupKind{Group: "", Kind: "AgentPool"},
 		ap.Name,
 		allErrs,
 	)
@@ -30,25 +30,37 @@ func (ap *AgentPool) ValidateSpec() error {
 func (ap *AgentPool) validateSpecAgentToken() field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	atn := make(map[string]int)
+
 	for i, at := range ap.Spec.AgentTokens {
+		f := field.NewPath("spec").Child(fmt.Sprintf("agentTokens[%d]", i))
+
 		if at.ID != "" {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("spec").Child("agentTokens").Child(fmt.Sprint(i)),
+				f.Child("id"),
 				"id is not allowed in the spec"),
 			)
 		}
 		if at.CreatedAt != nil {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("spec").Child("agentTokens").Child(fmt.Sprint(i)),
+				f.Child("createdAt"),
 				"createdAt is not allowed in the spec"),
 			)
 		}
 		if at.LastUsedAt != nil {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("spec").Child("agentTokens").Child(fmt.Sprint(i)),
+				f.Child("lastUsedAt"),
 				"lastUsedAt is not allowed in the spec"),
 			)
 		}
+
+		if _, ok := atn[at.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(
+				f.Child("name"),
+				at.Name,
+			))
+		}
+		atn[at.Name] = i
 	}
 
 	return allErrs

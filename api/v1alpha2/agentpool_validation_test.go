@@ -18,6 +18,18 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 				},
 			},
 		},
+		"HasMultipleTokens": {
+			Spec: AgentPoolSpec{
+				AgentTokens: []*AgentToken{
+					{
+						Name: "this",
+					},
+					{
+						Name: "self",
+					},
+				},
+			},
+		},
 	}
 
 	for n, c := range successCases {
@@ -55,6 +67,18 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 					{
 						Name:       "this",
 						LastUsedAt: PointerOf(int64(1984)),
+					},
+				},
+			},
+		},
+		"HasDuplicateName": {
+			Spec: AgentPoolSpec{
+				AgentTokens: []*AgentToken{
+					{
+						Name: "this",
+					},
+					{
+						Name: "this",
 					},
 				},
 			},
