@@ -204,3 +204,10 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 
 	return allErrs
 }
+
+// TODO:Validation
+//
+// + EnvironmentVariables names duplicate: spec.environmentVariables[].name
+// + TerraformVariables names duplicate: spec.terraformVariables[].name
+// + Tags duplicate: spec.tags[]
+// + AgentPool must be set when ExecutionMode = 'agent': spec.agentPool <- spec.executionMode['agent']
