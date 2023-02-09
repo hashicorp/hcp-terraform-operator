@@ -87,7 +87,7 @@ _Appears in:_
 
 
 
-ConsumerWorkspace allows access to the state for specific workspaces within the same organization. Only one of the fields `ID` or `Name` is allowed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
+ConsumerWorkspace allows access to the state for specific workspaces within the same organization. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 
 _Appears in:_
 - [RemoteStateSharing](#remotestatesharing)
@@ -266,7 +266,7 @@ _Appears in:_
 
 
 
-RunTrigger allows you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. Only one of the fields `ID` or `Name` is allowed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
+RunTrigger allows you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
@@ -281,7 +281,7 @@ _Appears in:_
 
 
 
-SSH key used to clone Terraform modules. Only one of the fields `ID` or `Name` is allowed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
+SSH key used to clone Terraform modules. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
@@ -296,7 +296,7 @@ _Appears in:_
 
 
 
-Teams are groups of Terraform Cloud users within an organization. If a user belongs to at least one team in an organization, they are considered a member of that organization. Only one of the fields `ID` or `Name` is allowed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
+Teams are groups of Terraform Cloud users within an organization. If a user belongs to at least one team in an organization, they are considered a member of that organization. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 
 _Appears in:_
 - [TeamAccess](#teamaccess)
@@ -410,7 +410,7 @@ Workspace is the Schema for the workspaces API
 
 
 
-AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. Only one of the fields `ID` or `Name` is allowed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
+AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)

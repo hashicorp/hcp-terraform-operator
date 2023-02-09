@@ -181,8 +181,8 @@ spec:
                     items:
                       description: 'ConsumerWorkspace allows access to the state for
                         specific workspaces within the same organization. Only one
-                        of the fields `ID` or `Name` is allowed. More information:
-                        - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
+                        of the fields `ID` or `Name` is allowed. At least one of the
+                        fields `ID` or `Name` is mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
                       properties:
                         id:
                           description: Consumer Workspace ID.
@@ -206,7 +206,8 @@ spec:
                     one or more source workspaces. These connections allow runs to
                     queue automatically in this workspace on successful apply of runs
                     in any of the source workspaces. Only one of the fields `ID` or
-                    `Name` is allowed. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
+                    `Name` is allowed. At least one of the fields `ID` or `Name` is
+                    mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
                       description: Source Workspace ID.
