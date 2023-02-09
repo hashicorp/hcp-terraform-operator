@@ -10,7 +10,6 @@ import (
 
 // AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
 // Only one of the fields `ID` or `Name` is allowed.
-//
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 type WorkspaceAgentPool struct {
@@ -28,7 +27,6 @@ type WorkspaceAgentPool struct {
 
 // ConsumerWorkspace allows access to the state for specific workspaces within the same organization.
 // Only one of the fields `ID` or `Name` is allowed.
-//
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 type ConsumerWorkspace struct {
@@ -64,7 +62,6 @@ type RemoteStateSharing struct {
 // RunTrigger allows you to connect this workspace to one or more source workspaces.
 // These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 // Only one of the fields `ID` or `Name` is allowed.
-//
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
@@ -83,7 +80,6 @@ type RunTrigger struct {
 // Teams are groups of Terraform Cloud users within an organization.
 // If a user belongs to at least one team in an organization, they are considered a member of that organization.
 // Only one of the fields `ID` or `Name` is allowed.
-//
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 type Team struct {
@@ -166,7 +162,7 @@ type ValueFrom struct {
 	//
 	//+optional
 	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
-	// Selects a key of a secret in the workspace's namespace
+	// Selects a key of a secret in the workspace's namespace.
 	//
 	//+optional
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
@@ -222,13 +218,13 @@ type VersionControl struct {
 	Repository string `json:"repository,omitempty"`
 	// The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main).
 	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Branch string `json:"branch,omitempty"`
 }
 
-// SSH key used to clone Terraform modules
+// SSH key used to clone Terraform modules.
 // Only one of the fields `ID` or `Name` is allowed.
-//
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 type SSHKey struct {
@@ -240,20 +236,20 @@ type SSHKey struct {
 	Name string `json:"name,omitempty"`
 }
 
-// WorkspaceSpec defines the desired state of Workspace
+// WorkspaceSpec defines the desired state of Workspace.
 type WorkspaceSpec struct {
-	// API Token to be used for API calls
-	Token Token `json:"token"`
-	// Workspace name
+	// Workspace name.
 	//
 	//+kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
-	// Organization name where the Workspace will be created
+	// Organization name where the Workspace will be created.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
 	//
 	//+kubebuilder:validation:MinLength=1
 	Organization string `json:"organization"`
+	// API Token to be used for API calls.
+	Token Token `json:"token"`
 
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// More information:
@@ -270,7 +266,7 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=true
 	//+optional
 	AllowDestroyPlan bool `json:"allowDestroyPlan,omitempty"`
-	// Workspace description
+	// Workspace description.
 	//
 	//+kubebuilder:validation:MinLength=1
 	//+optional
@@ -283,7 +279,7 @@ type WorkspaceSpec struct {
 	AgentPool *WorkspaceAgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
 	// More information:
-	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode
 	//
 	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"
 	//+kubebuilder:default=remote
@@ -299,7 +295,7 @@ type WorkspaceSpec struct {
 	// When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
 	// with full admin permissions. These teams' access can't be removed from a workspace.
 	// More information:
-	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
 	//
 	//+kubebuilder:validation:MinItems=1
 	//+optional
@@ -307,14 +303,14 @@ type WorkspaceSpec struct {
 	// The version of Terraform to use for this workspace.
 	// If not specified, the latest available version will be used.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
+	//   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
 	//
 	//+kubebuilder:validation:Pattern="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
 	// The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
+	//   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
 	//
 	//+kubebuilder:validation:MinLength=1
 	//+optional
@@ -355,8 +351,8 @@ type WorkspaceSpec struct {
 	// Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
 	// Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.
 	// More information:
-	//  - https://www.terraform.io/cloud-docs/run/ui
-	//  - https://www.terraform.io/cloud-docs/vcs
+	//   - https://www.terraform.io/cloud-docs/run/ui
+	//   - https://www.terraform.io/cloud-docs/vcs
 	//
 	//+optional
 	VersionControl *VersionControl `json:"versionControl,omitempty"`
@@ -385,16 +381,16 @@ type RunStatus struct {
 	OutputRunID string `json:"outputRunID,omitempty"`
 }
 
-// WorkspaceStatus defines the observed state of Workspace
+// WorkspaceStatus defines the observed state of Workspace.
 type WorkspaceStatus struct {
-	// Real world state generation
+	// Real world state generation.
 	ObservedGeneration int64 `json:"observedGeneration"`
-	// Workspace last update timestamp
+	// Workspace last update timestamp.
 	UpdateAt int64 `json:"updateAt"`
-	// Workspace ID that is managed by the controller
+	// Workspace ID that is managed by the controller.
 	WorkspaceID string `json:"workspaceID"`
 
-	// Workspace Runs status
+	// Workspace Runs status.
 	//+optional
 	Run RunStatus `json:"runStatus,omitempty"`
 }

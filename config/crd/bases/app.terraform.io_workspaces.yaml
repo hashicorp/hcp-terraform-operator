@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: WorkspaceSpec defines the desired state of Workspace
+            description: WorkspaceSpec defines the desired state of Workspace.
             properties:
               agentPool:
                 description: 'Terraform Cloud Agents allow Terraform Cloud to communicate
@@ -65,7 +65,7 @@ spec:
                 pattern: ^(auto|manual)$
                 type: string
               description:
-                description: Workspace description
+                description: Workspace description.
                 minLength: 1
                 type: string
               environmentVariables:
@@ -126,7 +126,7 @@ spec:
                           x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the workspace's
-                            namespace
+                            namespace.
                           properties:
                             key:
                               description: The key of the secret to select from.  Must
@@ -157,11 +157,11 @@ spec:
                 pattern: ^(agent|local|remote)$
                 type: string
               name:
-                description: Workspace name
+                description: Workspace name.
                 minLength: 1
                 type: string
               organization:
-                description: 'Organization name where the Workspace will be created
+                description: 'Organization name where the Workspace will be created.
                   More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
                 minLength: 1
                 type: string
@@ -179,10 +179,10 @@ spec:
                     description: Allow access to the state for specific workspaces
                       within the same organization.
                     items:
-                      description: "ConsumerWorkspace allows access to the state for
+                      description: 'ConsumerWorkspace allows access to the state for
                         specific workspaces within the same organization. Only one
-                        of the fields `ID` or `Name` is allowed. \n More information:
-                        - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls"
+                        of the fields `ID` or `Name` is allowed. More information:
+                        - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
                       properties:
                         id:
                           description: Consumer Workspace ID.
@@ -202,11 +202,11 @@ spec:
                   automatically in this workspace on successful apply of runs in any
                   of the source workspaces. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                 items:
-                  description: "RunTrigger allows you to connect this workspace to
+                  description: 'RunTrigger allows you to connect this workspace to
                     one or more source workspaces. These connections allow runs to
                     queue automatically in this workspace on successful apply of runs
                     in any of the source workspaces. Only one of the fields `ID` or
-                    `Name` is allowed. \n More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers"
+                    `Name` is allowed. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
                       description: Source Workspace ID.
@@ -361,7 +361,7 @@ spec:
                           x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the workspace's
-                            namespace
+                            namespace.
                           properties:
                             key:
                               description: The key of the secret to select from.  Must
@@ -392,7 +392,7 @@ spec:
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                 type: string
               token:
-                description: API Token to be used for API calls
+                description: API Token to be used for API calls.
                 properties:
                   secretKeyRef:
                     description: Selects a key of a secret in the workspace's namespace
@@ -426,6 +426,7 @@ spec:
                   branch:
                     description: The repository branch that Run will execute from.
                       This defaults to the repository's default branch (e.g. main).
+                    minLength: 1
                     type: string
                   oAuthTokenID:
                     description: The VCS Connection (OAuth Connection + Token) to
@@ -451,14 +452,14 @@ spec:
             - token
             type: object
           status:
-            description: WorkspaceStatus defines the observed state of Workspace
+            description: WorkspaceStatus defines the observed state of Workspace.
             properties:
               observedGeneration:
-                description: Real world state generation
+                description: Real world state generation.
                 format: int64
                 type: integer
               runStatus:
-                description: Workspace Runs status
+                description: Workspace Runs status.
                 properties:
                   configurationVersion:
                     type: string
@@ -475,11 +476,11 @@ spec:
                     type: string
                 type: object
               updateAt:
-                description: Workspace last update timestamp
+                description: Workspace last update timestamp.
                 format: int64
                 type: integer
               workspaceID:
-                description: Workspace ID that is managed by the controller
+                description: Workspace ID that is managed by the controller.
                 type: string
             required:
             - observedGeneration

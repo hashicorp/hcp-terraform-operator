@@ -78,16 +78,19 @@ type ModuleOutput struct {
 
 // ModuleSpec defines the desired state of Module.
 type ModuleSpec struct {
-	// API Token to be used for API calls.
-	Token Token `json:"token"`
 	// Organization name where the Workspace will be created.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
+	//
+	//+kubebuilder:validation:MinLength:=1
 	Organization string `json:"organization"`
+	// API Token to be used for API calls.
+	Token Token `json:"token"`
 	// Module source and version to execute.
 	Module *ModuleSource `json:"module"`
 	// Workspace to execute the module.
 	Workspace *ModuleWorkspace `json:"workspace"`
+
 	// Variables to pass to the module, they must exist in the Workspace.
 	//
 	//+kubebuilder:validation:MinItems:=1
@@ -113,6 +116,7 @@ type ModuleSpec struct {
 
 // ModuleStatus defines the observed state of Module.
 type ModuleStatus struct {
+	// Real world state generation.
 	ObservedGeneration int64 `json:"observedGeneration"`
 	// Workspace ID where the module is running.
 	WorkspaceID string `json:"workspaceID"`

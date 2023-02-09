@@ -66,6 +66,7 @@ spec:
               organization:
                 description: 'Organization name where the Workspace will be created.
                   More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
+                minLength: 1
                 type: string
               outputs:
                 description: Module outputs to store in ConfigMap(non-sensitive) or
@@ -173,6 +174,7 @@ spec:
                 description: Workspace Destroy Run status.
                 type: string
               observedGeneration:
+                description: Real world state generation.
                 format: int64
                 type: integer
               output:

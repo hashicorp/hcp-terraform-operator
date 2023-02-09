@@ -55,10 +55,7 @@ func (ap *AgentPool) validateSpecAgentToken() field.ErrorList {
 		}
 
 		if _, ok := atn[at.Name]; ok {
-			allErrs = append(allErrs, field.Duplicate(
-				f.Child("name"),
-				at.Name,
-			))
+			allErrs = append(allErrs, field.Duplicate(f.Child("name"), at.Name))
 		}
 		atn[at.Name] = i
 	}
