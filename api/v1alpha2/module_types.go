@@ -14,6 +14,7 @@ type ModuleSource struct {
 	//   - https://developer.hashicorp.com/terraform/language/modules/sources
 	Source string `json:"source"`
 	// Terraform module version.
+	//
 	//+optional
 	Version string `json:"version,omitempty"`
 }
@@ -22,10 +23,12 @@ type ModuleSource struct {
 // Only one of the fields `ID` or `Name` is allowed.
 type ModuleWorkspace struct {
 	// Module Workspace ID.
+	//
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Module Workspace Name.
+	//
 	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`

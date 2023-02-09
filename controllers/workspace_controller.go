@@ -67,6 +67,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	w.log.Info("Spec Validation", "msg", "validating instance object spec")
+	if err := w.instance.ValidateSpec(); err != nil {
+		w.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
+		return requeueAfter(requeueIntervalOnValidation)
+	}
+	w.log.Info("Spec Validation", "msg", "spec is valid")
+
 	if w.instance.NeedToAddFinalizer(workspaceFinalizer) {
 		err := r.addFinalizer(ctx, &w.instance)
 		if err != nil {

@@ -50,6 +50,7 @@ spec:
                     type: string
                   name:
                     description: Agent Pool name.
+                    minLength: 1
                     type: string
                 type: object
               allowDestroyPlan:
@@ -65,6 +66,7 @@ spec:
                 type: string
               description:
                 description: Workspace description
+                minLength: 1
                 type: string
               environmentVariables:
                 description: 'Terraform Environment variables for all plans and applies
@@ -87,6 +89,7 @@ spec:
                       type: boolean
                     name:
                       description: Name of the variable.
+                      minLength: 1
                       type: string
                     sensitive:
                       default: false
@@ -143,6 +146,7 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               executionMode:
                 default: remote
@@ -182,8 +186,10 @@ spec:
                           type: string
                         name:
                           description: Consumer Workspace name.
+                          minLength: 1
                           type: string
                       type: object
+                    minItems: 1
                     type: array
                 type: object
               runTriggers:
@@ -204,8 +210,10 @@ spec:
                       type: string
                     name:
                       description: Source Workspace Name.
+                      minLength: 1
                       type: string
                   type: object
+                minItems: 1
                 type: array
               sshKey:
                 description: 'SSH key used to clone Terraform modules. More information:
@@ -215,6 +223,7 @@ spec:
                     pattern: ^sshkey-[a-zA-Z0-9]+$
                     type: string
                   name:
+                    minLength: 1
                     type: string
                 type: object
               tags:
@@ -222,6 +231,7 @@ spec:
                   workspaces.
                 items:
                   type: string
+                minItems: 1
                 type: array
               teamAccess:
                 description: 'Terraform Cloud workspaces can only be accessed by users
@@ -280,12 +290,14 @@ spec:
                           type: string
                         name:
                           description: Team name.
+                          minLength: 1
                           type: string
                       type: object
                   required:
                   - access
                   - team
                   type: object
+                minItems: 1
                 type: array
               terraformVariables:
                 description: 'Terraform variables for all plans and applies in this
@@ -308,6 +320,7 @@ spec:
                       type: boolean
                     name:
                       description: Name of the variable.
+                      minLength: 1
                       type: string
                     sensitive:
                       default: false
@@ -364,6 +377,7 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
@@ -406,6 +420,7 @@ spec:
                   branch:
                     description: The repository branch that Run will execute from.
                       This defaults to the repository's default branch (e.g. main).
+                    minLength: 1
                     type: string
                   oAuthTokenID:
                     description: The VCS Connection (OAuth Connection + Token) to
@@ -422,6 +437,7 @@ spec:
                 description: 'The directory where Terraform will execute, specified
                   as a relative path from the root of the configuration directory.
                   More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory'
+                minLength: 1
                 type: string
             required:
             - name

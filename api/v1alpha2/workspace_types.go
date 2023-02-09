@@ -15,10 +15,13 @@ import (
 //   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 type WorkspaceAgentPool struct {
 	// Agent Pool ID.
+	//
 	//+kubebuilder:validation:Pattern="^apool-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Agent Pool name.
+	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -30,10 +33,13 @@ type WorkspaceAgentPool struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 type ConsumerWorkspace struct {
 	// Consumer Workspace ID.
+	//
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Consumer Workspace name.
+	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -44,10 +50,13 @@ type ConsumerWorkspace struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 type RemoteStateSharing struct {
 	// Allow access to the state for all workspaces within the same organization.
+	//
 	//+kubebuilder:default:=false
 	//+optional
 	AllWorkspaces bool `json:"allWorkspaces,omitempty"`
 	// Allow access to the state for specific workspaces within the same organization.
+	//
+	//+kubebuilder:validation:MinItems=1
 	//+optional
 	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
 }
@@ -60,10 +69,13 @@ type RemoteStateSharing struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
 	// Source Workspace ID.
+	//
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Source Workspace Name.
+	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -76,10 +88,13 @@ type RunTrigger struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 type Team struct {
 	// Team ID.
+	//
 	//+kubebuilder:validation:Pattern="^team-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Team name.
+	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -128,11 +143,13 @@ type TeamAccess struct {
 	// There are two ways to choose which permissions a given team has on a workspace: fixed permission sets, and custom permissions.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions
+	//
 	//+kubebuilder:validation:Pattern="^(admin|custom|plan|read|write)$"
 	Access string `json:"access"`
 	// Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
+	//
 	//+optional
 	Custom CustomPermissions `json:"custom,omitempty"`
 }
@@ -158,22 +175,29 @@ type ValueFrom struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 type Variable struct {
 	// Name of the variable.
+	//
+	//+kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 	// Description of the variable.
+	//
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
+	//
 	//+kubebuilder:default:=false
 	//+optional
 	HCL bool `json:"hcl,omitempty"`
 	// Sensitive variables are never shown in the UI or API. They may appear in Terraform logs if your configuration is designed to output them.
+	//
 	//+kubebuilder:default:=false
 	//+optional
 	Sensitive bool `json:"sensitive,omitempty"`
 	// Value of the variable.
+	//
 	//+optional
 	Value string `json:"value,omitempty"`
 	// Source for the variable's value. Cannot be used if value is not empty.
+	//
 	//+optional
 	ValueFrom *ValueFrom `json:"valueFrom,omitempty"`
 }
@@ -185,11 +209,13 @@ type Variable struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/vcs
 type VersionControl struct {
 	// The VCS Connection (OAuth Connection + Token) to use.
+	//
 	//+kubebuilder:validation:Pattern="^ot-[a-zA-Z0-9]+$"
 	OAuthTokenID string `json:"oAuthTokenID,omitempty"`
 	// A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider.
 	Repository string `json:"repository,omitempty"`
 	// The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main).
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Branch string `json:"branch,omitempty"`
 }
@@ -203,6 +229,7 @@ type SSHKey struct {
 	//+kubebuilder:validation:Pattern="^sshkey-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -221,6 +248,7 @@ type WorkspaceSpec struct {
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
+	//
 	//+kubebuilder:validation:Pattern="^(auto|manual)$"
 	//+kubebuilder:default=manual
 	//+optional
@@ -228,25 +256,32 @@ type WorkspaceSpec struct {
 	// Allows a destroy plan to be created and applied.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
+	//
 	//+kubebuilder:default=true
 	//+optional
 	AllowDestroyPlan bool `json:"allowDestroyPlan,omitempty"`
 	// Workspace description
+	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/agents
+	//
 	//+optional
 	AgentPool *WorkspaceAgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
 	// More information:
 	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode
+	//
 	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"
 	//+kubebuilder:default=remote
 	//+optional
 	ExecutionMode string `json:"executionMode,omitempty"`
 	// Workspace tags are used to help identify and group together workspaces.
+	//
+	//+kubebuilder:validation:MinItems=1
 	//+optional
 	Tags []string `json:"tags,omitempty"`
 	// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
@@ -255,18 +290,23 @@ type WorkspaceSpec struct {
 	// with full admin permissions. These teams' access can't be removed from a workspace.
 	// More information:
 	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
+	//
+	//+kubebuilder:validation:MinItems=1
 	//+optional
 	TeamAccess []*TeamAccess `json:"teamAccess,omitempty"`
 	// The version of Terraform to use for this workspace.
 	// If not specified, the latest available version will be used.
 	// More information:
 	//  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
+	//
 	//+kubebuilder:validation:Pattern="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
 	// The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.
 	// More information:
 	//  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
+	//
+	//+kubebuilder:validation:MinLength=1
 	//+optional
 	WorkingDirectory string `json:"workingDirectory,omitempty"`
 	// Terraform Environment variables for all plans and applies in this workspace.
@@ -274,6 +314,8 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables
+	//
+	//+kubebuilder:validation:MinItems=1
 	//+optional
 	EnvironmentVariables []Variable `json:"environmentVariables,omitempty"`
 	// Terraform variables for all plans and applies in this workspace.
@@ -281,6 +323,8 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables
+	//
+	//+kubebuilder:validation:MinItems=1
 	//+optional
 	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
 	// Remote state access between workspaces.
@@ -293,6 +337,8 @@ type WorkspaceSpec struct {
 	// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
+	//
+	//+kubebuilder:validation:MinItems=1
 	//+optional
 	RunTriggers []RunTrigger `json:"runTriggers,omitempty"`
 	// Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
@@ -300,11 +346,13 @@ type WorkspaceSpec struct {
 	// More information:
 	//  - https://www.terraform.io/cloud-docs/run/ui
 	//  - https://www.terraform.io/cloud-docs/vcs
+	//
 	//+optional
 	VersionControl *VersionControl `json:"versionControl,omitempty"`
 	// SSH key used to clone Terraform modules.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
+	//
 	//+optional
 	SSHKey *SSHKey `json:"sshKey,omitempty"`
 }
