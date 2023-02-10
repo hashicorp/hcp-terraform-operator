@@ -61,3 +61,7 @@ func (ap *AgentPool) validateSpecAgentToken() field.ErrorList {
 
 	return allErrs
 }
+
+// TODO:Validation
+//
+// + Invalid CR cannot be deleted until it is fixed -- need to discuss if we want to do something about it

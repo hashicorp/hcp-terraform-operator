@@ -53,3 +53,5 @@ func (m *Module) validateSpecWorkspace() field.ErrorList {
 //
 // + Variables names duplicate: spec.variables[].name
 // + Outputs names duplicate: spec.outputs[].name
+//
+// + Invalid CR cannot be deleted until it is fixed -- need to discuss if we want to do something about it

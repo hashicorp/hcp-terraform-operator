@@ -211,3 +211,5 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 // + TerraformVariables names duplicate: spec.terraformVariables[].name
 // + Tags duplicate: spec.tags[]
 // + AgentPool must be set when ExecutionMode = 'agent': spec.agentPool <- spec.executionMode['agent']
+//
+// + Invalid CR cannot be deleted until it is fixed -- need to discuss if we want to do something about it
