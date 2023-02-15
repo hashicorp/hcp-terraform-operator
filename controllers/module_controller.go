@@ -68,6 +68,14 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return requeueAfter(requeueInterval)
 	}
 
+	m.log.Info("Spec Validation", "msg", "validating instance object spec")
+	if err := m.instance.ValidateSpec(); err != nil {
+		m.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
+		return doNotRequeue()
+	}
+	m.log.Info("Spec Validation", "msg", "spec is valid")
+
 	if m.instance.NeedToAddFinalizer(moduleFinalizer) {
 		err := r.addFinalizer(ctx, &m.instance)
 		if err != nil {

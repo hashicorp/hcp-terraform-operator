@@ -63,6 +63,14 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	ap.log.Info("Spec Validation", "msg", "validating instance object spec")
+	if err := ap.instance.ValidateSpec(); err != nil {
+		ap.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
+		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
+		return doNotRequeue()
+	}
+	ap.log.Info("Spec Validation", "msg", "spec is valid")
+
 	if ap.instance.NeedToAddFinalizer(agentPoolFinalizer) {
 		err := r.addFinalizer(ctx, &ap.instance)
 		if err != nil {

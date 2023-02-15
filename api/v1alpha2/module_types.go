@@ -12,20 +12,28 @@ type ModuleSource struct {
 	// Non local Terraform module source.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/language/modules/sources
+	//
+	//+kubebuilder:validation:MinLength:=1
 	Source string `json:"source"`
 	// Terraform module version.
+	//
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Version string `json:"version,omitempty"`
 }
 
 // Workspace to execute the module.
 // Only one of the fields `ID` or `Name` is allowed.
+// At least one of the fields `ID` or `Name` is mandatory.
 type ModuleWorkspace struct {
 	// Module Workspace ID.
+	//
 	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Module Workspace Name.
+	//
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -50,14 +58,19 @@ type OutputStatus struct {
 // Variables to pass to the module.
 type ModuleVariable struct {
 	// Variable name must exist in the Workspace.
+	//
+	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 }
 
 // Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive).
 type ModuleOutput struct {
 	// Output name must match with the module output.
+	//
+	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 	// Specify whether or not the output is sensitive.
+	//
 	//+kubebuilder:default:=false
 	//+optional
 	Sensitive bool `json:"sensitive,omitempty"`
@@ -65,38 +78,48 @@ type ModuleOutput struct {
 
 // ModuleSpec defines the desired state of Module.
 type ModuleSpec struct {
-	// API Token to be used for API calls.
-	Token Token `json:"token"`
 	// Organization name where the Workspace will be created.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
+	//
+	//+kubebuilder:validation:MinLength:=1
 	Organization string `json:"organization"`
+	// API Token to be used for API calls.
+	Token Token `json:"token"`
 	// Module source and version to execute.
 	Module *ModuleSource `json:"module"`
 	// Workspace to execute the module.
 	Workspace *ModuleWorkspace `json:"workspace"`
+
 	// Variables to pass to the module, they must exist in the Workspace.
+	//
+	//+kubebuilder:validation:MinItems:=1
 	// +optional
 	Variables []ModuleVariable `json:"variables,omitempty"`
 	// Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive).
-	// +optional
+	//
+	//+kubebuilder:validation:MinItems:=1
+	//+optional
 	Outputs []ModuleOutput `json:"outputs,omitempty"`
 	// Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
+	//
 	//+kubebuilder:default:=false
-	// +optional
+	//+optional
 	DestroyOnDeletion bool `json:"destroyOnDeletion,omitempty"`
 	// Allows executing a new Run without changing any Workspace or Module attributes.
 	// Example: kubectl patch <KIND> <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
+	//
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	RestartedAt string `json:"restartedAt,omitempty"`
 }
 
 // ModuleStatus defines the observed state of Module.
 type ModuleStatus struct {
+	// Real world state generation.
 	ObservedGeneration int64 `json:"observedGeneration"`
 	// Workspace ID where the module is running.
 	WorkspaceID string `json:"workspaceID"`
-
 	// A configuration version is a resource used to reference the uploaded configuration files.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
@@ -109,6 +132,7 @@ type ModuleStatus struct {
 	// Module Outputs status.
 	Output *OutputStatus `json:"output,omitempty"`
 	// Workspace Destroy Run status.
+	//
 	//+optional
 	DestroyRunID string `json:"destroyRunID,omitempty"`
 }

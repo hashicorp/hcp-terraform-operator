@@ -111,6 +111,10 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -timeout 30m -v ./controllers -coverprofile cover.out
 
+.PHONY: test-api
+test-api: fmt vet ## Run API tests.
+	go test -timeout 30m -count 1 -v ./api/v1alpha2
+
 ##@ Build
 
 .PHONY: build

@@ -67,6 +67,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	w.log.Info("Spec Validation", "msg", "validating instance object spec")
+	if err := w.instance.ValidateSpec(); err != nil {
+		w.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "SpecValidation", err.Error())
+		return doNotRequeue()
+	}
+	w.log.Info("Spec Validation", "msg", "spec is valid")
+
 	if w.instance.NeedToAddFinalizer(workspaceFinalizer) {
 		err := r.addFinalizer(ctx, &w.instance)
 		if err != nil {
@@ -169,9 +177,9 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 		return true
 	}
 	// The TFC API VCS behavior is inconsistent:
-	//  - once a VCS is attached to a Workspace, the 'UpdateAt' attribute is updated
-	//  - once attached to a Workspace VCS is updated, for instance, change a branch name, the 'UpdateAt' attribute is updated
-	//  - once a VCS is detached from a Workspace, the 'UpdateAt' attribute is not updated, because of that we have to have this condition here
+	//   - once a VCS is attached to a Workspace, the 'UpdateAt' attribute is updated
+	//   - once attached to a Workspace VCS is updated, for instance, change a branch name, the 'UpdateAt' attribute is updated
+	//   - once a VCS is detached from a Workspace, the 'UpdateAt' attribute is not updated, because of that we have to have this condition here
 	if instance.Spec.VersionControl != nil && workspace.VCSRepo == nil {
 		return true
 	}

@@ -19,7 +19,7 @@ Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
 
 
 
-AgentPool is the Schema for the agentpools API
+AgentPool is the Schema for the agentpools API.
 
 
 
@@ -43,9 +43,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Agent Pool name: More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools |
+| `name` _string_ | Agent Pool name. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools |
+| `organization` _string_ | Organization name where the Workspace will be created. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
-| `organization` _string_ | Organization name where the Workspace will be created. More information:  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `agentTokens` _[AgentToken](#agenttoken) array_ | List of the agent tokens to generate. |
 
 
@@ -55,7 +55,7 @@ _Appears in:_
 
 
 
-Agent Token is a secret token that a Terraform Cloud Agent is used to connect to the Terraform Cloud Agent Pool. More infromation:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
+Agent Token is a secret token that a Terraform Cloud Agent is used to connect to the Terraform Cloud Agent Pool. In `spec` only the field `Name` is allowed, the rest are used in `status`. More infromation:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 
 _Appears in:_
 - [AgentPoolSpec](#agentpoolspec)
@@ -87,8 +87,7 @@ _Appears in:_
 
 
 
-ConsumerWorkspace allows access to the state for specific workspaces within the same organization. Only one of the fields `ID` or `Name` is allowed. 
- More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
+ConsumerWorkspace allows access to the state for specific workspaces within the same organization. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 
 _Appears in:_
 - [RemoteStateSharing](#remotestatesharing)
@@ -176,8 +175,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `organization` _string_ | Organization name where the Workspace will be created. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `module` _[ModuleSource](#modulesource)_ | Module source and version to execute. |
 | `workspace` _[ModuleWorkspace](#moduleworkspace)_ | Workspace to execute the module. |
 | `variables` _[ModuleVariable](#modulevariable) array_ | Variables to pass to the module, they must exist in the Workspace. |
@@ -206,7 +205,7 @@ _Appears in:_
 
 
 
-Workspace to execute the module. Only one of the fields `ID` or `Name` is allowed.
+Workspace to execute the module. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory.
 
 _Appears in:_
 - [ModuleSpec](#modulespec)
@@ -267,8 +266,7 @@ _Appears in:_
 
 
 
-RunTrigger allows you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. Only one of the fields `ID` or `Name` is allowed. 
- More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
+RunTrigger allows you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
@@ -283,8 +281,7 @@ _Appears in:_
 
 
 
-SSH key used to clone Terraform modules Only one of the fields `ID` or `Name` is allowed. 
- More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
+SSH key used to clone Terraform modules. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
@@ -299,8 +296,7 @@ _Appears in:_
 
 
 
-Teams are groups of Terraform Cloud users within an organization. If a user belongs to at least one team in an organization, they are considered a member of that organization. Only one of the fields `ID` or `Name` is allowed. 
- More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
+Teams are groups of Terraform Cloud users within an organization. If a user belongs to at least one team in an organization, they are considered a member of that organization. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 
 _Appears in:_
 - [TeamAccess](#teamaccess)
@@ -355,7 +351,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `configMapKeyRef` _[ConfigMapKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#configmapkeyselector-v1-core)_ | Selects a key of a ConfigMap. |
-| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
+| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace. |
 
 
 #### Variable
@@ -414,8 +410,7 @@ Workspace is the Schema for the workspaces API
 
 
 
-AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. Only one of the fields `ID` or `Name` is allowed. 
- More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
+AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
@@ -430,30 +425,30 @@ _Appears in:_
 
 
 
-WorkspaceSpec defines the desired state of Workspace
+WorkspaceSpec defines the desired state of Workspace.
 
 _Appears in:_
 - [Workspace](#workspace)
 
 | Field | Description |
 | --- | --- |
-| `token` _[Token](#token)_ | API Token to be used for API calls |
-| `name` _string_ | Workspace name |
-| `organization` _string_ | Organization name where the Workspace will be created More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `name` _string_ | Workspace name. |
+| `organization` _string_ | Organization name where the Workspace will be created. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual). More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
 | `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
-| `description` _string_ | Workspace description |
+| `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents |
-| `executionMode` _string_ | Define where the Terraform code will be executed. More information:  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
+| `executionMode` _string_ | Define where the Terraform code will be executed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
 | `tags` _string array_ | Workspace tags are used to help identify and group together workspaces. |
-| `teamAccess` _[TeamAccess](#teamaccess) array_ | Terraform Cloud workspaces can only be accessed by users with the correct permissions. You can manage permissions for a workspace on a per-team basis. When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it, with full admin permissions. These teams' access can't be removed from a workspace. More information:  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
-| `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. More information:  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
-| `workingDirectory` _string_ | The directory where Terraform will execute, specified as a relative path from the root of the configuration directory. More information:  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory |
+| `teamAccess` _[TeamAccess](#teamaccess) array_ | Terraform Cloud workspaces can only be accessed by users with the correct permissions. You can manage permissions for a workspace on a per-team basis. When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it, with full admin permissions. These teams' access can't be removed from a workspace. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
+| `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. More information:   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
+| `workingDirectory` _string_ | The directory where Terraform will execute, specified as a relative path from the root of the configuration directory. More information:   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory |
 | `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all plans and applies in this workspace. Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables |
 | `terraformVariables` _[Variable](#variable) array_ | Terraform variables for all plans and applies in this workspace. Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables |
 | `remoteStateSharing` _[RemoteStateSharing](#remotestatesharing)_ | Remote state access between workspaces. By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces |
 | `runTriggers` _[RunTrigger](#runtrigger) array_ | Run triggers allow you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers |
-| `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow. Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider. More information:  - https://www.terraform.io/cloud-docs/run/ui  - https://www.terraform.io/cloud-docs/vcs |
+| `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow. Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider. More information:   - https://www.terraform.io/cloud-docs/run/ui   - https://www.terraform.io/cloud-docs/vcs |
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 
 
