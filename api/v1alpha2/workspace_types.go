@@ -61,6 +61,39 @@ type RemoteStateSharing struct {
 	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
 }
 
+// Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+// Only one of the fields `ID` or `Name` is allowed.
+// At least one of the fields `ID` or `Name` is mandatory.
+// More information:
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
+type WorkspaceRunTask struct {
+	// Run Task ID.
+	//
+	//+kubebuilder:validation:Pattern="^task-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Run Task Name.
+	//
+	//+kubebuilder:validation:MinLength=1
+	//+optional
+	Name string `json:"name,omitempty"`
+	// Run Task Type. Must be "workspace-tasks".
+	//
+	//+kubebuilder:validation:Pattern="^(workspace-tasks)$"
+	//+kubebuilder:default:=workspace-tasks
+	Type string `json:"type"`
+	// Run Task Enforcement Level.
+	//
+	//+kubebuilder:validation:Pattern="^(advisory|mandatory)$"
+	//+kubebuilder:default:=advisory
+	EnforcementLevel string `json:"enforcementLevel"`
+	// Run Task Stage.
+	//+kubebuilder:validation:Pattern="^(pre_apply|pre_plan|post_plan)$"
+	//+kubebuilder:default:=post_plan
+	//+optional
+	Stage string `json:"stage,omitempty"`
+}
+
 // RunTrigger allows you to connect this workspace to one or more source workspaces.
 // These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 // Only one of the fields `ID` or `Name` is allowed.
@@ -290,6 +323,13 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=remote
 	//+optional
 	ExecutionMode string `json:"executionMode,omitempty"`
+	// Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
+	//
+	//+kubebuilder:validation:MinItems=1
+	//+optional
+	RunTasks []WorkspaceRunTask `json:"runTasks,omitempty"`
 	// Workspace tags are used to help identify and group together workspaces.
 	//
 	//+kubebuilder:validation:MinItems=1

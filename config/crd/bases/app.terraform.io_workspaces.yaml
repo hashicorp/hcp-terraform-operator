@@ -196,6 +196,46 @@ spec:
                     minItems: 1
                     type: array
                 type: object
+              runTasks:
+                description: 'Run tasks allow Terraform Cloud to interact with external
+                  systems at specific points in the Terraform Cloud run lifecycle.
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks'
+                items:
+                  description: 'Run tasks allow Terraform Cloud to interact with external
+                    systems at specific points in the Terraform Cloud run lifecycle.
+                    Only one of the fields `ID` or `Name` is allowed. At least one
+                    of the fields `ID` or `Name` is mandatory. More information: -
+                    https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks'
+                  properties:
+                    enforcementLevel:
+                      default: advisory
+                      description: Run Task Enforcement Level.
+                      pattern: ^(advisory|mandatory)$
+                      type: string
+                    id:
+                      description: Run Task ID.
+                      pattern: ^task-[a-zA-Z0-9]+$
+                      type: string
+                    name:
+                      description: Run Task Name.
+                      minLength: 1
+                      type: string
+                    stage:
+                      default: post_plan
+                      description: Run Task Stage.
+                      pattern: ^(pre_apply|pre_plan|post_plan)$
+                      type: string
+                    type:
+                      default: workspace-tasks
+                      description: Run Task Type. Must be "task".
+                      pattern: ^(workspace-tasks)$
+                      type: string
+                  required:
+                  - enforcementLevel
+                  - type
+                  type: object
+                minItems: 1
+                type: array
               runTriggers:
                 description: 'Run triggers allow you to connect this workspace to
                   one or more source workspaces. These connections allow runs to queue

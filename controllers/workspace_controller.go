@@ -521,6 +521,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Remote State Sharing", "msg", "successfully reconcilied remote state sharing")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRemoteStateSharing", "Reconcilied remote state sharing in workspace ID %s", w.instance.Status.WorkspaceID)
 
+	// Reconcile Run Tasks
+	err = r.reconcileRunTasks(ctx, w)
+	if err != nil {
+		w.log.Error(err, "Reconcile Run Tasks", "msg", fmt.Sprintf("failed to reconcile run tasks in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileRunTasks", "Failed to reconcile run tasks in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Run Tasks", "msg", "successfully reconcilied run tasks")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRunTasks", "Reconcilied run tasks in workspace ID %s", w.instance.Status.WorkspaceID)
+
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, w, workspace)
 }
