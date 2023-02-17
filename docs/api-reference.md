@@ -434,7 +434,6 @@ _Appears in:_
 | --- | --- |
 | `id` _string_ | Run Task ID. |
 | `name` _string_ | Run Task Name. |
-| `type` _string_ | Run Task Type. Must be "task". |
 | `enforcementLevel` _string_ | Run Task Enforcement Level. |
 | `stage` _string_ | Run Task Stage. |
 

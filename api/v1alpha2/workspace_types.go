@@ -77,15 +77,11 @@ type WorkspaceRunTask struct {
 	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
-	// Run Task Type. Must be "workspace-tasks".
-	//
-	//+kubebuilder:validation:Pattern="^(workspace-tasks)$"
-	//+kubebuilder:default:=workspace-tasks
-	Type string `json:"type"`
 	// Run Task Enforcement Level.
 	//
 	//+kubebuilder:validation:Pattern="^(advisory|mandatory)$"
 	//+kubebuilder:default:=advisory
+	//+optional
 	EnforcementLevel string `json:"enforcementLevel"`
 	// Run Task Stage.
 	//+kubebuilder:validation:Pattern="^(pre_apply|pre_plan|post_plan)$"
@@ -437,7 +433,7 @@ type WorkspaceStatus struct {
 
 	// Workspace Runs status.
 	//+optional
-	Run RunStatus `json:"runStatus,omitempty"`
+	Run RunStatus `json:"run,omitempty"`
 }
 
 //+kubebuilder:object:root=true

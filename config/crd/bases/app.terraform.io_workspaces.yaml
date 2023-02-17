@@ -225,14 +225,6 @@ spec:
                       description: Run Task Stage.
                       pattern: ^(pre_apply|pre_plan|post_plan)$
                       type: string
-                    type:
-                      default: workspace-tasks
-                      description: Run Task Type. Must be "task".
-                      pattern: ^(workspace-tasks)$
-                      type: string
-                  required:
-                  - enforcementLevel
-                  - type
                   type: object
                 minItems: 1
                 type: array
@@ -499,7 +491,7 @@ spec:
                 description: Real world state generation.
                 format: int64
                 type: integer
-              runStatus:
+              run:
                 description: Workspace Runs status.
                 properties:
                   configurationVersion:
