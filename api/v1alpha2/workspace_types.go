@@ -77,13 +77,13 @@ type WorkspaceRunTask struct {
 	//+kubebuilder:validation:MinLength=1
 	//+optional
 	Name string `json:"name,omitempty"`
-	// Run Task Enforcement Level.
+	// Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`.
 	//
 	//+kubebuilder:validation:Pattern="^(advisory|mandatory)$"
 	//+kubebuilder:default:=advisory
 	//+optional
 	EnforcementLevel string `json:"enforcementLevel"`
-	// Run Task Stage.
+	// Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`.
 	//+kubebuilder:validation:Pattern="^(pre_apply|pre_plan|post_plan)$"
 	//+kubebuilder:default:=post_plan
 	//+optional

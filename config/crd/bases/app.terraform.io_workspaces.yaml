@@ -209,7 +209,8 @@ spec:
                   properties:
                     enforcementLevel:
                       default: advisory
-                      description: Run Task Enforcement Level.
+                      description: 'Run Task Enforcement Level. Can be one of `advisory`
+                        or `mandatory`. Default: `advisory`.'
                       pattern: ^(advisory|mandatory)$
                       type: string
                     id:
@@ -222,7 +223,8 @@ spec:
                       type: string
                     stage:
                       default: post_plan
-                      description: Run Task Stage.
+                      description: 'Run Task Stage. Can be one of `pre_apply`, `pre_plan`,
+                        or `post_plan`. Default: `post_plan`.'
                       pattern: ^(pre_apply|pre_plan|post_plan)$
                       type: string
                   type: object

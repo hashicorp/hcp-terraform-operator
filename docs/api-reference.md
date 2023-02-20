@@ -434,8 +434,8 @@ _Appears in:_
 | --- | --- |
 | `id` _string_ | Run Task ID. |
 | `name` _string_ | Run Task Name. |
-| `enforcementLevel` _string_ | Run Task Enforcement Level. |
-| `stage` _string_ | Run Task Stage. |
+| `enforcementLevel` _string_ | Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`. |
+| `stage` _string_ | Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`. |
 
 
 #### WorkspaceSpec
