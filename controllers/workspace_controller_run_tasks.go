@@ -100,14 +100,39 @@ func (r *WorkspaceReconciler) deleteRunTasks(ctx context.Context, w *workspaceIn
 	return nil
 }
 
+func hasRunTaskName(w *workspaceInstance) bool {
+	for _, rt := range w.instance.Spec.RunTasks {
+		if rt.Name != "" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *workspaceInstance) (map[string]*tfc.WorkspaceRunTask, error) {
 	o := map[string]*tfc.WorkspaceRunTask{}
 
+	rl := make(map[string]string)
+	if hasRunTaskName(w) {
+		rt, err := w.tfClient.Client.RunTasks.List(ctx, w.instance.Spec.Organization, &tfc.RunTaskListOptions{})
+		if err != nil {
+			return o, err
+		}
+		for _, t := range rt.Items {
+			rl[t.Name] = t.ID
+		}
+	}
+
 	for _, rt := range w.instance.Spec.RunTasks {
-		o[rt.ID] = &tfc.WorkspaceRunTask{
+		id := rt.ID
+		if rt.Name != "" {
+			id = rl[rt.Name]
+		}
+		o[id] = &tfc.WorkspaceRunTask{
 			EnforcementLevel: tfc.TaskEnforcementLevel(rt.EnforcementLevel),
 			Stage:            tfc.Stage(rt.Stage),
-			RunTask:          &tfc.RunTask{ID: rt.ID},
+			RunTask:          &tfc.RunTask{ID: id},
 		}
 	}
 

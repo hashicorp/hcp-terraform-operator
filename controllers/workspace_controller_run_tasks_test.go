@@ -18,12 +18,14 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Label("runTask"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance    *appv1alpha2.Workspace
-		workspace   = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
-		runTaskName = fmt.Sprintf("kubernetes-operator-run-task-%v", GinkgoRandomSeed())
-		runTaskID   = ""
+		instance     *appv1alpha2.Workspace
+		workspace    = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		runTaskName  = fmt.Sprintf("kubernetes-operator-run-task-%v", GinkgoRandomSeed())
+		runTaskName2 = fmt.Sprintf("kubernetes-operator-run-task-2-%v", GinkgoRandomSeed())
+		runTaskID    = ""
+		runTaskID2   = ""
 	)
 
 	// KNOWN ISSUE
@@ -75,16 +77,9 @@ var _ = Describe("Workspace controller", Label("runTask"), Ordered, func() {
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
-		// Create a Run Task
-		rt, err := tfClient.RunTasks.Create(ctx, organization, tfc.RunTaskCreateOptions{
-			Name:     runTaskName,
-			URL:      "https://example.com",
-			Category: "task", // MUST BE "task"
-			Enabled:  tfc.Bool(true),
-		})
-		Expect(err).Should(Succeed())
-		Expect(rt).ShouldNot(BeNil())
-		runTaskID = rt.ID
+
+		runTaskID = createRunTaskForTest(runTaskName)
+		runTaskID2 = createRunTaskForTest(runTaskName2)
 	})
 
 	AfterEach(func() {
@@ -92,10 +87,12 @@ var _ = Describe("Workspace controller", Label("runTask"), Ordered, func() {
 		deleteWorkspaceRunTasks(instance)
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance, namespacedName)
-		// Delete Run Task
+		// Delete Run Task 1
 		err := tfClient.RunTasks.Delete(ctx, runTaskID)
 		Expect(err).Should(Succeed())
-
+		// Delete Run Task 2
+		err = tfClient.RunTasks.Delete(ctx, runTaskID2)
+		Expect(err).Should(Succeed())
 	})
 
 	Context("Workspace controller", func() {
@@ -106,11 +103,24 @@ var _ = Describe("Workspace controller", Label("runTask"), Ordered, func() {
 			isRunTasksReconciled(instance)
 		})
 
-		// It("can create run task by Name", func() {
-		// 	instance.Spec.RunTasks[0].ID = runTaskName
-		// 	// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-		// 	createWorkspace(instance, namespacedName)
-		// })
+		It("can create run task by Name", func() {
+			instance.Spec.RunTasks[0].Name = runTaskName
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			isRunTasksReconciled(instance)
+		})
+
+		It("can create 2 run tasks by Name and ID", func() {
+			instance.Spec.RunTasks[0].Name = runTaskName
+			instance.Spec.RunTasks = append(instance.Spec.RunTasks, appv1alpha2.WorkspaceRunTask{
+				ID:               runTaskID2,
+				EnforcementLevel: "advisory",
+				Stage:            "post_plan",
+			})
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			isRunTasksReconciled(instance)
+		})
 
 		It("can delete run task", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
@@ -121,6 +131,19 @@ var _ = Describe("Workspace controller", Label("runTask"), Ordered, func() {
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			// Delete Run Tasks from the spec
 			instance.Spec.RunTasks = []appv1alpha2.WorkspaceRunTask{}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isRunTasksReconciled(instance)
+		})
+
+		It("can update run task", func() {
+			instance.Spec.RunTasks[0].ID = runTaskID
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			isRunTasksReconciled(instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.RunTasks[0].EnforcementLevel = "mandatory" // was "advisory"
+
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			isRunTasksReconciled(instance)
 		})
@@ -209,4 +232,16 @@ func isRunTasksReconciled(instance *appv1alpha2.Workspace) {
 
 		return cmp.Equal(s, w)
 	}).Should(BeTrue())
+}
+
+func createRunTaskForTest(name string) string {
+	rt, err := tfClient.RunTasks.Create(ctx, organization, tfc.RunTaskCreateOptions{
+		Name:     name,
+		URL:      "https://example.com",
+		Category: "task", // MUST BE "task"
+		Enabled:  tfc.Bool(true),
+	})
+	Expect(err).Should(Succeed())
+	Expect(rt).ShouldNot(BeNil())
+	return rt.ID
 }

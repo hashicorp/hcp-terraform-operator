@@ -26,6 +26,7 @@ The following Terraform Cloud Workspace features are supported by the `Workspace
 - Execution Mode
 - Outputs
 - Remote State Sharing
+- Run Tasks
 - Run Triggers
 - SSH Key
 - Tags
