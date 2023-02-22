@@ -493,7 +493,7 @@ spec:
                 description: Real world state generation.
                 format: int64
                 type: integer
-              run:
+              runStatus:
                 description: Workspace Runs status.
                 properties:
                   configurationVersion:

@@ -24,19 +24,19 @@ func runTasksDifference(a, b map[string]*tfc.WorkspaceRunTask) map[string]*tfc.W
 	return d
 }
 
-func getRunTasksToCreate(ctx context.Context, specRunTasks, workspaceRunTasks map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
-	return runTasksDifference(specRunTasks, workspaceRunTasks)
+func getRunTasksToCreate(ctx context.Context, spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+	return runTasksDifference(spec, ws)
 }
 
-func getRunTasksToUpdate(ctx context.Context, specRunTasks, workspaceRunTasks map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+func getRunTasksToUpdate(ctx context.Context, spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
 	o := make(map[string]*tfc.WorkspaceRunTask)
 
-	if len(specRunTasks) == 0 || len(workspaceRunTasks) == 0 {
+	if len(spec) == 0 || len(ws) == 0 {
 		return o
 	}
 
-	for ik, iv := range specRunTasks {
-		if wv, ok := workspaceRunTasks[ik]; ok {
+	for ik, iv := range spec {
+		if wv, ok := ws[ik]; ok {
 			iv.ID = wv.ID
 			if !cmp.Equal(iv, wv, cmpopts.IgnoreFields(tfc.WorkspaceRunTask{}, "Workspace")) {
 				o[ik] = iv
@@ -47,8 +47,8 @@ func getRunTasksToUpdate(ctx context.Context, specRunTasks, workspaceRunTasks ma
 	return o
 }
 
-func getRunTasksToDelete(ctx context.Context, specRunTasks, workspaceRunTasks map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
-	return runTasksDifference(workspaceRunTasks, specRunTasks)
+func getRunTasksToDelete(ctx context.Context, spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+	return runTasksDifference(ws, spec)
 }
 
 func (r *WorkspaceReconciler) createRunTasks(ctx context.Context, w *workspaceInstance, create map[string]*tfc.WorkspaceRunTask) error {
@@ -89,9 +89,6 @@ func (r *WorkspaceReconciler) deleteRunTasks(ctx context.Context, w *workspaceIn
 	for _, d := range delete {
 		err := w.tfClient.Client.WorkspaceRunTasks.Delete(ctx, w.instance.Status.WorkspaceID, d.ID)
 		if err != nil {
-			// if err == tfc.ErrResourceNotFound {
-			// 	continue
-			// }
 			w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to delete run task")
 			return err
 		}
@@ -162,19 +159,19 @@ func (r *WorkspaceReconciler) getWorkspaceRunTasks(ctx context.Context, w *works
 func (r *WorkspaceReconciler) reconcileRunTasks(ctx context.Context, w *workspaceInstance) error {
 	w.log.Info("Reconcile Run Tasks", "msg", "new reconciliation event")
 
-	specRunTasks, err := r.getInstanceRunTasks(ctx, w)
+	spec, err := r.getInstanceRunTasks(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to get instance run tasks")
 		return err
 	}
 
-	workspaceRunTasks, err := r.getWorkspaceRunTasks(ctx, w)
+	ws, err := r.getWorkspaceRunTasks(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to get workspace run tasks")
 		return err
 	}
 
-	create := getRunTasksToCreate(ctx, specRunTasks, workspaceRunTasks)
+	create := getRunTasksToCreate(ctx, spec, ws)
 	if len(create) > 0 {
 		w.log.Info("Reconcile Run Tasks", "msg", fmt.Sprintf("creating %d run tasks", len(create)))
 		err := r.createRunTasks(ctx, w, create)
@@ -184,16 +181,17 @@ func (r *WorkspaceReconciler) reconcileRunTasks(ctx context.Context, w *workspac
 		}
 	}
 
-	update := getRunTasksToUpdate(ctx, specRunTasks, workspaceRunTasks)
+	update := getRunTasksToUpdate(ctx, spec, ws)
 	if len(update) > 0 {
 		w.log.Info("Reconcile Run Tasks", "msg", fmt.Sprintf("updating %d run tasks", len(update)))
 		err := r.updateRunTasks(ctx, w, update)
 		if err != nil {
+			w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to update a run task")
 			return err
 		}
 	}
 
-	delete := getRunTasksToDelete(ctx, specRunTasks, workspaceRunTasks)
+	delete := getRunTasksToDelete(ctx, spec, ws)
 	if len(delete) > 0 {
 		w.log.Info("Reconcile Run Tasks", "msg", fmt.Sprintf("deleting %d run tasks", len(delete)))
 		err := r.deleteRunTasks(ctx, w, delete)

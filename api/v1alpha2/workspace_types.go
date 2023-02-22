@@ -84,6 +84,7 @@ type WorkspaceRunTask struct {
 	//+optional
 	EnforcementLevel string `json:"enforcementLevel"`
 	// Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`.
+	//
 	//+kubebuilder:validation:Pattern="^(pre_apply|pre_plan|post_plan)$"
 	//+kubebuilder:default:=post_plan
 	//+optional

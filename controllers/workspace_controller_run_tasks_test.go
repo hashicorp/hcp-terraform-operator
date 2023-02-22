@@ -84,7 +84,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete all Run Tasks from the Workspace before deleting the Workspace, otherwise, it won't be possible to delete the Run Tasks instantly.
-		deleteWorkspaceRunTasks(instance)
+		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		instance.Spec.RunTasks = []appv1alpha2.WorkspaceRunTask{}
+		Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+		isRunTasksReconciled(instance)
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance, namespacedName)
 		// Delete Run Task 1
