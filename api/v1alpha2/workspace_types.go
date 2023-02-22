@@ -433,7 +433,7 @@ type WorkspaceStatus struct {
 
 	// Workspace Runs status.
 	//+optional
-	Run RunStatus `json:"run,omitempty"`
+	Run RunStatus `json:"runStatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true
