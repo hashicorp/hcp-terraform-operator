@@ -333,5 +333,15 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 	ap.log.Info("Reconcile Agent Tokens", "msg", "successfully reconcilied agent tokens")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentTokens", "Reconcilied agent tokens in agent pool ID %s", ap.instance.Status.AgentPoolID)
 
+	// Reconcile Agent Deployment
+	err = r.reconcileAgentDeployment(ctx, ap)
+	if err != nil {
+		ap.log.Error(err, "Reconcile Agent Deployment", "msg", fmt.Sprintf("failed to reconcile agent deployment in agent pool ID %s", ap.instance.Status.AgentPoolID))
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentDeployment", "Failed to reconcile agent deployment in agent pool ID %s", ap.instance.Status.AgentPoolID)
+		return err
+	}
+	ap.log.Info("Reconcile Agent Tokens", "msg", "successfully reconcilied agent deployment")
+	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentTokens", "Reconcilied agent deployment in agent pool ID %s", ap.instance.Status.AgentPoolID)
+
 	return r.updateStatus(ctx, ap, agentPool)
 }

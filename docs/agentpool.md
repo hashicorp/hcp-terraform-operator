@@ -30,6 +30,12 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
         - name: white
         - name: blue
         - name: red
+      agentDeployment:
+        replicas: 3
+        spec:
+          containers:
+            - name: tfc-agent
+              image: "hashicorp/tfc-agent:latest"
     ```
 
 2. Apply YAML manifest.
