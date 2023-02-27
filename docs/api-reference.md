@@ -421,6 +421,23 @@ _Appears in:_
 | `name` _string_ | Agent Pool name. |
 
 
+#### WorkspaceRunTask
+
+
+
+Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | Run Task ID. |
+| `name` _string_ | Run Task Name. |
+| `enforcementLevel` _string_ | Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`. |
+| `stage` _string_ | Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`. |
+
+
 #### WorkspaceSpec
 
 
@@ -440,6 +457,7 @@ _Appears in:_
 | `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/agents |
 | `executionMode` _string_ | Define where the Terraform code will be executed. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
+| `runTasks` _[WorkspaceRunTask](#workspaceruntask) array_ | Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks |
 | `tags` _string array_ | Workspace tags are used to help identify and group together workspaces. |
 | `teamAccess` _[TeamAccess](#teamaccess) array_ | Terraform Cloud workspaces can only be accessed by users with the correct permissions. You can manage permissions for a workspace on a per-team basis. When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it, with full admin permissions. These teams' access can't be removed from a workspace. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
 | `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. More information:   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |

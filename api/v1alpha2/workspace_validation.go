@@ -16,7 +16,8 @@ func (w *Workspace) ValidateSpec() error {
 
 	allErrs = append(allErrs, w.validateSpecAgentPool()...)
 	allErrs = append(allErrs, w.validateSpecRemoteStateSharing()...)
-	allErrs = append(allErrs, w.validateSpecRunTrigger()...)
+	allErrs = append(allErrs, w.validateSpecRunTasks()...)
+	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
 
 	if len(allErrs) == 0 {
@@ -134,7 +135,49 @@ func (w *Workspace) validateSpecRemoteStateSharingWorkspaces() field.ErrorList {
 	return allErrs
 }
 
-func (w *Workspace) validateSpecRunTrigger() field.ErrorList {
+func (w *Workspace) validateSpecRunTasks() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	rti := make(map[string]int)
+	rtn := make(map[string]int)
+
+	for i, rt := range w.Spec.RunTasks {
+		f := field.NewPath("spec").Child(fmt.Sprintf("runTasks[%d]", i))
+		if rt.ID == "" && rt.Name == "" {
+			allErrs = append(allErrs, field.Invalid(
+				f,
+				"",
+				"one of the field ID or Name must be set"),
+			)
+		}
+
+		if rt.ID != "" && rt.Name != "" {
+			allErrs = append(allErrs, field.Invalid(
+				f,
+				"",
+				"only one of the field ID or Name is allowed"),
+			)
+		}
+
+		if rt.ID != "" {
+			if _, ok := rti[rt.ID]; ok {
+				allErrs = append(allErrs, field.Duplicate(f.Child("ID"), rt.ID))
+			}
+			rti[rt.ID] = i
+		}
+
+		if rt.Name != "" {
+			if _, ok := rtn[rt.Name]; ok {
+				allErrs = append(allErrs, field.Duplicate(f.Child("Name"), rt.Name))
+			}
+			rtn[rt.Name] = i
+		}
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecRunTriggers() field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	rti := make(map[string]int)
@@ -167,7 +210,7 @@ func (w *Workspace) validateSpecRunTrigger() field.ErrorList {
 
 		if rt.Name != "" {
 			if _, ok := rtn[rt.Name]; ok {
-				allErrs = append(allErrs, field.Duplicate(f.Child("ID"), rt.Name))
+				allErrs = append(allErrs, field.Duplicate(f.Child("Name"), rt.Name))
 			}
 			rtn[rt.Name] = i
 		}

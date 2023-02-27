@@ -210,7 +210,105 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 	}
 }
 
-func TestValidateWorkspaceSpecRunTrigger(t *testing.T) {
+func TestValidateWorkspaceSpecRunTasks(t *testing.T) {
+	successCases := map[string]Workspace{
+		"HasOnlyID": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						ID: "this",
+					},
+				},
+			},
+		},
+		"HasOnlyName": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						Name: "this",
+					},
+				},
+			},
+		},
+		"HasOneWithIDandOneWithName": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						ID: "this",
+					},
+					{
+						Name: "this",
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecRunTasks(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"HasIDandName": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						ID:   "this",
+						Name: "this",
+					},
+				},
+			},
+		},
+		"HasEmptyIDandName": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						Name: "",
+						ID:   "",
+					},
+				},
+			},
+		},
+		"HasDuplicateID": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						ID: "this",
+					},
+					{
+						ID: "this",
+					},
+				},
+			},
+		},
+		"HasDuplicateName": {
+			Spec: WorkspaceSpec{
+				RunTasks: []WorkspaceRunTask{
+					{
+						Name: "this",
+					},
+					{
+						Name: "this",
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecRunTasks(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateWorkspaceSpecRunTriggers(t *testing.T) {
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{
@@ -246,7 +344,7 @@ func TestValidateWorkspaceSpecRunTrigger(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRunTrigger(); len(errs) != 0 {
+			if errs := c.validateSpecRunTriggers(); len(errs) != 0 {
 				t.Errorf("Unexpected validation errors: %v", errs)
 			}
 		})
@@ -301,7 +399,7 @@ func TestValidateWorkspaceSpecRunTrigger(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRunTrigger(); len(errs) == 0 {
+			if errs := c.validateSpecRunTriggers(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})
