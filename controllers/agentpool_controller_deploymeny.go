@@ -18,7 +18,11 @@ import (
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "msg", "new reconciliation event")
-
+	if ap.instance.Spec.AgentDeployment == nil {
+		ap.log.Info("Reconcile Agent Deployment", "msg",
+			fmt.Sprintf("skipping - no deployment configured in AgentPool %q", ap.instance.GetName()))
+		return nil
+	}
 	err := r.createDeployment(ctx, ap)
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Deployment", "msg", fmt.Sprintf("failed to create a new Kubernetes Deployment %s", agentPoolOutputObjectName(ap.instance.Name)))
