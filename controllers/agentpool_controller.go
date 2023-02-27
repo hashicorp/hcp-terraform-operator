@@ -320,7 +320,7 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to update agent pool ID %s", ap.instance.Status.AgentPoolID)
 			return err
 		}
-		ap.log.Info("Reconcile Agent Tokens", "msg", "successfully updated agent pool")
+		ap.log.Info("Reconcile Agent Pool", "msg", "successfully updated agent pool")
 	}
 
 	// Reconcile Agent Tokens
