@@ -33,8 +33,8 @@ type AgentToken struct {
 }
 
 type AgentDeployment struct {
-	Replicas *int32     `json:"replicas,omitempty"`
-	Spec     v1.PodSpec `json:"spec"`
+	Replicas *int32      `json:"replicas,omitempty"`
+	Spec     *v1.PodSpec `json:"spec,omitempty"`
 }
 
 // AgentPoolSpec defines the desired state of AgentPool.

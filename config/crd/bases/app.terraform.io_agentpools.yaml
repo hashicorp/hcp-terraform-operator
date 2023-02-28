@@ -7409,8 +7409,6 @@ spec:
                     required:
                     - containers
                     type: object
-                required:
-                - spec
                 type: object
               agentTokens:
                 description: List of the agent tokens to generate.
