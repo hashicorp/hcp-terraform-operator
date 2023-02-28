@@ -6,7 +6,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"net/url"
 
+	"github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,7 +30,7 @@ const (
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "msg", "new reconciliation event")
 	var d *appsv1.Deployment = &appsv1.Deployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Namespace: ap.instance.Namespace, Name: agentPoolDeploymentName(&ap.instance)}, d)
+	err := r.Client.Get(ctx, types.NamespacedName{Namespace: ap.instance.Namespace, Name: agentPoolDeploymentName(ap)}, d)
 	if err == nil {
 		if ap.instance.Spec.AgentDeployment == nil {
 			// Delete the existing deployment
@@ -61,7 +63,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 	if len(ap.instance.Status.AgentTokens) < 1 {
 		return fmt.Errorf("not enough tokens available")
 	}
-	d := agentPoolDeployment(&ap.instance)
+	d := agentPoolDeployment(ap)
 	err := controllerutil.SetControllerReference(&ap.instance, d, r.Scheme)
 	if err != nil {
 		return err
@@ -78,7 +80,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 
 func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
-	nd := agentPoolDeployment(&ap.instance)
+	nd := agentPoolDeployment(ap)
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "terraform-cloud-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
@@ -105,10 +107,10 @@ func (r *AgentPoolReconciler) deleteDeployment(ctx context.Context, ap *agentPoo
 	return nil
 }
 
-func agentPoolDeployment(ap *v1alpha2.AgentPool) *appsv1.Deployment {
+func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var r int32 = 1 // default to one worker if not otherwise configured
-	if ap.Spec.AgentDeployment.Replicas != nil {
-		r = *ap.Spec.AgentDeployment.Replicas
+	if ap.instance.Spec.AgentDeployment.Replicas != nil {
+		r = *ap.instance.Spec.AgentDeployment.Replicas
 	}
 	var s v1.PodSpec = v1.PodSpec{
 		Containers: []corev1.Container{ // default tfc-agent container if none configured by user
@@ -118,16 +120,16 @@ func agentPoolDeployment(ap *v1alpha2.AgentPool) *appsv1.Deployment {
 			},
 		},
 	}
-	if ap.Spec.AgentDeployment.Spec != nil {
-		s = *ap.Spec.AgentDeployment.Spec
+	if ap.instance.Spec.AgentDeployment.Spec != nil {
+		s = *ap.instance.Spec.AgentDeployment.Spec
 	}
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      agentPoolDeploymentName(ap),
-			Namespace: ap.Namespace,
+			Namespace: ap.instance.Namespace,
 			Annotations: map[string]string{
-				poolNameLabel: ap.Name,
-				poolIDLabel:   ap.Status.AgentPoolID,
+				poolNameLabel: ap.instance.Name,
+				poolIDLabel:   ap.instance.Status.AgentPoolID,
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -155,14 +157,14 @@ func agentPoolDeployment(ap *v1alpha2.AgentPool) *appsv1.Deployment {
 	return d
 }
 
-func decorateDeployment(ap *v1alpha2.AgentPool, d *appsv1.Deployment) {
+func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 	evs := []v1.EnvVar{
 		corev1.EnvVar{
 			Name: "TFC_AGENT_TOKEN",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: agentPoolOutputObjectName(ap.Name)},
-					Key:                  ap.Status.AgentTokens[0].Name,
+					LocalObjectReference: corev1.LocalObjectReference{Name: agentPoolOutputObjectName(ap.instance.Name)},
+					Key:                  ap.instance.Status.AgentTokens[0].Name,
 				},
 			},
 		},
@@ -179,18 +181,26 @@ func decorateDeployment(ap *v1alpha2.AgentPool, d *appsv1.Deployment) {
 			Value: "disabled",
 		},
 	}
+	// Set TFE_ADDRESS on agent Pod if differnet than default TFC endpoint.
+	bURL := ap.tfClient.Client.BaseURL()
+	if defURL, perr := url.Parse(tfe.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
+		evs = append(evs, corev1.EnvVar{
+			Name:  "TFC_ADDRESS",
+			Value: bURL.String(),
+		})
+	}
 	// Inject agent specific environment vars to each container in the Deployment.
 	for ci := range d.Spec.Template.Spec.Containers {
 		d.Spec.Template.Spec.Containers[ci].Env = append(d.Spec.Template.Spec.Containers[ci].Env, evs...)
 	}
 }
 
-func agentPoolDeploymentName(ap *v1alpha2.AgentPool) string {
-	return fmt.Sprintf("agents-of-%s", ap.Name)
+func agentPoolDeploymentName(ap *agentPoolInstance) string {
+	return fmt.Sprintf("agents-of-%s", ap.instance.Name)
 }
 
-func agentPoolPodLabels(ap *v1alpha2.AgentPool) map[string]string {
+func agentPoolPodLabels(ap *agentPoolInstance) map[string]string {
 	return map[string]string{
-		poolNameLabel: ap.Name,
+		poolNameLabel: ap.instance.Name,
 	}
 }
