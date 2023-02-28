@@ -22,9 +22,8 @@ import (
 )
 
 const (
-	specHashAnnotation = "agentpool.app.terraform.io/agent-pod-spec-hash"
-	poolNameLabel      = "agentpool.app.terraform.io/pool-name"
-	poolIDLabel        = "agentpool.app.terraform.io/pool-id"
+	poolNameLabel = "agentpool.app.terraform.io/pool-name"
+	poolIDLabel   = "agentpool.app.terraform.io/pool-id"
 )
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
