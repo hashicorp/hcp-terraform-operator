@@ -1,0 +1,34 @@
+name: E2E on Terraform Cloud
+
+on:
+  schedule:
+    - cron: '30 5 * * *'
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run end-to-end test suite
+        run: make test
+        env:
+          TFC_OAUTH_TOKEN: ${{ secrets.TFC_OAUTH_TOKEN }}
+          TFC_ORG: ${{ secrets.TFC_ORG }}
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+          TFC_VCS_REPO: ${{ secrets.TFC_VCS_REPO }}

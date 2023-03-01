@@ -1,4 +1,4 @@
-name: End-to-end tests
+name: E2E on Terraform Enterprise
 
 on:
   schedule:
@@ -28,7 +28,8 @@ jobs:
       - name: Run end-to-end test suite
         run: make test
         env:
-          TFC_OAUTH_TOKEN: ${{ secrets.TFC_OAUTH_TOKEN }}
-          TFC_ORG: ${{ secrets.TFC_ORG }}
-          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
-          TFC_VCS_REPO: ${{ secrets.TFC_VCS_REPO }}
+          TFC_OAUTH_TOKEN: ${{ secrets.TFE_OAUTH_TOKEN }}
+          TFC_ORG: ${{ secrets.TFE_ORG }}
+          TFC_TOKEN: ${{ secrets.TFE_TOKEN }}
+          TFC_VCS_REPO: ${{ secrets.TFE_VCS_REPO }}
+          TFE_ADDRESS: ${{ secrets.TFE_ADDRESS }}

@@ -5,6 +5,7 @@ package controllers
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,6 +43,7 @@ var tfClient *tfc.Client
 
 var organization = os.Getenv("TFC_ORG")
 var terraformToken = os.Getenv("TFC_TOKEN")
+var cloudEndpoint = "app.terraform.io"
 
 var syncPeriod = 30 * time.Second
 
@@ -65,6 +67,15 @@ func TestControllersAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel = context.WithCancel(context.TODO())
+
+	By("Set up endpoint")
+	if v, ok := os.LookupEnv("TFE_ADDRESS"); ok {
+		u, err := url.Parse(v)
+		if err != nil {
+			Fail("Cannot get hostname from the URL provided in TFE_ADDRESS")
+		}
+		cloudEndpoint = u.Host
+	}
 
 	By("bootstrapping test environment")
 	if os.Getenv("USE_EXISTING_CLUSTER") == "true" {
