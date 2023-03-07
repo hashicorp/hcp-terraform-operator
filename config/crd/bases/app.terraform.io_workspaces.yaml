@@ -160,6 +160,12 @@ spec:
                 description: Workspace name.
                 minLength: 1
                 type: string
+              notifications:
+                description: 'Notifications allow you to send messages to other applications
+                  based on run and workspace events. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications'
+                items:
+                  type: object
+                type: array
               organization:
                 description: 'Organization name where the Workspace will be created.
                   More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'

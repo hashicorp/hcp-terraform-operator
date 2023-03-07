@@ -271,6 +271,8 @@ type SSHKey struct {
 	Name string `json:"name,omitempty"`
 }
 
+type Notification struct{}
+
 // WorkspaceSpec defines the desired state of Workspace.
 type WorkspaceSpec struct {
 	// Workspace name.
@@ -404,6 +406,12 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	SSHKey *SSHKey `json:"sshKey,omitempty"`
+	// Notifications allow you to send messages to other applications based on run and workspace events.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
+	//
+	//+optional
+	Notifications []Notification `json:"notifications,omitempty"`
 }
 
 type RunStatus struct {

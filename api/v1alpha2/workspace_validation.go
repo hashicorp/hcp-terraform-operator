@@ -15,6 +15,7 @@ func (w *Workspace) ValidateSpec() error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, w.validateSpecAgentPool()...)
+	allErrs = append(allErrs, w.validateSpecNotifications()...)
 	allErrs = append(allErrs, w.validateSpecRemoteStateSharing()...)
 	allErrs = append(allErrs, w.validateSpecRunTasks()...)
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
@@ -58,6 +59,10 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 	}
 
 	return allErrs
+}
+
+func (w *Workspace) validateSpecNotifications() field.ErrorList {
+	return nil
 }
 
 func (w *Workspace) validateSpecRemoteStateSharing() field.ErrorList {

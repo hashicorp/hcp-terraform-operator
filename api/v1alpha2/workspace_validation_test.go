@@ -58,6 +58,28 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 	}
 }
 
+func TestValidateWorkspaceSpecNotifications(t *testing.T) {
+	successCases := map[string]Workspace{}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecNotifications(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecNotifications(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
 func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 	successCases := map[string]Workspace{
 		"HasOnlyAllWorkspaces": {

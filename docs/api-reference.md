@@ -232,6 +232,17 @@ _Appears in:_
 | `name` _string_ | Module Workspace Name. |
 
 
+#### Notification
+
+
+
+
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+
+
 #### OutputStatus
 
 
@@ -484,6 +495,7 @@ _Appears in:_
 | `runTriggers` _[RunTrigger](#runtrigger) array_ | Run triggers allow you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers |
 | `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow. Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider. More information:   - https://www.terraform.io/cloud-docs/run/ui   - https://www.terraform.io/cloud-docs/vcs |
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
+| `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 
 
 

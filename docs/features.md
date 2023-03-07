@@ -24,6 +24,7 @@ The following Terraform Cloud Workspace features are supported by the `Workspace
 - Apply Method
 - Description
 - Execution Mode
+- Notifications
 - Outputs
 - Remote State Sharing
 - Run Tasks
