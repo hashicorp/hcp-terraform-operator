@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -31,7 +32,7 @@ const (
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "msg", "new reconciliation event")
 	var d *appsv1.Deployment = &appsv1.Deployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Namespace: ap.instance.Namespace, Name: agentPoolDeploymentName(ap)}, d)
+	err := r.Client.Get(ctx, types.NamespacedName{Namespace: ap.instance.Namespace, Name: agentPoolDeploymentName(&ap.instance)}, d)
 	if err == nil {
 		if ap.instance.Spec.AgentDeployment == nil {
 			// Delete the existing deployment
@@ -126,7 +127,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	}
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      agentPoolDeploymentName(ap),
+			Name:      agentPoolDeploymentName(&ap.instance),
 			Namespace: ap.instance.Namespace,
 			Annotations: map[string]string{
 				poolNameLabel: ap.instance.Name,
@@ -135,7 +136,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: agentPoolPodLabels(ap),
+				MatchLabels: agentPoolPodLabels(&ap.instance),
 			},
 			Replicas: &r,
 			Strategy: appsv1.DeploymentStrategy{
@@ -148,7 +149,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: agentPoolPodLabels(ap),
+					Labels: agentPoolPodLabels(&ap.instance),
 				},
 				Spec: s,
 			},
@@ -196,12 +197,12 @@ func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 	}
 }
 
-func agentPoolDeploymentName(ap *agentPoolInstance) string {
-	return fmt.Sprintf("agents-of-%s", ap.instance.Name)
+func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
+	return fmt.Sprintf("agents-of-%s", ap.Name)
 }
 
-func agentPoolPodLabels(ap *agentPoolInstance) map[string]string {
+func agentPoolPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
 	return map[string]string{
-		poolNameLabel: ap.instance.Name,
+		poolNameLabel: ap.Name,
 	}
 }
