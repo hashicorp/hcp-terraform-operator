@@ -354,6 +354,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			validateAgentPoolDeployment(ctx, instance)
 
 			// SET AgentDeployment TO NIL
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.Spec.AgentDeployment = nil
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
