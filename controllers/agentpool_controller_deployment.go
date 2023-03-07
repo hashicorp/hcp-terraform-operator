@@ -22,8 +22,10 @@ import (
 )
 
 const (
-	poolNameLabel = "agentpool.app.terraform.io/pool-name"
-	poolIDLabel   = "agentpool.app.terraform.io/pool-id"
+	poolNameLabel             = "agentpool.app.terraform.io/pool-name"
+	poolIDLabel               = "agentpool.app.terraform.io/pool-id"
+	defaultAgentImage         = "hashicorp/tfc-agent"
+	defaultAgentContainerName = "tfc-agent"
 )
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
@@ -114,8 +116,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var s v1.PodSpec = v1.PodSpec{
 		Containers: []corev1.Container{ // default tfc-agent container if none configured by user
 			{
-				Name:  "tfc-agent",
-				Image: "hashicorp/tfc-agent",
+				Name:  defaultAgentContainerName,
+				Image: defaultAgentImage,
 			},
 		},
 	}
