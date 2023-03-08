@@ -236,11 +236,21 @@ _Appears in:_
 
 
 
-
+Notifications allow you to send messages to other applications based on run and workspace events. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
 
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Notification name. |
+| `type` _NotificationDestinationType_ | The type of the notification. Valid values: `email`, `generic`, `microsoft-teams`, `slack`. |
+| `enabled` _boolean_ | Whether the notification configuration should be enabled or not. |
+| `token` _string_ | The token of the notification. |
+| `triggers` _NotificationTrigger array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers:   - Health Events: `checkFailed`, `driftDetected`, `healthAssessmentFail`.   - Run Events: `applying`, `completed`, `created`, `errored`, `needsAttention`, `planning`. |
+| `url` _string_ | The URL of the notification. |
+| `emailAddresses` _string array_ | The list of email addresses that will receive notification emails. It is only available for TFE users. It is not available in TFC. |
+| `emailUsers` _string array_ | The list of users belonging to the organization that will receive notification emails. |
 
 
 #### OutputStatus

@@ -164,7 +164,82 @@ spec:
                 description: 'Notifications allow you to send messages to other applications
                   based on run and workspace events. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications'
                 items:
+                  description: 'Notifications allow you to send messages to other
+                    applications based on run and workspace events. More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications'
+                  properties:
+                    emailAddresses:
+                      description: The list of email addresses that will receive notification
+                        emails. It is only available for TFE users. It is not available
+                        in TFC.
+                      items:
+                        type: string
+                      minItems: 1
+                      type: array
+                    emailUsers:
+                      description: The list of users belonging to the organization
+                        that will receive notification emails.
+                      items:
+                        type: string
+                      minItems: 1
+                      type: array
+                    enabled:
+                      default: true
+                      description: Whether the notification configuration should be
+                        enabled or not.
+                      type: boolean
+                    name:
+                      description: Notification name.
+                      minLength: 1
+                      type: string
+                    token:
+                      description: The token of the notification.
+                      minLength: 1
+                      type: string
+                    triggers:
+                      description: 'The list of run events that will trigger notifications.
+                        Trigger represents the different TFC notifications that can
+                        be sent as a run''s progress transitions between different
+                        states. There are two categories of triggers: - Health Events:
+                        `checkFailed`, `driftDetected`, `healthAssessmentFail`. -
+                        Run Events: `applying`, `completed`, `created`, `errored`,
+                        `needsAttention`, `planning`.'
+                      items:
+                        description: NotificationTrigger represents the different
+                          TFC notifications that can be sent as a run's progress transitions
+                          between different states. This must be aligned with go-tfe
+                          type `NotificationTriggerType`.
+                        enum:
+                        - applying
+                        - checkFailed
+                        - completed
+                        - created
+                        - driftDetected
+                        - errored
+                        - healthAssessmentFail
+                        - needsAttention
+                        - planning
+                        type: string
+                      minItems: 1
+                      type: array
+                    type:
+                      description: 'The type of the notification. Valid values: `email`,
+                        `generic`, `microsoft-teams`, `slack`.'
+                      enum:
+                      - email
+                      - generic
+                      - microsoft-teams
+                      - slack
+                      type: string
+                    url:
+                      description: The URL of the notification.
+                      minLength: 1
+                      type: string
+                  required:
+                  - name
+                  - type
                   type: object
+                minItems: 1
                 type: array
               organization:
                 description: 'Organization name where the Workspace will be created.
