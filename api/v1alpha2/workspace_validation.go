@@ -62,7 +62,166 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 }
 
 func (w *Workspace) validateSpecNotifications() field.ErrorList {
-	return nil
+	allErrs := field.ErrorList{}
+	spec := w.Spec.Notifications
+
+	if spec == nil {
+		return allErrs
+	}
+
+	for i, n := range spec {
+		f := field.NewPath("spec").Child("notifications").Child(fmt.Sprintf("[%d]", i))
+		switch n.Type {
+		case "email":
+			allErrs = append(allErrs, w.validateSpecNotificationsEmail(n, f)...)
+		case "generic":
+			allErrs = append(allErrs, w.validateSpecNotificationsGeneric(n, f)...)
+		case "microsoft-teams":
+			allErrs = append(allErrs, w.validateSpecNotificationsMicrosoftTeams(n, f)...)
+		case "slack":
+			allErrs = append(allErrs, w.validateSpecNotificationsSlack(n, f)...)
+		}
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsEmail(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := "email"
+
+	if n.Token != "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'token' cannot be set for type %q", t)),
+		)
+	}
+	if n.URL != "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'url' cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) == 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailAddresses' must be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) == 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailUsers' must be set for type %q", t)),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsGeneric(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := "generic"
+
+	if n.Token == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'token' must be set for type %q", t)),
+		)
+	}
+	if n.URL == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'url' must be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailAddresses' cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailUsers' cannot be set for type %q", t)),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsMicrosoftTeams(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := "microsoft-teams"
+
+	if n.URL == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'url' must be set for type %q", t)),
+		)
+	}
+	if n.Token != "" {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'token' cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailAddresses' cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailUsers' cannot be set for type %q", t)),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsSlack(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := "slack"
+
+	if n.URL == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'url' must be set for type %q", t)),
+		)
+	}
+	if n.Token != "" {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'token' cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailAddresses' cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("'emailUsers' cannot be set for type %q", t)),
+		)
+	}
+
+	return allErrs
 }
 
 func (w *Workspace) validateSpecRemoteStateSharing() field.ErrorList {

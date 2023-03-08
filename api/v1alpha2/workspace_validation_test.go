@@ -59,7 +59,92 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecNotifications(t *testing.T) {
-	successCases := map[string]Workspace{}
+	token := "token"
+	url := "https://example.com"
+	successCases := map[string]Workspace{
+		"OnlyEmail": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "email",
+						EmailAddresses: []string{
+							"linus@torvalds.fi",
+						},
+						EmailUsers: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+		"OnlyGeneric": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "generic",
+						Token: token,
+						URL:   url,
+					},
+				},
+			},
+		},
+		"OnlyMicrosoftTeams": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "microsoft-teams",
+						URL:  url,
+					},
+				},
+			},
+		},
+		"OnlySlack": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "slack",
+						URL:  url,
+					},
+				},
+			},
+		},
+		"AllTypes": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "email",
+						EmailAddresses: []string{
+							"linus@torvalds.fi",
+						},
+						EmailUsers: []string{
+							"linus@torvalds.fi",
+						},
+					},
+					{
+						Name:  "this",
+						Type:  "generic",
+						Token: token,
+						URL:   url,
+					},
+					{
+						Name: "this",
+						Type: "microsoft-teams",
+						URL:  url,
+					},
+					{
+						Name: "this",
+						Type: "slack",
+						URL:  url,
+					},
+				},
+			},
+		},
+	}
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
@@ -69,7 +154,164 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 		})
 	}
 
-	errorCases := map[string]Workspace{}
+	errorCases := map[string]Workspace{
+		"GenericWithoutToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "generic",
+						URL:  url,
+					},
+				},
+			},
+		},
+		"GenericWithoutURL": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "generic",
+						Token: token,
+					},
+				},
+			},
+		},
+		"GenericWithEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "generic",
+						Token: token,
+						URL:   url,
+						EmailAddresses: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+		"GenericWithEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "generic",
+						Token: token,
+						URL:   url,
+						EmailUsers: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "microsoft-teams",
+						URL:   url,
+						Token: token,
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithoutURL": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "microsoft-teams",
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "microsoft-teams",
+						Token: token,
+						URL:   url,
+						EmailAddresses: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "microsoft-teams",
+						Token: token,
+						URL:   url,
+						EmailUsers: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+		"SlackWithToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "microsoft-teams",
+						URL:   url,
+						Token: token,
+					},
+				},
+			},
+		},
+		"SlackWithoutURL": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "slack",
+					},
+				},
+			},
+		},
+		"SlackWithEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "microsoft-teams",
+						Token: token,
+						URL:   url,
+						EmailAddresses: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+		"SlackWithEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "microsoft-teams",
+						Token: token,
+						URL:   url,
+						EmailUsers: []string{
+							"linus@torvalds.fi",
+						},
+					},
+				},
+			},
+		},
+	}
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
