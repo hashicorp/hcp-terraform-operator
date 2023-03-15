@@ -71,6 +71,13 @@ func (w *Workspace) validateSpecNotifications() field.ErrorList {
 
 	for i, n := range spec {
 		f := field.NewPath("spec").Child("notifications").Child(fmt.Sprintf("[%d]", i))
+		if n.ID != "" {
+			allErrs = append(allErrs, field.Invalid(
+				f,
+				"",
+				"'id' cannot be set in spec"),
+			)
+		}
 		switch n.Type {
 		case "email":
 			allErrs = append(allErrs, w.validateSpecNotificationsEmail(n, f)...)

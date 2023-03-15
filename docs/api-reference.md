@@ -245,6 +245,7 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Notification name. |
 | `type` _NotificationDestinationType_ | The type of the notification. Valid values: `email`, `generic`, `microsoft-teams`, `slack`. |
+| `id` _string_ | The ID of the notification. |
 | `enabled` _boolean_ | Whether the notification configuration should be enabled or not. |
 | `token` _string_ | The token of the notification. |
 | `triggers` _NotificationTrigger array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers:   - Health Events: `checkFailed`, `driftDetected`, `healthAssessmentFail`.   - Run Events: `applying`, `completed`, `created`, `errored`, `needsAttention`, `planning`. |

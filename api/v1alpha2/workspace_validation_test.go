@@ -311,6 +311,18 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				},
 			},
 		},
+		"HasIDinSpec": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "slack",
+						ID:   "nc-this",
+						URL:  url,
+					},
+				},
+			},
+		},
 	}
 
 	for n, c := range errorCases {

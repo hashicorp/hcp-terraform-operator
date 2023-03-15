@@ -188,6 +188,10 @@ spec:
                       description: Whether the notification configuration should be
                         enabled or not.
                       type: boolean
+                    id:
+                      description: The ID of the notification.
+                      pattern: ^nc-[a-zA-Z0-9]+$
+                      type: string
                     name:
                       description: Notification name.
                       minLength: 1
@@ -233,7 +237,7 @@ spec:
                       type: string
                     url:
                       description: The URL of the notification.
-                      minLength: 1
+                      pattern: ^https?://.*
                       type: string
                   required:
                   - name

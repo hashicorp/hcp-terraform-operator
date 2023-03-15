@@ -291,6 +291,11 @@ type Notification struct {
 	//
 	//+kubebuilder:validation:Enum=email;generic;microsoft-teams;slack
 	Type tfc.NotificationDestinationType `json:"type"`
+	// The ID of the notification.
+	//
+	//+kubebuilder:validation:Pattern="^nc-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
 	// Whether the notification configuration should be enabled or not.
 	//
 	//+kubebuilder:default=true
@@ -312,7 +317,7 @@ type Notification struct {
 	Triggers []NotificationTrigger `json:"triggers,omitempty"`
 	// The URL of the notification.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:Pattern="^https?://.*"
 	//+optional
 	URL string `json:"url,omitempty"`
 	// The list of email addresses that will receive notification emails.
