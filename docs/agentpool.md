@@ -30,6 +30,12 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
         - name: white
         - name: blue
         - name: red
+      agentDeployment:
+        replicas: 3
+        spec:
+          containers:
+            - name: tfc-agent
+              image: "hashicorp/tfc-agent:latest"
     ```
 
 2. Apply YAML manifest.
@@ -38,7 +44,7 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
     $ kubectl apply -f agentpool.yaml
     ```
 
-3. Wait till the Operator creates a new agent pool `agent-pool-demo` under the `kubernetes-operator` organization and 3 agent tokens: `white`, `blue`, and `red`. You can validate that either by logging in to the Terraform Cloud WEB UI and navigating to the Agent Pools or via CLI.
+3. Wait till the Operator creates a new agent pool `agent-pool-demo` under the `kubernetes-operator` organization, 3 agent tokens: `white`, `blue`, and `red` and the deployment for agent pods `agents-of-agent-pool-demo`. You can validate that either by logging in to the Terraform Cloud WEB UI and navigating to the Agent Pools or via CLI. Soon, the agent should register themselves with Terraform Cloud and appear in the Agent Pool UI.
 
     Here is an example of the Status and Events outputs of the successfully created Agent Pool and Agent Tokens:
 
@@ -190,6 +196,12 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
       namespace: default
       ...
     ```
+
+7. If the `agentDeployment` attribute was specified on the agent pool, agents will be deployed on the cluster as Pods in the same namespace as the AgentPool object. The simplest value for `agentDeployment` is `{}` and will deploy a single agent Pod using the `hashicorp/tfc-agent:latest` containter image.
+
+The `agentDeployment.Spec` attribute accepts a common `PodSpec` structure identical to the one in Deployment's `Spec.Template.Spec`. This allows for full customization of the agent Pods. The operator will add some TFC_ specific environment variables in each of the Pods' containers, to inject agent tokens and optionally the API endpoint when used with Terraform Enterprise.
+
+Deleting the AgentPool will result in deletion of the associated agent Deployment.
 
 If you have any questions, please check out the [FAQ](./faq.md#agent-pool-controller) to see if you can find answers there.
 

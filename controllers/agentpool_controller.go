@@ -198,9 +198,12 @@ func (r *AgentPoolReconciler) removeFinalizer(ctx context.Context, ap *agentPool
 }
 
 func (r *AgentPoolReconciler) updateStatus(ctx context.Context, ap *agentPoolInstance, agentPool *tfc.AgentPool) error {
-	ap.instance.Status.ObservedGeneration = ap.instance.Generation
-	ap.instance.Status.AgentPoolID = agentPool.ID
-
+	if ap != nil {
+		ap.instance.Status.ObservedGeneration = ap.instance.Generation
+	}
+	if agentPool != nil {
+		ap.instance.Status.AgentPoolID = agentPool.ID
+	}
 	return r.Status().Update(ctx, &ap.instance)
 }
 
@@ -263,11 +266,23 @@ func (r *AgentPoolReconciler) readAgentPool(ctx context.Context, ap *agentPoolIn
 	})
 }
 
-func needToUpdateAgentPool(instance *appv1alpha2.AgentPool, agentPool *tfc.AgentPool) bool {
+func needToUpdateAgentPool(instance *appv1alpha2.AgentPool) bool {
 	return instance.Generation != instance.Status.ObservedGeneration
 }
 
 func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentPoolInstance) error {
+	defer func() {
+		agentPool, rerr := r.readAgentPool(ctx, ap) // check if it has been deleted
+		if rerr != nil {
+			return
+		}
+		serr := r.updateStatus(ctx, ap, agentPool)
+		if serr != nil {
+			r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "Update Status", fmt.Sprintf("Failed to update agent pool status: %s", serr))
+			ap.log.Error(serr, "Failed to update agent pool status")
+		}
+	}()
+
 	ap.log.Info("Reconcile Agent Pool", "msg", "reconciling agent pool")
 
 	var agentPool *tfc.AgentPool
@@ -313,8 +328,8 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 	}
 
 	// Update Agent Pool
-	if needToUpdateAgentPool(&ap.instance, agentPool) {
-		agentPool, err = r.updateAgentPool(ctx, ap, agentPool)
+	if needToUpdateAgentPool(&ap.instance) {
+		_, err = r.updateAgentPool(ctx, ap, agentPool)
 		if err != nil {
 			ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to update agent pool ID %s", ap.instance.Status.AgentPoolID))
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to update agent pool ID %s", ap.instance.Status.AgentPoolID)
@@ -333,5 +348,15 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 	ap.log.Info("Reconcile Agent Tokens", "msg", "successfully reconcilied agent tokens")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentTokens", "Reconcilied agent tokens in agent pool ID %s", ap.instance.Status.AgentPoolID)
 
-	return r.updateStatus(ctx, ap, agentPool)
+	// Reconcile Agent Deployment
+	err = r.reconcileAgentDeployment(ctx, ap)
+	if err != nil {
+		ap.log.Error(err, "Reconcile Agent Deployment", "msg", fmt.Sprintf("failed to reconcile agent deployment in agent pool ID %s: %s", ap.instance.Status.AgentPoolID, err))
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentDeployment", "Failed to reconcile agent deployment in agent pool: %s", err)
+		return err
+	}
+	ap.log.Info("Reconcile Agent Tokens", "msg", "successfully reconcilied agent deployment")
+	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentTokens", "Reconcilied agent deployment in agent pool ID %s", ap.instance.Status.AgentPoolID)
+
+	return nil
 }

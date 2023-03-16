@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,6 +67,26 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
+		// DELETE AGENT POOL DEPLOYMENT
+		did := types.NamespacedName{
+			Name:      agentPoolDeploymentName(instance),
+			Namespace: instance.GetNamespace(),
+		}
+		d := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      did.Name,
+				Namespace: did.Namespace,
+			},
+		}
+		Eventually(func() bool {
+			err := k8sClient.Delete(ctx, d)
+			return errors.IsNotFound(err) || err == nil
+		}).Should(BeTrue())
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, did, d)
+			return errors.IsNotFound(err)
+		}).Should(BeTrue())
+
 		// DELETE AGENT POOL
 		Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
 
@@ -225,6 +246,120 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			// VALIDATE AGENT TOKENS
 			validateAgentPoolTestTokens(ctx, instance)
 		})
+
+		It("can create agent deployments with all defaults", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			// ADD EMPTY AgentDeployment BLOCK
+			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Replicas).To(BeNil())
+			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
+
+			// VALIDATE AGENT DEPLOYMENT ATTRIBUTES
+			validateAgentPoolDeployment(ctx, instance)
+		})
+
+		It("can create agent deployments with agent pool replica count", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			// ADD EMPTY AgentDeployment BLOCK
+			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{
+				Replicas: appv1alpha2.PointerOf(int32(3)),
+			}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
+			Expect(*instance.Spec.AgentDeployment.Replicas).To(BeNumerically("==", 3))
+
+			// VALIDATE AGENT DEPLOYMENT ATTRIBUTES
+			validateAgentPoolDeployment(ctx, instance)
+		})
+
+		It("can create agent deployments with agent pool custom container", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			// ADD EMPTY AgentDeployment BLOCK
+			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{
+				Spec: &corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "my-agent",
+							Image: "my-org/my-custom-agent",
+						},
+					},
+				},
+			}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Spec).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Replicas).To(BeNil())
+
+			// VALIDATE AGENT DEPLOYMENT ATTRIBUTES
+			validateAgentPoolDeployment(ctx, instance)
+		})
+
+		It("can delete agent deployments", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			// ADD EMPTY AgentDeployment BLOCK
+			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Replicas).To(BeNil())
+			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
+
+			// VALIDATE AGENT DEPLOYMENT ATTRIBUTES
+			validateAgentPoolDeployment(ctx, instance)
+
+			// SET AgentDeployment TO NIL
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.AgentDeployment = nil
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			validateAgentPoolDeploymentDeleted(ctx, instance)
+		})
 	})
 })
 
@@ -303,6 +438,61 @@ func validateAgentPoolTestTokens(ctx context.Context, instance *appv1alpha2.Agen
 		return compareAgentTokens(ct, kt)
 	}).Should(BeTrue())
 
+}
+
+func validateAgentPoolDeployment(ctx context.Context, instance *appv1alpha2.AgentPool) {
+	Expect(instance).ToNot(BeNil())
+
+	agentDeployment := &appsv1.Deployment{}
+	did := types.NamespacedName{
+		Name:      agentPoolDeploymentName(instance),
+		Namespace: instance.GetNamespace(),
+	}
+	Eventually(func() error {
+		return k8sClient.Get(ctx, did, agentDeployment)
+	}).Should(Succeed())
+
+	Expect(agentDeployment.Spec.Replicas).ToNot(BeNil())
+	Expect(agentDeployment.Spec.Strategy.Type).To(Equal(appsv1.RollingUpdateDeploymentStrategyType))
+	Expect(agentDeployment.Spec.Strategy.RollingUpdate).ToNot(BeNil())
+	Expect(agentDeployment.Spec.Strategy.RollingUpdate.MaxSurge.IntVal).To(BeNumerically("==", 0))
+	if instance.Spec.AgentDeployment == nil {
+		Expect(*agentDeployment.Spec.Replicas).To(BeNumerically("==", 1))
+		Expect(agentDeployment.Spec.Template.Spec.Containers).To(HaveLen(1))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Name).To(Equal(defaultAgentContainerName))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Image).To(Equal(defaultAgentImage))
+		return
+	}
+	if instance.Spec.AgentDeployment.Replicas == nil {
+		Expect(*agentDeployment.Spec.Replicas).To(BeNumerically("==", 1))
+	} else {
+		Expect(*agentDeployment.Spec.Replicas).To(BeNumerically("==", *instance.Spec.AgentDeployment.Replicas))
+	}
+	if instance.Spec.AgentDeployment.Spec == nil {
+		Expect(agentDeployment.Spec.Template.Spec.Containers).To(HaveLen(1))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Name).To(Equal(defaultAgentContainerName))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Image).To(Equal(defaultAgentImage))
+		return
+	}
+	Expect(agentDeployment.Spec.Template.Spec.Containers).To(HaveLen(len(instance.Spec.AgentDeployment.Spec.Containers)))
+	for ci, c := range instance.Spec.AgentDeployment.Spec.Containers {
+		Expect(agentDeployment.Spec.Template.Spec.Containers[ci].Name).To(Equal(c.Name))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[ci].Image).To(Equal(c.Image))
+	}
+}
+
+func validateAgentPoolDeploymentDeleted(ctx context.Context, instance *appv1alpha2.AgentPool) {
+	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+	Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+	did := types.NamespacedName{
+		Name:      agentPoolDeploymentName(instance),
+		Namespace: instance.GetNamespace(),
+	}
+	Eventually(func() bool {
+		err := k8sClient.Get(ctx, did, &appsv1.Deployment{})
+		return errors.IsNotFound(err)
+	}).Should(BeTrue())
 }
 
 func compareAgentTokens(aTokens, bTokens []string) bool {
