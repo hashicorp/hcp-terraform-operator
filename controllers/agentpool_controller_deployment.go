@@ -83,6 +83,10 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
 	nd := agentPoolDeployment(ap)
+	err := controllerutil.SetControllerReference(&ap.instance, nd, r.Scheme)
+	if err != nil {
+		return err
+	}
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "terraform-cloud-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
