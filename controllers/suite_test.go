@@ -61,8 +61,6 @@ func TestControllersAPIs(t *testing.T) {
 	reporterConfig.NoColor = true
 	reporterConfig.Succinct = false
 
-	suiteConfig.LabelFilter = "Notifications"
-
 	RunSpecs(t, "Controllers Suite", suiteConfig, reporterConfig)
 }
 

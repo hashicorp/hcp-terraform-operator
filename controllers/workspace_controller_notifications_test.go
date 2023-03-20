@@ -5,6 +5,7 @@ package controllers
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -23,13 +24,15 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		instance  *appv1alpha2.Workspace
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
 
-		memberEmail = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", GinkgoRandomSeed())
+		memberEmail  = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", GinkgoRandomSeed())
+		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", GinkgoRandomSeed())
+		memberID     = ""
+		memberID2    = ""
 	)
 
 	BeforeAll(func() {
-		member, err := tfClient.OrganizationMemberships.Create(ctx, organization, tfc.OrganizationMembershipCreateOptions{Email: &memberEmail})
-		Expect(err).Should(Succeed())
-		Expect(member).ShouldNot(BeNil())
+		memberID = createOrgMember(memberEmail)
+		memberID2 = createOrgMember(memberEmail2)
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
@@ -65,6 +68,11 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		}
 	})
 
+	AfterAll(func() {
+		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID)).Should(Succeed())
+		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID2)).Should(Succeed())
+	})
+
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance, namespacedName)
@@ -79,7 +87,6 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
-
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -97,16 +104,83 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+		})
+
+		It("can re-create notifications", func() {
+			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
+				Name: "slack",
+				Type: "slack",
+				URL:  "https://example.com",
+			})
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+
+			// Delete notifications manually
+			notifications, err := tfClient.NotificationConfigurations.List(ctx, instance.Status.WorkspaceID, &tfc.NotificationConfigurationListOptions{})
+			Expect(err).Should(Succeed())
+			Expect(notifications).ShouldNot(BeNil())
+			for _, n := range notifications.Items {
+				Expect(tfClient.NotificationConfigurations.Delete(ctx, n.ID)).Should(Succeed())
+			}
 
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
 
-		// TODO
-		// It("can create Terraform Enterprise email address notifications", func() {
-		// 	// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-		// 	createWorkspace(instance, namespacedName)
-		// })
+		It("can update notifications", func() {
+			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
+				Name:       "email",
+				Type:       "email",
+				EmailUsers: []string{memberEmail},
+			})
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+
+			// Add a new email user
+			instance.Spec.Notifications[0].EmailUsers = append(instance.Spec.Notifications[0].EmailUsers, memberEmail2)
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+		})
+
+		It("can delete notifications", func() {
+			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
+				Name:       "email",
+				Type:       "email",
+				EmailUsers: []string{memberEmail},
+			})
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+
+			// Delete all notifications
+			instance.Spec.Notifications = []appv1alpha2.Notification{}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+		})
+
+		It("can create Terraform Enterprise email address notifications", func() {
+			if _, ok := os.LookupEnv("TFE_ADDRESS"); !ok {
+				Skip("Environment variable TFE_ADDRESS is either not set or empty")
+			}
+			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
+				Name:           "email",
+				Type:           "email",
+				EmailAddresses: []string{"user@example.com"},
+			})
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+			// Validate reconciliation
+			isNotificationsReconciled(instance)
+		})
 	})
 })
 
@@ -132,8 +206,8 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 			return false
 		}
 
-		w := make([]appv1alpha2.Notification, len(notifications.Items))
-		for i, n := range notifications.Items {
+		var w []appv1alpha2.Notification
+		for _, n := range notifications.Items {
 			var nt []appv1alpha2.NotificationTrigger
 			for _, t := range n.Triggers {
 				nt = append(nt, appv1alpha2.NotificationTrigger(t))
@@ -142,7 +216,7 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 			for _, u := range n.EmailUsers {
 				nu = append(nu, m[u.ID])
 			}
-			w[i] = appv1alpha2.Notification{
+			w = append(w, appv1alpha2.Notification{
 				Name:           n.Name,
 				Type:           n.DestinationType,
 				Enabled:        n.Enabled,
@@ -151,9 +225,16 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 				URL:            n.URL,
 				EmailAddresses: n.EmailAddresses,
 				EmailUsers:     nu,
-			}
+			})
 		}
 
 		return cmp.Equal(s, w)
 	}).Should(BeTrue())
+}
+
+func createOrgMember(email string) string {
+	m, err := tfClient.OrganizationMemberships.Create(ctx, organization, tfc.OrganizationMembershipCreateOptions{Email: &email})
+	Expect(err).Should(Succeed())
+	Expect(m).ShouldNot(BeNil())
+	return m.ID
 }
