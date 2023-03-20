@@ -275,7 +275,7 @@ type SSHKey struct {
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 // This must be aligned with go-tfe type `NotificationTriggerType`.
 //
-// +kubebuilder:validation:Enum=applying;checkFailed;completed;created;driftDetected;errored;healthAssessmentFail;needsAttention;planning
+// +kubebuilder:validation:Enum="run:applying";"assessment:check_failure";"run:completed";"run:created";"assessment:drifted";"run:errored";"assessment:failed";"run:needs_attention";"run:planning"
 type NotificationTrigger string
 
 // Notifications allow you to send messages to other applications based on run and workspace events.
@@ -291,11 +291,6 @@ type Notification struct {
 	//
 	//+kubebuilder:validation:Enum=email;generic;microsoft-teams;slack
 	Type tfc.NotificationDestinationType `json:"type"`
-	// The ID of the notification.
-	//
-	//+kubebuilder:validation:Pattern="^nc-[a-zA-Z0-9]+$"
-	//+optional
-	ID string `json:"id,omitempty"`
 	// Whether the notification configuration should be enabled or not.
 	//
 	//+kubebuilder:default=true
@@ -309,8 +304,8 @@ type Notification struct {
 	// The list of run events that will trigger notifications.
 	// Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 	// There are two categories of triggers:
-	//   - Health Events: `checkFailed`, `driftDetected`, `healthAssessmentFail`.
-	//   - Run Events: `applying`, `completed`, `created`, `errored`, `needsAttention`, `planning`.
+	//   - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.
+	//   - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`.
 	//
 	//+kubebuilder:validation:MinItems=1
 	//+optional

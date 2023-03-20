@@ -62,17 +62,43 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 	token := "token"
 	url := "https://example.com"
 	successCases := map[string]Workspace{
-		"OnlyEmail": {
+		"OnlyEmailAddresses": {
 			Spec: WorkspaceSpec{
 				Notifications: []Notification{
 					{
 						Name: "this",
 						Type: "email",
 						EmailAddresses: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"OnlyEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "email",
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"EmailAddressesAndEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "email",
+						EmailAddresses: []string{
+							"user@mail.com",
 						},
 						EmailUsers: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 				},
@@ -116,28 +142,42 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 			Spec: WorkspaceSpec{
 				Notifications: []Notification{
 					{
-						Name: "this",
+						Name: "thisA",
 						Type: "email",
 						EmailAddresses: []string{
-							"linus@torvalds.fi",
-						},
-						EmailUsers: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 					{
-						Name:  "this",
+						Name: "thisB",
+						Type: "email",
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+					{
+						Name: "thisC",
+						Type: "email",
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+					{
+						Name:  "thisD",
 						Type:  "generic",
 						Token: token,
 						URL:   url,
 					},
 					{
-						Name: "this",
+						Name: "thisE",
 						Type: "microsoft-teams",
 						URL:  url,
 					},
 					{
-						Name: "this",
+						Name: "thisF",
 						Type: "slack",
 						URL:  url,
 					},
@@ -155,6 +195,38 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 	}
 
 	errorCases := map[string]Workspace{
+		"EmailWithoutEmails": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "email",
+					},
+				},
+			},
+		},
+		"EmailWithUrl": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: "email",
+						URL:  url,
+					},
+				},
+			},
+		},
+		"EmailWithToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  "email",
+						Token: token,
+					},
+				},
+			},
+		},
 		"GenericWithoutToken": {
 			Spec: WorkspaceSpec{
 				Notifications: []Notification{
@@ -186,7 +258,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 						Token: token,
 						URL:   url,
 						EmailAddresses: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 				},
@@ -201,7 +273,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 						Token: token,
 						URL:   url,
 						EmailUsers: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 				},
@@ -238,7 +310,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 						Token: token,
 						URL:   url,
 						EmailAddresses: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 				},
@@ -253,7 +325,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 						Token: token,
 						URL:   url,
 						EmailUsers: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 				},
@@ -290,7 +362,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 						Token: token,
 						URL:   url,
 						EmailAddresses: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
 					},
 				},
@@ -305,20 +377,8 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 						Token: token,
 						URL:   url,
 						EmailUsers: []string{
-							"linus@torvalds.fi",
+							"user@mail.com",
 						},
-					},
-				},
-			},
-		},
-		"HasIDinSpec": {
-			Spec: WorkspaceSpec{
-				Notifications: []Notification{
-					{
-						Name: "this",
-						Type: "slack",
-						ID:   "nc-this",
-						URL:  url,
 					},
 				},
 			},

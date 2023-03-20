@@ -245,10 +245,9 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Notification name. |
 | `type` _NotificationDestinationType_ | The type of the notification. Valid values: `email`, `generic`, `microsoft-teams`, `slack`. |
-| `id` _string_ | The ID of the notification. |
 | `enabled` _boolean_ | Whether the notification configuration should be enabled or not. |
 | `token` _string_ | The token of the notification. |
-| `triggers` _NotificationTrigger array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers:   - Health Events: `checkFailed`, `driftDetected`, `healthAssessmentFail`.   - Run Events: `applying`, `completed`, `created`, `errored`, `needsAttention`, `planning`. |
+| `triggers` _NotificationTrigger array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers:   - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.   - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`. |
 | `url` _string_ | The URL of the notification. |
 | `emailAddresses` _string array_ | The list of email addresses that will receive notification emails. It is only available for TFE users. It is not available in TFC. |
 | `emailUsers` _string array_ | The list of users belonging to the organization that will receive notification emails. |

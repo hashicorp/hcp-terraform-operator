@@ -188,10 +188,6 @@ spec:
                       description: Whether the notification configuration should be
                         enabled or not.
                       type: boolean
-                    id:
-                      description: The ID of the notification.
-                      pattern: ^nc-[a-zA-Z0-9]+$
-                      type: string
                     name:
                       description: Notification name.
                       minLength: 1
@@ -205,24 +201,24 @@ spec:
                         Trigger represents the different TFC notifications that can
                         be sent as a run''s progress transitions between different
                         states. There are two categories of triggers: - Health Events:
-                        `checkFailed`, `driftDetected`, `healthAssessmentFail`. -
-                        Run Events: `applying`, `completed`, `created`, `errored`,
-                        `needsAttention`, `planning`.'
+                        `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.
+                        - Run Events: `run:applying`, `run:completed`, `run:created`,
+                        `run:errored`, `run:needs_attention`, `run:planning`.'
                       items:
                         description: NotificationTrigger represents the different
                           TFC notifications that can be sent as a run's progress transitions
                           between different states. This must be aligned with go-tfe
                           type `NotificationTriggerType`.
                         enum:
-                        - applying
-                        - checkFailed
-                        - completed
-                        - created
-                        - driftDetected
-                        - errored
-                        - healthAssessmentFail
-                        - needsAttention
-                        - planning
+                        - run:applying
+                        - assessment:check_failure
+                        - run:completed
+                        - run:created
+                        - assessment:drifted
+                        - run:errored
+                        - assessment:failed
+                        - run:needs_attention
+                        - run:planning
                         type: string
                       minItems: 1
                       type: array

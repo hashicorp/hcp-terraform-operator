@@ -29,7 +29,7 @@ func TestPointerOf(t *testing.T) {
 }
 
 func TestRemoveFromSlice(t *testing.T) {
-	slices := [][]any{
+	input := [][]any{
 		{1, 2, 3},
 		{"a", "b", "c"},
 	}
@@ -37,7 +37,7 @@ func TestRemoveFromSlice(t *testing.T) {
 		{1, 3},
 		{"a", "c"},
 	}
-	for i, s := range slices {
+	for i, s := range input {
 		r := RemoveFromSlice(s, 1)
 		if !reflect.DeepEqual(want[i], r) {
 			t.Errorf("Failed to remove an element from slice %d", i)

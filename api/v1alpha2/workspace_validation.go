@@ -69,15 +69,14 @@ func (w *Workspace) validateSpecNotifications() field.ErrorList {
 		return allErrs
 	}
 
+	nn := make(map[string]int)
+
 	for i, n := range spec {
 		f := field.NewPath("spec").Child("notifications").Child(fmt.Sprintf("[%d]", i))
-		if n.ID != "" {
-			allErrs = append(allErrs, field.Invalid(
-				f,
-				"",
-				"'id' cannot be set in spec"),
-			)
+		if _, ok := nn[n.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(f.Child("Name"), n.Name))
 		}
+		nn[n.Name] = i
 		switch n.Type {
 		case "email":
 			allErrs = append(allErrs, w.validateSpecNotificationsEmail(n, f)...)
@@ -100,27 +99,20 @@ func (w *Workspace) validateSpecNotificationsEmail(n Notification, f *field.Path
 	if n.Token != "" {
 		allErrs = append(allErrs, field.Required(
 			f,
-			fmt.Sprintf("'token' cannot be set for type %q", t)),
+			fmt.Sprintf("token cannot be set for type %q", t)),
 		)
 	}
 	if n.URL != "" {
 		allErrs = append(allErrs, field.Required(
 			f,
-			fmt.Sprintf("'url' cannot be set for type %q", t)),
+			fmt.Sprintf("url cannot be set for type %q", t)),
 		)
 	}
-	if len(n.EmailAddresses) == 0 {
+	if len(n.EmailAddresses) == 0 && len(n.EmailUsers) == 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailAddresses' must be set for type %q", t)),
-		)
-	}
-	if len(n.EmailUsers) == 0 {
-		allErrs = append(allErrs, field.Invalid(
-			f,
-			"",
-			fmt.Sprintf("'emailUsers' must be set for type %q", t)),
+			fmt.Sprintf("at least one of emailAddresses or emailUsers must be set for type %q", t)),
 		)
 	}
 
@@ -134,27 +126,27 @@ func (w *Workspace) validateSpecNotificationsGeneric(n Notification, f *field.Pa
 	if n.Token == "" {
 		allErrs = append(allErrs, field.Required(
 			f,
-			fmt.Sprintf("'token' must be set for type %q", t)),
+			fmt.Sprintf("token must be set for type %q", t)),
 		)
 	}
 	if n.URL == "" {
 		allErrs = append(allErrs, field.Required(
 			f,
-			fmt.Sprintf("'url' must be set for type %q", t)),
+			fmt.Sprintf("url must be set for type %q", t)),
 		)
 	}
 	if len(n.EmailAddresses) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailAddresses' cannot be set for type %q", t)),
+			fmt.Sprintf("emailAddresses cannot be set for type %q", t)),
 		)
 	}
 	if len(n.EmailUsers) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailUsers' cannot be set for type %q", t)),
+			fmt.Sprintf("emailUsers cannot be set for type %q", t)),
 		)
 	}
 
@@ -168,28 +160,28 @@ func (w *Workspace) validateSpecNotificationsMicrosoftTeams(n Notification, f *f
 	if n.URL == "" {
 		allErrs = append(allErrs, field.Required(
 			f,
-			fmt.Sprintf("'url' must be set for type %q", t)),
+			fmt.Sprintf("url must be set for type %q", t)),
 		)
 	}
 	if n.Token != "" {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'token' cannot be set for type %q", t)),
+			fmt.Sprintf("token cannot be set for type %q", t)),
 		)
 	}
 	if len(n.EmailAddresses) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailAddresses' cannot be set for type %q", t)),
+			fmt.Sprintf("emailAddresses cannot be set for type %q", t)),
 		)
 	}
 	if len(n.EmailUsers) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailUsers' cannot be set for type %q", t)),
+			fmt.Sprintf("emailUsers cannot be set for type %q", t)),
 		)
 	}
 
@@ -203,28 +195,28 @@ func (w *Workspace) validateSpecNotificationsSlack(n Notification, f *field.Path
 	if n.URL == "" {
 		allErrs = append(allErrs, field.Required(
 			f,
-			fmt.Sprintf("'url' must be set for type %q", t)),
+			fmt.Sprintf("url must be set for type %q", t)),
 		)
 	}
 	if n.Token != "" {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'token' cannot be set for type %q", t)),
+			fmt.Sprintf("token cannot be set for type %q", t)),
 		)
 	}
 	if len(n.EmailAddresses) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailAddresses' cannot be set for type %q", t)),
+			fmt.Sprintf("emailAddresses cannot be set for type %q", t)),
 		)
 	}
 	if len(n.EmailUsers) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			fmt.Sprintf("'emailUsers' cannot be set for type %q", t)),
+			fmt.Sprintf("emailUsers cannot be set for type %q", t)),
 		)
 	}
 
