@@ -291,7 +291,7 @@ type Notification struct {
 	//
 	//+kubebuilder:validation:Enum=email;generic;microsoft-teams;slack
 	Type tfc.NotificationDestinationType `json:"type"`
-	// Whether the notification configuration should be enabled or not.
+	// Whether the notification configuration should be enabled or not. Default: `true`.
 	//
 	//+kubebuilder:default=true
 	//+optional
@@ -316,7 +316,7 @@ type Notification struct {
 	//+optional
 	URL string `json:"url,omitempty"`
 	// The list of email addresses that will receive notification emails.
-	// It is only available for TFE users. It is not available in TFC.
+	// It is only available for Terraform Enterprise users. It is not available in Terraform Cloud.
 	//
 	//+kubebuilder:validation:MinItems=1
 	//+optional

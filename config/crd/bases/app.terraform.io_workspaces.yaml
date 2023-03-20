@@ -170,8 +170,8 @@ spec:
                   properties:
                     emailAddresses:
                       description: The list of email addresses that will receive notification
-                        emails. It is only available for TFE users. It is not available
-                        in TFC.
+                        emails. It is only available for Terraform Enterprise users.
+                        It is not available in Terraform Cloud.
                       items:
                         type: string
                       minItems: 1
@@ -185,8 +185,8 @@ spec:
                       type: array
                     enabled:
                       default: true
-                      description: Whether the notification configuration should be
-                        enabled or not.
+                      description: 'Whether the notification configuration should
+                        be enabled or not. Default: `true`.'
                       type: boolean
                     name:
                       description: Notification name.
