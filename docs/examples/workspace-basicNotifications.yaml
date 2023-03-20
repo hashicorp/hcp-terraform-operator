@@ -1,0 +1,51 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+---
+apiVersion: app.terraform.io/v1alpha2
+kind: Workspace
+metadata:
+  name: this
+spec:
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  name: kubernetes-operator-demo
+  notifications:
+    - name: SRESlack
+      type: slack
+      url: https://hooks.slack.com/
+      triggers:
+        - run:needs_attention
+        - assessment:check_failure
+        - assessment:drifted
+        - assessment:failed
+    - name: SREEmail
+      type: email
+      emailUsers:
+        - sre@example.com
+      triggers:
+        - run:completed
+    - name: SRETeams
+      type: microsoft-teams
+      enabled: false
+      url: https://example.webhook.office.com/
+      triggers:
+        - assessment:check_failure
+        - assessment:drifted
+        - assessment:failed
+        - run:applying
+        - run:completed
+        - run:created
+        - run:errored
+        - run:needs_attention
+        - run:planning
+    - name: SRELambda
+      type: generic
+      enabled: false
+      url: https://lambda.eu-central-1.amazonaws.com/
+      token: t0k3n
+      triggers:
+        - run:planning
