@@ -77,7 +77,7 @@ func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *w
 	}
 
 	for i, n := range w.instance.Spec.Notifications {
-		eu := []*tfc.User{}
+		var eu []*tfc.User
 		for _, e := range n.EmailUsers {
 			if v, ok := orgEmailUsers[e]; ok && v != nil {
 				eu = append(eu, v)
@@ -159,7 +159,7 @@ func getNotificationsToDelete(ctx context.Context, spec, ws []tfc.NotificationCo
 
 func (r *WorkspaceReconciler) createNotifications(ctx context.Context, w *workspaceInstance, create []tfc.NotificationConfiguration) error {
 	for _, c := range create {
-		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("creating notificaion %q", c.ID))
+		w.log.Info("Reconcile Notifications", "msg", "creating notificaion")
 		nt := make([]tfc.NotificationTriggerType, len(c.Triggers))
 		for i, t := range c.Triggers {
 			nt[i] = tfc.NotificationTriggerType(t)
