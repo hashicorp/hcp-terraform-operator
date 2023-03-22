@@ -66,15 +66,15 @@ func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceIns
 
 func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *workspaceInstance) ([]tfc.NotificationConfiguration, error) {
 	if len(w.instance.Spec.Notifications) == 0 {
-		return nil, nil
+		return []tfc.NotificationConfiguration{}, nil
 	}
-
-	o := make([]tfc.NotificationConfiguration, len(w.instance.Spec.Notifications))
 
 	orgEmailUsers, err := r.getOrgMembers(ctx, w)
 	if err != nil {
-		return nil, err
+		return []tfc.NotificationConfiguration{}, err
 	}
+
+	o := make([]tfc.NotificationConfiguration, len(w.instance.Spec.Notifications))
 
 	for i, n := range w.instance.Spec.Notifications {
 		var eu []*tfc.User
@@ -105,7 +105,7 @@ func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *w
 func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *workspaceInstance) ([]tfc.NotificationConfiguration, error) {
 	wn, err := w.tfClient.Client.NotificationConfigurations.List(ctx, w.instance.Status.WorkspaceID, &tfc.NotificationConfigurationListOptions{})
 	if err != nil {
-		return nil, err
+		return []tfc.NotificationConfiguration{}, err
 	}
 
 	o := make([]tfc.NotificationConfiguration, len(wn.Items))
