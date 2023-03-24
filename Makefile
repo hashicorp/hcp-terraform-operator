@@ -115,21 +115,21 @@ copywrite: install-copywrite ## Run copywrite against code.
 	$(HASHICORP_COPYWRITE) headers
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+test: manifests generate fmt vet copywrite envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -timeout 30m -v ./controllers -coverprofile cover.out
 
 .PHONY: test-api
-test-api: fmt vet ## Run API tests.
+test-api: fmt vet copywrite ## Run API tests.
 	go test -timeout 30m -count 1 -v ./api/v1alpha2
 
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
+build: manifests generate fmt vet copywrite ## Build manager binary.
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate fmt vet copywrite ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
