@@ -29,7 +29,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'Module is the Schema for the modules API Module implements the
-          API-driven Run Workflow More information: - https://www.terraform.io/cloud-docs/run/api'
+          API-driven Run Workflow More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/api'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -56,17 +56,20 @@ spec:
                 properties:
                   source:
                     description: 'Non local Terraform module source. More information:
-                      - https://www.terraform.io/language/modules/sources'
+                      - https://developer.hashicorp.com/terraform/language/modules/sources'
+                    minLength: 1
                     type: string
                   version:
                     description: Terraform module version.
+                    minLength: 1
                     type: string
                 required:
                 - source
                 type: object
               organization:
                 description: 'Organization name where the Workspace will be created.
-                  More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
+                minLength: 1
                 type: string
               outputs:
                 description: Module outputs to store in ConfigMap(non-sensitive) or
@@ -77,6 +80,7 @@ spec:
                   properties:
                     name:
                       description: Output name must match with the module output.
+                      minLength: 1
                       type: string
                     sensitive:
                       default: false
@@ -85,11 +89,13 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               restartedAt:
                 description: 'Allows executing a new Run without changing any Workspace
                   or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge
                   --patch ''{"spec": {"restartedAt": "''`date -u -Iseconds`''"}}'''
+                minLength: 1
                 type: string
               token:
                 description: API Token to be used for API calls.
@@ -124,10 +130,12 @@ spec:
                   properties:
                     name:
                       description: Variable name must exist in the Workspace.
+                      minLength: 1
                       type: string
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               workspace:
                 description: Workspace to execute the module.
@@ -138,6 +146,7 @@ spec:
                     type: string
                   name:
                     description: Module Workspace Name.
+                    minLength: 1
                     type: string
                 type: object
             required:
@@ -151,8 +160,8 @@ spec:
             properties:
               configurationVersion:
                 description: 'A configuration version is a resource used to reference
-                  the uploaded configuration files. More information: - https://www.terraform.io/cloud-docs/api-docs/configuration-versions
-                  - https://www.terraform.io/cloud-docs/run/api'
+                  the uploaded configuration files. More information: - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
+                  - https://developer.hashicorp.com/terraform/cloud-docs/run/api'
                 properties:
                   id:
                     description: Configuration Version ID.
@@ -168,6 +177,7 @@ spec:
                 description: Workspace Destroy Run status.
                 type: string
               observedGeneration:
+                description: Real world state generation.
                 format: int64
                 type: integer
               output:
@@ -180,7 +190,7 @@ spec:
                 - runID
                 type: object
               run:
-                description: 'Workspace Runs status. More information: - https://www.terraform.io/cloud-docs/run/states'
+                description: 'Workspace Runs status. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/states'
                 properties:
                   configurationVersion:
                     type: string
