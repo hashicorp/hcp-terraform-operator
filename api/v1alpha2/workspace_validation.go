@@ -6,6 +6,7 @@ package v1alpha2
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-tfe"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,6 +16,7 @@ func (w *Workspace) ValidateSpec() error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, w.validateSpecAgentPool()...)
+	allErrs = append(allErrs, w.validateSpecNotifications()...)
 	allErrs = append(allErrs, w.validateSpecRemoteStateSharing()...)
 	allErrs = append(allErrs, w.validateSpecRunTasks()...)
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
@@ -54,6 +56,168 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 			f,
 			"",
 			"only one of the field ID or Name is allowed"),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotifications() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.Notifications
+
+	if spec == nil {
+		return allErrs
+	}
+
+	nn := make(map[string]int)
+
+	for i, n := range spec {
+		f := field.NewPath("spec").Child("notifications").Child(fmt.Sprintf("[%d]", i))
+		if _, ok := nn[n.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(f.Child("Name"), n.Name))
+		}
+		nn[n.Name] = i
+		switch n.Type {
+		case tfe.NotificationDestinationTypeEmail:
+			allErrs = append(allErrs, w.validateSpecNotificationsEmail(n, f)...)
+		case tfe.NotificationDestinationTypeGeneric:
+			allErrs = append(allErrs, w.validateSpecNotificationsGeneric(n, f)...)
+		case tfe.NotificationDestinationTypeMicrosoftTeams:
+			allErrs = append(allErrs, w.validateSpecNotificationsMicrosoftTeams(n, f)...)
+		case tfe.NotificationDestinationTypeSlack:
+			allErrs = append(allErrs, w.validateSpecNotificationsSlack(n, f)...)
+		}
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsEmail(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := tfe.NotificationDestinationTypeEmail
+
+	if n.Token != "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("token cannot be set for type %q", t)),
+		)
+	}
+	if n.URL != "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("url cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) == 0 && len(n.EmailUsers) == 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("at least one of emailAddresses or emailUsers must be set for type %q", t)),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsGeneric(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := tfe.NotificationDestinationTypeGeneric
+
+	if n.Token == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("token must be set for type %q", t)),
+		)
+	}
+	if n.URL == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("url must be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("emailAddresses cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("emailUsers cannot be set for type %q", t)),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsMicrosoftTeams(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := tfe.NotificationDestinationTypeMicrosoftTeams
+
+	if n.URL == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("url must be set for type %q", t)),
+		)
+	}
+	if n.Token != "" {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("token cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("emailAddresses cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("emailUsers cannot be set for type %q", t)),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecNotificationsSlack(n Notification, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	t := tfe.NotificationDestinationTypeSlack
+
+	if n.URL == "" {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("url must be set for type %q", t)),
+		)
+	}
+	if n.Token != "" {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("token cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailAddresses) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("emailAddresses cannot be set for type %q", t)),
+		)
+	}
+	if len(n.EmailUsers) != 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			fmt.Sprintf("emailUsers cannot be set for type %q", t)),
 		)
 	}
 
