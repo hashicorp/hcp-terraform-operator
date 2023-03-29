@@ -40,12 +40,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: WorkspaceSpec defines the desired state of Workspace
+            description: WorkspaceSpec defines the desired state of Workspace.
             properties:
               agentPool:
                 description: 'Terraform Cloud Agents allow Terraform Cloud to communicate
                   with isolated, private, or on-premises infrastructure. More information:
-                  - https://www.terraform.io/cloud-docs/agents'
+                  - https://developer.hashicorp.com/terraform/cloud-docs/agents'
                 properties:
                   id:
                     description: Agent Pool ID.
@@ -53,35 +53,38 @@ spec:
                     type: string
                   name:
                     description: Agent Pool name.
+                    minLength: 1
                     type: string
                 type: object
               allowDestroyPlan:
                 default: true
                 description: 'Allows a destroy plan to be created and applied. More
-                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#destruction-and-deletion'
+                  information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion'
                 type: boolean
               applyMethod:
                 default: manual
                 description: 'Define either change will be applied automatically(auto)
-                  or require an operator to confirm(manual). More information: - https://www.terraform.io/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
+                  or require an operator to confirm(manual). More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
                 pattern: ^(auto|manual)$
                 type: string
               description:
-                description: Workspace description
+                description: Workspace description.
+                minLength: 1
                 type: string
               environmentVariables:
                 description: 'Terraform Environment variables for all plans and applies
                   in this workspace. Variables defined within a workspace always overwrite
                   variables from variable sets that have the same type and the same
-                  key. More information: - https://www.terraform.io/cloud-docs/workspaces/variables
-                  - https://www.terraform.io/cloud-docs/workspaces/variables##environment-variables'
+                  key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables'
                 items:
                   description: 'Variables let you customize configurations, modify
                     Terraform''s behavior, and store information like provider credentials.
-                    More information: - https://www.terraform.io/cloud-docs/workspaces/variables'
+                    More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables'
                   properties:
                     description:
                       description: Description of the variable.
+                      minLength: 1
                       type: string
                     hcl:
                       default: false
@@ -90,6 +93,7 @@ spec:
                       type: boolean
                     name:
                       description: Name of the variable.
+                      minLength: 1
                       type: string
                     sensitive:
                       default: false
@@ -99,6 +103,7 @@ spec:
                       type: boolean
                     value:
                       description: Value of the variable.
+                      minLength: 1
                       type: string
                     valueFrom:
                       description: Source for the variable's value. Cannot be used
@@ -124,7 +129,7 @@ spec:
                           x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the workspace's
-                            namespace
+                            namespace.
                           properties:
                             key:
                               description: The key of the secret to select from.  Must
@@ -146,24 +151,108 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               executionMode:
                 default: remote
                 description: 'Define where the Terraform code will be executed. More
-                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#execution-mode'
+                  information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode'
                 pattern: ^(agent|local|remote)$
                 type: string
               name:
-                description: Workspace name
+                description: Workspace name.
+                minLength: 1
                 type: string
+              notifications:
+                description: 'Notifications allow you to send messages to other applications
+                  based on run and workspace events. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications'
+                items:
+                  description: 'Notifications allow you to send messages to other
+                    applications based on run and workspace events. More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications'
+                  properties:
+                    emailAddresses:
+                      description: The list of email addresses that will receive notification
+                        emails. It is only available for Terraform Enterprise users.
+                        It is not available in Terraform Cloud.
+                      items:
+                        type: string
+                      minItems: 1
+                      type: array
+                    emailUsers:
+                      description: The list of users belonging to the organization
+                        that will receive notification emails.
+                      items:
+                        type: string
+                      minItems: 1
+                      type: array
+                    enabled:
+                      default: true
+                      description: 'Whether the notification configuration should
+                        be enabled or not. Default: `true`.'
+                      type: boolean
+                    name:
+                      description: Notification name.
+                      minLength: 1
+                      type: string
+                    token:
+                      description: The token of the notification.
+                      minLength: 1
+                      type: string
+                    triggers:
+                      description: 'The list of run events that will trigger notifications.
+                        Trigger represents the different TFC notifications that can
+                        be sent as a run''s progress transitions between different
+                        states. There are two categories of triggers: - Health Events:
+                        `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.
+                        - Run Events: `run:applying`, `run:completed`, `run:created`,
+                        `run:errored`, `run:needs_attention`, `run:planning`.'
+                      items:
+                        description: NotificationTrigger represents the different
+                          TFC notifications that can be sent as a run's progress transitions
+                          between different states. This must be aligned with go-tfe
+                          type `NotificationTriggerType`.
+                        enum:
+                        - run:applying
+                        - assessment:check_failure
+                        - run:completed
+                        - run:created
+                        - assessment:drifted
+                        - run:errored
+                        - assessment:failed
+                        - run:needs_attention
+                        - run:planning
+                        type: string
+                      minItems: 1
+                      type: array
+                    type:
+                      description: 'The type of the notification. Valid values: `email`,
+                        `generic`, `microsoft-teams`, `slack`.'
+                      enum:
+                      - email
+                      - generic
+                      - microsoft-teams
+                      - slack
+                      type: string
+                    url:
+                      description: The URL of the notification.
+                      pattern: ^https?://.*
+                      type: string
+                  required:
+                  - name
+                  - type
+                  type: object
+                minItems: 1
+                type: array
               organization:
-                description: 'Organization name where the Workspace will be created
-                  More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/organizations'
+                description: 'Organization name where the Workspace will be created.
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
+                minLength: 1
                 type: string
               remoteStateSharing:
                 description: 'Remote state access between workspaces. By default,
                   new workspaces in Terraform Cloud do not allow other workspaces
-                  to access their state. More information: - https://www.terraform.io/cloud-docs/workspaces/state#accessing-state-from-other-workspaces'
+                  to access their state. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces'
                 properties:
                   allWorkspaces:
                     default: false
@@ -175,8 +264,9 @@ spec:
                       within the same organization.
                     items:
                       description: 'ConsumerWorkspace allows access to the state for
-                        specific workspaces within the same organization. More information:
-                        - https://www.terraform.io/cloud-docs/workspaces/state#remote-state-access-controls'
+                        specific workspaces within the same organization. Only one
+                        of the fields `ID` or `Name` is allowed. At least one of the
+                        fields `ID` or `Name` is mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
                       properties:
                         id:
                           description: Consumer Workspace ID.
@@ -184,20 +274,58 @@ spec:
                           type: string
                         name:
                           description: Consumer Workspace name.
+                          minLength: 1
                           type: string
                       type: object
+                    minItems: 1
                     type: array
                 type: object
+              runTasks:
+                description: 'Run tasks allow Terraform Cloud to interact with external
+                  systems at specific points in the Terraform Cloud run lifecycle.
+                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks'
+                items:
+                  description: 'Run tasks allow Terraform Cloud to interact with external
+                    systems at specific points in the Terraform Cloud run lifecycle.
+                    Only one of the fields `ID` or `Name` is allowed. At least one
+                    of the fields `ID` or `Name` is mandatory. More information: -
+                    https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks'
+                  properties:
+                    enforcementLevel:
+                      default: advisory
+                      description: 'Run Task Enforcement Level. Can be one of `advisory`
+                        or `mandatory`. Default: `advisory`.'
+                      pattern: ^(advisory|mandatory)$
+                      type: string
+                    id:
+                      description: Run Task ID.
+                      pattern: ^task-[a-zA-Z0-9]+$
+                      type: string
+                    name:
+                      description: Run Task Name.
+                      minLength: 1
+                      type: string
+                    stage:
+                      default: post_plan
+                      description: 'Run Task Stage. Can be one of `pre_apply`, `pre_plan`,
+                        or `post_plan`. Default: `post_plan`.'
+                      pattern: ^(pre_apply|pre_plan|post_plan)$
+                      type: string
+                  type: object
+                minItems: 1
+                type: array
               runTriggers:
                 description: 'Run triggers allow you to connect this workspace to
                   one or more source workspaces. These connections allow runs to queue
                   automatically in this workspace on successful apply of runs in any
-                  of the source workspaces. More information: https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
+                  of the source workspaces. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                 items:
                   description: 'RunTrigger allows you to connect this workspace to
                     one or more source workspaces. These connections allow runs to
                     queue automatically in this workspace on successful apply of runs
-                    in any of the source workspaces. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/run-triggers'
+                    in any of the source workspaces. Only one of the fields `ID` or
+                    `Name` is allowed. At least one of the fields `ID` or `Name` is
+                    mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
                       description: Source Workspace ID.
@@ -205,17 +333,20 @@ spec:
                       type: string
                     name:
                       description: Source Workspace Name.
+                      minLength: 1
                       type: string
                   type: object
+                minItems: 1
                 type: array
               sshKey:
                 description: 'SSH key used to clone Terraform modules. More information:
-                  - https://www.terraform.io/cloud-docs/workspaces/settings/ssh-keys'
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys'
                 properties:
                   id:
                     pattern: ^sshkey-[a-zA-Z0-9]+$
                     type: string
                   name:
+                    minLength: 1
                     type: string
                 type: object
               tags:
@@ -223,6 +354,7 @@ spec:
                   workspaces.
                 items:
                   type: string
+                minItems: 1
                 type: array
               teamAccess:
                 description: 'Terraform Cloud workspaces can only be accessed by users
@@ -230,25 +362,25 @@ spec:
                   on a per-team basis. When a workspace is created, only the owners
                   team and teams with the "manage workspaces" permission can access
                   it, with full admin permissions. These teams'' access can''t be
-                  removed from a workspace. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/access'
+                  removed from a workspace. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access'
                 items:
                   description: 'Terraform Cloud workspaces can only be accessed by
                     users with the correct permissions. You can manage permissions
                     for a workspace on a per-team basis. When a workspace is created,
                     only the owners team and teams with the "manage workspaces" permission
                     can access it, with full admin permissions. These teams'' access
-                    can''t be removed from a workspace. More information: - https://www.terraform.io/cloud-docs/workspaces/settings/access'
+                    can''t be removed from a workspace. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access'
                   properties:
                     access:
                       description: 'There are two ways to choose which permissions
                         a given team has on a workspace: fixed permission sets, and
-                        custom permissions. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
+                        custom permissions. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
                       pattern: ^(admin|custom|plan|read|write)$
                       type: string
                     custom:
                       description: 'Custom permissions let you assign specific, finer-grained
                         permissions to a team than the broader fixed permission sets
-                        provide. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions'
+                        provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions'
                       properties:
                         runTasks:
                           type: boolean
@@ -273,7 +405,7 @@ spec:
                           type: boolean
                       type: object
                     team:
-                      description: 'Team to grant access. More information: - https://www.terraform.io/cloud-docs/users-teams-organizations/teams'
+                      description: 'Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams'
                       properties:
                         id:
                           description: Team ID.
@@ -281,26 +413,29 @@ spec:
                           type: string
                         name:
                           description: Team name.
+                          minLength: 1
                           type: string
                       type: object
                   required:
                   - access
                   - team
                   type: object
+                minItems: 1
                 type: array
               terraformVariables:
                 description: 'Terraform variables for all plans and applies in this
                   workspace. Variables defined within a workspace always overwrite
                   variables from variable sets that have the same type and the same
-                  key. More information: - https://www.terraform.io/cloud-docs/workspaces/variables
-                  - https://www.terraform.io/cloud-docs/workspaces/variables#terraform-variables'
+                  key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables'
                 items:
                   description: 'Variables let you customize configurations, modify
                     Terraform''s behavior, and store information like provider credentials.
-                    More information: - https://www.terraform.io/cloud-docs/workspaces/variables'
+                    More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables'
                   properties:
                     description:
                       description: Description of the variable.
+                      minLength: 1
                       type: string
                     hcl:
                       default: false
@@ -309,6 +444,7 @@ spec:
                       type: boolean
                     name:
                       description: Name of the variable.
+                      minLength: 1
                       type: string
                     sensitive:
                       default: false
@@ -318,6 +454,7 @@ spec:
                       type: boolean
                     value:
                       description: Value of the variable.
+                      minLength: 1
                       type: string
                     valueFrom:
                       description: Source for the variable's value. Cannot be used
@@ -343,7 +480,7 @@ spec:
                           x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the workspace's
-                            namespace
+                            namespace.
                           properties:
                             key:
                               description: The key of the secret to select from.  Must
@@ -365,6 +502,7 @@ spec:
                   required:
                   - name
                   type: object
+                minItems: 1
                 type: array
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
@@ -373,7 +511,7 @@ spec:
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                 type: string
               token:
-                description: API Token to be used for API calls
+                description: API Token to be used for API calls.
                 properties:
                   secretKeyRef:
                     description: Selects a key of a secret in the workspace's namespace
@@ -407,6 +545,7 @@ spec:
                   branch:
                     description: The repository branch that Run will execute from.
                       This defaults to the repository's default branch (e.g. main).
+                    minLength: 1
                     type: string
                   oAuthTokenID:
                     description: The VCS Connection (OAuth Connection + Token) to
@@ -417,12 +556,14 @@ spec:
                     description: A reference to your VCS repository in the format
                       <organization>/<repository> where <organization> and <repository>
                       refer to the organization and repository in your VCS provider.
+                    minLength: 1
                     type: string
                 type: object
               workingDirectory:
                 description: 'The directory where Terraform will execute, specified
                   as a relative path from the root of the configuration directory.
                   More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory'
+                minLength: 1
                 type: string
             required:
             - name
@@ -430,14 +571,14 @@ spec:
             - token
             type: object
           status:
-            description: WorkspaceStatus defines the observed state of Workspace
+            description: WorkspaceStatus defines the observed state of Workspace.
             properties:
               observedGeneration:
-                description: Real world state generation
+                description: Real world state generation.
                 format: int64
                 type: integer
               runStatus:
-                description: Workspace Runs status
+                description: Workspace Runs status.
                 properties:
                   configurationVersion:
                     type: string
@@ -454,11 +595,11 @@ spec:
                     type: string
                 type: object
               updateAt:
-                description: Workspace last update timestamp
+                description: Workspace last update timestamp.
                 format: int64
                 type: integer
               workspaceID:
-                description: Workspace ID that is managed by the controller
+                description: Workspace ID that is managed by the controller.
                 type: string
             required:
             - observedGeneration
