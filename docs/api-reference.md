@@ -232,6 +232,27 @@ _Appears in:_
 | `name` _string_ | Module Workspace Name. |
 
 
+#### Notification
+
+
+
+Notifications allow you to send messages to other applications based on run and workspace events. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Notification name. |
+| `type` _NotificationDestinationType_ | The type of the notification. Valid values: `email`, `generic`, `microsoft-teams`, `slack`. |
+| `enabled` _boolean_ | Whether the notification configuration should be enabled or not. Default: `true`. |
+| `token` _string_ | The token of the notification. |
+| `triggers` _NotificationTrigger array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers:   - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.   - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`. |
+| `url` _string_ | The URL of the notification. |
+| `emailAddresses` _string array_ | The list of email addresses that will receive notification emails. It is only available for Terraform Enterprise users. It is not available in Terraform Cloud. |
+| `emailUsers` _string array_ | The list of users belonging to the organization that will receive notification emails. |
+
+
 #### OutputStatus
 
 
@@ -484,6 +505,7 @@ _Appears in:_
 | `runTriggers` _[RunTrigger](#runtrigger) array_ | Run triggers allow you to connect this workspace to one or more source workspaces. These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers |
 | `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow. Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider. More information:   - https://www.terraform.io/cloud-docs/run/ui   - https://www.terraform.io/cloud-docs/vcs |
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
+| `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events. More information:   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 
 
 

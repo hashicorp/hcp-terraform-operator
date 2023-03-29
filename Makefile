@@ -92,8 +92,11 @@ docs: crd-ref-docs ## Generate API reference documentation.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen docs## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+manifests: controller-gen docs ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
+	  output:crd:artifacts:config=config/crd/bases \
+	  output:crd:artifacts:config=charts/terraform-cloud-operator/crds
+	$(MAKE) copywrite
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -107,22 +110,26 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: copywrite
+copywrite: install-copywrite ## Run copywrite against code.
+	$(HASHICORP_COPYWRITE) headers
+
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+test: manifests generate fmt vet copywrite envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -timeout 30m -v ./controllers -coverprofile cover.out
 
 .PHONY: test-api
-test-api: fmt vet ## Run API tests.
+test-api: fmt vet copywrite ## Run API tests.
 	go test -timeout 30m -count 1 -v ./api/v1alpha2
 
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
+build: manifests generate fmt vet copywrite ## Build manager binary.
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate fmt vet copywrite ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
@@ -168,11 +175,13 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
+HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.7
 CONTROLLER_TOOLS_VERSION ?= v0.11.3
 CRD_REF_DOCS_VERSION ?= v0.0.8
+HASHICORP_COPYWRITE_VERSION ?= 0.16.3
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -194,6 +203,11 @@ $(ENVTEST): $(LOCALBIN)
 crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
 $(CRD_REF_DOCS): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(CRD_REF_DOCS_VERSION)
+
+.PHONY: install-copywrite
+install-copywrite: $(HASHICORP_COPYWRITE) ## Download HashiCorp copywrite locally if necessary.
+$(HASHICORP_COPYWRITE): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/hashicorp/copywrite@v$(HASHICORP_COPYWRITE_VERSION)
 
 .PHONY: bundle
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.

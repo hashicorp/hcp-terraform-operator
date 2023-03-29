@@ -5,6 +5,8 @@ package v1alpha2
 
 import (
 	"testing"
+
+	"github.com/hashicorp/go-tfe"
 )
 
 func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
@@ -52,6 +54,342 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecAgentPool(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateWorkspaceSpecNotifications(t *testing.T) {
+	token := "token"
+	url := "https://example.com"
+	successCases := map[string]Workspace{
+		"OnlyEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeEmail,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"OnlyEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeEmail,
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"EmailAddressesAndEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeEmail,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"OnlyGeneric": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeGeneric,
+						Token: token,
+						URL:   url,
+					},
+				},
+			},
+		},
+		"OnlyMicrosoftTeams": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeMicrosoftTeams,
+						URL:  url,
+					},
+				},
+			},
+		},
+		"OnlySlack": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeSlack,
+						URL:  url,
+					},
+				},
+			},
+		},
+		"AllTypes": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "thisA",
+						Type: tfe.NotificationDestinationTypeEmail,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+					},
+					{
+						Name: "thisB",
+						Type: tfe.NotificationDestinationTypeEmail,
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+					{
+						Name: "thisC",
+						Type: tfe.NotificationDestinationTypeEmail,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+					{
+						Name:  "thisD",
+						Type:  tfe.NotificationDestinationTypeGeneric,
+						Token: token,
+						URL:   url,
+					},
+					{
+						Name: "thisE",
+						Type: tfe.NotificationDestinationTypeMicrosoftTeams,
+						URL:  url,
+					},
+					{
+						Name: "thisF",
+						Type: tfe.NotificationDestinationTypeSlack,
+						URL:  url,
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecNotifications(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"EmailWithoutEmails": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeEmail,
+					},
+				},
+			},
+		},
+		"EmailWithUrl": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeEmail,
+						URL:  url,
+					},
+				},
+			},
+		},
+		"EmailWithToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeEmail,
+						Token: token,
+					},
+				},
+			},
+		},
+		"GenericWithoutToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeGeneric,
+						URL:  url,
+					},
+				},
+			},
+		},
+		"GenericWithoutURL": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeGeneric,
+						Token: token,
+					},
+				},
+			},
+		},
+		"GenericWithEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeGeneric,
+						Token: token,
+						URL:   url,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"GenericWithEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeGeneric,
+						Token: token,
+						URL:   url,
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeMicrosoftTeams,
+						URL:   url,
+						Token: token,
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithoutURL": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeMicrosoftTeams,
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeMicrosoftTeams,
+						Token: token,
+						URL:   url,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"MicrosoftTeamsWithEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeMicrosoftTeams,
+						Token: token,
+						URL:   url,
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"SlackWithToken": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeMicrosoftTeams,
+						URL:   url,
+						Token: token,
+					},
+				},
+			},
+		},
+		"SlackWithoutURL": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name: "this",
+						Type: tfe.NotificationDestinationTypeSlack,
+					},
+				},
+			},
+		},
+		"SlackWithEmailAddresses": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeMicrosoftTeams,
+						Token: token,
+						URL:   url,
+						EmailAddresses: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+		"SlackWithEmailUsers": {
+			Spec: WorkspaceSpec{
+				Notifications: []Notification{
+					{
+						Name:  "this",
+						Type:  tfe.NotificationDestinationTypeMicrosoftTeams,
+						Token: token,
+						URL:   url,
+						EmailUsers: []string{
+							"user@mail.com",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecNotifications(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})
