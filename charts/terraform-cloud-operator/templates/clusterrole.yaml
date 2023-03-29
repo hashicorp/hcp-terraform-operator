@@ -33,6 +33,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - app.terraform.io
   resources:
   - agentpools
