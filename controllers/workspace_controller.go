@@ -531,6 +531,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Run Tasks", "msg", "successfully reconcilied run tasks")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRunTasks", "Reconcilied run tasks in workspace ID %s", w.instance.Status.WorkspaceID)
 
+	// Reconcile Notifications
+	err = r.reconcileNotifications(ctx, w)
+	if err != nil {
+		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to reconcile notifications in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileNotifications", "Failed to reconcile notifications in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
+
 	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, w, workspace)
 }

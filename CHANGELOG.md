@@ -1,10 +1,13 @@
-## 2.0.0-beta4 (Unreleased)
+## 2.0.0-beta4 (March 28, 2023)
 
 ENHANCEMENT:
 
 * `AgentPool`: add custom resource `spec` validation. [[GH-79](https://github.com/hashicorp/terraform-cloud-operator/issues/79)]
+* `AgentPool`: add `agentDeployment` field to spec [[GH-96](https://github.com/hashicorp/terraform-cloud-operator/pull/96)]
 * `Module`: add custom resource `spec` validation. [[GH-79](https://github.com/hashicorp/terraform-cloud-operator/issues/79)]
 * `Workspace`: add custom resource `spec` validation. [[GH-79](https://github.com/hashicorp/terraform-cloud-operator/issues/79)]
+* `Workspace`: add `notifications` field to spec [[GH-107](https://github.com/hashicorp/terraform-cloud-operator/pull/107)]
+* `Workspace`: add `runTasks` field to spec [[GH-89](https://github.com/hashicorp/terraform-cloud-operator/pull/89)]
 
 BUG FIXES:
 

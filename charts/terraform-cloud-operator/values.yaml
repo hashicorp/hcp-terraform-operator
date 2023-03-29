@@ -7,7 +7,7 @@ operator:
   image:
     repository: hashicorp/terraform-cloud-operator
     pullPolicy: IfNotPresent
-    tag: "0.0.1"
+    tag: "2.0.0-beta4"
 
   resources:
     limits:

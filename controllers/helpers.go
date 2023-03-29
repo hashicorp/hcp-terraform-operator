@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// RETURNS
 func doNotRequeue() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }

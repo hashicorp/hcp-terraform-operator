@@ -4,6 +4,7 @@
 package v1alpha2
 
 import (
+	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -271,6 +272,62 @@ type SSHKey struct {
 	Name string `json:"name,omitempty"`
 }
 
+// NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
+// This must be aligned with go-tfe type `NotificationTriggerType`.
+//
+// +kubebuilder:validation:Enum="run:applying";"assessment:check_failure";"run:completed";"run:created";"assessment:drifted";"run:errored";"assessment:failed";"run:needs_attention";"run:planning"
+type NotificationTrigger string
+
+// Notifications allow you to send messages to other applications based on run and workspace events.
+// More information:
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
+type Notification struct {
+	// Notification name.
+	//
+	//+kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// The type of the notification.
+	// Valid values: `email`, `generic`, `microsoft-teams`, `slack`.
+	//
+	//+kubebuilder:validation:Enum=email;generic;microsoft-teams;slack
+	Type tfc.NotificationDestinationType `json:"type"`
+	// Whether the notification configuration should be enabled or not. Default: `true`.
+	//
+	//+kubebuilder:default=true
+	//+optional
+	Enabled bool `json:"enabled,omitempty"`
+	// The token of the notification.
+	//
+	//+kubebuilder:validation:MinLength=1
+	//+optional
+	Token string `json:"token,omitempty"`
+	// The list of run events that will trigger notifications.
+	// Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
+	// There are two categories of triggers:
+	//   - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.
+	//   - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`.
+	//
+	//+kubebuilder:validation:MinItems=1
+	//+optional
+	Triggers []NotificationTrigger `json:"triggers,omitempty"`
+	// The URL of the notification.
+	//
+	//+kubebuilder:validation:Pattern="^https?://.*"
+	//+optional
+	URL string `json:"url,omitempty"`
+	// The list of email addresses that will receive notification emails.
+	// It is only available for Terraform Enterprise users. It is not available in Terraform Cloud.
+	//
+	//+kubebuilder:validation:MinItems=1
+	//+optional
+	EmailAddresses []string `json:"emailAddresses,omitempty"`
+	// The list of users belonging to the organization that will receive notification emails.
+	//
+	//+kubebuilder:validation:MinItems=1
+	//+optional
+	EmailUsers []string `json:"emailUsers,omitempty"`
+}
+
 // WorkspaceSpec defines the desired state of Workspace.
 type WorkspaceSpec struct {
 	// Workspace name.
@@ -404,6 +461,13 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	SSHKey *SSHKey `json:"sshKey,omitempty"`
+	// Notifications allow you to send messages to other applications based on run and workspace events.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
+	//
+	//+kubebuilder:validation:MinItems=1
+	//+optional
+	Notifications []Notification `json:"notifications,omitempty"`
 }
 
 type RunStatus struct {
