@@ -1,21 +1,25 @@
 api:
-- api/**/*.go
+- 'api/**/*.go'
 
 controller:
-- controllers/*.go
+- 'controllers/*.go'
 
 crd:
-- config/crd/bases/*.yaml
+- 'config/crd/bases/*.yaml'
 
 documentation:
-- README.md
-- docs/*.md
+- 'README.md'
+- 'docs/*.md'
+
+github_actions:
+- '**/workflows/*.yaml'
+- '**/workflows/*.yml'
 
 golang:
 - '**/*.go'
 
 helm-chart:
-- charts/**/*.yaml
+- 'charts/**/*.yaml'
 
 test:
 - '**/*_test.go'
