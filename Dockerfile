@@ -24,6 +24,8 @@ ARG BIN_NAME
 ARG TARGETOS
 ARG TARGETARCH
 
+ENV BIN_NAME=$BIN_NAME
+
 WORKDIR /build
 
 COPY go.mod go.mod
@@ -43,6 +45,8 @@ FROM gcr.io/distroless/static:nonroot as dev
 
 ARG BIN_NAME
 ARG PRODUCT_VERSION
+
+ENV BIN_NAME=$BIN_NAME
 
 LABEL version=$PRODUCT_VERSION
 

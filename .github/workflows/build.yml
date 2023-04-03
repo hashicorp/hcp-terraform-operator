@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 env:
+  BIN_NAME: ${{ vars.BIN_NAME }}
   PKG_NAME: 'terraform-cloud-operator'
   DOCKER_HUB_REPO: 'hashicorp/terraform-cloud-operator'
   DOCKER_HUB_DEV_REPO: 'hashicorppreview/terraform-cloud-operator'

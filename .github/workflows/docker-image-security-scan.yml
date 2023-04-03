@@ -34,6 +34,8 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
+          build-args:
+            BIN_NAME=${{ vars.BIN_NAME }}
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Run Trivy vulnerability scanner
