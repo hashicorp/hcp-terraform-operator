@@ -80,6 +80,7 @@ jobs:
         with:
           product_name: ${{ env.PKG_NAME }}
           product_version: ${{ needs.set-product-version.outputs.product-version }}
+          bin_name: ${{ env.BIN_NAME }}
           go_version: ${{ needs.get-go-version.outputs.go-version }}
           os: linux
           arch: ${{ matrix.arch }}
@@ -105,6 +106,7 @@ jobs:
           GO_VERSION: ${{ needs.get-go-version.outputs.go-version }}
         with:
           version: ${{ env.VERSION }}
+          bin_name: ${{ env.BIN_NAME }}
           target: release-default
           arch: ${{ matrix.arch }}
           tags: |
