@@ -8,7 +8,6 @@ on:
   workflow_dispatch:
 
 env:
-  BIN_NAME: ${{ vars.BIN_NAME }}
   PKG_NAME: 'terraform-cloud-operator'
   DOCKER_HUB_REPO: 'hashicorp/terraform-cloud-operator'
   DOCKER_HUB_DEV_REPO: 'hashicorppreview/terraform-cloud-operator'
@@ -70,7 +69,7 @@ jobs:
         with:
           product_name: ${{ env.PKG_NAME }}
           product_version: ${{ needs.set-product-version.outputs.product-version }}
-          bin_name: ${{ env.BIN_NAME }}
+          bin_name: ${{ vars.BIN_NAME }}
           go_version: ${{ steps.set-up-go.outputs.go-version }}
           os: linux
           arch: ${{ matrix.arch }}
@@ -96,7 +95,7 @@ jobs:
           GO_VERSION: ${{ needs.build.outputs.go-version }}
         with:
           version: ${{ env.VERSION }}
-          bin_name: ${{ env.BIN_NAME }}
+          bin_name: ${{ vars.BIN_NAME }}
           target: release-default
           arch: ${{ matrix.arch }}
           tags: |
