@@ -3,7 +3,7 @@
 
 schema = "1"
 
-project "crt-core-helloworld" {
+project "terraform-cloud-operator" {
   team = "terraform"
   slack {
     notification_channel = "C051FAAHL8M" # feed-terraform-ecosystem-kubernetes-releases
@@ -85,46 +85,46 @@ event "promote-staging-docker" {
   }
 }
 
-// event "trigger-production" {
-//   // This event is dispatched by the bob trigger-promotion command
-//   // and is required - do not delete.
-// }
+event "trigger-production" {
+  // This event is dispatched by the bob trigger-promotion command
+  // and is required - do not delete.
+}
 
-// event "promote-production" {
-//   depends = ["trigger-production"]
-//   action "promote-production" {
-//     organization = "hashicorp"
-//     repository   = "crt-workflows-common"
-//     workflow     = "promote-production"
-//   }
+event "promote-production" {
+  depends = ["trigger-production"]
+  action "promote-production" {
+    organization = "hashicorp"
+    repository   = "crt-workflows-common"
+    workflow     = "promote-production"
+  }
 
-//   notification {
-//     on = "always"
-//   }
-// }
+  notification {
+    on = "always"
+  }
+}
 
-// event "promote-production-docker" {
-//   depends = ["promote-production"]
-//   action "promote-production-docker" {
-//     organization = "hashicorp"
-//     repository   = "crt-workflows-common"
-//     workflow     = "promote-production-docker"
-//   }
+event "promote-production-docker" {
+  depends = ["promote-production"]
+  action "promote-production-docker" {
+    organization = "hashicorp"
+    repository   = "crt-workflows-common"
+    workflow     = "promote-production-docker"
+  }
 
-//   notification {
-//     on = "always"
-//   }
-// }
+  notification {
+    on = "always"
+  }
+}
 
-// event "promote-production-helm" {
-//   depends = ["promote-production-docker"]
-//   action "promote-production-helm" {
-//     organization = "hashicorp"
-//     repository   = "crt-workflows-common"
-//     workflow     = "promote-production-helm"
-//   }
+event "promote-production-helm" {
+  depends = ["promote-production-docker"]
+  action "promote-production-helm" {
+    organization = "hashicorp"
+    repository   = "crt-workflows-common"
+    workflow     = "promote-production-helm"
+  }
 
-//   notification {
-//     on = "always"
-//   }
-// }
+  notification {
+    on = "always"
+  }
+}
