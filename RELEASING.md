@@ -18,7 +18,7 @@ To create a new release, adhere to the following steps:
 
 - Update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file by modifying `version` and `appVersion` to match the desired release number.
 
-- Update the [`values.yaml`](./charts/terraform-cloud-operator/values.yaml) file by modifying `version` and `appVersion` to match the desired release number.
+- Update the [`values.yaml`](./charts/terraform-cloud-operator/values.yaml) file by modifying `operator.image.tag` to match the desired release number.
 
 - Create a pull request against the `main` branch and follow the regular code review and merge procedures.
 
