@@ -65,6 +65,8 @@ jobs:
         with:
           platforms: linux/amd64
           load: true
+          build-args:
+            BIN_NAME=${{ vars.BIN_NAME }}
           tags: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
       
       - name: Upload Docker image to kind
