@@ -54,7 +54,7 @@ WORKDIR /
 COPY --from=dev-builder /build/$BIN_NAME .
 USER 65532:65532
 
-ENTRYPOINT ["/$BIN_NAME"]
+ENTRYPOINT ["/bin/sh", "-c", "/$BIN_NAME"]
 
 # ===================================
 #
@@ -70,7 +70,6 @@ FROM gcr.io/distroless/static:nonroot AS release-default
 ARG BIN_NAME
 ARG PRODUCT_VERSION
 ARG PRODUCT_REVISION
-ARG PRODUCT_NAME=$BIN_NAME
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -80,12 +79,13 @@ LABEL maintainer="Team Terraform Ecosystem - Kubernetes <team-tf-k8s@hashicorp.c
 LABEL version=$PRODUCT_VERSION
 LABEL revision=$PRODUCT_REVISION
 
+WORKDIR /
 COPY LICENSE /licenses/copyright.txt
-COPY dist/$TARGETOS/$TARGETARCH/$BIN_NAME /bin/
+COPY dist/$TARGETOS/$TARGETARCH/$BIN_NAME .
 
 USER 65532:65532
 
-ENTRYPOINT ["/$BIN_NAME"]
+ENTRYPOINT ["/bin/sh", "-c", "/$BIN_NAME"]
 
 # ===================================
 #
