@@ -22,12 +22,6 @@ To create a new release, adhere to the following steps:
 
 - Create a pull request against the `main` branch and follow the regular code review and merge procedures.
 
-- After merging the release branch into the `main` branch, add a tag for the release version number to the commit. The version number in the tag must correspond with the `<SEMVER>` of the merged release branch name.
-
-```console
-$ git tag v<SEMVER>
-
-$ git push --tags
-```
+- After merging the release branch into the `main` branch, a git tag should have been automatically created for the new release version number. The version number in the tag must correspond with the `<SEMVER>` of the merged release branch name. Confirm this succeeded by viewing the repository [tags](https://github.com/hashicorp/terraform-cloud-operator/tags).
 
 - Follow the CRT steps to deploy the release to promote release to the staging and production states.
