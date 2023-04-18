@@ -4,6 +4,8 @@
 
 # Kubernetes Operator for Terraform Cloud
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/hashicorp/terraform-cloud-operator)](https://hub.docker.com/r/hashicorp/terraform-cloud-operator)
+
 > **Warning**
 > Please note that this is a beta version still undergoing final testing before the official release.
 
