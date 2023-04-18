@@ -1,3 +1,13 @@
+## 2.0.0-beta5 (April 18, 2023)
+
+BUG FIXES:
+
+* RBAC fixes for agent deployment [[GH-135](https://github.com/hashicorp/terraform-cloud-operator/pull/135)], [[GH-143](https://github.com/hashicorp/terraform-cloud-operator/pull/134)]
+
+DEPENDENCIES:
+
+* Bump sigs.k8s.io/controller-runtime from 0.14.5 to 0.14.6 [[GH-132](https://github.com/hashicorp/terraform-cloud-operator/pull/132)]
+
 ## 2.0.0-beta4 (March 28, 2023)
 
 ENHANCEMENT:
