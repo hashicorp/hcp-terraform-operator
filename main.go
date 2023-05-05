@@ -81,6 +81,8 @@ func main() {
 		if lerr == nil {
 			setupLog.Info("Set logging level to %q", ls)
 			zapConfig.Level = lv
+		} else {
+			setupLog.Error(lerr, "unable to set logging level")
 		}
 	}
 
