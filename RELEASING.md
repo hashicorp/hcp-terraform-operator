@@ -24,4 +24,4 @@ To create a new release, adhere to the following steps:
 
 - After merging the release branch into the `main` branch, a git tag should have been automatically created for the new release version number. The version number in the tag must correspond with the `<SEMVER>` of the merged release branch name. Confirm this succeeded by viewing the repository [tags](https://github.com/hashicorp/terraform-cloud-operator/tags).
 
-- Follow the CRT steps to deploy the release to promote release to the staging and production states.
+- Follow the [CRT Usage](https://hashicorp.atlassian.net/wiki/spaces/RELENG/pages/2309390389/Part+3+CRT+Usage) guide to promote the release to the staging and production states.
