@@ -40,7 +40,7 @@ jobs:
           cluster_name: ${{ env.CLUSTER_NAME }}
 
       - name: Set up Helm
-        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78  # TSCCR: no entry for repository "azure/setup-helm"
+        uses: Azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
         with:
           version: v3.11.2
 
