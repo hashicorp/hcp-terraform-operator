@@ -20,6 +20,8 @@ variable "admin_email" {
   type    = string
 }
 
+# Wait for the TFE installation to finish internal provisioning on the node and report itself as available.
+#
 data "http" "wait-for-ok" {
   url = "${var.tfe-api-url}/_health_check"
   retry {
@@ -28,6 +30,8 @@ data "http" "wait-for-ok" {
   }
 }
 
+# Grab the time-limited IACT token required to create the admin user.
+#
 data "http" "iact_token" {
   url = "${var.tfe-api-url}/admin/retrieve-iact"
   retry {
@@ -36,6 +40,8 @@ data "http" "iact_token" {
   }
 }
 
+# Create the admin user and retrieve its associated token
+#
 data "http" "admin_user_token" {
   url    = "${var.tfe-api-url}/admin/initial-admin-user?token=${data.http.iact_token.response_body}"
   method = "POST"
@@ -50,5 +56,5 @@ data "http" "admin_user_token" {
 }
 
 output "admin_token" {
-  value = jsondecode(data.http.admin_user_token.response_body)
+  value = jsondecode(data.http.admin_user_token.response_body).token
 }
