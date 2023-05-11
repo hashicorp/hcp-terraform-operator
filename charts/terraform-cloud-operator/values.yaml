@@ -39,3 +39,5 @@ controllers:
   workspace:
     # The number of the Workspace controller workers.
     workers: 1
+
+customCAcertificates: ""

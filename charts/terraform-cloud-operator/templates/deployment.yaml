@@ -68,6 +68,12 @@ spec:
           - mountPath: /controller_manager_config.yaml
             name: manager-config
             subPath: controller_manager_config.yaml
+{{- if .Values.customCAcertificates }}
+          - name: ca-certificates
+            mountPath: /etc/ssl/certs/custom-ca-certificates.crt
+            subPath: ca-certificates
+            readOnly: true
+{{- end }}
         - name: kube-rbac-proxy
           image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
           imagePullPolicy: IfNotPresent
@@ -97,3 +103,8 @@ spec:
       - configMap:
           name: {{ .Release.Name }}-manager-config
         name: manager-config
+{{- if .Values.customCAcertificates }}
+      - configMap:
+          name: {{ .Release.Name }}-ca-certificates
+        name: ca-certificates
+{{- end }}
