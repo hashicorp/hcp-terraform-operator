@@ -66,6 +66,11 @@ spec:
                 required:
                 - source
                 type: object
+              name:
+                default: this
+                description: Name of the module that will be uploaded and executed.
+                minLength: 1
+                type: string
               organization:
                 description: 'Organization name where the Workspace will be created.
                   More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'

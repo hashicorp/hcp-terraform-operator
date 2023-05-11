@@ -165,6 +165,7 @@ var _ = Describe("Module controller", Ordered, func() {
 
 			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
 			// Create a new Module
+			instance.Spec.Name = "operator"
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
 			// Make sure a new module is created and executed

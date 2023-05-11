@@ -23,14 +23,15 @@ const (
 	moduleFinalizer                    = "module.app.terraform.io/finalizer"
 
 	moduleTemplate = `
+{{- $moduleName  := .Name -}}
 {{- if .Variables }}
   {{ range $v := .Variables }}
 variable "{{ $v.Name }}" {}
   {{- end}}
 {{- end }}
 
-module "this" {
-  source = "{{ .Module.Source }}"
+module "{{ $moduleName }}" {
+  source  = "{{ .Module.Source }}"
 {{- if .Module.Version }}
   version = "{{ .Module.Version }}"
 {{- end }}
@@ -45,7 +46,7 @@ module "this" {
 {{- if .Outputs }}
   {{ range $o := .Outputs }}
 output "{{ $o.Name }}" {
-  value = module.this.{{ $o.Name }}
+  value     = module.{{ $moduleName }}.{{ $o.Name }}
   sensitive = {{ $o.Sensitive }}
 }
   {{- end}}
