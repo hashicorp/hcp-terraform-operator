@@ -1,0 +1,23 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+---
+apiVersion: app.terraform.io/v1alpha2
+kind: Module
+metadata:
+  name: this
+spec:
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  name: this
+  module:
+    source: redeux/terraform-cloud-agent/kubernetes
+    version: 1.0.1
+  workspace:
+    id: ws-NUVHA9feCXzAmPHx
+    # Alternatively, you can use the Workspace name:
+    #
+    # name: workspace-name
