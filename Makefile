@@ -94,7 +94,8 @@ docs: crd-ref-docs ## Generate API reference documentation.
 .PHONY: manifests
 manifests: controller-gen docs ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
-	  output:crd:artifacts:config=config/crd/bases \
+	  output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
 	  output:crd:artifacts:config=charts/terraform-cloud-operator/crds
 	$(MAKE) copywrite
 
