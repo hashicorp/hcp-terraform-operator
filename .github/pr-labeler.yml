@@ -9,6 +9,7 @@ crd:
 
 documentation:
 - 'README.md'
+- 'RELEASING.md'
 - 'docs/*.md'
 
 github_actions:
@@ -20,6 +21,9 @@ golang:
 
 helm-chart:
 - 'charts/**/*.yaml'
+
+release:
+- 'version/VERSION'
 
 test:
 - '**/*_test.go'

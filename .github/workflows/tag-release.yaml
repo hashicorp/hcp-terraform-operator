@@ -1,0 +1,23 @@
+name: Tag Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - version/VERSION
+
+env:
+  TAG: v$(cat version/VERSION)
+
+jobs:
+  tag_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+      - name: Create tag
+        run: |
+          git tag ${{ env.TAG }}
+          git push origin ${{ env.TAG }}
