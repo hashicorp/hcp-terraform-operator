@@ -17,6 +17,11 @@
 # Directories
 bin/
 .vscode/
+.terraform
+
+# Terraform state 
+.terraform.lock.hcl
+terraform.tfstate*
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

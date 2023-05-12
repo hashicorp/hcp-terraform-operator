@@ -7,7 +7,7 @@ operator:
   image:
     repository: hashicorp/terraform-cloud-operator
     pullPolicy: IfNotPresent
-    tag: "2.0.0-beta4"
+    tag: "2.0.0-beta5"
 
   resources:
     limits:
@@ -39,3 +39,7 @@ controllers:
   workspace:
     # The number of the Workspace controller workers.
     workers: 1
+
+# Custom Certificate Authority bundle to validate API TLS certificates
+# Expects a path to a CRT file containing concatenated certificates
+customCAcertificates: ""
