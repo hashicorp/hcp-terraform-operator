@@ -472,8 +472,6 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			Message:   tfc.String("Triggered by the Kubernetes Operator"),
 			Workspace: workspace,
-			// Execute a new Run once it is created
-			AutoApply: tfc.Bool(true),
 		})
 		if err != nil {
 			m.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")

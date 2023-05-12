@@ -1,3 +1,9 @@
+## 2.0.0-beta6 (Unreleased)
+
+ENHANCEMENT:
+
+* `Module`: The Run now adopts the apply method of the Workspace in which it is executed. If the apply method is set to 'manual', the Run will remain on hold until it receives manual approval or rejection for the application or cancellation of the Run. [[GH-170](https://github.com/hashicorp/terraform-cloud-operator/pull/170)]
+
 ## 2.0.0-beta5 (April 18, 2023)
 
 BUG FIXES:
