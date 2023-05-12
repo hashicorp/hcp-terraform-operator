@@ -49,6 +49,13 @@ If targeting a TFE instance rather than Terraform Cloud, set the API URL using t
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
+If the TFE instance uses a TLS certificate signed by a non-public authority or "Let's Encrypt", the chain of CAs that can validate 
+that TLS certificate should be installed with the operator by setting the `customCAcertificates` chart value:
+
+```
+  --set customCAcertificates=<path-to-CA-chain-file.crt>
+``` 
+
 ### Upgrade with options
 
 ```console
