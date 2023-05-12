@@ -15,10 +15,9 @@ This example for Terraform Enterprise creates a TFE installation with the follow
 
 This example assumes that the following resources exist:
 
-- TFE license is on a file path defined by `var.license_file` 
-- A DNS zone
-- Valid managed SSL certificate to use with load balancer:
-  - Create/Import a managed SSL Certificate in Network Services -> Load Balancing to serve as the certificate for the DNS A Record.
+- TFE license is on a file path defined by `var.license_file`
+- A DNS zone (already provisioned and speficied in the auto.tfvars file)
+- Valid managed SSL certificate to use with load balancer (already provisioned and speficied in the auto.tfvars file)
   
 ## How to Use This Module
 
@@ -37,14 +36,24 @@ This example assumes that the following resources exist:
   ```
   terraform init
   terraform plan
-  terraform apply
+  terraform apply -auto-approve
   ```
 
 ## Post-deployment Tasks
 
 The build should take approximately 10-15 minutes to deploy. Once the module has completed, give the platform another 10 minutes or so prior to attempting to interact with it in order for all containers to start up.
 
-Unless amended, this example will not create an initial admin user using the IACT, but it does output the URL for your convenience. Follow the advice in this document to create the initial admin user, and log into the system using this user in order to configure it for use.
+Next comes creating the admin user. To do this, use the Terraform configuration in the `./initial-admin` sub-directory.
+DO NOT run a PLAN on this configuration. This is because the admin creation API calls are performed via datasource, which actually evaluate at plan time. Effectively, the admin user is created during the planning phase. Just run ONE SINGLE APPLY, that implies a single plan action.
+
+WARNING: please not the absence of the plan action!!! DO NOT RUN PLAN!
+
+```
+terraform init
+terraform apply -auto-approve
+```
+
+The output of this apply will print out the API token corresponding to the admin user.
 
 ### Connecting to the TFE Console
 
