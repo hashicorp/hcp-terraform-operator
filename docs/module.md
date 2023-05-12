@@ -67,4 +67,4 @@ $ kubectl patch module <NAME> \
 
 If you have any questions, please check out the [FAQ](./faq.md#module-controller).
 
-If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
+If you encounter any issues with the `Module` controller please refer to the [Troubleshooting](../README.md#troubleshooting).

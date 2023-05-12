@@ -8,12 +8,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/hashicorp/go-tfe"
-	"github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -118,7 +116,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
 		r = *ap.instance.Spec.AgentDeployment.Replicas
 	}
-	var s v1.PodSpec = v1.PodSpec{
+	var s corev1.PodSpec = corev1.PodSpec{
 		Containers: []corev1.Container{ // default tfc-agent container if none configured by user
 			{
 				Name:  defaultAgentContainerName,
@@ -148,7 +146,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 				RollingUpdate: &appsv1.RollingUpdateDeployment{
 					// this is important to ensure the number of pods does not temporarily
 					// shoot over the max agents allowed when rolling the deployment.
-					MaxSurge: v1alpha2.PointerOf(intstr.FromInt(0)),
+					MaxSurge: appv1alpha2.PointerOf(intstr.FromInt(0)),
 				},
 			},
 			Template: corev1.PodTemplateSpec{
@@ -164,8 +162,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 }
 
 func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
-	evs := []v1.EnvVar{
-		corev1.EnvVar{
+	evs := []corev1.EnvVar{
+		{
 			Name: "TFC_AGENT_TOKEN",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
@@ -174,22 +172,22 @@ func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 				},
 			},
 		},
-		corev1.EnvVar{
+		{
 			Name: "TFC_AGENT_NAME",
 			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
+				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "metadata.name",
 				},
 			},
 		},
-		corev1.EnvVar{
+		{
 			Name:  "TFC_AGENT_AUTO_UPDATE",
 			Value: "disabled",
 		},
 	}
 	// Set TFE_ADDRESS on agent Pod if differnet than default TFC endpoint.
 	bURL := ap.tfClient.Client.BaseURL()
-	if defURL, perr := url.Parse(tfe.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
+	if defURL, perr := url.Parse(tfc.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
 		evs = append(evs, corev1.EnvVar{
 			Name:  "TFC_ADDRESS",
 			Value: bURL.String(),

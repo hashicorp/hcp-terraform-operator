@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/hashicorp/go-tfe"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
@@ -83,7 +82,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		It("can create single notification", func() {
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
-				Type: tfe.NotificationDestinationTypeSlack,
+				Type: tfc.NotificationDestinationTypeSlack,
 				URL:  "https://example.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -95,12 +94,12 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		It("can create multiple notifications", func() {
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
-				Type: tfe.NotificationDestinationTypeSlack,
+				Type: tfc.NotificationDestinationTypeSlack,
 				URL:  "https://example.com",
 			})
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
-				Type:       tfe.NotificationDestinationTypeEmail,
+				Type:       tfc.NotificationDestinationTypeEmail,
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -112,7 +111,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		It("can re-create notifications", func() {
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
-				Type: tfe.NotificationDestinationTypeSlack,
+				Type: tfc.NotificationDestinationTypeSlack,
 				URL:  "https://example.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -135,7 +134,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		It("can update notifications", func() {
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
-				Type:       tfe.NotificationDestinationTypeEmail,
+				Type:       tfc.NotificationDestinationTypeEmail,
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -153,7 +152,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		It("can delete notifications", func() {
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
-				Type:       tfe.NotificationDestinationTypeEmail,
+				Type:       tfc.NotificationDestinationTypeEmail,
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -174,7 +173,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:           "email",
-				Type:           tfe.NotificationDestinationTypeEmail,
+				Type:           tfc.NotificationDestinationTypeEmail,
 				EmailAddresses: []string{"user@example.com"},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation

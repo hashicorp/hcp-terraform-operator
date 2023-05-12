@@ -17,12 +17,12 @@ import (
 type WorkspaceAgentPool struct {
 	// Agent Pool ID.
 	//
-	//+kubebuilder:validation:Pattern="^apool-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^apool-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Agent Pool name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -35,12 +35,12 @@ type WorkspaceAgentPool struct {
 type ConsumerWorkspace struct {
 	// Consumer Workspace ID.
 	//
-	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Consumer Workspace name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -57,7 +57,7 @@ type RemoteStateSharing struct {
 	AllWorkspaces bool `json:"allWorkspaces,omitempty"`
 	// Allow access to the state for specific workspaces within the same organization.
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
 }
@@ -70,23 +70,23 @@ type RemoteStateSharing struct {
 type WorkspaceRunTask struct {
 	// Run Task ID.
 	//
-	//+kubebuilder:validation:Pattern="^task-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^task-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Run Task Name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 	// Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`.
 	//
-	//+kubebuilder:validation:Pattern="^(advisory|mandatory)$"
+	//+kubebuilder:validation:Pattern:="^(advisory|mandatory)$"
 	//+kubebuilder:default:=advisory
 	//+optional
 	EnforcementLevel string `json:"enforcementLevel"`
 	// Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`.
 	//
-	//+kubebuilder:validation:Pattern="^(pre_apply|pre_plan|post_plan)$"
+	//+kubebuilder:validation:Pattern:="^(pre_apply|pre_plan|post_plan)$"
 	//+kubebuilder:default:=post_plan
 	//+optional
 	Stage string `json:"stage,omitempty"`
@@ -101,12 +101,12 @@ type WorkspaceRunTask struct {
 type RunTrigger struct {
 	// Source Workspace ID.
 	//
-	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Source Workspace Name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -120,12 +120,12 @@ type RunTrigger struct {
 type Team struct {
 	// Team ID.
 	//
-	//+kubebuilder:validation:Pattern="^team-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^team-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Team name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -136,22 +136,22 @@ type Team struct {
 //
 // +optional
 type CustomPermissions struct {
-	//+kubebuilder:validation:Pattern="^(apply|plan|read)$"
+	//+kubebuilder:validation:Pattern:="^(apply|plan|read)$"
 	//+kubebuilder:default:=read
 	//+optional
 	Runs string `json:"runs,omitempty"`
 	//+kubebuilder:validation:default:=false
 	//+optional
 	RunTasks bool `json:"runTasks,omitempty"`
-	//+kubebuilder:validation:Pattern="^(none|read)$"
+	//+kubebuilder:validation:Pattern:="^(none|read)$"
 	//+kubebuilder:default:=none
 	//+optional
 	Sentinel string `json:"sentinel,omitempty"`
-	//+kubebuilder:validation:Pattern="^(none|read|read-outputs|write)$"
+	//+kubebuilder:validation:Pattern:="^(none|read|read-outputs|write)$"
 	//+kubebuilder:default:=none
 	//+optional
 	StateVersions string `json:"stateVersions,omitempty"`
-	//+kubebuilder:validation:Pattern="^(none|read|write)$"
+	//+kubebuilder:validation:Pattern:="^(none|read|write)$"
 	//+kubebuilder:default:=none
 	//+optional
 	Variables string `json:"variables,omitempty"`
@@ -175,7 +175,7 @@ type TeamAccess struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions
 	//
-	//+kubebuilder:validation:Pattern="^(admin|custom|plan|read|write)$"
+	//+kubebuilder:validation:Pattern:="^(admin|custom|plan|read|write)$"
 	Access string `json:"access"`
 	// Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
 	// More information:
@@ -209,11 +209,11 @@ type ValueFrom struct {
 type Variable struct {
 	// Name of the variable.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 	// Description of the variable.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
@@ -228,7 +228,7 @@ type Variable struct {
 	Sensitive bool `json:"sensitive,omitempty"`
 	// Value of the variable.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Value string `json:"value,omitempty"`
 	// Source for the variable's value. Cannot be used if value is not empty.
@@ -245,15 +245,15 @@ type Variable struct {
 type VersionControl struct {
 	// The VCS Connection (OAuth Connection + Token) to use.
 	//
-	//+kubebuilder:validation:Pattern="^ot-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^ot-[a-zA-Z0-9]+$"
 	OAuthTokenID string `json:"oAuthTokenID,omitempty"`
 	// A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	Repository string `json:"repository,omitempty"`
 	// The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main).
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Branch string `json:"branch,omitempty"`
 }
@@ -264,10 +264,10 @@ type VersionControl struct {
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 type SSHKey struct {
-	//+kubebuilder:validation:Pattern="^sshkey-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^sshkey-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
 }
@@ -275,7 +275,7 @@ type SSHKey struct {
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 // This must be aligned with go-tfe type `NotificationTriggerType`.
 //
-// +kubebuilder:validation:Enum="run:applying";"assessment:check_failure";"run:completed";"run:created";"assessment:drifted";"run:errored";"assessment:failed";"run:needs_attention";"run:planning"
+// +kubebuilder:validation:Enum:="run:applying";"assessment:check_failure";"run:completed";"run:created";"assessment:drifted";"run:errored";"assessment:failed";"run:needs_attention";"run:planning"
 type NotificationTrigger string
 
 // Notifications allow you to send messages to other applications based on run and workspace events.
@@ -284,12 +284,12 @@ type NotificationTrigger string
 type Notification struct {
 	// Notification name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 	// The type of the notification.
 	// Valid values: `email`, `generic`, `microsoft-teams`, `slack`.
 	//
-	//+kubebuilder:validation:Enum=email;generic;microsoft-teams;slack
+	//+kubebuilder:validation:Enum:=email;generic;microsoft-teams;slack
 	Type tfc.NotificationDestinationType `json:"type"`
 	// Whether the notification configuration should be enabled or not. Default: `true`.
 	//
@@ -298,7 +298,7 @@ type Notification struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// The token of the notification.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Token string `json:"token,omitempty"`
 	// The list of run events that will trigger notifications.
@@ -307,23 +307,23 @@ type Notification struct {
 	//   - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.
 	//   - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`.
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Triggers []NotificationTrigger `json:"triggers,omitempty"`
 	// The URL of the notification.
 	//
-	//+kubebuilder:validation:Pattern="^https?://.*"
+	//+kubebuilder:validation:Pattern:="^https?://.*"
 	//+optional
 	URL string `json:"url,omitempty"`
 	// The list of email addresses that will receive notification emails.
 	// It is only available for Terraform Enterprise users. It is not available in Terraform Cloud.
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	EmailAddresses []string `json:"emailAddresses,omitempty"`
 	// The list of users belonging to the organization that will receive notification emails.
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	EmailUsers []string `json:"emailUsers,omitempty"`
 }
@@ -332,13 +332,13 @@ type Notification struct {
 type WorkspaceSpec struct {
 	// Workspace name.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 	// Organization name where the Workspace will be created.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	Organization string `json:"organization"`
 	// API Token to be used for API calls.
 	Token Token `json:"token"`
@@ -347,7 +347,7 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
 	//
-	//+kubebuilder:validation:Pattern="^(auto|manual)$"
+	//+kubebuilder:validation:Pattern:="^(auto|manual)$"
 	//+kubebuilder:default=manual
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
@@ -360,7 +360,7 @@ type WorkspaceSpec struct {
 	AllowDestroyPlan bool `json:"allowDestroyPlan,omitempty"`
 	// Workspace description.
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
@@ -373,7 +373,7 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode
 	//
-	//+kubebuilder:validation:Pattern="^(agent|local|remote)$"
+	//+kubebuilder:validation:Pattern:="^(agent|local|remote)$"
 	//+kubebuilder:default=remote
 	//+optional
 	ExecutionMode string `json:"executionMode,omitempty"`
@@ -381,12 +381,12 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	RunTasks []WorkspaceRunTask `json:"runTasks,omitempty"`
 	// Workspace tags are used to help identify and group together workspaces.
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Tags []string `json:"tags,omitempty"`
 	// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
@@ -396,7 +396,7 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	TeamAccess []*TeamAccess `json:"teamAccess,omitempty"`
 	// The version of Terraform to use for this workspace.
@@ -404,14 +404,14 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
 	//
-	//+kubebuilder:validation:Pattern="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
+	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
 	// The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.
 	// More information:
 	//   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory
 	//
-	//+kubebuilder:validation:MinLength=1
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	WorkingDirectory string `json:"workingDirectory,omitempty"`
 	// Terraform Environment variables for all plans and applies in this workspace.
@@ -420,7 +420,7 @@ type WorkspaceSpec struct {
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	EnvironmentVariables []Variable `json:"environmentVariables,omitempty"`
 	// Terraform variables for all plans and applies in this workspace.
@@ -429,7 +429,7 @@ type WorkspaceSpec struct {
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
 	// Remote state access between workspaces.
@@ -444,7 +444,7 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	RunTriggers []RunTrigger `json:"runTriggers,omitempty"`
 	// Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
@@ -465,7 +465,7 @@ type WorkspaceSpec struct {
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
 	//
-	//+kubebuilder:validation:MinItems=1
+	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Notifications []Notification `json:"notifications,omitempty"`
 }

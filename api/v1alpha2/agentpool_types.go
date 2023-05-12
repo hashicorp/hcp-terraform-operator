@@ -19,7 +19,7 @@ type AgentToken struct {
 	Name string `json:"name"`
 	// Agent Token ID.
 	//
-	//+kubebuilder:validation:Pattern="^at-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^at-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Timestamp of when the agent token was created.

@@ -195,6 +195,7 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `module` _[ModuleSource](#modulesource)_ | Module source and version to execute. |
 | `workspace` _[ModuleWorkspace](#moduleworkspace)_ | Workspace to execute the module. |
+| `name` _string_ | Name of the module that will be uploaded and executed. |
 | `variables` _[ModuleVariable](#modulevariable) array_ | Variables to pass to the module, they must exist in the Workspace. |
 | `outputs` _[ModuleOutput](#moduleoutput) array_ | Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive). |
 | `destroyOnDeletion` _boolean_ | Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes. |

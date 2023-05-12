@@ -28,7 +28,7 @@ type ModuleSource struct {
 type ModuleWorkspace struct {
 	// Module Workspace ID.
 	//
-	//+kubebuilder:validation:Pattern="^ws-[a-zA-Z0-9]+$"
+	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
 	// Module Workspace Name.
@@ -91,6 +91,12 @@ type ModuleSpec struct {
 	// Workspace to execute the module.
 	Workspace *ModuleWorkspace `json:"workspace"`
 
+	// Name of the module that will be uploaded and executed.
+	//
+	//+kubebuilder:validation:MinLength:=1
+	//+kubebuilder:default:=this
+	//+optional
+	Name string `json:"name,omitempty"`
 	// Variables to pass to the module, they must exist in the Workspace.
 	//
 	//+kubebuilder:validation:MinItems:=1
