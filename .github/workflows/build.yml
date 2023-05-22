@@ -89,7 +89,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - name: Docker build
-        uses: hashicorp/actions-docker-build@5e6230693cdbf8a6485b36f17740447ad28bf353 # v1.3.4
+        uses: hashicorp/actions-docker-build@2771d60f540373a86cf21177de69624b4de7de69 # v1.5.0
         env:
           VERSION: ${{ needs.set-product-version.outputs.product-version }}
           GO_VERSION: ${{ needs.build.outputs.go-version }}
