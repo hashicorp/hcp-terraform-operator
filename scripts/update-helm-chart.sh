@@ -43,29 +43,34 @@ function update_values_file {
     --ignore-blank-lines \
     $CHART_DIR/$VALUES_FILE <(yq '.operator.image.tag = strenv(VERSION)' $CHART_DIR/$VALUES_FILE) > $CHART_DIR/$VALUES_FILE.diff
 
-  patch $CHART_DIR/$VALUES_FILE < $CHART_DIR/$VALUES_FILE.diff
+  patch --silent $CHART_DIR/$VALUES_FILE < $CHART_DIR/$VALUES_FILE.diff
   rm $CHART_DIR/$VALUES_FILE.diff
 }
 
-if [[ -z "${VERSION}" ]]; then
-  echo "The environment variable VERSION is not set. Read value from ${VERSION_FILE}."
-  export VERSION=`cat $VERSION_FILE`
-fi
+function main {
+  if [[ -z "${VERSION}" ]]; then
+    echo "The environment variable VERSION is not set. Read value from ${VERSION_FILE}."
+    export VERSION=`cat $VERSION_FILE`
+  fi
 
-if [[ -z "${CHART_VERSION}" ]]; then
-  echo "The environment variable CHART_VERSION is not set. Read value from ${CHART_VERSION_FILE}."
-  export CHART_VERSION=`cat $CHART_VERSION_FILE`
-fi
+  if [[ -z "${CHART_VERSION}" ]]; then
+    echo "The environment variable CHART_VERSION is not set. Read value from ${CHART_VERSION_FILE}."
+    export CHART_VERSION=`cat $CHART_VERSION_FILE`
+  fi
 
-GIT_BRANCH=`git rev-parse --abbrev-ref HEAD | sed -e 's/^release\/v//'`
+  GIT_BRANCH=`git rev-parse --abbrev-ref HEAD | sed -e 's/^release\/v//'`
 
-if [[ "$VERSION" != "$GIT_BRANCH" ]]; then
-  echo "The version in the git branch name '${GIT_BRANCH}' does not match with the release version '${VERSION}'."
-  exit 1
-fi
+  if [[ "$VERSION" != "$GIT_BRANCH" ]]; then
+    echo "The version in the git branch name '${GIT_BRANCH}' does not match with the release version '${VERSION}'."
+    echo "Exiting!"
+    exit 1
+  fi
 
-echo "Version: ${VERSION}"
-echo "Chart Version: ${CHART_VERSION}"
+  echo "Version: ${VERSION}"
+  echo "Chart Version: ${CHART_VERSION}"
 
-update_values_file
-update_chart_file
+  update_values_file
+  update_chart_file
+}
+
+main
