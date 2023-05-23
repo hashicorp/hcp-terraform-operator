@@ -8,7 +8,7 @@ The Semantic Versioning agreement is being followed by this project. Further det
 
 To create a new release, adhere to the following steps:
 
-- Decide on the version number that you intend to release.
+- Decide on the version number that you intend to release. Throughout the following steps, it will be denoted as <SEMVER>.
 
 - Create a new branch from the `main`. The branch name is required to adhere to the following template: `release/v<SEMVER>`.
 
@@ -16,9 +16,14 @@ To create a new release, adhere to the following steps:
 
 - Revise the [`CHANGELOG`](./CHANGELOG.md) file by renaming the `UNRELEASED` section to the version number of the release or creating it if it doesn't already exist. The version number in this file must correspond with the `<SEMVER>` of the release branch name.
 
-- Update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file by modifying `version` and `appVersion` to match the desired release number.
+- Run script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) and the [`values.yaml`](./charts/terraform-cloud-operator/values.yaml) files to match the desired release number:
 
-- Update the [`values.yaml`](./charts/terraform-cloud-operator/values.yaml) file by modifying `operator.image.tag` to match the desired release number.
+  - [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml):
+    - The value of `version` will be updated based on the value set in the environment variable `CHART_VERSION`, or if it is not set, it will be derived from the file `version/HELM_CHART_VERSION`.
+    - The value of `appVersion` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
+
+  - [`values.yaml`](./charts/terraform-cloud-operator/values.yaml):
+    - The value of `operator.image.tag` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
 
 - Create a pull request against the `main` branch and follow the regular code review and merge procedures.
 
