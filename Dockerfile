@@ -37,6 +37,8 @@ COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
 
+# Do not use the 'ldflags' option here to set up the version of the operator.
+# During the development rely on the build-in one.
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -trimpath -o $BIN_NAME main.go
 
 # dev runs the binary from devbuild

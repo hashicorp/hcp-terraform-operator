@@ -22,6 +22,7 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 type TerraformCloudClient struct {
@@ -253,6 +254,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		ExecutionMode:    tfc.String(spec.ExecutionMode),
 		TerraformVersion: tfc.String(spec.TerraformVersion),
 		WorkingDirectory: tfc.String(spec.WorkingDirectory),
+		SourceName:       tfc.String(version.Source),
 	}
 
 	if spec.ExecutionMode == "agent" {

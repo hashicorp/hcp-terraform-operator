@@ -30,6 +30,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"github.com/hashicorp/terraform-cloud-operator/controllers"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -148,6 +149,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	setupLog.Info(fmt.Sprintf("Version: %s", version.Version))
+	setupLog.Info(fmt.Sprintf("Source: %s", version.Source))
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

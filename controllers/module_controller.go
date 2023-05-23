@@ -27,6 +27,7 @@ import (
 	"github.com/hashicorp/go-slug"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 // ModuleReconciler reconciles a Module object
@@ -270,7 +271,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			IsDestroy: tfc.Bool(true),
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(fmt.Sprintf("Triggered by %s", version.Source)),
 			Workspace: &tfc.Workspace{
 				ID: m.instance.Status.WorkspaceID,
 			},
@@ -470,7 +471,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	if needNewRun(&m.instance) {
 		m.log.Info("Reconcile Run", "msg", "create a new run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(fmt.Sprintf("Triggered by %s", version.Source)),
 			Workspace: workspace,
 		})
 		if err != nil {

@@ -9,6 +9,7 @@ on:
 
 env:
   PKG_NAME: 'terraform-cloud-operator'
+  PKG_PATH: 'github.com/hashicorp/terraform-cloud-operator'
   DOCKER_HUB_REPO: 'hashicorp/terraform-cloud-operator'
   DOCKER_HUB_DEV_REPO: 'hashicorppreview/terraform-cloud-operator'
 
@@ -66,6 +67,8 @@ jobs:
           go-version-file: 'go.mod'
       - name: Go build
         uses: hashicorp/actions-go-build@e20c6be7bf010e40e930dab20e6da63176725ec1 # v0.1.9
+        env:
+          LD_FLAGS: "-X '${{ env.PKG_PATH }}/version.Version=v${{ env.VERSION }}'"
         with:
           product_name: ${{ env.PKG_NAME }}
           product_version: ${{ needs.set-product-version.outputs.product-version }}
@@ -75,7 +78,7 @@ jobs:
           arch: ${{ matrix.arch }}
           reproducible: report
           instructions: |
-            go build -trimpath -o $BIN_PATH main.go
+            go build -a -ldflags $LD_FLAGS -trimpath -o $BIN_PATH main.go
 
   build-docker:
     name: Docker ${{ matrix.arch }} build
