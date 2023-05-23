@@ -36,6 +36,7 @@ RUN go mod download
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
+COPY version/ version/
 
 # Do not use the 'ldflags' option here to set up the version of the operator.
 # During the development rely on the build-in one.
