@@ -78,7 +78,7 @@ jobs:
           arch: ${{ matrix.arch }}
           reproducible: report
           instructions: |
-            go build -a -ldflags $LD_FLAGS -trimpath -o $BIN_PATH main.go
+            go build -a -ldflags="${{ env.LD_FLAGS }}" -trimpath -o $BIN_PATH main.go
 
   build-docker:
     name: Docker ${{ matrix.arch }} build
