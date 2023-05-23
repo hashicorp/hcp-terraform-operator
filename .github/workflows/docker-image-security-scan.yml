@@ -48,7 +48,7 @@ jobs:
           exit-code: '1'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@9a866ed4524fc3422c3af1e446dab8efa3503411 # codeql-bundle-20230418
+        uses: github/codeql-action/upload-sarif@f31a31c052207cc13b328d6295c5b728bb49568c # codeql-bundle-20230428
         with:
           category: 'Trivy Security Scan'
           sarif_file: 'trivy-results.sarif'
