@@ -22,8 +22,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"github.com/go-logr/zapr"
@@ -47,11 +46,6 @@ func init() {
 
 func main() {
 	// GLOBAL OPTIONS
-	var configFile string
-	flag.StringVar(&configFile, "config", "",
-		"The controller will load its initial configuration from this file. "+
-			"Omit this flag to use the default configuration values. "+
-			"Command-line flags override configuration from this file.")
 	var syncPeriod time.Duration
 	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
@@ -85,26 +79,27 @@ func main() {
 	ctrl.SetLogger(zapr.NewLogger(logger))
 
 	options := ctrl.Options{
-		Controller: v1alpha1.ControllerConfigurationSpec{
+		Controller: config.Controller{
 			GroupKindConcurrency: map[string]int{
 				"Workspace.app.terraform.io": workspaceWorkers,
 				"Module.app.terraform.io":    moduleWorkers,
 				"AgentPool.app.terraform.io": agentPoolWorkers,
 			},
 		},
-		Scheme:     scheme,
-		SyncPeriod: &syncPeriod,
+		Scheme:                        scheme,
+		SyncPeriod:                    &syncPeriod,
+		MetricsBindAddress:            "127.0.0.1:8080",
+		HealthProbeBindAddress:        ":8081",
+		LeaderElection:                true,
+		LeaderElectionReleaseOnCancel: true,
+		LeaderElectionID:              "hashicorp-terraform-cloud-operator",
 	}
-	if configFile != "" {
-		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
-		if err != nil {
-			setupLog.Error(err, "unable to load the config file")
-			os.Exit(1)
-		}
-	}
+
 	if len(watchNamespaces) != 0 {
 		setupLog.Info("Watching namespaces: " + strings.Join(watchNamespaces, " "))
-		options.NewCache = cache.MultiNamespacedCacheBuilder(watchNamespaces)
+		options.Cache.Namespaces = watchNamespaces
+	} else {
+		setupLog.Info("Watching all namespaces")
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
