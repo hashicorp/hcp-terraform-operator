@@ -480,7 +480,7 @@ type RunStatus struct {
 	//+optional
 	Status string `json:"status,omitempty"`
 	//+optional
-	ConfigurationVersion string `json:"configurationVersion"`
+	ConfigurationVersion string `json:"configurationVersion,omitempty"`
 	// Run ID of the latest run that could update the outputs.
 	//
 	//+optional
@@ -489,13 +489,15 @@ type RunStatus struct {
 
 // WorkspaceStatus defines the observed state of Workspace.
 type WorkspaceStatus struct {
-	// Real world state generation.
-	ObservedGeneration int64 `json:"observedGeneration"`
-	// Workspace last update timestamp.
-	UpdateAt int64 `json:"updateAt"`
 	// Workspace ID that is managed by the controller.
 	WorkspaceID string `json:"workspaceID"`
 
+	// Real world state generation.
+	//+optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	// Workspace last update timestamp.
+	//+optional
+	UpdateAt int64 `json:"updateAt,omitempty"`
 	// Workspace Runs status.
 	//+optional
 	Run RunStatus `json:"runStatus,omitempty"`

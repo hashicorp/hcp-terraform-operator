@@ -67,6 +67,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	// Migration Validation
+	if controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizerAlpha1) {
+		w.log.Error(err, "Migration", "msg", fmt.Sprintf("spec contains old finalizer %s", workspaceFinalizerAlpha1))
+		return doNotRequeue()
+	}
+
 	w.log.Info("Spec Validation", "msg", "validating instance object spec")
 	if err := w.instance.ValidateSpec(); err != nil {
 		w.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
