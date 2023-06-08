@@ -30,6 +30,14 @@ Please, take into account the beta stage of this project and DO NOT use it in yo
 
 We deeply appreciate everyone who is participating in the Operator beta and looking forward to hearing your feedback.
 
+## Getting started
+
+To get started see our tutorials on the HashiCorp Developer Portal:
+
+- [Deploy infrastructure with the Terraform Cloud Kubernetes Operator v2](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2)
+- [Manage agent pools with the Terraform Cloud Kubernetes Operator v2](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2-agentpool)
+- [Terraform Cloud Kubernetes Operator v2 Migration Guide](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes/ops-v2-migration)
+
 ## Documentation
 
 ### Supported Features
