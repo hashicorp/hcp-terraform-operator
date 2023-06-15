@@ -39,37 +39,40 @@ func (r *WorkspaceReconciler) getSSHKeyID(ctx context.Context, w *workspaceInsta
 	return specSSHKey.ID, nil
 }
 
-func (r *WorkspaceReconciler) reconcileSSHKey(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
+func (r *WorkspaceReconciler) reconcileSSHKey(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	if w.instance.Spec.SSHKey == nil {
 		// Verify whether a Workspace has an SSH key and unassign it if so
 		if workspace.SSHKey != nil {
 			w.log.Info("Reconcile SSH Key", "msg", "unassigning the ssh key")
-			return w.tfClient.Client.Workspaces.UnassignSSHKey(ctx, workspace.ID)
+			_, err := w.tfClient.Client.Workspaces.UnassignSSHKey(ctx, workspace.ID)
+			return err
 		}
 
-		return workspace, nil
+		return nil
 	}
 
 	SSHKeyID, err := r.getSSHKeyID(ctx, w)
 	if err != nil {
-		return workspace, err
+		return err
 	}
 
 	// Assign an SSH key to a workspace if nothing is assigned
 	if workspace.SSHKey == nil {
 		w.log.Info("Reconcile SSH Key", "msg", "assigning the ssh key")
-		return w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, tfc.WorkspaceAssignSSHKeyOptions{
+		_, err := w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, tfc.WorkspaceAssignSSHKeyOptions{
 			SSHKeyID: tfc.String(SSHKeyID),
 		})
+		return err
 	}
 
 	// Assign an SSH key to a workspace if it is different from the one in spec
 	if workspace.SSHKey.ID != SSHKeyID {
 		w.log.Info("Reconcile SSH Key", "msg", "assigning the ssh key")
-		return w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, tfc.WorkspaceAssignSSHKeyOptions{
+		_, err := w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, tfc.WorkspaceAssignSSHKeyOptions{
 			SSHKeyID: tfc.String(SSHKeyID),
 		})
+		return err
 	}
 
-	return workspace, nil
+	return nil
 }
