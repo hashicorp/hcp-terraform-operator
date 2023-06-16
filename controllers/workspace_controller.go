@@ -433,7 +433,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		_, err = r.createWorkspace(ctx, w)
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
-			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new agent pool")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
 			return err
 		}
 		w.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
@@ -450,7 +450,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 			workspace, err = r.createWorkspace(ctx, w)
 			if err != nil {
 				w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
-				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new agent pool")
+				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
 				return err
 			}
 			w.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
