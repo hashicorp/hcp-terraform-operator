@@ -20,7 +20,7 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -118,7 +118,7 @@ var _ = BeforeSuite(func() {
 		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme:     scheme.Scheme,
 			SyncPeriod: &syncPeriod,
-			Controller: v1alpha1.ControllerConfigurationSpec{
+			Controller: config.Controller{
 				GroupKindConcurrency: map[string]int{
 					"Workspace.app.terraform.io": 5,
 					"Module.app.terraform.io":    5,

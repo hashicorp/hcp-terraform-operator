@@ -602,8 +602,6 @@ spec:
                 description: Workspace ID that is managed by the controller.
                 type: string
             required:
-            - observedGeneration
-            - updateAt
             - workspaceID
             type: object
         required:

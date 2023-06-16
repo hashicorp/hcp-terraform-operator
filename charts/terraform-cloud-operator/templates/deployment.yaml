@@ -26,7 +26,6 @@ spec:
           image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
           args:
-          - --config=controller_manager_config.yaml
           - --sync-period={{ .Values.operator.syncPeriod }}
           - --agent-pool-workers={{ .Values.controllers.agentPool.workers }}
           - --module-workers={{ .Values.controllers.module.workers }}
@@ -65,9 +64,6 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
-          - mountPath: /controller_manager_config.yaml
-            name: manager-config
-            subPath: controller_manager_config.yaml
 {{- if .Values.customCAcertificates }}
           - name: ca-certificates
             mountPath: /etc/ssl/certs/custom-ca-certificates.crt
