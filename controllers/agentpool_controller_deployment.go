@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -112,9 +113,13 @@ func (r *AgentPoolReconciler) deleteDeployment(ctx context.Context, ap *agentPoo
 }
 
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
-	var r int32 = 1 // default to one worker if not otherwise configured
+	var r *int32 = pointer.Int32(1) // default to one replica if not otherwise configured
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
-		r = *ap.instance.Spec.AgentDeployment.Replicas
+		r = ap.instance.Spec.AgentDeployment.Replicas
+	}
+	// don't set the replica count if autoscaling is enabled
+	if ap.instance.Spec.AgentDeploymentAutoscaling != nil {
+		r = nil
 	}
 	var s corev1.PodSpec = corev1.PodSpec{
 		Containers: []corev1.Container{ // default tfc-agent container if none configured by user
@@ -140,7 +145,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: agentPoolPodLabels(&ap.instance),
 			},
-			Replicas: &r,
+			Replicas: r,
 			Strategy: appsv1.DeploymentStrategy{
 				Type: appsv1.RollingUpdateDeploymentStrategyType,
 				RollingUpdate: &appsv1.RollingUpdateDeployment{

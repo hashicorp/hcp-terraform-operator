@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +37,9 @@ type agentPoolInstance struct {
 	log      logr.Logger
 	tfClient TerraformCloudClient
 }
+
+// agentPoolSyncPeriodSeconds is how frequently the AgentPool controller should reconcile
+const agentPoolSyncPeriodSeconds = 30
 
 //+kubebuilder:rbac:groups=app.terraform.io,resources=agentpools,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=app.terraform.io,resources=agentpools/status,verbs=get;update;patch
@@ -97,7 +101,14 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	ap.log.Info("Agent Pool Controller", "msg", "successfully reconcilied agent pool")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully reconcilied agent pool ID %s", ap.instance.Status.AgentPoolID)
 
-	return doNotRequeue()
+	err = r.reconcileAgentAutoscaling(ctx, &ap)
+	if err != nil {
+		ap.log.Error(err, "Agent Pool Controller", "msg", "reconcile agent pool")
+		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to reconcile agent pool")
+		return requeueAfter(requeueInterval)
+	}
+
+	return requeueAfter(agentPoolSyncPeriodSeconds * time.Second)
 }
 
 // SetupWithManager sets up the controller with the Manager.

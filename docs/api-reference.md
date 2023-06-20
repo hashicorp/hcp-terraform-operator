@@ -30,6 +30,38 @@ _Appears in:_
 | `spec` _[PodSpec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#podspec-v1-core)_ |  |
 
 
+#### AgentDeploymentAutoscaling
+
+
+
+AgentDeploymentAutoscaling allows you to configure the operator to scale the deployment for an AgentPool up and down to meet demand.
+
+_Appears in:_
+- [AgentPoolSpec](#agentpoolspec)
+
+| Field | Description |
+| --- | --- |
+| `targetWorkspaces` _[TargetWorkspace](#targetworkspace) array_ | TargetWorkspaces is a list of Terraform Cloud Workspaces which the agent pool should scale up to meet demand. |
+| `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
+| `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
+| `cooldownPeriodSeconds` _integer_ | CoolDownPeriodSeconds is the time to wait between scaling events. |
+
+
+#### AgentDeploymentAutoscalingStatus
+
+
+
+AgentDeploymentAutoscalingStatus
+
+_Appears in:_
+- [AgentPoolStatus](#agentpoolstatus)
+
+| Field | Description |
+| --- | --- |
+| `desiredReplicas` _integer_ | Desired number of agent replicas |
+| `lastScalingEvent` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#time-v1-meta)_ | Last time the agent pool was scaledx |
+
+
 #### AgentPool
 
 
@@ -63,6 +95,7 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `agentTokens` _[AgentToken](#agenttoken) array_ | List of the agent tokens to generate. |
 | `agentDeployment` _[AgentDeployment](#agentdeployment)_ | Agent deployment settings |
+| `autoscaling` _[AgentDeploymentAutoscaling](#agentdeploymentautoscaling)_ | Agent deployment settings |
 
 
 
@@ -328,6 +361,21 @@ _Appears in:_
 | --- | --- |
 | `id` _string_ |  |
 | `name` _string_ |  |
+
+
+#### TargetWorkspace
+
+
+
+
+
+_Appears in:_
+- [AgentDeploymentAutoscaling](#agentdeploymentautoscaling)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | Workspace ID |
+| `name` _string_ | Workspace Name |
 
 
 #### Team

@@ -360,6 +360,36 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			validateAgentPoolDeploymentDeleted(ctx, instance)
 		})
+
+		It("can autoscale agent deployments", func() {
+			createTestAgentPool(instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{}
+			instance.Spec.AgentDeploymentAutoscaling = &appv1alpha2.AgentDeploymentAutoscaling{
+				TargetWorkspaces: []appv1alpha2.TargetWorkspace{
+					{Name: "test-workspace"},
+				},
+				MinReplicas:           appv1alpha2.PointerOf(int32(3)),
+				MaxReplicas:           appv1alpha2.PointerOf(int32(5)),
+				CooldownPeriodSeconds: appv1alpha2.PointerOf(int32(60)),
+			}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Replicas).To(BeNil())
+			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
+			Expect(instance.Spec.AgentDeploymentAutoscaling).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(Equal([]appv1alpha2.TargetWorkspace{
+				{Name: "test-workspace"},
+			}))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(appv1alpha2.PointerOf(int32(3))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(appv1alpha2.PointerOf(int32(5))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(appv1alpha2.PointerOf(int32(60))))
+		})
 	})
 })
 
