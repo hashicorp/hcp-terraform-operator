@@ -3,6 +3,7 @@
 NOTES:
 * `Operator`: the Operator no longer includes the global option `--config`. [[GH-185](https://github.com/hashicorp/terraform-cloud-operator/pull/185)]
 * `Helm Chart`: the Helm chart no longer includes the ConfigMap `manager-config` as it has been removed. [[GH-185](https://github.com/hashicorp/terraform-cloud-operator/pull/185)]
+* `Helm Chart`: the Helm chart now allows configuration of custom CA bundles [[GH-173](https://github.com/hashicorp/terraform-cloud-operator/pull/173)]
 
 ENHANCEMENT:
 

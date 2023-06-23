@@ -6,4 +6,4 @@ name: terraform-cloud-operator
 description: A Helm chart for HashiCorp Terraform Cloud Kubernetes Operator.
 type: application
 version: 0.0.7
-appVersion: "2.0.0-beta5"
+appVersion: "2.0.0-beta6"
