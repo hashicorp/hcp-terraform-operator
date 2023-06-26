@@ -27,25 +27,6 @@ Please, take into account the beta stage of this project and DO NOT use it in yo
 
 We deeply appreciate everyone who is participating in the Operator beta and looking forward to hearing your feedback.
 
-### Upgrade beta version
-
-In this example, Helm will upgrade the existing operator installation in the `tfc-operator-system` namespace. The Operator will watch all namespaces(default value) in the Kubernetes cluster and run 5 workers for `AgentPool`, `Module`, and `Workspace` controllers. All other Helm values remain with their default values.
-
-```console
-$ helm upgrade \
-  beta oci://public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --version 0.0.7 \
-  --namespace tfc-operator-system \
-  --set operator.image.repository=public.ecr.aws/t8q4c9g6/terraform-cloud-operator \
-  --set operator.image.tag=2.0.0-beta5 \
-  --set controllers.agentPool.workers=5 \
-  --set controllers.module.workers=5 \
-  --set controllers.workspace.workers=5
-```
-
-> **Note**
-> Please pay attention to the repository name, chart version, and image tag.
-
 ## Documentation
 
 ### Supported Features
