@@ -1,4 +1,10 @@
-## 2.0.0-beta6 (Unreleased)
+## 2.0.0-beta7 (UNRELEASED)
+
+BUG FIXES:
+
+* `Operator`: fix an issue when the operator couldn't be run on the `amd64` platform.
+
+## 2.0.0-beta6 (June 23, 2023)
 
 NOTES:
 * `Operator`: the Operator no longer includes the global option `--config`. [[GH-185](https://github.com/hashicorp/terraform-cloud-operator/pull/185)]
