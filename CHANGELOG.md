@@ -1,4 +1,6 @@
-## 2.0.0-beta6 (Unreleased)
+## X.Y.Z (UNRELEASED)
+
+## 2.0.0-beta6 (June 23, 2023)
 
 NOTES:
 * `Operator`: the Operator no longer includes the global option `--config`. [[GH-185](https://github.com/hashicorp/terraform-cloud-operator/pull/185)]
