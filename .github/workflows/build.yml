@@ -66,6 +66,8 @@ jobs:
           go-version-file: 'go.mod'
       - name: Go build
         uses: hashicorp/actions-go-build@e20c6be7bf010e40e930dab20e6da63176725ec1 # v0.1.9
+        env:
+          CGO_ENABLED: 0
         with:
           product_name: ${{ env.PKG_NAME }}
           product_version: ${{ needs.set-product-version.outputs.product-version }}
