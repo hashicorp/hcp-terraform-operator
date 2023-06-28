@@ -14,18 +14,12 @@ To create a new release, adhere to the following steps:
 
 - Modify the `version/VERSION` file to reflect the version number that you plan to release. The version number in this file must correspond with the `<SEMVER>` of the release branch name.
 
-- [OPTIONAL] Modify the `version/HELM_CHART_VERSION` file to reflect the Helm chart version number that you plan to release.
-
 - Revise the [`CHANGELOG`](./CHANGELOG.md) file by renaming the unreleased version section to the version number of the release if necessary(for example, it might be `X.Y.Z`) or creating it if it doesn't already exist. The version number in this file must correspond with the `<SEMVER>` of the release branch name. Substitute `UNRELEASED` in the breast adjacent to the release version with the planned release date expressed as `Month DD, YYYY` format. Alternatively, execute the script [release-date.sh](./scripts/release-date.sh) to modify the [`CHANGELOG`](./CHANGELOG.md) file by substituting `UNRELEASED` with the current date.
 
-- Execute script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) and the [`values.yaml`](./charts/terraform-cloud-operator/values.yaml) files to match the desired release number:
+- Execute script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file to match the desired release number:
 
-  - [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml):
-    - The value of `version` will be updated based on the value set in the environment variable `CHART_VERSION`, or if it is not set, it will be derived from the file `version/HELM_CHART_VERSION`.
-    - The value of `appVersion` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
-
-  - [`values.yaml`](./charts/terraform-cloud-operator/values.yaml):
-    - The value of `operator.image.tag` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
+  - The value of `version` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
+  - The value of `appVersion` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
 
 - Create a pull request against the `main` branch and follow the regular code review and merge procedures.
 

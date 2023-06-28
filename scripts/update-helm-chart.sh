@@ -25,27 +25,6 @@ function update_chart_file {
     '.appVersion = strenv(VERSION) | .version = strenv(VERSION)' $CHART_DIR/$CHART_FILE
 }
 
-# Update the 'values.yaml' file with a new version of the Operator image tag.
-function update_values_file {
-  C_VERSION=`yq '.operator.image.tag' $CHART_DIR/$VALUES_FILE`
-
-  if [[ $C_VERSION == $VERSION ]]; then
-    echo "No changes in the $VALUES_FILE file."
-    return 0
-  fi
-
-  echo "Updating the $VALUES_FILE file."
-
-  diff \
-    -U0 \
-    -w \
-    --ignore-blank-lines \
-    $CHART_DIR/$VALUES_FILE <(yq '.operator.image.tag = strenv(VERSION)' $CHART_DIR/$VALUES_FILE) > $CHART_DIR/$VALUES_FILE.diff
-
-  patch --silent $CHART_DIR/$VALUES_FILE < $CHART_DIR/$VALUES_FILE.diff
-  rm $CHART_DIR/$VALUES_FILE.diff
-}
-
 function main {
   if [[ -z "${VERSION}" ]]; then
     echo "The environment variable VERSION is not set. Read value from ${VERSION_FILE}."
@@ -62,7 +41,6 @@ function main {
 
   echo "Version: ${VERSION}"
 
-  update_values_file
   update_chart_file
 }
 
