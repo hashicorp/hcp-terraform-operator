@@ -18,8 +18,7 @@ To create a new release, adhere to the following steps:
 
 - Execute script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file to match the desired release number:
 
-  - The value of `version` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
-  - The value of `appVersion` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
+  - The values of `version` and `appVersion` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
 
 - Create a pull request against the `main` branch and follow the regular code review and merge procedures.
 
