@@ -44,7 +44,7 @@ _Appears in:_
 | `targetWorkspaces` _[TargetWorkspace](#targetworkspace) array_ | TargetWorkspaces is a list of Terraform Cloud Workspaces which the agent pool should scale up to meet demand. |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
 | `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
-| `cooldownPeriodSeconds` _integer_ | CoolDownPeriodSeconds is the time to wait between scaling events. |
+| `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. |
 
 
 #### AgentDeploymentAutoscalingStatus
@@ -83,7 +83,7 @@ AgentPool is the Schema for the agentpools API.
 
 
 
-AgentPoolSpec defines the desired state of AgentPool.
+AgentPoolSpec defines the desired stak get ste of AgentPool.
 
 _Appears in:_
 - [AgentPool](#agentpool)

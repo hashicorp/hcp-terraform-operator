@@ -69,6 +69,10 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 	if err != nil {
 		return err
 	}
+	// if autoscaler is enabled, set the replicas to the min
+	if a := ap.instance.Spec.AgentDeploymentAutoscaling; a != nil {
+		d.Spec.Replicas = a.MinReplicas
+	}
 	ap.log.Info("Reconcile Agent Deployment", "msg", fmt.Sprintf("creating a new Kubernetes Deployment %q", d.Name))
 	err = r.Client.Create(ctx, d, &client.CreateOptions{FieldManager: "terraform-cloud-operator"})
 	if err != nil {
@@ -85,6 +89,10 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 	err := controllerutil.SetControllerReference(&ap.instance, nd, r.Scheme)
 	if err != nil {
 		return err
+	}
+	// if autoscaler is enabled, set the replicas to the desired replica count
+	if a := ap.instance.Status.AgentDeploymentAutoscalingStatus; a != nil {
+		nd.Spec.Replicas = a.DesiredReplicas
 	}
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "terraform-cloud-operator"})
 	if uerr != nil {

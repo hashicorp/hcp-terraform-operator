@@ -57,9 +57,10 @@ type AgentDeploymentAutoscaling struct {
 	// MinReplicas is the minimum number of replicas for the Agent deployment.
 	MinReplicas *int32 `json:"minReplicas"`
 
-	// CoolDownPeriodSeconds is the time to wait between scaling events.
+	// CooldownPeriodSeconds is the time to wait between scaling events.
 	//
 	//+optional
+	//+kubebuilder:default:=60
 	CooldownPeriodSeconds *int32 `json:"cooldownPeriodSeconds,omitempty"`
 }
 
@@ -68,7 +69,7 @@ type AgentDeployment struct {
 	Spec     *v1.PodSpec `json:"spec,omitempty"`
 }
 
-// AgentPoolSpec defines the desired state of AgentPool.
+// AgentPoolSpec defines the desired stak get ste of AgentPool.
 type AgentPoolSpec struct {
 	// Agent Pool name.
 	// More information:

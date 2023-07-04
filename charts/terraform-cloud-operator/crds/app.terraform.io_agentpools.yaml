@@ -36,7 +36,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AgentPoolSpec defines the desired state of AgentPool.
+            description: AgentPoolSpec defines the desired stak get ste of AgentPool.
             properties:
               agentDeployment:
                 description: Agent deployment settings
@@ -7563,7 +7563,8 @@ spec:
                 description: Agent deployment settings
                 properties:
                   cooldownPeriodSeconds:
-                    description: CoolDownPeriodSeconds is the time to wait between
+                    default: 60
+                    description: CooldownPeriodSeconds is the time to wait between
                       scaling events.
                     format: int32
                     type: integer
