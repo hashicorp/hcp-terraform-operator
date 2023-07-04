@@ -118,7 +118,6 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// KUBERNETES HELPERS
 func (r *WorkspaceReconciler) getConfigMap(ctx context.Context, name types.NamespacedName) (*corev1.ConfigMap, error) {
 	cm := &corev1.ConfigMap{}
 	err := r.Client.Get(ctx, name, cm)
@@ -133,7 +132,6 @@ func (r *WorkspaceReconciler) getSecret(ctx context.Context, name types.Namespac
 	return secret, err
 }
 
-// TERRAFORM CLOUD PLATFORM CLIENT
 func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
 	var secret *corev1.Secret
 
@@ -189,6 +187,13 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 	if instance.Spec.VersionControl != nil && workspace.VCSRepo == nil {
 		return true
 	}
+	// Terraform version
+	if instance.Spec.TerraformVersion == "" {
+		if instance.Status.TerraformVersion != workspace.TerraformVersion {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -209,7 +214,6 @@ func autoApplyToStr(autoApply bool) string {
 	return "manual"
 }
 
-// FINALIZERS
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
 
@@ -235,6 +239,7 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 	w.instance.Status.ObservedGeneration = w.instance.Generation
 	w.instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
 	w.instance.Status.WorkspaceID = workspace.ID
+	w.instance.Status.TerraformVersion = workspace.TerraformVersion
 
 	if workspace.CurrentRun != nil {
 		w.instance.Status.Run.ID = workspace.CurrentRun.ID
@@ -248,7 +253,6 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 	return r.Status().Update(ctx, &w.instance)
 }
 
-// WORKSPACES
 func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) error {
 	spec := w.instance.Spec
 	options := tfc.WorkspaceCreateOptions{
@@ -315,6 +319,7 @@ func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceIns
 func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
 	updateOptions := tfc.WorkspaceUpdateOptions{}
 	spec := w.instance.Spec
+	status := w.instance.Status
 
 	if spec.ExecutionMode == "agent" {
 		agentPoolID, err := r.getAgentPoolID(ctx, w)
@@ -353,8 +358,14 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		}
 	}
 
-	if workspace.TerraformVersion != spec.TerraformVersion {
-		updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
+	if spec.TerraformVersion == "" {
+		if workspace.TerraformVersion != status.TerraformVersion {
+			updateOptions.TerraformVersion = tfc.String(status.TerraformVersion)
+		}
+	} else {
+		if workspace.TerraformVersion != spec.TerraformVersion {
+			updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
+		}
 	}
 
 	if workspace.WorkingDirectory != spec.WorkingDirectory {

@@ -493,14 +493,22 @@ type WorkspaceStatus struct {
 	WorkspaceID string `json:"workspaceID"`
 
 	// Real world state generation.
+	//
 	//+optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// Workspace last update timestamp.
+	//
 	//+optional
 	UpdateAt int64 `json:"updateAt,omitempty"`
 	// Workspace Runs status.
+	//
 	//+optional
 	Run RunStatus `json:"runStatus,omitempty"`
+	// Workspace Terraform version.
+	//
+	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
+	//+optional
+	TerraformVersion string `json:"terraformVersion,omitempty"`
 }
 
 //+kubebuilder:object:root=true

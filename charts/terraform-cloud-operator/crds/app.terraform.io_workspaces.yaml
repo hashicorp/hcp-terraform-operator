@@ -594,6 +594,10 @@ spec:
                       run status.
                     type: string
                 type: object
+              terraformVersion:
+                description: Workspace Terraform version.
+                pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
+                type: string
               updateAt:
                 description: Workspace last update timestamp.
                 format: int64
