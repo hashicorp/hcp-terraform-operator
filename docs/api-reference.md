@@ -367,7 +367,7 @@ _Appears in:_
 
 
 
-
+TargetWorkspace is the name or ID of the workspace you want autoscale against.
 
 _Appears in:_
 - [AgentDeploymentAutoscaling](#agentdeploymentautoscaling)

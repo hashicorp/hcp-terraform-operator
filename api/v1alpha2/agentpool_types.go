@@ -32,6 +32,7 @@ type AgentToken struct {
 	LastUsedAt *int64 `json:"lastUsedAt,omitempty"`
 }
 
+// TargetWorkspace is the name or ID of the workspace you want autoscale against.
 type TargetWorkspace struct {
 	// Workspace ID
 	//

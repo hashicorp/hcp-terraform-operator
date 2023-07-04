@@ -7579,6 +7579,8 @@ spec:
                     description: TargetWorkspaces is a list of Terraform Cloud Workspaces
                       which the agent pool should scale up to meet demand.
                     items:
+                      description: TargetWorkspace is the name or ID of the workspace
+                        you want autoscale against.
                       properties:
                         id:
                           description: Workspace ID
