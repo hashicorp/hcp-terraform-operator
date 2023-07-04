@@ -105,8 +105,8 @@ func main() {
 			setupLog.Info("does not run in a Kubernetes environment")
 			options.LeaderElectionNamespace = "default"
 		} else {
-			// Ignore all other errors but print them out
-			setupLog.Info("got an error when called InClusterConfig:", err)
+			// Ignore all other errors since it is affect only the dev end but print them out.
+			setupLog.Info("got an error when calling InClusterConfig:", err)
 		}
 	}
 
