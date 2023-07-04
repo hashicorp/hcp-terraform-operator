@@ -44,7 +44,7 @@ _Appears in:_
 | `targetWorkspaces` _[TargetWorkspace](#targetworkspace) array_ | TargetWorkspaces is a list of Terraform Cloud Workspaces which the agent pool should scale up to meet demand. |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
 | `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
-| `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. |
+| `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300. |
 
 
 #### AgentDeploymentAutoscalingStatus

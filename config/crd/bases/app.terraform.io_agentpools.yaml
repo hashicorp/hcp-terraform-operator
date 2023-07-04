@@ -7560,9 +7560,9 @@ spec:
                 description: Agent deployment settings
                 properties:
                   cooldownPeriodSeconds:
-                    default: 60
+                    default: 300
                     description: CooldownPeriodSeconds is the time to wait between
-                      scaling events.
+                      scaling events. Defaults to 300.
                     format: int32
                     type: integer
                   maxReplicas:

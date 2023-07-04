@@ -58,10 +58,10 @@ type AgentDeploymentAutoscaling struct {
 	// MinReplicas is the minimum number of replicas for the Agent deployment.
 	MinReplicas *int32 `json:"minReplicas"`
 
-	// CooldownPeriodSeconds is the time to wait between scaling events.
+	// CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300.
 	//
 	//+optional
-	//+kubebuilder:default:=60
+	//+kubebuilder:default:=300
 	CooldownPeriodSeconds *int32 `json:"cooldownPeriodSeconds,omitempty"`
 }
 
