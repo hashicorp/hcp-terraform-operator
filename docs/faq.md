@@ -141,6 +141,14 @@
 
   Non-sensitive outputs will be saved in a ConfigMap. Sensitive outputs will be saved in a Secret. In both cases, the name of the corresponding Kubernetes resource will be generated automatically and has the following pattern: `<metadata.name>-outputs`.
 
+- **What version of Terraform is utilized in the Workplace?**
+
+  If the `spec.terraformVersion` is configured, the Operator ensures that the specified version will be utilized.
+
+  If the `spec.terraformVersion` is not configured, i.e. empty, the latest available Terraform version will be picked up during the Workspace creation and the same version will be utilized till it gets updated via the Workspace manifest.
+
+  Regardless of the scenario, you can always refer to `status.terraformVersion` to determine the version of Terraform being used in the Workplace.
+
 ## Module Controller
 
 - **Where can I find Module outputs?**

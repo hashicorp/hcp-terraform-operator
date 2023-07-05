@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -93,6 +94,20 @@ func main() {
 		LeaderElection:                true,
 		LeaderElectionReleaseOnCancel: true,
 		LeaderElectionID:              "hashicorp-terraform-cloud-operator",
+	}
+
+	// When the Operator not running in a Kubernetes environment,
+	// i.e. during the development stage when it runs via the command 'make run',
+	// It requires a namespace to be specified for the Leader Election.
+	// We set it up to 'default' since this namespace always presents.
+	if _, err := rest.InClusterConfig(); err != nil {
+		if err == rest.ErrNotInCluster {
+			setupLog.Info("does not run in a Kubernetes environment")
+			options.LeaderElectionNamespace = "default"
+		} else {
+			// Ignore all other errors since it is affect only the dev end but print them out.
+			setupLog.Info("got an error when calling InClusterConfig:", err)
+		}
 	}
 
 	if len(watchNamespaces) != 0 {

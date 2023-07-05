@@ -890,6 +890,10 @@ spec:
                   description: Real world state generation.
                   format: int64
                   type: integer
+                terraformVersion:
+                  description: Workspace Terraform version.
+                  pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
+                  type: string
                 updateAt:
                   description: Workspace last update timestamp.
                   format: int64
