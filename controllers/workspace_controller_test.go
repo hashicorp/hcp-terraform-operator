@@ -59,7 +59,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				AllowDestroyPlan: true,
 				Description:      "Description",
 				ExecutionMode:    "remote",
-				TerraformVersion: "1.2.3",
 				WorkingDirectory: "aws/us-west-1/vpc",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
@@ -130,7 +129,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.AllowDestroyPlan = false
 			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
 			instance.Spec.ExecutionMode = "local"
-			instance.Spec.TerraformVersion = "1.2.1"
+			instance.Spec.TerraformVersion = "1.5.2"
 			instance.Spec.WorkingDirectory = fmt.Sprintf("%v/new", instance.Spec.WorkingDirectory)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -145,6 +144,25 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					ws.ExecutionMode == instance.Spec.ExecutionMode &&
 					ws.TerraformVersion == instance.Spec.TerraformVersion &&
 					ws.WorkingDirectory == instance.Spec.WorkingDirectory
+			}).Should(BeTrue())
+		})
+
+		It("can keep Terraform version", func() {
+			instance.Spec.TerraformVersion = "1.5.1"
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance, namespacedName)
+
+			// Remove TerraformVersion from the 'spec'
+			instance.Spec.TerraformVersion = ""
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			// Wait until the controller updates Terraform Cloud workspace
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return instance.Spec.TerraformVersion == "" &&
+					ws.TerraformVersion == instance.Status.TerraformVersion
 			}).Should(BeTrue())
 		})
 

@@ -67,6 +67,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	// Migration Validation
+	if controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizerAlpha1) {
+		w.log.Error(err, "Migration", "msg", fmt.Sprintf("spec contains old finalizer %s", workspaceFinalizerAlpha1))
+		return doNotRequeue()
+	}
+
 	w.log.Info("Spec Validation", "msg", "validating instance object spec")
 	if err := w.instance.ValidateSpec(); err != nil {
 		w.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
@@ -109,10 +115,10 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appv1alpha2.Workspace{}).
+		WithEventFilter(handlePredicates()).
 		Complete(r)
 }
 
-// KUBERNETES HELPERS
 func (r *WorkspaceReconciler) getConfigMap(ctx context.Context, name types.NamespacedName) (*corev1.ConfigMap, error) {
 	cm := &corev1.ConfigMap{}
 	err := r.Client.Get(ctx, name, cm)
@@ -127,7 +133,6 @@ func (r *WorkspaceReconciler) getSecret(ctx context.Context, name types.Namespac
 	return secret, err
 }
 
-// TERRAFORM CLOUD PLATFORM CLIENT
 func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
 	var secret *corev1.Secret
 
@@ -183,6 +188,13 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 	if instance.Spec.VersionControl != nil && workspace.VCSRepo == nil {
 		return true
 	}
+	// Terraform version
+	if instance.Spec.TerraformVersion == "" {
+		if instance.Status.TerraformVersion != workspace.TerraformVersion {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -203,7 +215,6 @@ func autoApplyToStr(autoApply bool) string {
 	return "manual"
 }
 
-// FINALIZERS
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
 
@@ -229,6 +240,7 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 	w.instance.Status.ObservedGeneration = w.instance.Generation
 	w.instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
 	w.instance.Status.WorkspaceID = workspace.ID
+	w.instance.Status.TerraformVersion = workspace.TerraformVersion
 
 	if workspace.CurrentRun != nil {
 		w.instance.Status.Run.ID = workspace.CurrentRun.ID
@@ -243,7 +255,7 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 }
 
 // WORKSPACES
-func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) error {
+func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
 	spec := w.instance.Spec
 	options := tfc.WorkspaceCreateOptions{
 		Name:             tfc.String(spec.Name),
@@ -260,7 +272,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get agent pool ID")
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get agent pool ID")
-			return err
+			return nil, err
 		}
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
 		options.AgentPoolID = tfc.String(agentPoolID)
@@ -283,23 +295,14 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 	if err != nil {
 		w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
-		return err
-	}
-	w.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
-	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", workspace.ID)
-
-	ws, err := r.reconcileSSHKey(ctx, w, workspace)
-	if err != nil {
-		w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
-	} else {
-		w.log.Info("Reconcile SSH Key", "msg", "successfully assigned ssh key to the workspace")
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully assigned SSH Key to the workspace with ID %s", workspace.ID)
-		workspace = ws
+		return nil, err
 	}
 
-	// Update status once a workspace has been successfully created
-	return r.updateStatus(ctx, w, workspace)
+	w.instance.Status = appv1alpha2.WorkspaceStatus{
+		WorkspaceID: workspace.ID,
+	}
+
+	return workspace, nil
 }
 
 func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
@@ -309,6 +312,7 @@ func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceIns
 func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
 	updateOptions := tfc.WorkspaceUpdateOptions{}
 	spec := w.instance.Spec
+	status := w.instance.Status
 
 	if spec.ExecutionMode == "agent" {
 		agentPoolID, err := r.getAgentPoolID(ctx, w)
@@ -347,8 +351,14 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		}
 	}
 
-	if workspace.TerraformVersion != spec.TerraformVersion {
-		updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
+	if spec.TerraformVersion == "" {
+		if workspace.TerraformVersion != status.TerraformVersion {
+			updateOptions.TerraformVersion = tfc.String(status.TerraformVersion)
+		}
+	} else {
+		if workspace.TerraformVersion != spec.TerraformVersion {
+			updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
+		}
 	}
 
 	if workspace.WorkingDirectory != spec.WorkingDirectory {
@@ -420,7 +430,14 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	if w.instance.IsCreationCandidate() {
 		w.log.Info("Reconcile Workspace", "msg", "status.WorkspaceID is empty, creating a new workspace")
 		r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Status.WorkspaceID is empty, creating a new workspace")
-		return r.createWorkspace(ctx, w)
+		_, err = r.createWorkspace(ctx, w)
+		if err != nil {
+			w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
+			return err
+		}
+		w.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", w.instance.Status.WorkspaceID)
 	}
 
 	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
@@ -430,7 +447,14 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		if err == tfc.ErrResourceNotFound {
 			w.log.Info("Reconcile Workspace", "msg", "workspace not found, creating a new workspace")
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s not found, creating a new workspace", w.instance.Status.WorkspaceID)
-			return r.createWorkspace(ctx, w)
+			workspace, err = r.createWorkspace(ctx, w)
+			if err != nil {
+				w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
+				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
+				return err
+			}
+			w.log.Info("Reconcile Workspace", "msg", "successfully created a new workspace")
+			r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", w.instance.Status.WorkspaceID)
 		} else {
 			w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to read workspace ID %s", w.instance.Status.WorkspaceID))
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to read workspace ID %s", w.instance.Status.WorkspaceID)
@@ -447,18 +471,19 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s", w.instance.Status.WorkspaceID)
 			return err
 		}
-		// reconcile SSH key
-		workspace, err = r.reconcileSSHKey(ctx, w, workspace)
-		if err != nil {
-			w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
-			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
-			return err
-		} else {
-			w.log.Info("Reconcile SSH Key", "msg", "successfully reconcile ssh key")
-			r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully reconcile SSH Key")
-		}
 	} else {
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", w.instance.Status.WorkspaceID))
+	}
+
+	// reconcile SSH key
+	err = r.reconcileSSHKey(ctx, w, workspace)
+	if err != nil {
+		w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")
+		return err
+	} else {
+		w.log.Info("Reconcile SSH Key", "msg", "successfully reconcile ssh key")
+		r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileSSHKey", "Successfully reconcile SSH Key")
 	}
 
 	// Reconcile Tags
@@ -541,6 +566,5 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
 
-	// Update status once a workspace has been successfully updated
 	return r.updateStatus(ctx, w, workspace)
 }

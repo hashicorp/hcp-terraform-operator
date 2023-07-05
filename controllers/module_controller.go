@@ -19,9 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-slug"
@@ -125,35 +123,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *ModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appv1alpha2.Module{}).
-		WithEventFilter(func() predicate.Predicate {
-			return predicate.Funcs{
-				CreateFunc: func(e event.CreateEvent) bool {
-					return true
-				},
-				UpdateFunc: func(e event.UpdateEvent) bool {
-					if e.ObjectOld == nil || e.ObjectNew == nil {
-						return false
-					}
-
-					// if Generations of new and old objects are not equal this is an update of the object
-					// if Generations and ResourceVersions of new and old objects are equal this is a periodic reconciliation
-					if e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration() {
-						return true
-					} else if e.ObjectOld.GetResourceVersion() == e.ObjectNew.GetResourceVersion() {
-						return true
-					}
-
-					// Do not call reconciliation in all other cases
-					return false
-				},
-				DeleteFunc: func(e event.DeleteEvent) bool {
-					return true
-				},
-				GenericFunc: func(e event.GenericEvent) bool {
-					return true
-				},
-			}
-		}()).
+		WithEventFilter(handlePredicates()).
 		Complete(r)
 }
 
