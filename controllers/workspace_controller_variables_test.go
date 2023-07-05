@@ -398,7 +398,7 @@ func compareVars(aVars, bVars []tfc.Variable) bool {
 		return false
 	}
 
-	return cmp.Equal(aVars, bVars, cmpopts.IgnoreFields(tfc.Variable{}, "ID", "Workspace"))
+	return cmp.Equal(aVars, bVars, cmpopts.IgnoreFields(tfc.Variable{}, "ID", "VersionID", "Workspace"))
 }
 
 // listWorkspaceVars returns a list of all variables assigned to the workspace
