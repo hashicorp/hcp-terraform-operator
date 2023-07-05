@@ -6,7 +6,7 @@ package v1alpha2
 import (
 	"fmt"
 
-	"github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -79,13 +79,13 @@ func (w *Workspace) validateSpecNotifications() field.ErrorList {
 		}
 		nn[n.Name] = i
 		switch n.Type {
-		case tfe.NotificationDestinationTypeEmail:
+		case tfc.NotificationDestinationTypeEmail:
 			allErrs = append(allErrs, w.validateSpecNotificationsEmail(n, f)...)
-		case tfe.NotificationDestinationTypeGeneric:
+		case tfc.NotificationDestinationTypeGeneric:
 			allErrs = append(allErrs, w.validateSpecNotificationsGeneric(n, f)...)
-		case tfe.NotificationDestinationTypeMicrosoftTeams:
+		case tfc.NotificationDestinationTypeMicrosoftTeams:
 			allErrs = append(allErrs, w.validateSpecNotificationsMicrosoftTeams(n, f)...)
-		case tfe.NotificationDestinationTypeSlack:
+		case tfc.NotificationDestinationTypeSlack:
 			allErrs = append(allErrs, w.validateSpecNotificationsSlack(n, f)...)
 		}
 	}
@@ -95,7 +95,7 @@ func (w *Workspace) validateSpecNotifications() field.ErrorList {
 
 func (w *Workspace) validateSpecNotificationsEmail(n Notification, f *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	t := tfe.NotificationDestinationTypeEmail
+	t := tfc.NotificationDestinationTypeEmail
 
 	if n.Token != "" {
 		allErrs = append(allErrs, field.Required(
@@ -122,7 +122,7 @@ func (w *Workspace) validateSpecNotificationsEmail(n Notification, f *field.Path
 
 func (w *Workspace) validateSpecNotificationsGeneric(n Notification, f *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	t := tfe.NotificationDestinationTypeGeneric
+	t := tfc.NotificationDestinationTypeGeneric
 
 	if n.Token == "" {
 		allErrs = append(allErrs, field.Required(
@@ -156,7 +156,7 @@ func (w *Workspace) validateSpecNotificationsGeneric(n Notification, f *field.Pa
 
 func (w *Workspace) validateSpecNotificationsMicrosoftTeams(n Notification, f *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	t := tfe.NotificationDestinationTypeMicrosoftTeams
+	t := tfc.NotificationDestinationTypeMicrosoftTeams
 
 	if n.URL == "" {
 		allErrs = append(allErrs, field.Required(
@@ -191,7 +191,7 @@ func (w *Workspace) validateSpecNotificationsMicrosoftTeams(n Notification, f *f
 
 func (w *Workspace) validateSpecNotificationsSlack(n Notification, f *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	t := tfe.NotificationDestinationTypeSlack
+	t := tfc.NotificationDestinationTypeSlack
 
 	if n.URL == "" {
 		allErrs = append(allErrs, field.Required(
