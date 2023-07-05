@@ -25,6 +25,7 @@ DEPENDENCIES:
 * Bump `k8s.io/apimachinery` from 0.27.2 to 0.27.3. [[GH-195](https://github.com/hashicorp/terraform-cloud-operator/pull/195)]
 * Bump `k8s.io/client-go` from 0.27.2 to 0.27.3. [[GH-195](https://github.com/hashicorp/terraform-cloud-operator/pull/195)]
 * Bump `github.com/onsi/ginkgo/v2` from 2.9.5 to 2.11.0. [[GH-197](https://github.com/hashicorp/terraform-cloud-operator/pull/197)]
+* Bump `github.com/onsi/gomega` from 1.27.7 to 1.27.8. [[GH-197](https://github.com/hashicorp/terraform-cloud-operator/pull/197)]
 * Bump `github.com/hashicorp/go-tfe` from 1.23.0 to 1.29.0. [[GH-205](https://github.com/hashicorp/terraform-cloud-operator/pull/205)]
 
 ## 2.0.0-beta6 (June 23, 2023)
