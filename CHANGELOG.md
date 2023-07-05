@@ -19,6 +19,10 @@ DOCS:
 
 * Update FAQ. [[GH-206](https://github.com/hashicorp/terraform-cloud-operator/pull/206)]
 
+DEPENDENCIES:
+
+* Bump `github.com/hashicorp/go-tfe` from 1.23.0 to 1.29.0. [[GH-205](https://github.com/hashicorp/terraform-cloud-operator/pull/205)]
+
 ## 2.0.0-beta6 (June 23, 2023)
 
 NOTES:
