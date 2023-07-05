@@ -1,8 +1,14 @@
 ## 2.0.0-beta7 (UNRELEASED)
 
+NOTES:
+* `Helm Chart`: the Helm chart version is synced to the Terraform Cloud Operator version. [[GH-204](https://github.com/hashicorp/terraform-cloud-operator/pull/204)]
+
 BUG FIXES:
 
-* `Operator`: fix an issue when the operator couldn't be run on the `amd64` platform.
+* `Operator`: fix an issue when the operator couldn't be run on the `amd64` platform. [[GH-203](https://github.com/hashicorp/terraform-cloud-operator/pull/203)]
+
+ENHANCEMENT:
+* `Helm Chart`: `operator.image.tag` defaults to `.Chart.AppVersion`. [[GH-204](https://github.com/hashicorp/terraform-cloud-operator/pull/204)]
 
 ENHANCEMENT:
 
