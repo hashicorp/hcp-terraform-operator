@@ -42,7 +42,7 @@ func getVariablesToUpdate(instanceVariables, workspaceVariables map[string]tfc.V
 
 	for ik, iv := range instanceVariables {
 		if wv, ok := workspaceVariables[ik]; ok {
-			if !isNoLongerSensitive(iv.Sensitive, wv.Sensitive) && !cmp.Equal(iv, wv, cmpopts.IgnoreFields(tfc.Variable{}, "ID", "Workspace")) {
+			if !isNoLongerSensitive(iv.Sensitive, wv.Sensitive) && !cmp.Equal(iv, wv, cmpopts.IgnoreFields(tfc.Variable{}, "ID", "VersionID", "Workspace")) {
 				iv.ID = wv.ID
 				variables[iv.Key] = iv
 			}
