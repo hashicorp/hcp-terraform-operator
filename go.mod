@@ -58,12 +58,8 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
-<<<<<<< HEAD
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-=======
 	golang.org/x/sys v0.9.0 // indirect
->>>>>>> bb227fb (🌱 Bump github.com/onsi/ginkgo/v2 from 2.9.5 to 2.11.0)
 	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
