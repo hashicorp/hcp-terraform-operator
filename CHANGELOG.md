@@ -19,6 +19,11 @@ DOCS:
 
 * Update FAQ. [[GH-206](https://github.com/hashicorp/terraform-cloud-operator/pull/206)]
 
+DEPENDENCIES:
+
+* Bump `github.com/onsi/ginkgo/v2` from 2.9.5 to 2.9.7. [[GH-192](https://github.com/hashicorp/terraform-cloud-operator/pull/192)]
+* Bump `github.com/onsi/gomega` from 1.27.7 to 1.27.8. [[GH-192](https://github.com/hashicorp/terraform-cloud-operator/pull/192)]
+
 ## 2.0.0-beta6 (June 23, 2023)
 
 NOTES:
