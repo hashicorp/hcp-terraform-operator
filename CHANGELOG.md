@@ -1,4 +1,4 @@
-## 2.0.0-beta7 (UNRELEASED)
+## 2.0.0-beta7 (July 07, 2023)
 
 NOTES:
 * `Helm Chart`: the Helm chart version is synced to the Terraform Cloud Operator version. [[GH-204](https://github.com/hashicorp/terraform-cloud-operator/pull/204)]
@@ -9,12 +9,8 @@ BUG FIXES:
 
 ENHANCEMENT:
 * `Helm Chart`: `operator.image.tag` defaults to `.Chart.AppVersion`. [[GH-204](https://github.com/hashicorp/terraform-cloud-operator/pull/204)]
-* `AgentPool`: add `autoscaling` field to allow configuration of a basic autoscaler for agent deployments based on pending runs. 
-
-
-ENHANCEMENT:
-
 * `Workspace`: add event filtering to reduce the number of unnecessary reconciliations. [[GH-194](https://github.com/hashicorp/terraform-cloud-operator/pull/194)]
+* `AgentPool`: add `autoscaling` field to allow configuration of a basic autoscaler for agent deployments based on pending runs. [[GH-198](https://github.com/hashicorp/terraform-cloud-operator/pull/198)]
 * `Workspace`: add Terraform version utilized in the Workspace to the status: `status.TerraformVersion`. [[GH-206](https://github.com/hashicorp/terraform-cloud-operator/pull/206)]
 
 DOCS:
