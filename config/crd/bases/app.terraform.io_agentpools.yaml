@@ -33,7 +33,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AgentPoolSpec defines the desired state of AgentPool.
+            description: AgentPoolSpec defines the desired stak get ste of AgentPool.
             properties:
               agentDeployment:
                 description: Agent deployment settings
@@ -7556,6 +7556,46 @@ spec:
                   type: object
                 minItems: 1
                 type: array
+              autoscaling:
+                description: Agent deployment settings
+                properties:
+                  cooldownPeriodSeconds:
+                    default: 300
+                    description: CooldownPeriodSeconds is the time to wait between
+                      scaling events. Defaults to 300.
+                    format: int32
+                    type: integer
+                  maxReplicas:
+                    description: MaxReplicas is the maximum number of replicas for
+                      the Agent deployment.
+                    format: int32
+                    type: integer
+                  minReplicas:
+                    description: MinReplicas is the minimum number of replicas for
+                      the Agent deployment.
+                    format: int32
+                    type: integer
+                  targetWorkspaces:
+                    description: TargetWorkspaces is a list of Terraform Cloud Workspaces
+                      which the agent pool should scale up to meet demand.
+                    items:
+                      description: TargetWorkspace is the name or ID of the workspace
+                        you want autoscale against.
+                      properties:
+                        id:
+                          description: Workspace ID
+                          type: string
+                        name:
+                          description: Workspace Name
+                          minLength: 1
+                          type: string
+                      type: object
+                    type: array
+                required:
+                - maxReplicas
+                - minReplicas
+                - targetWorkspaces
+                type: object
               name:
                 description: 'Agent Pool name. More information: - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools'
                 minLength: 1
@@ -7632,6 +7672,18 @@ spec:
                   - name
                   type: object
                 type: array
+              autoscaling:
+                description: Autoscaling Status
+                properties:
+                  desiredReplicas:
+                    description: Desired number of agent replicas
+                    format: int32
+                    type: integer
+                  lastScalingEvent:
+                    description: Last time the agent pool was scaledx
+                    format: date-time
+                    type: string
+                type: object
               observedGeneration:
                 description: Real world state generation.
                 format: int64

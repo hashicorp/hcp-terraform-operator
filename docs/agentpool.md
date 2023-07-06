@@ -200,6 +200,40 @@ The `agentDeployment.Spec` attribute accepts a common `PodSpec` structure identi
 
 Deleting the AgentPool will result in deletion of the associated agent Deployment.
 
+
+8. If you want the agent deployment to autoscale based on pending runs in a terraform workspace you can set the `autoscaling` field. This field allows you to configure the set of workspaces you want to scale on pending runs for, and the minimum and maximum agents you want the deployment to run.
+
+    ```yaml
+    apiVersion: app.terraform.io/v1alpha2
+    kind: AgentPool
+    metadata:
+      name: this
+      namespace: default
+    spec:
+      organization: kubernetes-operator
+      token:
+        secretKeyRef:
+          name: tfc-operator
+          key: token
+      name: agent-pool-demo
+      agentTokens:
+        - name: white
+        - name: blue
+        - name: red
+      agentDeployment:
+        replicas: 3
+        spec:
+          containers:
+            - name: tfc-agent
+              image: "hashicorp/tfc-agent:latest"
+      autoscaling:
+        minReplicas: 2
+        maxReplicas: 4
+        targetWorkspaces:
+        - name: test-workspace1
+        - name: test-workspace2
+    ```
+
 If you have any questions, please check out the [FAQ](./faq.md#agent-pool-controller) to see if you can find answers there.
 
 If you encounter any issues with the `AgentPool` controller please refer to the [Troubleshooting](../README.md#troubleshooting).
