@@ -2,6 +2,16 @@
 
 The Operator provides [Helm chart](../charts/terraform-cloud-operator) as a first-class method of installation on Kubernetes.
 
+## :warning: Beta :warning:
+
+By default, Helm does not display development versions (alpha, beta, and release candidate releases). In order to list them, use the following command when looking for available versions:
+
+```console
+$ helm search repo hashicorp/terraform-cloud-operator --versions --devel
+```
+
+Use the option `--version VERSION` with `helm install` and `helm upgrade` commands to specify the version you want to install.
+
 ## Steps
 
 1. Add the Helm repository
@@ -21,6 +31,7 @@ The Operator provides [Helm chart](../charts/terraform-cloud-operator) as a firs
     ```console
     $ helm install \
       demo hashicorp/terraform-cloud-operator \
+      --version 2.0.0-beta7 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -32,6 +43,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 ```console
 $ helm install \
   demo hashicorp/terraform-cloud-operator \
+  --version 2.0.0-beta7 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -61,6 +73,7 @@ that TLS certificate should be installed with the operator by setting the `custo
 ```console
 $ helm upgrade \
   demo hashicorp/terraform-cloud-operator \
+  --version 2.0.0-beta7 \
   --namespace tfc-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
