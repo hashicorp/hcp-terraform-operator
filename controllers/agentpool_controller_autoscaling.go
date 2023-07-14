@@ -6,6 +6,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
@@ -19,8 +20,13 @@ import (
 )
 
 func getWorkspacePendingRuns(ctx context.Context, ap *agentPoolInstance, workspaceID string) (int, error) {
+	statuses := []string{
+		string(tfc.RunPending),
+		string(tfc.RunPlanQueued),
+		string(tfc.RunApplyQueued),
+	}
 	runs, err := ap.tfClient.Client.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
-		Status: string(tfc.RunPending),
+		Status: strings.Join(statuses, ","),
 	})
 	if err != nil {
 		return 0, err
