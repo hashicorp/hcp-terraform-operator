@@ -28,6 +28,9 @@ operator:
   # The API URL of a TFE instance
   tfeAddress: ""
 
+  # Whether or not to ignore TLS certification warnings.
+  skipTLSVerify: false
+
 # Controllers-specific options.
 controllers:
   agentPool:

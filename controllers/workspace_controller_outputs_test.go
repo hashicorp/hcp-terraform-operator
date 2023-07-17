@@ -19,7 +19,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Workspace controller", Label("Outputs"), Ordered, func() {
 	var (
 		instance  *appv1alpha2.Workspace
 		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
@@ -32,6 +32,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		if cloudEndpoint != tfcDefaultAddress {
+			Skip("Does not run against TFC, skip this test")
+		}
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

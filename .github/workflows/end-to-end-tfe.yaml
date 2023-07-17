@@ -2,13 +2,7 @@ name: E2E on Terraform Enterprise
 
 on:
   schedule:
-    - cron: '30 5 * * *'
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+    - cron: '5 9 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -33,3 +27,4 @@ jobs:
           TFC_TOKEN: ${{ secrets.TFE_TOKEN }}
           TFC_VCS_REPO: ${{ secrets.TFE_VCS_REPO }}
           TFE_ADDRESS: ${{ secrets.TFE_ADDRESS }}
+          TFC_TLS_SKIP_VERIFY: true

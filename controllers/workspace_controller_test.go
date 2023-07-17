@@ -129,7 +129,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.AllowDestroyPlan = false
 			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
 			instance.Spec.ExecutionMode = "local"
-			instance.Spec.TerraformVersion = "1.5.2"
+			instance.Spec.TerraformVersion = "1.4.4"
 			instance.Spec.WorkingDirectory = fmt.Sprintf("%v/new", instance.Spec.WorkingDirectory)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -148,7 +148,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 
 		It("can keep Terraform version", func() {
-			instance.Spec.TerraformVersion = "1.5.1"
+			instance.Spec.TerraformVersion = "1.4.1"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
 

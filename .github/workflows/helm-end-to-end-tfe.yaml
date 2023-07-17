@@ -2,19 +2,14 @@ name: E2E on Terraform Enterprise [Helm]
 
 on:
   schedule:
-    - cron: '30 6 * * *'
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+    - cron: '5 9 * * 0'
   workflow_dispatch:
 
 env:
   USE_EXISTING_CLUSTER: true
   CLUSTER_NAME: 'this'
   DOCKER_IMAGE: 'this'
+  KIND_VERSION: ${{ vars.KIND_VERSION }}
   KUBECONFIG: ${{ github.workspace }}/.kube/config
 
 jobs:
@@ -36,7 +31,7 @@ jobs:
         uses: helm/kind-action@fa81e57adff234b2908110485695db0f181f3c67 # v1.7.0
         with:
           wait: 2m
-          version: v0.18.0 # Installs Kubernetes v1.26.3
+          version: v${{ env.KIND_VERSION }}
           cluster_name: ${{ env.CLUSTER_NAME }}
 
       - name: Set up Helm
@@ -78,6 +73,7 @@ jobs:
           helm install --wait --timeout 1m this ./charts/terraform-cloud-operator \
             --set operator.image.repository=${{ env.DOCKER_IMAGE }} \
             --set operator.image.tag=${{ env.DOCKER_METADATA_OUTPUT_VERSION }} \
+            --set operator.skipTLSVerify=true \
             --set operator.syncPeriod=30s \
             --set controllers.agentPool.workers=5 \
             --set controllers.module.workers=5 \
@@ -88,6 +84,7 @@ jobs:
         env:
           TFC_OAUTH_TOKEN: ${{ secrets.TFC_OAUTH_TOKEN }}
           TFC_ORG: ${{ secrets.TFC_ORG }}
-          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+          TFC_TOKEN: ${{ secrets.TFE_TOKEN }}
           TFC_VCS_REPO: ${{ secrets.TFC_VCS_REPO }}
           TFE_ADDRESS: ${{ secrets.TFE_ADDRESS }}
+          TFC_TLS_SKIP_VERIFY: true

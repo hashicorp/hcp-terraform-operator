@@ -25,6 +25,9 @@ var _ = Describe("Module controller", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		if cloudEndpoint != tfcDefaultAddress {
+			Skip("Does not run against TFC, skip this test")
+		}
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
@@ -54,7 +57,8 @@ var _ = Describe("Module controller", Ordered, func() {
 					},
 				},
 				Module: &appv1alpha2.ModuleSource{
-					Source:  fmt.Sprintf("%s/%v/module-random/provider", cloudEndpoint, organization),
+					// Source:  fmt.Sprintf("%s/%v/module-random/provider", cloudEndpoint, organization),
+					Source:  "github.com/arybolovlev/terraform-provider-module-random",
 					Version: "0.0.4",
 				},
 				DestroyOnDeletion: true,
