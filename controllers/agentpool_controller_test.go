@@ -19,6 +19,7 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/utils"
 )
 
 var _ = Describe("Agent Pool controller", Ordered, func() {
@@ -284,7 +285,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			// ADD EMPTY AgentDeployment BLOCK
 			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{
-				Replicas: appv1alpha2.PointerOf(int32(3)),
+				Replicas: utils.PointerOf(int32(3)),
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -372,9 +373,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				TargetWorkspaces: []appv1alpha2.TargetWorkspace{
 					{Name: "test-workspace"},
 				},
-				MinReplicas:           appv1alpha2.PointerOf(int32(3)),
-				MaxReplicas:           appv1alpha2.PointerOf(int32(5)),
-				CooldownPeriodSeconds: appv1alpha2.PointerOf(int32(60)),
+				MinReplicas:           utils.PointerOf(int32(3)),
+				MaxReplicas:           utils.PointerOf(int32(5)),
+				CooldownPeriodSeconds: utils.PointerOf(int32(60)),
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -386,9 +387,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(Equal([]appv1alpha2.TargetWorkspace{
 				{Name: "test-workspace"},
 			}))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(appv1alpha2.PointerOf(int32(3))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(appv1alpha2.PointerOf(int32(5))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(appv1alpha2.PointerOf(int32(60))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(utils.PointerOf(int32(3))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(utils.PointerOf(int32(5))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(utils.PointerOf(int32(60))))
 		})
 	})
 })

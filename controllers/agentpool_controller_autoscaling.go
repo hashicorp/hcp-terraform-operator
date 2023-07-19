@@ -14,9 +14,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/utils"
 )
 
 func getWorkspaceQueueDepth(ctx context.Context, ap *agentPoolInstance, workspaceID string) (int, error) {
@@ -135,7 +135,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	} else if (int(*currentReplicas) + queueDepth) > int(*ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas) {
 		desiredReplicas = ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
 	} else if queueDepth > int(*currentReplicas) {
-		desiredReplicas = pointer.Int32(int32(int(*currentReplicas) + queueDepth))
+		desiredReplicas = utils.PointerOf(int32(int(*currentReplicas) + queueDepth))
 	}
 
 	if *desiredReplicas != *currentReplicas {

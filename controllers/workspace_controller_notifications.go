@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	tfc "github.com/hashicorp/go-tfe"
 
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/utils"
 )
 
 func hasNotificationItem(s []tfc.NotificationConfiguration, f tfc.NotificationConfiguration) (int, bool) {
@@ -34,7 +34,7 @@ func notificationsDifference(a, b []tfc.NotificationConfiguration) []tfc.Notific
 	for _, av := range a {
 		i, t := hasNotificationItem(bc, av)
 		if t {
-			bc = appv1alpha2.RemoveFromSlice(bc, i)
+			bc = utils.RemoveFromSlice(bc, i)
 		} else {
 			d = append(d, av)
 		}

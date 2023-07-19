@@ -14,6 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/hashicorp/terraform-cloud-operator/utils"
 )
 
 func getAgentPoolTokens(ctx context.Context, ap *agentPoolInstance) (map[string]bool, error) {
@@ -105,8 +107,8 @@ func (r *AgentPoolReconciler) createAgentPoolTokens(ctx context.Context, ap *age
 		ap.instance.Status.AgentTokens = append(ap.instance.Status.AgentTokens, &appv1alpha2.AgentToken{
 			Name:       at.Description,
 			ID:         at.ID,
-			CreatedAt:  appv1alpha2.PointerOf(at.CreatedAt.Unix()),
-			LastUsedAt: appv1alpha2.PointerOf(at.LastUsedAt.Unix()),
+			CreatedAt:  utils.PointerOf(at.CreatedAt.Unix()),
+			LastUsedAt: utils.PointerOf(at.LastUsedAt.Unix()),
 		})
 		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new agent token %q %q", t, at.ID))
 		// UPDATE SECRET

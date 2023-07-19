@@ -5,6 +5,8 @@ package v1alpha2
 
 import (
 	"testing"
+
+	"github.com/hashicorp/terraform-cloud-operator/utils"
 )
 
 func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
@@ -56,7 +58,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 				AgentTokens: []*AgentToken{
 					{
 						Name:      "this",
-						CreatedAt: PointerOf(int64(1984)),
+						CreatedAt: utils.PointerOf(int64(1984)),
 					},
 				},
 			},
@@ -66,7 +68,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 				AgentTokens: []*AgentToken{
 					{
 						Name:       "this",
-						LastUsedAt: PointerOf(int64(1984)),
+						LastUsedAt: utils.PointerOf(int64(1984)),
 					},
 				},
 			},
