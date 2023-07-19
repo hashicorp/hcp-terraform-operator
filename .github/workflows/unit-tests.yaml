@@ -1,4 +1,4 @@
-name: API tests
+name: Unit tests
 
 on:
   schedule:
@@ -25,5 +25,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Run API tests
-        run: make test-api
+      - name: Run Unit tests
+        run: |
+          make test-api
+          make test-utils

@@ -9,6 +9,7 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/internal/pointer"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -105,8 +106,8 @@ func (r *AgentPoolReconciler) createAgentPoolTokens(ctx context.Context, ap *age
 		ap.instance.Status.AgentTokens = append(ap.instance.Status.AgentTokens, &appv1alpha2.AgentToken{
 			Name:       at.Description,
 			ID:         at.ID,
-			CreatedAt:  appv1alpha2.PointerOf(at.CreatedAt.Unix()),
-			LastUsedAt: appv1alpha2.PointerOf(at.LastUsedAt.Unix()),
+			CreatedAt:  pointer.PointerOf(at.CreatedAt.Unix()),
+			LastUsedAt: pointer.PointerOf(at.LastUsedAt.Unix()),
 		})
 		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new agent token %q %q", t, at.ID))
 		// UPDATE SECRET

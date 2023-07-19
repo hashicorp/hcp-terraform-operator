@@ -123,6 +123,10 @@ test: manifests generate fmt vet copywrite envtest ## Run tests.
 test-api: fmt vet copywrite ## Run API tests.
 	go test -timeout 30m -count 1 -v ./api/v1alpha2
 
+.PHONY: test-internal
+test-internal: fmt vet copywrite ## Run internal/* tests.
+	go test -timeout 30m -count 1 -v ./internal/*
+
 ##@ Build
 
 .PHONY: build
