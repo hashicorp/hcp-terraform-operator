@@ -22,7 +22,7 @@ spec:
         control-plane: {{ .Release.Name }}-controller-manager
     spec:
       containers:
-        - name: {{ .Chart.Name }}
+        - name: manager
           image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
           args:
@@ -55,7 +55,6 @@ spec:
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
-          name: manager
           readinessProbe:
             httpGet:
               path: /readyz
