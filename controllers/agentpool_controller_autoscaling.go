@@ -19,7 +19,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-func getWorkspacePendingRuns(ctx context.Context, ap *agentPoolInstance, workspaceID string) (int, error) {
+func getWorkspaceQueueDepth(ctx context.Context, ap *agentPoolInstance, workspaceID string) (int, error) {
 	statuses := []string{
 		string(tfc.RunPending),
 		string(tfc.RunPlanQueued),
@@ -52,21 +52,21 @@ func getTargetWorkspaceID(ctx context.Context, ap *agentPoolInstance, targetWork
 	return "", fmt.Errorf("no such workspace found %q", targetWorkspace.Name)
 }
 
-func getPendingRuns(ctx context.Context, ap *agentPoolInstance) (int, error) {
+func getQueueDepth(ctx context.Context, ap *agentPoolInstance) (int, error) {
 	workspaces := ap.instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces
-	count := 0
+	depth := 0
 	for _, w := range workspaces {
 		id, err := getTargetWorkspaceID(ctx, ap, w)
 		if err != nil {
 			return 0, err
 		}
-		runs, err := getWorkspacePendingRuns(ctx, ap, id)
+		runs, err := getWorkspaceQueueDepth(ctx, ap, id)
 		if err != nil {
 			return 0, err
 		}
-		count += runs
+		depth += runs
 	}
-	return count, nil
+	return depth, nil
 }
 
 func getAgentDeploymentNamespacedName(ap *agentPoolInstance) types.NamespacedName {
@@ -115,7 +115,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		}
 	}
 
-	pendingRuns, err := getPendingRuns(ctx, ap)
+	queueDepth, err := getQueueDepth(ctx, ap)
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to get pending runs")
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
@@ -130,12 +130,12 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	}
 
 	desiredReplicas := currentReplicas
-	if pendingRuns == 0 {
+	if queueDepth == 0 {
 		desiredReplicas = ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas
-	} else if (int(*currentReplicas) + pendingRuns) > int(*ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas) {
+	} else if (int(*currentReplicas) + queueDepth) > int(*ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas) {
 		desiredReplicas = ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
-	} else if pendingRuns > int(*currentReplicas) {
-		desiredReplicas = pointer.Int32(int32(int(*currentReplicas) + pendingRuns))
+	} else if queueDepth > int(*currentReplicas) {
+		desiredReplicas = pointer.Int32(int32(int(*currentReplicas) + queueDepth))
 	}
 
 	if *desiredReplicas != *currentReplicas {
