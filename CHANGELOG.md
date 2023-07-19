@@ -1,3 +1,9 @@
+## 2.0.0-beta8 (UNRELEASED)
+
+BUG FIXES:
+* `AgentPool`: fix an issue when `plan_queued` and `apply_queued` statuses do not trigger agent scaling. [[GH-215](https://github.com/hashicorp/terraform-cloud-operator/pull/215)]
+* `Helm Chart`: fix an issue with the Deployment template in the Helm chart where `name` in path `spec.template.spec.containers[0]` was duplicated. [[GH-216](https://github.com/hashicorp/terraform-cloud-operator/pull/216)]
+
 ## 2.0.0-beta7 (July 07, 2023)
 
 NOTES:
