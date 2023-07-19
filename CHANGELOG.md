@@ -7,6 +7,7 @@ BUG FIXES:
 DEPENDENCIES:
 
 * Bump `github.com/hashicorp/go-tfe` from 1.29.0 to 1.30.0. [[GH-218](https://github.com/hashicorp/terraform-cloud-operator/pull/218)]
+* Bump `github.com/hashicorp/go-slug` from 0.11.1 to 0.12.0. [[GH-219](https://github.com/hashicorp/terraform-cloud-operator/pull/219)]
 
 ## 2.0.0-beta7 (July 07, 2023)
 
