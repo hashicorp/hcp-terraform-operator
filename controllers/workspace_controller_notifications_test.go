@@ -5,7 +5,6 @@ package controllers
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -92,6 +91,9 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		})
 
 		It("can create multiple notifications", func() {
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
@@ -109,6 +111,9 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		})
 
 		It("can re-create notifications", func() {
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
@@ -132,6 +137,9 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		})
 
 		It("can update notifications", func() {
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
 				Type:       tfc.NotificationDestinationTypeEmail,
@@ -150,6 +158,9 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		})
 
 		It("can delete notifications", func() {
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
 				Type:       tfc.NotificationDestinationTypeEmail,
@@ -168,8 +179,8 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		})
 
 		It("can create Terraform Enterprise email address notifications", func() {
-			if _, ok := os.LookupEnv("TFE_ADDRESS"); !ok {
-				Skip("Environment variable TFE_ADDRESS is either not set or empty")
+			if cloudEndpoint == tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:           "email",
