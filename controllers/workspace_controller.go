@@ -5,7 +5,11 @@ package controllers
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
+	"os"
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -160,8 +164,25 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 		return err
 	}
 
+	httpClient := tfc.DefaultConfig().HTTPClient
+	insecure := false
+
+	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
+		insecure, err = strconv.ParseBool(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if insecure {
+		w.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
+	}
+
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+
 	config := &tfc.Config{
-		Token: token,
+		Token:      token,
+		HTTPClient: httpClient,
 	}
 	w.tfClient.Client, err = tfc.NewClient(config)
 
