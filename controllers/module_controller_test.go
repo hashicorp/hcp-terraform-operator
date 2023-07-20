@@ -57,23 +57,19 @@ var _ = Describe("Module controller", Ordered, func() {
 					},
 				},
 				Module: &appv1alpha2.ModuleSource{
-					Source:  "github.com/arybolovlev/terraform-provider-module-random",
-					Version: "0.0.4",
+					Source:  "hashicorp/animal/demo",
+					Version: "1.0.0",
 				},
 				DestroyOnDeletion: true,
 				Variables: []appv1alpha2.ModuleVariable{
 					{
-						Name: "string_length",
+						Name: "name",
 					},
 				},
 				Outputs: []appv1alpha2.ModuleOutput{
 					{
-						Name:      "bool",
+						Name:      "animal",
 						Sensitive: false,
-					},
-					{
-						Name:      "secret",
-						Sensitive: true,
 					},
 				},
 			},
@@ -90,9 +86,12 @@ var _ = Describe("Module controller", Ordered, func() {
 			return errors.IsNotFound(err)
 		}).Should(BeTrue())
 
-		// Delete workspace
-		err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-		Expect(err).Should(Succeed())
+		// Make sure that the Terraform Cloud workspace is deleted
+		Eventually(func() bool {
+			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
+			// The Terraform Cloud client will return the error 'ResourceNotFound' once the workspace does not exist
+			return err == tfc.ErrResourceNotFound || err == nil
+		}).Should(BeTrue())
 	})
 
 	Context("Module controller", func() {
@@ -107,9 +106,9 @@ var _ = Describe("Module controller", Ordered, func() {
 
 			// Create TFC Workspace variables
 			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
-				Key:      tfc.String("string_length"),
-				Value:    tfc.String("512"),
-				HCL:      tfc.Bool(true),
+				Key:      tfc.String("name"),
+				Value:    tfc.String("Pluto"),
+				HCL:      tfc.Bool(false),
 				Category: tfc.Category(tfc.CategoryTerraform),
 			})
 			Expect(err).Should(Succeed())
@@ -159,9 +158,9 @@ var _ = Describe("Module controller", Ordered, func() {
 
 			// Create TFC Workspace variables
 			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
-				Key:      tfc.String("string_length"),
-				Value:    tfc.String("512"),
-				HCL:      tfc.Bool(true),
+				Key:      tfc.String("name"),
+				Value:    tfc.String("Pluto"),
+				HCL:      tfc.Bool(false),
 				Category: tfc.Category(tfc.CategoryTerraform),
 			})
 			Expect(err).Should(Succeed())

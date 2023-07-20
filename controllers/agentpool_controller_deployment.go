@@ -10,13 +10,13 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/internal/pointer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -121,7 +121,7 @@ func (r *AgentPoolReconciler) deleteDeployment(ctx context.Context, ap *agentPoo
 }
 
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
-	var r *int32 = pointer.Int32(1) // default to one replica if not otherwise configured
+	var r *int32 = pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
 		r = ap.instance.Spec.AgentDeployment.Replicas
 	}
@@ -159,7 +159,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 				RollingUpdate: &appsv1.RollingUpdateDeployment{
 					// this is important to ensure the number of pods does not temporarily
 					// shoot over the max agents allowed when rolling the deployment.
-					MaxSurge: appv1alpha2.PointerOf(intstr.FromInt(0)),
+					MaxSurge: pointer.PointerOf(intstr.FromInt(0)),
 				},
 			},
 			Template: corev1.PodTemplateSpec{
