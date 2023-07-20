@@ -6,8 +6,11 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -202,8 +205,25 @@ func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInst
 		return err
 	}
 
+	httpClient := tfc.DefaultConfig().HTTPClient
+	insecure := false
+
+	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
+		insecure, err = strconv.ParseBool(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if insecure {
+		m.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
+	}
+
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+
 	config := &tfc.Config{
-		Token: token,
+		Token:      token,
+		HTTPClient: httpClient,
 	}
 	m.tfClient.Client, err = tfc.NewClient(config)
 

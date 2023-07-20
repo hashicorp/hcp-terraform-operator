@@ -5,7 +5,11 @@ package controllers
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -153,8 +157,25 @@ func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentP
 		return err
 	}
 
+	httpClient := tfc.DefaultConfig().HTTPClient
+	insecure := false
+
+	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
+		insecure, err = strconv.ParseBool(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if insecure {
+		ap.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
+	}
+
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+
 	config := &tfc.Config{
-		Token: token,
+		Token:      token,
+		HTTPClient: httpClient,
 	}
 	ap.tfClient.Client, err = tfc.NewClient(config)
 
