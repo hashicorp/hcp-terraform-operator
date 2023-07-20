@@ -15,7 +15,6 @@ env:
   USE_EXISTING_CLUSTER: true
   CLUSTER_NAME: 'this'
   DOCKER_IMAGE: 'this'
-  KIND_VERSION: ${{ vars.KIND_VERSION }}
   KUBECONFIG: ${{ github.workspace }}/.kube/config
 
 jobs:
@@ -37,7 +36,7 @@ jobs:
         uses: helm/kind-action@fa81e57adff234b2908110485695db0f181f3c67 # v1.7.0
         with:
           wait: 2m
-          KIND_VERSION: ${{ vars.KIND_VERSION }}
+          version: v${{ vars.KIND_VERSION }}
           cluster_name: ${{ env.CLUSTER_NAME }}
 
       - name: Set up Helm
@@ -79,6 +78,8 @@ jobs:
           helm install --wait --timeout 1m this ./charts/terraform-cloud-operator \
             --set operator.image.repository=${{ env.DOCKER_IMAGE }} \
             --set operator.image.tag=${{ env.DOCKER_METADATA_OUTPUT_VERSION }} \
+            --set operator.skipTLSVerify=true \
+            --set operator.tfeAddress=${{ secrets.TFE_ADDRESS }} \
             --set operator.syncPeriod=30s \
             --set controllers.agentPool.workers=5 \
             --set controllers.module.workers=5 \
@@ -87,9 +88,9 @@ jobs:
       - name: Run end-to-end test suite
         run: make test
         env:
-          TFC_OAUTH_TOKEN: ${{ secrets.TFC_OAUTH_TOKEN }}
-          TFC_ORG: ${{ secrets.TFC_ORG }}
-          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
-          TFC_VCS_REPO: ${{ secrets.TFC_VCS_REPO }}
-          TFE_ADDRESS: ${{ secrets.TFE_ADDRESS }}
+          TFC_OAUTH_TOKEN: ${{ secrets.TFE_OAUTH_TOKEN }}
+          TFC_ORG: ${{ secrets.TFE_ORG }}
+          TFC_TOKEN: ${{ secrets.TFE_TOKEN }}
+          TFC_VCS_REPO: ${{ secrets.TFE_VCS_REPO }}
           TFC_TLS_SKIP_VERIFY: true
+          TFE_ADDRESS: ${{ secrets.TFE_ADDRESS }}

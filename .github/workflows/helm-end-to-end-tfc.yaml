@@ -15,7 +15,6 @@ env:
   USE_EXISTING_CLUSTER: true
   CLUSTER_NAME: 'this'
   DOCKER_IMAGE: 'this'
-  KIND_VERSION: ${{ vars.KIND_VERSION }}
   KUBECONFIG: ${{ github.workspace }}/.kube/config
 
 jobs:
@@ -37,7 +36,7 @@ jobs:
         uses: helm/kind-action@fa81e57adff234b2908110485695db0f181f3c67 # v1.7.0
         with:
           wait: 2m
-          version: v${{ env.KIND_VERSION }}
+          version: v${{ vars.KIND_VERSION }}
           cluster_name: ${{ env.CLUSTER_NAME }}
 
       - name: Set up Helm
