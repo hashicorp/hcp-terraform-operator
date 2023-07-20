@@ -2,19 +2,20 @@ name: E2E on Terraform Cloud [Helm]
 
 on:
   schedule:
-    - cron: '30 6 * * *'
-  pull_request:
-    branches:
-      - main
+    - cron: '30 6 * * 0'
   push:
     branches:
       - main
+    paths:
+      - 'controllers/**'
+      - 'charts/terraform-cloud-operator/**'
   workflow_dispatch:
 
 env:
   USE_EXISTING_CLUSTER: true
   CLUSTER_NAME: 'this'
   DOCKER_IMAGE: 'this'
+  KIND_VERSION: ${{ vars.KIND_VERSION }}
   KUBECONFIG: ${{ github.workspace }}/.kube/config
 
 jobs:
@@ -36,7 +37,7 @@ jobs:
         uses: helm/kind-action@fa81e57adff234b2908110485695db0f181f3c67 # v1.7.0
         with:
           wait: 2m
-          version: v0.18.0 # Installs Kubernetes v1.26.3
+          version: v${{ env.KIND_VERSION }}
           cluster_name: ${{ env.CLUSTER_NAME }}
 
       - name: Set up Helm

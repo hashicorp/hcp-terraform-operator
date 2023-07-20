@@ -32,6 +32,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		if cloudEndpoint != tfcDefaultAddress {
+			Skip("Does not run against TFC, skip this test")
+		}
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

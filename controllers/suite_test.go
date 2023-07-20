@@ -5,9 +5,13 @@ package controllers
 
 import (
 	"context"
+	"crypto/tls"
+	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -43,7 +47,8 @@ var tfClient *tfc.Client
 
 var organization = os.Getenv("TFC_ORG")
 var terraformToken = os.Getenv("TFC_TOKEN")
-var cloudEndpoint = "app.terraform.io"
+var tfcDefaultAddress = "app.terraform.io"
+var cloudEndpoint = tfcDefaultAddress
 
 var syncPeriod = 30 * time.Second
 
@@ -104,6 +109,21 @@ var _ = BeforeSuite(func() {
 	}
 	// Terraform Cloud Client
 	tfClient, err = tfc.NewClient(&tfc.Config{Token: os.Getenv("TFC_TOKEN")})
+	httpClient := tfc.DefaultConfig().HTTPClient
+	insecure := false
+	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
+		insecure, err = strconv.ParseBool(v)
+		if err != nil {
+			Fail(fmt.Sprintf("Cannot convert value of TFC_TLS_SKIP_VERIFY into a bool: %v", err))
+		}
+	}
+	fmt.Fprintf(GinkgoWriter, "TFC_TLS_SKIP_VERIFY: %v", insecure)
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	tfcConfig := &tfc.Config{
+		Token:      os.Getenv("TFC_TOKEN"),
+		HTTPClient: httpClient,
+	}
+	tfClient, err = tfc.NewClient(tfcConfig)
 	Expect(err).Should(Succeed())
 	Expect(tfClient).ToNot(BeNil())
 
