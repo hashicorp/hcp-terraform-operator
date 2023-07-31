@@ -12,5 +12,5 @@ roleRef:
   name: {{ .Release.Name }}-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
+  name: {{ include "terraform-cloud-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}

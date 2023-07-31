@@ -46,3 +46,7 @@ controllers:
 # Custom Certificate Authority bundle to validate API TLS certificates
 # Expects a path to a CRT file containing concatenated certificates
 customCAcertificates: ""
+
+serviceAccount:
+  create: true
+  name:
