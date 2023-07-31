@@ -11,7 +11,7 @@ roleRef:
   name: {{ .Release.Name }}-manager-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
+  name: {{ include "terraform-cloud-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -24,5 +24,5 @@ roleRef:
   name: {{ .Release.Name }}-proxy-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-controller-manager
+  name: {{ include "terraform-cloud-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}

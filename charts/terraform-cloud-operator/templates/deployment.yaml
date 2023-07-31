@@ -93,7 +93,7 @@ spec:
               memory: 64Mi
           securityContext:
             allowPrivilegeEscalation: false
-      serviceAccountName: {{ .Release.Name }}-controller-manager
+      serviceAccountName: {{ include "terraform-cloud-operator.serviceAccountName" . }}
       securityContext:
         runAsNonRoot: true
       terminationGracePeriodSeconds: 10
