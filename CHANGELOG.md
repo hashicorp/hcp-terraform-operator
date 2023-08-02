@@ -11,7 +11,7 @@ ENHANCEMENT:
 
 * `Operator`: Add the ability to skip TLS certificate validation for communication between the Operator and the TFC/E endpoint. A new environment variable `TFC_TLS_SKIP_VERIFY` should be set to `true` to skip the validation. Default: `false`. [[GH-222](https://github.com/hashicorp/terraform-cloud-operator/pull/222)]
 * `Helm Chart`: Add a new parameter `operator.skipTLSVerify` to configure the ability to skip TLS certificate validation for communication between the Operator and the TFC/E endpoint. Default: `false`. [[GH-222](https://github.com/hashicorp/terraform-cloud-operator/pull/222)]
-* `Workspace`: Add `Tags` validation to align with the TFC requirement. [[GH-234](https://github.com/hashicorp/terraform-cloud-operator/pull/234)]
+* `Workspace`: Add `spec.Tags` validation to align with the TFC requirement. [[GH-234](https://github.com/hashicorp/terraform-cloud-operator/pull/234)]
 
 DEPENDENCIES:
 
