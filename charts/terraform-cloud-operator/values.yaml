@@ -20,12 +20,12 @@ operator:
   # Operator-global options.
   # The minimum frequency at which watched resources are reconciled.
   # Format: 5s, 1m, etc.
-  syncPeriod: "5m"
+  syncPeriod: 5m
 
-  # List of namespaces the controllers should monitor
+  # List of namespaces the controllers should watch.
   watchedNamespaces: []
 
-  # The API URL of a TFE instance
+  # The API URL of a TFE instance.
   tfeAddress: ""
 
   # Whether or not to ignore TLS certification warnings.
@@ -43,6 +43,6 @@ controllers:
     # The number of the Workspace controller workers.
     workers: 1
 
-# Custom Certificate Authority bundle to validate API TLS certificates
-# Expects a path to a CRT file containing concatenated certificates
+# Custom Certificate Authority bundle to validate API TLS certificates.
+# Expects a path to a CRT file containing concatenated certificates.
 customCAcertificates: ""
