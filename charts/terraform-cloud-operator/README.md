@@ -80,8 +80,8 @@ In the above example, the Operator will watch all namespaces in the Kubernetes c
 
 # Values
 
-| Key | Type | Default | Description |
-|-|-|-|-|
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
 | replicaCount | int | 2 | Number of Terraform Cloud Operator replicas. |
 | operator.image.repository | string | "hashicorp/terraform-cloud-operator" | Image repository. |
 | operator.image.pullPolicy | string | "IfNotPresent" | Image pull policy. |
