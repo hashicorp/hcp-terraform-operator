@@ -60,6 +60,51 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 	}
 }
 
+func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
+	successCases := map[string]Workspace{
+		"AgentWithAgentPoolWithID": {
+			Spec: WorkspaceSpec{
+				ExecutionMode: "agent",
+				AgentPool: &WorkspaceAgentPool{
+					ID: "this",
+				},
+			},
+		},
+		"AgentWithAgentPoolWithName": {
+			Spec: WorkspaceSpec{
+				ExecutionMode: "agent",
+				AgentPool: &WorkspaceAgentPool{
+					Name: "this",
+				},
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecExecutionMode(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"AgentWithoutAgentPool": {
+			Spec: WorkspaceSpec{
+				ExecutionMode: "agent",
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecExecutionMode(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
 func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 	token := "token"
 	url := "https://example.com"

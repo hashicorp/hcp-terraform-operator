@@ -16,6 +16,7 @@ func (w *Workspace) ValidateSpec() error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, w.validateSpecAgentPool()...)
+	allErrs = append(allErrs, w.validateSpecExecutionMode()...)
 	allErrs = append(allErrs, w.validateSpecNotifications()...)
 	allErrs = append(allErrs, w.validateSpecRemoteStateSharing()...)
 	allErrs = append(allErrs, w.validateSpecRunTasks()...)
@@ -56,6 +57,22 @@ func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 			f,
 			"",
 			"only one of the field ID or Name is allowed"),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecExecutionMode() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.ExecutionMode
+
+	f := field.NewPath("spec").Child("executionMode")
+
+	if spec == "agent" && w.Spec.AgentPool == nil {
+		allErrs = append(allErrs, field.Required(
+			f,
+			"'spec.agentPool' must be set when 'spec.executionMode' is set to 'agent'"),
 		)
 	}
 
@@ -417,6 +434,5 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 // + EnvironmentVariables names duplicate: spec.environmentVariables[].name
 // + TerraformVariables names duplicate: spec.terraformVariables[].name
 // + Tags duplicate: spec.tags[]
-// + AgentPool must be set when ExecutionMode = 'agent': spec.agentPool <- spec.executionMode['agent']
 //
 // + Invalid CR cannot be deleted until it is fixed -- need to discuss if we want to do something about it
