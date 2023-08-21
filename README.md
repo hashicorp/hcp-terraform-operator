@@ -38,7 +38,17 @@ The full list of supported Terraform Cloud features can be found [here](./docs/f
 
 ### Installation
 
-Installation documentation can be found [here](./docs/installation.md).
+The Operator provides [Helm chart](../charts/terraform-cloud-operator) as a first-class method of installation on Kubernetes.
+
+Three simple commands to install the Operator:
+
+```console
+$ helm repo add hashicorp https://helm.releases.hashicorp.com
+$ helm repo update
+$ helm install demo hashicorp/terraform-cloud-operator --wait --version 2.0.0-beta7
+```
+
+More detailed information about the installation and available values can be found [here](../charts/terraform-cloud-operator).
 
 ### Usage
 
