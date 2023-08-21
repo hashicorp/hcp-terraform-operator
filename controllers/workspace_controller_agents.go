@@ -32,6 +32,10 @@ func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, w *works
 func (r *WorkspaceReconciler) getAgentPoolID(ctx context.Context, w *workspaceInstance) (string, error) {
 	specAgentPool := w.instance.Spec.AgentPool
 
+	if specAgentPool == nil {
+		return "", fmt.Errorf("'spec.agentPool' is not set")
+	}
+
 	if specAgentPool.Name != "" {
 		w.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID by name")
 		return r.getAgentPoolIDByName(ctx, w)
