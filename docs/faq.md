@@ -1,15 +1,5 @@
 # Frequently Asked Questions
 
-## :warning: Beta Version Questions :warning:
-
-- **I am getting a '403' error when trying to install Terraform Cloud Operator v2 beta. How to address that?**
-
-  Make sure you are logged out from "public.ecr.aws":
-
-  ```console
-  $ docker logout public.ecr.aws
-  ```
-
 ## Terminology
 
 - **What is a Kubernetes Operator?**
@@ -84,9 +74,17 @@
 
   The `--sync-period` option specifies the minimum frequency at which watched resources are reconciled. The synchronization period should be aligned with the number of managed Customer Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
 
-- **Does the Operator work with Terraform Enterprise?**
+- **Does the Operator work with Terraform Enterprise / TFE?**
 
-  Yes, the operator can be configured for custom TFE API endpoints using the `operator.tfeAddress`. This value should be a valid URL, for the API of a Terraform Enterprise instance. Once the `tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
+  Yes, the operator can be configured for custom TFE API endpoints using the `operator.tfeAddress` value in the Helm chart. This value should be a valid URL including the protocol(`https://`), for the API of a Terraform Enterprise instance. Once the `operator.tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
+
+- **What can I do if the Operator cannot get a Terraform Cloud client due to a TLS certificate issue?**
+
+  There are multiple reasons why you can observe an error message in logs that indicate an issue with a TLS certificate. The error message example: _*tls: failed to verify certificate: x509: certificate has expired or is not yet valid*_
+
+  * You have a Terraform Enterprise instance and use the TLS certificate that is signed by a Certificate Authority that is not recognized by the Operator. In this case, you can use the value `customCAcertificates` of the Helm chart to specify a Certificate Authority bundle to validate API TLS certificates.
+  * You have a Terraform Enterprise instance and the TLS certificate has expired. In this case, you can use the value `operator.skipTLSVerify` of the Helm chart to skip the TLS validation. **Be aware of the potential security risks.**
+  * There is a TLS proxy between the Operator and Terraform Cloud / Enterprise instance that is installed by your security team to decrypt TLS connections. In this case, you can use the value `operator.skipTLSVerify` or `customCAcertificates` of the Helm chart to skip the TLS validation or specify a Certificate Authority bundle to validate API TLS certificates, respectively. Alternatively, you could talk to your security team to add an expection to this connection.
 
 - **What does `kube-rbac-proxy` do?**
 
