@@ -76,7 +76,7 @@
 
 - **Does the Operator work with Terraform Enterprise / TFE?**
 
-  Yes, the operator can be configured for custom TFE API endpoints using the `operator.tfeAddress` value in the Helm chart. This value should be a valid URL including the protocol(`https://`), for the API of a Terraform Enterprise instance. Once the `operator.tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
+  Yes, the operator can be configured for the custom TFE API endpoint using the `operator.tfeAddress` value in the Helm chart. This value should be a valid URL including the protocol(`https://`), for the API of a Terraform Enterprise instance. Once the `operator.tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
 
 - **What can I do if the Operator cannot get a Terraform Cloud client due to a TLS certificate issue?**
 
