@@ -51,18 +51,19 @@ $ helm install demo hashicorp/terraform-cloud-operator \
 
 In the above example, the Operator will watch 3 namespaces in the Kubernetes cluster: `white`, `blue`, and `red`.
 
-If targeting a TFE instance rather than Terraform Cloud, set the API URL using this variable:
+### Install to work with Terraform Enterprise
 
-```
+If targeting a Terraform Enterprise instance rather than Terraform Cloud, set the API endpoint URL using the `operator.tfeAddress` value:
+
+```console
+$ helm install demo hashicorp/terraform-cloud-operator \
+  --version 2.0.0-beta7 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
-If the TFE instance uses a TLS certificate signed by a non-public authority or "Let's Encrypt", the chain of CAs that can validate 
-that TLS certificate should be installed with the operator by setting the `customCAcertificates` chart value:
+If you encounter a TLS-related issue using the Operator with Terraform Enterprise, it likely could be addressed by using one of the Helm values, `customCAcertificates` or `operator.skipTLSVerify`.
 
-```
-  --set customCAcertificates=<path-to-CA-chain-file.crt>
-``` 
+For more information, please refer to the [FAQ](./../../docs/faq.md).
 
 ### Upgrade with options
 
