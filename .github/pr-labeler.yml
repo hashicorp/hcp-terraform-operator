@@ -7,6 +7,10 @@ controller:
 crd:
 - 'config/crd/bases/*.yaml'
 
+dependencies:
+- 'go.mod'
+- 'go.sum'
+
 documentation:
 - 'README.md'
 - 'RELEASING.md'
