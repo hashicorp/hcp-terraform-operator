@@ -87,6 +87,12 @@ FAQ can be found [here](./docs/faq.md).
 
 YAML manifests examples live [here](./docs/examples/).
 
+### Community Contribution
+
+If you come across articles, videos, how-tos, or any other resources that could assist individuals in adopting and utilizing the operator with greater efficiency, kindly inform us by initiating a [pull request](https://github.com/hashicorp/terraform-cloud-operator/pulls) and placing a link within this designated section.
+
+Your participation matters. Thank you for being a part of our community! :raised_hands:
+
 ## Operator Options
 
 Global options:
