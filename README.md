@@ -2,7 +2,7 @@
     <img src=".github/tf_logo.png" alt="Terraform logo" title="Terraform Cloud" align="left" height="50" />
 </a>
 
-# Kubernetes Operator for Terraform Cloud
+# Kubernetes Operator for Terraform Cloud / Enterprise
 
 [![GitHub release (with filter)](https://img.shields.io/github/v/release/hashicorp/terraform-cloud-operator)](https://github.com/hashicorp/terraform-cloud-operator/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hashicorp/terraform-cloud-operator)](https://hub.docker.com/r/hashicorp/terraform-cloud-operator)
@@ -12,7 +12,10 @@
 > **Warning**
 > Please note that this is a beta version still undergoing final testing before the official release.
 
-Kubernetes Operator allows managing Terraform Cloud resources via Kubernetes Custom Resources.
+Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via Kubernetes Custom Resources.
+
+> **Note**
+> _From this point forward, the terms Terraform Cloud or TFC can be used interchangeably with Terraform Enterprise or TFE in all documents, provided that the contrary is indicated._
 
 The Operator can manage the following types of resources:
 
