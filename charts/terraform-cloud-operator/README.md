@@ -63,7 +63,7 @@ $ helm install demo hashicorp/terraform-cloud-operator \
 
 If you encounter a TLS-related issue using the Operator with Terraform Enterprise, it likely could be addressed by using one of the Helm values, `customCAcertificates` or `operator.skipTLSVerify`.
 
-For more information, please refer to the [FAQ](./../../docs/faq.md).
+For more information, please refer to the [FAQ](./../../docs/faq.md#general-questions).
 
 ### Upgrade with options
 
