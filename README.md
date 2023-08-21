@@ -85,7 +85,7 @@ FAQ can be found [here](./docs/faq.md).
 
 ### Examples
 
-YAML manifests examples live [here](./docs/examples/README.md).
+YAML manifests examples live [here](./docs/examples/).
 
 ## Operator Options
 
