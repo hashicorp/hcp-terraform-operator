@@ -1,18 +1,26 @@
 ## 2.0.0-beta8 (UNRELEASED)
 
 BUG FIXES:
+
 * `AgentPool`: fix an issue when `plan_queued` and `apply_queued` statuses do not trigger agent scaling. [[GH-215](https://github.com/hashicorp/terraform-cloud-operator/pull/215)]
 * `Helm Chart`: fix an issue with the Deployment template in the Helm chart where `name` in path `spec.template.spec.containers[0]` was duplicated. [[GH-216](https://github.com/hashicorp/terraform-cloud-operator/pull/216)]
 * `Workspace`: fix an issue when the Operator panics when `spec.executionMode` is configured as `agent` but `spec.agentPool` is not set which is mandatory in this case. [[GH-242](https://github.com/hashicorp/terraform-cloud-operator/pull/242)]
 
 ENHANCEMENT:
+
 * `Operator`: Add the ability to skip TLS certificate validation for communication between the Operator and the TFC/E endpoint. A new environment variable `TFC_TLS_SKIP_VERIFY` should be set to `true` to skip the validation. Default: `false`. [[GH-222](https://github.com/hashicorp/terraform-cloud-operator/pull/222)]
 * `Helm Chart`: Add a new parameter `operator.skipTLSVerify` to configure the ability to skip TLS certificate validation for communication between the Operator and the TFC/E endpoint. Default: `false`. [[GH-222](https://github.com/hashicorp/terraform-cloud-operator/pull/222)]
 
 DEPENDENCIES:
 
-* Bump `github.com/hashicorp/go-tfe` from 1.29.0 to 1.30.0. [[GH-218](https://github.com/hashicorp/terraform-cloud-operator/pull/218)]
-* Bump `github.com/hashicorp/go-slug` from 0.11.1 to 0.12.0. [[GH-219](https://github.com/hashicorp/terraform-cloud-operator/pull/219)]
+* Bump `github.com/hashicorp/go-tfe` from 1.29.0 to 1.32.1. [[GH-218](https://github.com/hashicorp/terraform-cloud-operator/pull/218)] [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `github.com/hashicorp/go-slug` from 0.11.1 to 0.12.1. [[GH-219](https://github.com/hashicorp/terraform-cloud-operator/pull/219)] [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `github.com/onsi/gomega` from 1.27.8 to 1.27.10. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `go.uber.org/zap` from 1.24.0 to 1.25.0. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `k8s.io/api` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `k8s.io/apimachinery` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `k8s.io/client-go` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `sigs.k8s.io/controller-runtime` from 0.15.0 to 0.15.1. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 
 ## 2.0.0-beta7 (July 07, 2023)
 
