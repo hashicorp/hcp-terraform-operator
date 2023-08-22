@@ -12,8 +12,8 @@ dependencies:
 - 'go.sum'
 
 documentation:
-- 'README.md'
-- 'RELEASING.md'
+- '!CHANGELOG.md'
+- '*.md'
 - 'docs/*.md'
 
 github_actions:
