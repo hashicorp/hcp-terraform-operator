@@ -14,6 +14,7 @@ dependencies:
 documentation:
 - '!CHANGELOG.md'
 - '*.md'
+- 'charts/**/*.md'
 - 'docs/*.md'
 
 github_actions:
