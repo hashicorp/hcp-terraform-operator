@@ -18,9 +18,11 @@ We appreciate your interest in improving our documentation! Please find our docu
 
 1. If your changes require updates to screenshots or diagrams, ensure they are up-to-date and accurately represent the content.
 
+Please submit your changes.
+
 ### Do you want a request a new feature?
 
-We appreciate your enthusiasm for enhancing our project with new features! To request a new feature, follow the steps below:
+We appreciate your enthusiasm for enhancing the Operator with new features! To request a new feature, follow the steps below:
 
 1. **Check Existing Requests**: before submitting a new feature request, search our issue tracker to ensure that your idea hasn't been suggested before. If a similar request already exists, you can contribute to that discussion instead.
 
@@ -34,7 +36,7 @@ We appreciate your enthusiasm for enhancing our project with new features! To re
 
 ### Did you find a bug?
 
-We greatly appreciate your assistance in improving our project by identifying and reporting bugs. To report a bug, follow the steps below:
+We greatly appreciate your assistance in improving the Operator by identifying and reporting bugs. To report a bug, follow the steps below:
 
 1. **Check Existing Issues**: before submitting a new bug report, search our issue tracker to see if the bug has already been reported. If you find a similar issue, you can contribute to that discussion with additional information.
 
@@ -48,7 +50,7 @@ We greatly appreciate your assistance in improving our project by identifying an
 
 ### Did you write a patch that fixes a bug?
 
-If you've identified a bug in our project and have written a patch to fix it, we greatly appreciate your contribution to improving the Operator's stability. Please follow the steps below in this document to set up a development environment, tests your changes and submit them.
+If you've identified a bug in the Operator and have written a patch to fix it, we greatly appreciate your contribution to improving the Operator's stability. Please follow the steps below in this document to set up a development environment, tests your changes and submit them.
 
 ### Did you fix whitespace, format code, or make a purely cosmetic patch?
 
@@ -56,7 +58,7 @@ We appreciate your attention to detail in ensuring the quality of the Operator's
 
 ### Do you intend to add a new feature or change an existing one?
 
-We value your desire to contribute by introducing new features or enhancing existing ones in our project. Your contributions play a pivotal role in the evolution and growth of the Operator. Please create a new issue in our issue tracker on GitHub to have a discussion with the maintainers and involve the community before submitting a code change. Use the "New Issue" template labeled "🚀 Feature request".
+We value your desire to contribute by introducing new features or enhancing existing ones in the Operator. Your contributions play a pivotal role in the evolution and growth of the Operator. Please create a new issue in our issue tracker on GitHub to have a discussion with the maintainers and involve the community before submitting a code change. Use the "New Issue" template labeled "🚀 Feature request".
 
 ## Development Environment
 
@@ -174,7 +176,7 @@ There are two main pieces of the Operator `API` and `Controller`. Depending on w
 
 ### Creating a Pull Request
 
-We're excited that you're ready to contribute to our project by creating a pull request (PR)! Pull requests are a fundamental way to propose and discuss changes with the project maintainers and contributors.
+We're excited that you're ready to contribute to the Operator by creating a pull request (PR)! Pull requests are a fundamental way to propose and discuss changes with the project maintainers and contributors.
 
 1. **Description**: write a detailed description of your changes. Keep in mind, that it should be clear why you make this change, what you have changed, and how this will affect the Operator users. If you are working on a fix for an existing issue, you can provide less details about it.
 
