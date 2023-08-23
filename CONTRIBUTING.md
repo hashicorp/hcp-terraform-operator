@@ -52,7 +52,7 @@ We greatly appreciate your assistance in improving the Operator by identifying a
 
 If you've identified a bug in the Operator and have written a patch to fix it, we greatly appreciate your contribution to improving the Operator's stability. Please follow the steps below in this document to set up a development environment, tests your changes and submit them.
 
-### Did you fix whitespace, format code, or make a purely cosmetic patch?
+### Cosmetic changes
 
 We appreciate your attention to detail in ensuring the quality of the Operator's codebase, even in cosmetic and formatting aspects. While these changes might not directly address functional issues, they contribute to code readability and maintainability. Please submit your changes.
 
