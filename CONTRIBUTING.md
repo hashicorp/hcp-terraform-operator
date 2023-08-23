@@ -6,7 +6,7 @@ If you're a newcomer to the realm of Kubernetes Operators and are eager to expan
 
 ## Contribution
 
-### Do you want to update our documentation?
+### Updating documentation
 
 We appreciate your interest in improving our documentation! Please find our documentation guidelines below:
 
