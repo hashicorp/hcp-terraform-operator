@@ -56,7 +56,7 @@ If you've identified a bug in the Operator and have written a patch to fix it, w
 
 We appreciate your attention to detail in ensuring the quality of the Operator's codebase, even in cosmetic and formatting aspects. While these changes might not directly address functional issues, they contribute to code readability and maintainability. Please submit your changes.
 
-### Do you intend to add a new feature or change an existing one?
+### Adding new features or changing existing features
 
 We value your desire to contribute by introducing new features or enhancing existing ones in the Operator. Your contributions play a pivotal role in the evolution and growth of the Operator. Please create a new issue in our issue tracker on GitHub to have a discussion with the maintainers and involve the community before submitting a code change. Use the "New Issue" template labeled "🚀 Feature request".
 
