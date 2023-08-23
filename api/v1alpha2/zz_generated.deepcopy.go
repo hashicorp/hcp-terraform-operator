@@ -827,7 +827,7 @@ func (in *WorkspaceSpec) DeepCopyInto(out *WorkspaceSpec) {
 	}
 	if in.Tags != nil {
 		in, out := &in.Tags, &out.Tags
-		*out = make([]string, len(*in))
+		*out = make([]Tag, len(*in))
 		copy(*out, *in)
 	}
 	if in.TeamAccess != nil {

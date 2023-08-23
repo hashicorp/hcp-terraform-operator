@@ -5,11 +5,13 @@ BUG FIXES:
 * `AgentPool`: fix an issue when `plan_queued` and `apply_queued` statuses do not trigger agent scaling. [[GH-215](https://github.com/hashicorp/terraform-cloud-operator/pull/215)]
 * `Helm Chart`: fix an issue with the Deployment template in the Helm chart where `name` in path `spec.template.spec.containers[0]` was duplicated. [[GH-216](https://github.com/hashicorp/terraform-cloud-operator/pull/216)]
 * `Workspace`: fix an issue when the Operator panics when `spec.executionMode` is configured as `agent` but `spec.agentPool` is not set which is mandatory in this case. [[GH-242](https://github.com/hashicorp/terraform-cloud-operator/pull/242)]
+* `Workspace`: fix an issue when a new Workspace is successfully created, but its `status.WorkspaceID` status fails to update with a new Workspace ID due to an error during subsequent reconciliation. Consequently, the Workspace controller continuously encounters failures while attempting to reconcile the newly created Workspace. [[GH-234](https://github.com/hashicorp/terraform-cloud-operator/pull/234)]
 
 ENHANCEMENT:
 
 * `Operator`: Add the ability to skip TLS certificate validation for communication between the Operator and the TFC/E endpoint. A new environment variable `TFC_TLS_SKIP_VERIFY` should be set to `true` to skip the validation. Default: `false`. [[GH-222](https://github.com/hashicorp/terraform-cloud-operator/pull/222)]
 * `Helm Chart`: Add a new parameter `operator.skipTLSVerify` to configure the ability to skip TLS certificate validation for communication between the Operator and the TFC/E endpoint. Default: `false`. [[GH-222](https://github.com/hashicorp/terraform-cloud-operator/pull/222)]
+* `Workspace`: Add `spec.Tags` validation to align with the TFC requirement. [[GH-234](https://github.com/hashicorp/terraform-cloud-operator/pull/234)]
 
 DEPENDENCIES:
 

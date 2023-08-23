@@ -351,8 +351,15 @@ spec:
                 type: object
               tags:
                 description: Workspace tags are used to help identify and group together
-                  workspaces.
+                  workspaces. Tags must be one or more characters; can include letters,
+                  numbers, colons, hyphens, and underscores; and must begin and end
+                  with a letter or number.
                 items:
+                  description: Tags allows you to correlate, organize, and even filter
+                    workspaces based on the assigned tags. Tags must be one or more
+                    characters; can include letters, numbers, colons, hyphens, and
+                    underscores; and must begin and end with a letter or number.
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9:_-]*$
                   type: string
                 minItems: 1
                 type: array
