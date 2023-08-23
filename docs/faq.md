@@ -80,7 +80,7 @@
 
 - **What can I do if the Operator cannot get a Terraform Cloud client due to a TLS certificate issue?**
 
-  There are multiple reasons why you can observe an error message in logs that indicate an issue with a TLS certificate. The error message example: _*tls: failed to verify certificate: x509: certificate has expired or is not yet valid*_
+  There are multiple reasons why you may observe an error message in logs that indicate an issue with a TLS certificate. The error message example: _*tls: failed to verify certificate: x509: certificate has expired or is not yet valid*_
 
   * You have a Terraform Enterprise instance and use the TLS certificate that is signed by a Certificate Authority that is not recognized by the Operator. In this case, you can use the value `customCAcertificates` of the Helm chart to specify a Certificate Authority bundle to validate API TLS certificates.
   * You have a Terraform Enterprise instance and the TLS certificate has expired. In this case, you can use the value `operator.skipTLSVerify` of the Helm chart to skip the TLS validation. **Be aware of the potential security risks.**
