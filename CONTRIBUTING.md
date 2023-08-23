@@ -192,4 +192,4 @@ We're excited that you're ready to contribute to the Operator by creating a pull
 
 1. Address any feedback or suggestions provided by reviewers.
 
-1. Once the pull request is approved, it will be merged into the main project repository.
+1. Once the pull request is approved, it will be merged into the main branch of the project repository.
