@@ -48,7 +48,7 @@ We greatly appreciate your assistance in improving the Operator by identifying a
 
 1. **Additional Context**: if applicable, include any relevant information such as screenshots, error messages, or logs that might aid in diagnosing the issue.
 
-### Did you write a patch that fixes a bug?
+### Proposing bug fixes
 
 If you've identified a bug in the Operator and have written a patch to fix it, we greatly appreciate your contribution to improving the Operator's stability. Please follow the steps below in this document to set up a development environment, tests your changes and submit them.
 
