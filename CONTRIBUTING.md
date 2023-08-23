@@ -20,7 +20,7 @@ We appreciate your interest in improving our documentation! Please find our docu
 
 Please submit your changes.
 
-### Do you want a request a new feature?
+### Requesting new features
 
 We appreciate your enthusiasm for enhancing the Operator with new features! To request a new feature, follow the steps below:
 
