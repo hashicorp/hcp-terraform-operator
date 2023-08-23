@@ -172,7 +172,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: "env:dev"},
 			}
 
-			instance.Spec.Tags = []string{"kubernetes-operator"}
+			instance.Spec.Tags = []appv1alpha2.Tag{"kubernetes-operator"}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
 			// Make sure that the TFC Workspace has all desired tags
@@ -185,7 +185,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			// Update the Kubernetes workspace tags
-			instance.Spec.Tags = []string{"kubernetes-operator", "env:dev"}
+			instance.Spec.Tags = []appv1alpha2.Tag{"kubernetes-operator", "env:dev"}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates Terraform Cloud workspace correcly
 			Eventually(func() bool {
