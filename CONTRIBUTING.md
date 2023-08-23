@@ -34,7 +34,7 @@ We appreciate your enthusiasm for enhancing the Operator with new features! To r
 
 1. **Additional Context**: If applicable, provide context such as use cases, examples, or scenarios where the feature would be beneficial.
 
-### Did you find a bug?
+### Reporting bugs
 
 We greatly appreciate your assistance in improving the Operator by identifying and reporting bugs. To report a bug, follow the steps below:
 
