@@ -1,6 +1,6 @@
 # Contributor Guide
 
-We appreciate your enthusiasm for participating in the development of the Terraform Cloud Operator. Your contributions are warmly welcomed. Here you will instructions about how to contribute to the Terraform Cloud Operator.
+We appreciate your enthusiasm for participating in the development of the Terraform Cloud Operator. Your contributions are warmly welcomed. Here you will find instructions on how to contribute to the Terraform Cloud Operator.
 
 If you're a newcomer to the realm of Kubernetes Operators and are eager to expand your knowledge, a great place to begin your journey is by exploring the [Kubebuilder Book](https://book.kubebuilder.io/).
 
