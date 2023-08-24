@@ -22,7 +22,7 @@ func getTags(instance *appv1alpha2.Workspace) map[string]bool {
 	}
 
 	for _, t := range instance.Spec.Tags {
-		tags[t] = true
+		tags[string(t)] = true
 	}
 
 	return tags

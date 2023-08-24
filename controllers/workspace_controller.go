@@ -439,6 +439,30 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	var workspace *tfc.Workspace
 	var err error
 
+	defer func() {
+		// Update the status with the Workspace ID. This is useful if the reconciliation failed.
+		// An example here would be the case when the workspace has been created successfully,
+		// but further reconciliation steps failed.
+		//
+		// If a Workspace creation operation failed, we don't have a workspace object
+		// and thus don't update the status. An example here would be the case when the workspace name has already been taken.
+		//
+		// Cannot call updateStatus method since it updated multiple fields and can break reconciliation logic.
+		//
+		// TODO:
+		// - Use conditions(https://maelvls.dev/kubernetes-conditions/)
+		// - Let Objects update their own status conditions
+		// - Simplify updateStatus method in a way it could be called anytime
+		if workspace != nil && workspace.ID != "" {
+			w.instance.Status.WorkspaceID = workspace.ID
+			err = r.Status().Update(ctx, &w.instance)
+			if err != nil {
+				w.log.Error(err, "Workspace Controller", "msg", "update status with workspace ID")
+				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
+			}
+		}
+	}()
+
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the workspace
 	if w.instance.IsDeletionCandidate(workspaceFinalizer) {
 		w.log.Info("Reconcile Workspace", "msg", "object marked as deleted, need to delete workspace first")
@@ -451,7 +475,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	if w.instance.IsCreationCandidate() {
 		w.log.Info("Reconcile Workspace", "msg", "status.WorkspaceID is empty, creating a new workspace")
 		r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Status.WorkspaceID is empty, creating a new workspace")
-		_, err = r.createWorkspace(ctx, w)
+		workspace, err = r.createWorkspace(ctx, w)
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")

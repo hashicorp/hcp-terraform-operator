@@ -272,6 +272,12 @@ type SSHKey struct {
 	Name string `json:"name,omitempty"`
 }
 
+// Tags allows you to correlate, organize, and even filter workspaces based on the assigned tags.
+// Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number.
+//
+// +kubebuilder:validation:Pattern:="^[A-Za-z0-9][A-Za-z0-9:_-]*$"
+type Tag string
+
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 // This must be aligned with go-tfe type `NotificationTriggerType`.
 //
@@ -385,10 +391,11 @@ type WorkspaceSpec struct {
 	//+optional
 	RunTasks []WorkspaceRunTask `json:"runTasks,omitempty"`
 	// Workspace tags are used to help identify and group together workspaces.
+	// Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number.
 	//
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
-	Tags []string `json:"tags,omitempty"`
+	Tags []Tag `json:"tags,omitempty"`
 	// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
 	// You can manage permissions for a workspace on a per-team basis.
 	// When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
