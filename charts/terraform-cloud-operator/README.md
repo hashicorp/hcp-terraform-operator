@@ -79,6 +79,7 @@ $ helm upgrade demo hashicorp/terraform-cloud-operator \
 
 In the above example, the Operator will watch all namespaces in the Kubernetes cluster.
 
+<!-- TODO: automate Values section generation: https://github.com/norwoodj/helm-docs -->
 # Values
 
 | Parameter | Type | Default | Description |
