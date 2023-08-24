@@ -145,6 +145,10 @@ If you encounter any issues with the Operator there are a number of ways how to 
 
 If you believe you've found a bug and cannot find an existing issue, feel free to open a new issue! Be sure to include as much information as you can about your environment.
 
+## Contributing to the Operator
+
+We appreciate your enthusiasm for participating in the development of the Terraform Cloud Operator. To contribute, please read the [contribution guidelines](./CONTRIBUTING.md).
+
 ## Security Reporting
 
 If you think you've found a security vulnerability, we'd love to hear from you.
