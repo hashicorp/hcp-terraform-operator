@@ -61,7 +61,7 @@ $ helm install demo hashicorp/terraform-cloud-operator \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
-If you encounter a TLS-related issue using the Operator with Terraform Enterprise, you may need to configure your own CA certificates using the [`customCAcertificates`](https://github.com/hashicorp/terraform-cloud-operator/blob/main/charts/terraform-cloud-operator/values.yaml#L46-L48) value, or by skipping TLS verification using the [`operator.skipTLSVerify`](https://github.com/hashicorp/terraform-cloud-operator/blob/main/charts/terraform-cloud-operator/values.yaml#L31-L32) value..
+If you encounter a TLS-related issue using the Operator with Terraform Enterprise, you may need to configure your own CA certificates using the [`customCAcertificates`](./README.md#values) value, or by skipping TLS verification using the [`operator.skipTLSVerify`](./README.md#values) value.
 
 For more information, please refer to the [FAQ](./../../docs/faq.md#general-questions).
 
