@@ -23,6 +23,7 @@ DEPENDENCIES:
 * Bump `k8s.io/apimachinery` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 * Bump `k8s.io/client-go` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 * Bump `sigs.k8s.io/controller-runtime` from 0.15.0 to 0.15.1. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `kube-rbac-proxy` image from `0.13.1` to `0.14.2`. [[GH-251](https://github.com/hashicorp/terraform-cloud-operator/pull/251)]
 
 ## 2.0.0-beta7 (July 07, 2023)
 
