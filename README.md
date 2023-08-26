@@ -12,7 +12,10 @@
 > **Warning**
 > Please note that this is a beta version still undergoing final testing before the official release.
 
-Kubernetes Operator allows managing Terraform Cloud resources via Kubernetes Custom Resources.
+Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via Kubernetes Custom Resources.
+
+> **Note**
+> _From this point forward, the terms Terraform Cloud or TFC can be used interchangeably with Terraform Enterprise or TFE in all documents, provided that the contrary is indicated._
 
 The Operator can manage the following types of resources:
 
@@ -46,7 +49,7 @@ The full list of supported Terraform Cloud features can be found [here](./docs/f
 
 ### Installation
 
-The Operator provides [Helm chart](../charts/terraform-cloud-operator) as a first-class method of installation on Kubernetes.
+The Operator provides [Helm chart](./charts/terraform-cloud-operator) as a first-class method of installation on Kubernetes.
 
 Three simple commands to install the Operator:
 
@@ -56,7 +59,7 @@ $ helm repo update
 $ helm install demo hashicorp/terraform-cloud-operator --wait --version 2.0.0-beta7
 ```
 
-More detailed information about the installation and available values can be found [here](../charts/terraform-cloud-operator).
+More detailed information about the installation and available values can be found [here](./charts/terraform-cloud-operator/README.md).
 
 ### Usage
 
@@ -82,7 +85,13 @@ FAQ can be found [here](./docs/faq.md).
 
 ### Examples
 
-YAML manifests examples live [here](./docs/examples/README.md).
+YAML manifests examples live [here](./docs/examples/).
+
+### Community Contribution
+
+If you come across articles, videos, how-tos, or any other resources that could assist individuals in adopting and utilizing the operator with greater efficiency, kindly inform us by initiating a [pull request](https://github.com/hashicorp/terraform-cloud-operator/pulls) and placing a link within this designated section.
+
+Your participation matters. Thank you for being a part of our community! :raised_hands:
 
 ## Operator Options
 
