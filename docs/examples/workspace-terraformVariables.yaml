@@ -1,0 +1,29 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+---
+apiVersion: app.terraform.io/v1alpha2
+kind: Workspace
+metadata:
+  name: this
+spec:
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  name: kubernetes-operator-demo
+  # More about Terraform variables: https://developer.hashicorp.com/terraform/language/values/variables#assigning-values-to-root-module-variables
+  # More about Terraform Cloud Workspace Variables: https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+  terraformVariables:
+    - name: counter
+      hcl: true
+      value: >
+        [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32
+        ]
