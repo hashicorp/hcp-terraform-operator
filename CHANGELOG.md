@@ -1,4 +1,4 @@
-## 2.0.0-beta8 (UNRELEASED)
+## 2.0.0-beta8 (August 29, 2023)
 
 BUG FIXES:
 
