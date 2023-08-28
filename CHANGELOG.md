@@ -24,6 +24,7 @@ DEPENDENCIES:
 * Bump `k8s.io/client-go` from 0.27.3 to 0.27.5. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)] [[GH-252](https://github.com/hashicorp/terraform-cloud-operator/pull/252)]
 * Bump `sigs.k8s.io/controller-runtime` from 0.15.0 to 0.15.1. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 * Bump `kube-rbac-proxy` image from `0.13.1` to `0.14.2`. [[GH-251](https://github.com/hashicorp/terraform-cloud-operator/pull/251)]
+* Bump `github.com/onsi/ginkgo/v2` from 2.11.0 to 2.12.0. [[GH-254](https://github.com/hashicorp/terraform-cloud-operator/pull/254)]
 
 ## 2.0.0-beta7 (July 07, 2023)
 
