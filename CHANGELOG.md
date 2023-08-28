@@ -19,9 +19,9 @@ DEPENDENCIES:
 * Bump `github.com/hashicorp/go-slug` from 0.11.1 to 0.12.1. [[GH-219](https://github.com/hashicorp/terraform-cloud-operator/pull/219)] [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 * Bump `github.com/onsi/gomega` from 1.27.8 to 1.27.10. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 * Bump `go.uber.org/zap` from 1.24.0 to 1.25.0. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
-* Bump `k8s.io/api` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
-* Bump `k8s.io/apimachinery` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
-* Bump `k8s.io/client-go` from 0.27.3 to 0.27.4. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
+* Bump `k8s.io/api` from 0.27.3 to 0.27.5. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)] [[GH-252](https://github.com/hashicorp/terraform-cloud-operator/pull/252)]
+* Bump `k8s.io/apimachinery` from 0.27.3 to 0.27.5. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)] [[GH-252](https://github.com/hashicorp/terraform-cloud-operator/pull/252)]
+* Bump `k8s.io/client-go` from 0.27.3 to 0.27.5. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)] [[GH-252](https://github.com/hashicorp/terraform-cloud-operator/pull/252)]
 * Bump `sigs.k8s.io/controller-runtime` from 0.15.0 to 0.15.1. [[GH-247](https://github.com/hashicorp/terraform-cloud-operator/pull/247)]
 * Bump `kube-rbac-proxy` image from `0.13.1` to `0.14.2`. [[GH-251](https://github.com/hashicorp/terraform-cloud-operator/pull/251)]
 
