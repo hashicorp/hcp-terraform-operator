@@ -6,7 +6,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.4
 	github.com/google/go-cmp v0.5.9
-	github.com/hashicorp/go-slug v0.12.1
+	github.com/hashicorp/go-slug v0.12.2
 	github.com/hashicorp/go-tfe v1.32.1
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
