@@ -32,6 +32,10 @@ operator:
   skipTLSVerify: false
 
 kubeRbacProxy:
+  image:
+    repository: quay.io/brancz/kube-rbac-proxy
+    pullPolicy: IfNotPresent
+    tag: v0.14.2
   resources:
     limits:
       cpu: 500m
