@@ -31,6 +31,15 @@ operator:
   # Whether or not to ignore TLS certification warnings.
   skipTLSVerify: false
 
+kubeRbacProxy:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
 # Controllers-specific options.
 controllers:
   agentPool:
