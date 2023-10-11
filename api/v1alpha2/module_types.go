@@ -160,7 +160,6 @@ type Module struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Specification of the desired behavior of the module.
 	Spec   ModuleSpec   `json:"spec"`
 	Status ModuleStatus `json:"status,omitempty"`
 }

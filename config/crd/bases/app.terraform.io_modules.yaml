@@ -41,7 +41,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: Specification of the desired behavior of the module.
+            description: ModuleSpec defines the desired state of Module.
             properties:
               destroyOnDeletion:
                 default: false

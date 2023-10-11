@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: Specification of the desired behavior of the workspace.
+            description: WorkspaceSpec defines the desired state of Workspace.
             properties:
               agentPool:
                 description: 'Terraform Cloud Agents allow Terraform Cloud to communicate
