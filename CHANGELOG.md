@@ -1,5 +1,13 @@
 ## 2.0.0 (UNRELEASED)
 
+ENHANCEMENT:
+
+* `Helm Chart`: Add the ability to configure `kube-rbac-proxy` image and resources. [[GH-259](https://github.com/hashicorp/terraform-cloud-operator/pull/259)] [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)]
+
+DOCS:
+
+* Update FAQ. [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)]
+
 DEPENDENCIES:
 
 * Bump `sigs.k8s.io/controller-runtime` from 0.15.1 to 0.15.2. [[GH-258](https://github.com/hashicorp/terraform-cloud-operator/pull/258)]
@@ -12,6 +20,10 @@ DEPENDENCIES:
 * Bump `golang.org/x/term` from 0.11.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `golang.org/x/text` from 0.12.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `github.com/hashicorp/go-tfe` from 1.32.1 to 1.35.0. [[GH-273](https://github.com/hashicorp/terraform-cloud-operator/pull/273)]
+
+## Community Contributors :raised_hands:
+- @kieranbrown made their contribution in https://github.com/hashicorp/terraform-cloud-operator/pull/259
+- @KamalAman for constantly providing us with a valuable feedback :rocket:
 
 ## 2.0.0-beta8 (August 29, 2023)
 

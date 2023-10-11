@@ -149,7 +149,7 @@ There are two main pieces of the Operator `API` and `Controller`. Depending on w
     
 - Controllers:
 
-    We rely on (Ginkgo)[https://github.com/onsi/ginkgo] testing framework in our controllers E2E tests. If your made controller-related changes(/controllers/**), please make sure you have updated the tests and always run them.
+    We rely on [Ginkgo](https://github.com/onsi/ginkgo) testing framework in our controllers E2E tests. If your made controller-related changes(/controllers/**), please make sure you have updated the tests and always run them.
 
     Export the organization name and API token to environment variable:
 
