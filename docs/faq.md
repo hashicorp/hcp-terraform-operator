@@ -88,7 +88,7 @@
 
 - **What does `kube-rbac-proxy` do?**
 
-  The `kube-rbac-proxy` is a small HTTP proxy for a single upstream, that can perform RBAC authorization against the Kubernetes API. More information is in the author's [blog post](https://www.brancz.com/2018/02/27/using-kube-rbac-proxy-to-secure-kubernetes-workloads/).
+  The `kube-rbac-proxy` is a small HTTP proxy for a single upstream, that can perform RBAC authorization against the Kubernetes API. This allows providing RBAC-based access to the operator [metrics](./metrics.md) within the Kubernetes cluster. More information is in the author's [blog post](https://www.brancz.com/2018/02/27/using-kube-rbac-proxy-to-secure-kubernetes-workloads/).
 
 ## Performance
 
