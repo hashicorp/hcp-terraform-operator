@@ -27,6 +27,7 @@ type ModuleSource struct {
 // At least one of the fields `ID` or `Name` is mandatory.
 type ModuleWorkspace struct {
 	// Module Workspace ID.
+	// Must match pattern: ^ws-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
@@ -70,6 +71,7 @@ type ModuleOutput struct {
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 	// Specify whether or not the output is sensitive.
+	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
 	//+optional
@@ -92,6 +94,7 @@ type ModuleSpec struct {
 	Workspace *ModuleWorkspace `json:"workspace"`
 
 	// Name of the module that will be uploaded and executed.
+	// Default: `this`.
 	//
 	//+kubebuilder:validation:MinLength:=1
 	//+kubebuilder:default:=this
@@ -108,6 +111,7 @@ type ModuleSpec struct {
 	//+optional
 	Outputs []ModuleOutput `json:"outputs,omitempty"`
 	// Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
+	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
 	//+optional
@@ -156,6 +160,7 @@ type Module struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// Specification of the desired behavior of the module.
 	Spec   ModuleSpec   `json:"spec"`
 	Status ModuleStatus `json:"status,omitempty"`
 }
