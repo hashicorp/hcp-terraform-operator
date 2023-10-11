@@ -15,6 +15,7 @@ DEPENDENCIES:
 * Bump `k8s.io/api` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
 * Bump `k8s.io/apimachinery` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
 * Bump `k8s.io/client-go` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
+* Bump `kube-rbac-proxy` image from `0.14.2` to `0.14.3`. [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)]
 * Bump `golang.org/x/net` from 0.14.0 to 0.17.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `golang.org/x/sys` from 0.11.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `golang.org/x/term` from 0.11.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
