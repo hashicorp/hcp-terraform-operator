@@ -117,7 +117,7 @@ type ModuleSpec struct {
 	//+optional
 	DestroyOnDeletion bool `json:"destroyOnDeletion,omitempty"`
 	// Allows executing a new Run without changing any Workspace or Module attributes.
-	// Example: kubectl patch <KIND> <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
+	// Example: kubectl patch <KIND> <NAME> --type=merge --patch '{"spec": {"restartedAt": "'\`date -u -Iseconds\`'"}}'
 	//
 	//+kubebuilder:validation:MinLength:=1
 	//+optional

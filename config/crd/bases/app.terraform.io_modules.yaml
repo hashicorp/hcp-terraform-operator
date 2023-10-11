@@ -98,7 +98,7 @@ spec:
               restartedAt:
                 description: 'Allows executing a new Run without changing any Workspace
                   or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge
-                  --patch ''{"spec": {"restartedAt": "''`date -u -Iseconds`''"}}'''
+                  --patch ''{"spec": {"restartedAt": "''\`date -u -Iseconds\`''"}}'''
                 minLength: 1
                 type: string
               token:
