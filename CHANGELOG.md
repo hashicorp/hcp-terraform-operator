@@ -6,6 +6,7 @@ DEPENDENCIES:
 * Bump `k8s.io/api` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
 * Bump `k8s.io/apimachinery` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
 * Bump `k8s.io/client-go` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
+* Bump `golang.org/x/net` from 0.14.0 to 0.17.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 
 ## 2.0.0-beta8 (August 29, 2023)
 
