@@ -85,12 +85,7 @@ spec:
             name: https
             protocol: TCP
           resources:
-            limits:
-              cpu: 500m
-              memory: 128Mi
-            requests:
-              cpu: 50m
-              memory: 64Mi
+            {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
       serviceAccountName: {{ .Release.Name }}-controller-manager
