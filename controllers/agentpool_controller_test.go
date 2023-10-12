@@ -372,6 +372,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			instance.Spec.AgentDeploymentAutoscaling = &appv1alpha2.AgentDeploymentAutoscaling{
 				TargetWorkspaces: []appv1alpha2.TargetWorkspace{
 					{Name: "test-workspace"},
+					{WildcardName: "test-*"},
 				},
 				MinReplicas:           pointer.PointerOf(int32(3)),
 				MaxReplicas:           pointer.PointerOf(int32(5)),
@@ -386,6 +387,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeploymentAutoscaling).ToNot(BeNil())
 			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(Equal([]appv1alpha2.TargetWorkspace{
 				{Name: "test-workspace"},
+				{WildcardName: "test-*"},
 			}))
 			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(pointer.PointerOf(int32(3))))
 			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))

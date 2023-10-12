@@ -43,6 +43,12 @@ type TargetWorkspace struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
+
+	// Wildcard Name to match match workspace names using `*` on name suffix, prefix, or both.
+	//
+	//+kubebuilder:validation:MinLength:=1
+	//+optional
+	WildcardName string `json:"wildcardName,omitempty"`
 }
 
 // AgentDeploymentAutoscaling allows you to configure the operator

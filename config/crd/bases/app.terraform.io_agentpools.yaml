@@ -7589,6 +7589,11 @@ spec:
                           description: Workspace Name
                           minLength: 1
                           type: string
+                        wildcardName:
+                          description: Wildcard Name to match match workspace names
+                            using `*` on name suffix, prefix, or both.
+                          minLength: 1
+                          type: string
                       type: object
                     type: array
                 required:
