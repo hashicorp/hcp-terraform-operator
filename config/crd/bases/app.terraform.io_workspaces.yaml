@@ -45,7 +45,7 @@ spec:
                   - https://developer.hashicorp.com/terraform/cloud-docs/agents'
                 properties:
                   id:
-                    description: Agent Pool ID.
+                    description: 'Agent Pool ID. Must match pattern: ^apool-[a-zA-Z0-9]+$'
                     pattern: ^apool-[a-zA-Z0-9]+$
                     type: string
                   name:
@@ -55,13 +55,15 @@ spec:
                 type: object
               allowDestroyPlan:
                 default: true
-                description: 'Allows a destroy plan to be created and applied. More
-                  information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion'
+                description: 'Allows a destroy plan to be created and applied. Default:
+                  `true`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion'
                 type: boolean
               applyMethod:
                 default: manual
                 description: 'Define either change will be applied automatically(auto)
-                  or require an operator to confirm(manual). More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
+                  or require an operator to confirm(manual). Must be one of the following
+                  values: `auto`, `manual`. Default: `manual`. More information: -
+                  https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply'
                 pattern: ^(auto|manual)$
                 type: string
               description:
@@ -85,8 +87,9 @@ spec:
                       type: string
                     hcl:
                       default: false
-                      description: Parse this field as HashiCorp Configuration Language
-                        (HCL). This allows you to interpolate values at runtime.
+                      description: 'Parse this field as HashiCorp Configuration Language
+                        (HCL). This allows you to interpolate values at runtime. Default:
+                        `false`.'
                       type: boolean
                     name:
                       description: Name of the variable.
@@ -94,9 +97,9 @@ spec:
                       type: string
                     sensitive:
                       default: false
-                      description: Sensitive variables are never shown in the UI or
-                        API. They may appear in Terraform logs if your configuration
-                        is designed to output them.
+                      description: 'Sensitive variables are never shown in the UI
+                        or API. They may appear in Terraform logs if your configuration
+                        is designed to output them. Default: `false`.'
                       type: boolean
                     value:
                       description: Value of the variable.
@@ -125,8 +128,7 @@ spec:
                           type: object
                           x-kubernetes-map-type: atomic
                         secretKeyRef:
-                          description: Selects a key of a secret in the workspace's
-                            namespace.
+                          description: Selects a key of a Secret.
                           properties:
                             key:
                               description: The key of the secret to select from.  Must
@@ -152,8 +154,9 @@ spec:
                 type: array
               executionMode:
                 default: remote
-                description: 'Define where the Terraform code will be executed. More
-                  information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode'
+                description: 'Define where the Terraform code will be executed. Must
+                  be one of the following values: `agent`, `local`, `remote`. Default:
+                  `remote`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode'
                 pattern: ^(agent|local|remote)$
                 type: string
               name:
@@ -205,10 +208,13 @@ spec:
                         - Run Events: `run:applying`, `run:completed`, `run:created`,
                         `run:errored`, `run:needs_attention`, `run:planning`.'
                       items:
-                        description: NotificationTrigger represents the different
-                          TFC notifications that can be sent as a run's progress transitions
-                          between different states. This must be aligned with go-tfe
-                          type `NotificationTriggerType`.
+                        description: 'NotificationTrigger represents the different
+                          TFC notifications that can be sent as a run''s progress
+                          transitions between different states. This must be aligned
+                          with go-tfe type `NotificationTriggerType`. Must be one
+                          of the following values: `run:applying`, `assessment:check_failure`,
+                          `run:completed`, `run:created`, `assessment:drifted`, `run:errored`,
+                          `assessment:failed`, `run:needs_attention`, `run:planning`.'
                         enum:
                         - run:applying
                         - assessment:check_failure
@@ -223,8 +229,8 @@ spec:
                       minItems: 1
                       type: array
                     type:
-                      description: 'The type of the notification. Valid values: `email`,
-                        `generic`, `microsoft-teams`, `slack`.'
+                      description: 'The type of the notification. Must be one of the
+                        following values: `email`, `generic`, `microsoft-teams`, `slack`.'
                       enum:
                       - email
                       - generic
@@ -232,7 +238,8 @@ spec:
                       - slack
                       type: string
                     url:
-                      description: The URL of the notification.
+                      description: 'The URL of the notification. Must match pattern:
+                        ^https?://.*'
                       pattern: ^https?://.*
                       type: string
                   required:
@@ -253,8 +260,8 @@ spec:
                 properties:
                   allWorkspaces:
                     default: false
-                    description: Allow access to the state for all workspaces within
-                      the same organization.
+                    description: 'Allow access to the state for all workspaces within
+                      the same organization. Default: `false`.'
                     type: boolean
                   workspaces:
                     description: Allow access to the state for specific workspaces
@@ -266,7 +273,8 @@ spec:
                         fields `ID` or `Name` is mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls'
                       properties:
                         id:
-                          description: Consumer Workspace ID.
+                          description: 'Consumer Workspace ID. Must match pattern:
+                            ^ws-[a-zA-Z0-9]+$'
                           pattern: ^ws-[a-zA-Z0-9]+$
                           type: string
                         name:
@@ -291,11 +299,12 @@ spec:
                     enforcementLevel:
                       default: advisory
                       description: 'Run Task Enforcement Level. Can be one of `advisory`
-                        or `mandatory`. Default: `advisory`.'
+                        or `mandatory`. Default: `advisory`. Must be one of the following
+                        values: `advisory`, `mandatory` Default: `advisory`.'
                       pattern: ^(advisory|mandatory)$
                       type: string
                     id:
-                      description: Run Task ID.
+                      description: 'Run Task ID. Must match pattern: ^task-[a-zA-Z0-9]+$'
                       pattern: ^task-[a-zA-Z0-9]+$
                       type: string
                     name:
@@ -304,8 +313,8 @@ spec:
                       type: string
                     stage:
                       default: post_plan
-                      description: 'Run Task Stage. Can be one of `pre_apply`, `pre_plan`,
-                        or `post_plan`. Default: `post_plan`.'
+                      description: 'Run Task Stage. Must be one of the following values:
+                        `pre_apply`, `pre_plan`, `post_plan`. Default: `post_plan`.'
                       pattern: ^(pre_apply|pre_plan|post_plan)$
                       type: string
                   type: object
@@ -325,7 +334,7 @@ spec:
                     mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
-                      description: Source Workspace ID.
+                      description: 'Source Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$'
                       pattern: ^ws-[a-zA-Z0-9]+$
                       type: string
                     name:
@@ -340,9 +349,11 @@ spec:
                   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys'
                 properties:
                   id:
+                    description: 'SSH key ID. Must match pattern: ^sshkey-[a-zA-Z0-9]+$'
                     pattern: ^sshkey-[a-zA-Z0-9]+$
                     type: string
                   name:
+                    description: SSH key name.
                     minLength: 1
                     type: string
                 type: object
@@ -352,10 +363,11 @@ spec:
                   numbers, colons, hyphens, and underscores; and must begin and end
                   with a letter or number.
                 items:
-                  description: Tags allows you to correlate, organize, and even filter
+                  description: 'Tags allows you to correlate, organize, and even filter
                     workspaces based on the assigned tags. Tags must be one or more
                     characters; can include letters, numbers, colons, hyphens, and
-                    underscores; and must begin and end with a letter or number.
+                    underscores; and must begin and end with a letter or number. Must
+                    match pattern: ^[A-Za-z0-9][A-Za-z0-9:_-]*$'
                   pattern: ^[A-Za-z0-9][A-Za-z0-9:_-]*$
                   type: string
                 minItems: 1
@@ -378,7 +390,8 @@ spec:
                     access:
                       description: 'There are two ways to choose which permissions
                         a given team has on a workspace: fixed permission sets, and
-                        custom permissions. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
+                        custom permissions. Must be one of the following values: `admin`,
+                        `custom`, `plan`, `read`, `write`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions'
                       pattern: ^(admin|custom|plan|read|write)$
                       type: string
                     custom:
@@ -387,32 +400,43 @@ spec:
                         provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions'
                       properties:
                         runTasks:
+                          description: 'Manage Workspace Run Tasks. Default: `false`.'
                           type: boolean
                         runs:
                           default: read
+                          description: 'Run access. Must be one of the following values:
+                            `apply`, `plan`, `read`. Default: `read`.'
                           pattern: ^(apply|plan|read)$
                           type: string
                         sentinel:
                           default: none
+                          description: 'Download Sentinel mocks. Must be one of the
+                            following values: `none`, `read`. Default: `none`.'
                           pattern: ^(none|read)$
                           type: string
                         stateVersions:
                           default: none
+                          description: 'State access. Must be one of the following
+                            values: `none`, `read`, `read-outputs`, `write`. Default:
+                            `none`.'
                           pattern: ^(none|read|read-outputs|write)$
                           type: string
                         variables:
                           default: none
+                          description: 'Variable access. Must be one of the following
+                            values: `none`, `read`, `write`. Default: `none`.'
                           pattern: ^(none|read|write)$
                           type: string
                         workspaceLocking:
                           default: false
+                          description: 'Lock/unlock workspace. Default: `false`.'
                           type: boolean
                       type: object
                     team:
                       description: 'Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams'
                       properties:
                         id:
-                          description: Team ID.
+                          description: 'Team ID. Must match pattern: ^team-[a-zA-Z0-9]+$'
                           pattern: ^team-[a-zA-Z0-9]+$
                           type: string
                         name:
@@ -443,8 +467,9 @@ spec:
                       type: string
                     hcl:
                       default: false
-                      description: Parse this field as HashiCorp Configuration Language
-                        (HCL). This allows you to interpolate values at runtime.
+                      description: 'Parse this field as HashiCorp Configuration Language
+                        (HCL). This allows you to interpolate values at runtime. Default:
+                        `false`.'
                       type: boolean
                     name:
                       description: Name of the variable.
@@ -452,9 +477,9 @@ spec:
                       type: string
                     sensitive:
                       default: false
-                      description: Sensitive variables are never shown in the UI or
-                        API. They may appear in Terraform logs if your configuration
-                        is designed to output them.
+                      description: 'Sensitive variables are never shown in the UI
+                        or API. They may appear in Terraform logs if your configuration
+                        is designed to output them. Default: `false`.'
                       type: boolean
                     value:
                       description: Value of the variable.
@@ -483,8 +508,7 @@ spec:
                           type: object
                           x-kubernetes-map-type: atomic
                         secretKeyRef:
-                          description: Selects a key of a secret in the workspace's
-                            namespace.
+                          description: Selects a key of a Secret.
                           properties:
                             key:
                               description: The key of the secret to select from.  Must
@@ -510,8 +534,9 @@ spec:
                 type: array
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
-                  If not specified, the latest available version will be used. More
-                  information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version'
+                  If not specified, the latest available version will be used. Must
+                  match pattern: ^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$ More information:
+                  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version'
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                 type: string
               token:
@@ -552,8 +577,8 @@ spec:
                     minLength: 1
                     type: string
                   oAuthTokenID:
-                    description: The VCS Connection (OAuth Connection + Token) to
-                      use.
+                    description: 'The VCS Connection (OAuth Connection + Token) to
+                      use. Must match pattern: ^ot-[a-zA-Z0-9]+$'
                     pattern: ^ot-[a-zA-Z0-9]+$
                     type: string
                   repository:

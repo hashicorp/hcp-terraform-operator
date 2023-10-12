@@ -144,7 +144,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Consumer Workspace ID. |
+| `id` _string_ | Consumer Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$ |
 | `name` _string_ | Consumer Workspace name. |
 
 
@@ -159,12 +159,12 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `runs` _string_ |  |
-| `runTasks` _boolean_ |  |
-| `sentinel` _string_ |  |
-| `stateVersions` _string_ |  |
-| `variables` _string_ |  |
-| `workspaceLocking` _boolean_ |  |
+| `runs` _string_ | Run access. Must be one of the following values: `apply`, `plan`, `read`. Default: `read`. |
+| `runTasks` _boolean_ | Manage Workspace Run Tasks. Default: `false`. |
+| `sentinel` _string_ | Download Sentinel mocks. Must be one of the following values: `none`, `read`. Default: `none`. |
+| `stateVersions` _string_ | State access. Must be one of the following values: `none`, `read`, `read-outputs`, `write`. Default: `none`. |
+| `variables` _string_ | Variable access. Must be one of the following values: `none`, `read`, `write`. Default: `none`. |
+| `workspaceLocking` _boolean_ | Lock/unlock workspace. Default: `false`. |
 
 
 #### Module
@@ -197,7 +197,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `name` _string_ | Output name must match with the module output. |
-| `sensitive` _boolean_ | Specify whether or not the output is sensitive. |
+| `sensitive` _boolean_ | Specify whether or not the output is sensitive. Default: `false`. |
 
 
 #### ModuleSource
@@ -230,11 +230,11 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `module` _[ModuleSource](#modulesource)_ | Module source and version to execute. |
 | `workspace` _[ModuleWorkspace](#moduleworkspace)_ | Workspace to execute the module. |
-| `name` _string_ | Name of the module that will be uploaded and executed. |
+| `name` _string_ | Name of the module that will be uploaded and executed. Default: `this`. |
 | `variables` _[ModuleVariable](#modulevariable) array_ | Variables to pass to the module, they must exist in the Workspace. |
 | `outputs` _[ModuleOutput](#moduleoutput) array_ | Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive). |
-| `destroyOnDeletion` _boolean_ | Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes. |
-| `restartedAt` _string_ | Allows executing a new Run without changing any Workspace or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}' |
+| `destroyOnDeletion` _boolean_ | Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes. Default: `false`. |
+| `restartedAt` _string_ | Allows executing a new Run without changing any Workspace or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge --patch '{"spec": {"restartedAt": "'\`date -u -Iseconds\`'"}}' |
 
 
 
@@ -264,7 +264,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Module Workspace ID. |
+| `id` _string_ | Module Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$ |
 | `name` _string_ | Module Workspace Name. |
 
 
@@ -280,11 +280,11 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `name` _string_ | Notification name. |
-| `type` _NotificationDestinationType_ | The type of the notification. Valid values: `email`, `generic`, `microsoft-teams`, `slack`. |
+| `type` _NotificationDestinationType_ | The type of the notification. Must be one of the following values: `email`, `generic`, `microsoft-teams`, `slack`. |
 | `enabled` _boolean_ | Whether the notification configuration should be enabled or not. Default: `true`. |
 | `token` _string_ | The token of the notification. |
 | `triggers` _NotificationTrigger array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers: - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`. - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`. |
-| `url` _string_ | The URL of the notification. |
+| `url` _string_ | The URL of the notification. Must match pattern: ^https?://.* |
 | `emailAddresses` _string array_ | The list of email addresses that will receive notification emails. It is only available for Terraform Enterprise users. It is not available in Terraform Cloud. |
 | `emailUsers` _string array_ | The list of users belonging to the organization that will receive notification emails. |
 
@@ -314,7 +314,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `allWorkspaces` _boolean_ | Allow access to the state for all workspaces within the same organization. |
+| `allWorkspaces` _boolean_ | Allow access to the state for all workspaces within the same organization. Default: `false`. |
 | `workspaces` _[ConsumerWorkspace](#consumerworkspace) array_ | Allow access to the state for specific workspaces within the same organization. |
 
 
@@ -346,7 +346,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Source Workspace ID. |
+| `id` _string_ | Source Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$ |
 | `name` _string_ | Source Workspace Name. |
 
 
@@ -361,8 +361,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ |  |
-| `name` _string_ |  |
+| `id` _string_ | SSH key ID. Must match pattern: ^sshkey-[a-zA-Z0-9]+$ |
+| `name` _string_ | SSH key name. |
 
 
 #### TargetWorkspace
@@ -391,7 +391,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Team ID. |
+| `id` _string_ | Team ID. Must match pattern: ^team-[a-zA-Z0-9]+$ |
 | `name` _string_ | Team name. |
 
 
@@ -407,7 +407,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `team` _[Team](#team)_ | Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams |
-| `access` _string_ | There are two ways to choose which permissions a given team has on a workspace: fixed permission sets, and custom permissions. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions |
+| `access` _string_ | There are two ways to choose which permissions a given team has on a workspace: fixed permission sets, and custom permissions. Must be one of the following values: `admin`, `custom`, `plan`, `read`, `write`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions |
 | `custom` _[CustomPermissions](#custompermissions)_ | Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions |
 
 
@@ -439,7 +439,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `configMapKeyRef` _[ConfigMapKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#configmapkeyselector-v1-core)_ | Selects a key of a ConfigMap. |
-| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace. |
+| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a Secret. |
 
 
 #### Variable
@@ -455,8 +455,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name of the variable. |
 | `description` _string_ | Description of the variable. |
-| `hcl` _boolean_ | Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime. |
-| `sensitive` _boolean_ | Sensitive variables are never shown in the UI or API. They may appear in Terraform logs if your configuration is designed to output them. |
+| `hcl` _boolean_ | Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime. Default: `false`. |
+| `sensitive` _boolean_ | Sensitive variables are never shown in the UI or API. They may appear in Terraform logs if your configuration is designed to output them. Default: `false`. |
 | `value` _string_ | Value of the variable. |
 | `valueFrom` _[ValueFrom](#valuefrom)_ | Source for the variable's value. Cannot be used if value is not empty. |
 
@@ -472,7 +472,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `oAuthTokenID` _string_ | The VCS Connection (OAuth Connection + Token) to use. |
+| `oAuthTokenID` _string_ | The VCS Connection (OAuth Connection + Token) to use. Must match pattern: ^ot-[a-zA-Z0-9]+$ |
 | `repository` _string_ | A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
 
@@ -506,7 +506,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Agent Pool ID. |
+| `id` _string_ | Agent Pool ID. Must match pattern: ^apool-[a-zA-Z0-9]+$ |
 | `name` _string_ | Agent Pool name. |
 
 
@@ -521,10 +521,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Run Task ID. |
+| `id` _string_ | Run Task ID. Must match pattern: ^task-[a-zA-Z0-9]+$ |
 | `name` _string_ | Run Task Name. |
-| `enforcementLevel` _string_ | Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`. |
-| `stage` _string_ | Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`. |
+| `enforcementLevel` _string_ | Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`. Must be one of the following values: `advisory`, `mandatory` Default: `advisory`. |
+| `stage` _string_ | Run Task Stage. Must be one of the following values: `pre_apply`, `pre_plan`, `post_plan`. Default: `post_plan`. |
 
 
 #### WorkspaceSpec
@@ -541,15 +541,15 @@ _Appears in:_
 | `name` _string_ | Workspace name. |
 | `organization` _string_ | Organization name where the Workspace will be created. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
-| `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual). More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
-| `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
+| `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual). Must be one of the following values: `auto`, `manual`. Default: `manual`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
+| `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied. Default: `true`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
 | `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure. More information: - https://developer.hashicorp.com/terraform/cloud-docs/agents |
-| `executionMode` _string_ | Define where the Terraform code will be executed. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
+| `executionMode` _string_ | Define where the Terraform code will be executed. Must be one of the following values: `agent`, `local`, `remote`. Default: `remote`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
 | `runTasks` _[WorkspaceRunTask](#workspaceruntask) array_ | Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks |
 | `tags` _Tag array_ | Workspace tags are used to help identify and group together workspaces. Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number. |
 | `teamAccess` _[TeamAccess](#teamaccess) array_ | Terraform Cloud workspaces can only be accessed by users with the correct permissions. You can manage permissions for a workspace on a per-team basis. When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it, with full admin permissions. These teams' access can't be removed from a workspace. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
-| `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
+| `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. Must match pattern: ^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$ More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
 | `workingDirectory` _string_ | The directory where Terraform will execute, specified as a relative path from the root of the configuration directory. More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory |
 | `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all plans and applies in this workspace. Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables |
 | `terraformVariables` _[Variable](#variable) array_ | Terraform variables for all plans and applies in this workspace. Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables |

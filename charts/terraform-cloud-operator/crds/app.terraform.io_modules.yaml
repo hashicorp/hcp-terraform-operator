@@ -48,8 +48,8 @@ spec:
             properties:
               destroyOnDeletion:
                 default: false
-                description: Specify whether or not to execute a Destroy run when
-                  the object is deleted from the Kubernetes.
+                description: 'Specify whether or not to execute a Destroy run when
+                  the object is deleted from the Kubernetes. Default: `false`.'
                 type: boolean
               module:
                 description: Module source and version to execute.
@@ -68,7 +68,8 @@ spec:
                 type: object
               name:
                 default: this
-                description: Name of the module that will be uploaded and executed.
+                description: 'Name of the module that will be uploaded and executed.
+                  Default: `this`.'
                 minLength: 1
                 type: string
               organization:
@@ -89,7 +90,8 @@ spec:
                       type: string
                     sensitive:
                       default: false
-                      description: Specify whether or not the output is sensitive.
+                      description: 'Specify whether or not the output is sensitive.
+                        Default: `false`.'
                       type: boolean
                   required:
                   - name
@@ -99,7 +101,7 @@ spec:
               restartedAt:
                 description: 'Allows executing a new Run without changing any Workspace
                   or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge
-                  --patch ''{"spec": {"restartedAt": "''`date -u -Iseconds`''"}}'''
+                  --patch ''{"spec": {"restartedAt": "''\`date -u -Iseconds\`''"}}'''
                 minLength: 1
                 type: string
               token:
@@ -146,7 +148,7 @@ spec:
                 description: Workspace to execute the module.
                 properties:
                   id:
-                    description: Module Workspace ID.
+                    description: 'Module Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$'
                     pattern: ^ws-[a-zA-Z0-9]+$
                     type: string
                   name:
