@@ -1,3 +1,9 @@
+## 2.0.0 (UNRELEASED)
+
+DEPENDENCIES:
+
+* * Bump `github.com/hashicorp/go-slug` from 0.12.1 to 0.12.2. [[GH-261](https://github.com/hashicorp/terraform-cloud-operator/pull/261)]
+
 ## 2.0.0-beta8 (August 29, 2023)
 
 BUG FIXES:
