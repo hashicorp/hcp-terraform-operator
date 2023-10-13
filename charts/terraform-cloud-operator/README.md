@@ -96,6 +96,13 @@ In the above example, the Operator will watch all namespaces in the Kubernetes c
 | operator.watchedNamespaces | list | [] | List of namespaces the controllers should watch. |
 | operator.tfeAddress | string | "" | The API URL of a Terraform Enterprise instance. |
 | operator.skipTLSVerify | bool | false | Whether or not to ignore TLS certification warnings. |
+| kubeRbacProxy.image.repository | string | "quay.io/brancz/kube-rbac-proxy" | Image repository. |
+| kubeRbacProxy.image.pullPolicy | string | "IfNotPresent" | Image pull policy. |
+| kubeRbacProxy.image.tag | string | "v0.14.3" | Image tag. |
+| kubeRbacProxy.resources.limits.cpu | string | "500m" | Limits as a maximum amount of CPU to be used by a container. |
+| kubeRbacProxy.resources.limits.memory | string | "128Mi" | Limits as a maximum amount of memory to be used by a container. |
+| kubeRbacProxy.resources.requests.cpu | string | "50m" | Guaranteed minimum amount of CPU to be used by a container. |
+| kubeRbacProxy.resources.requests.memory | string | "64Mi" | Guaranteed minimum amount of memory to be used by a container. |
 | controllers.agentPool.workers | int | 1 | The number of the Agent Pool controller workers. |
 | controllers.module.workers | int | 1 | The number of the Module controller workers. |
 | controllers.workspace.workers | int | 1 | The number of the Workspace controller workers. |
