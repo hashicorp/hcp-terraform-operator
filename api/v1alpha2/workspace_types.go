@@ -16,6 +16,7 @@ import (
 //   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 type WorkspaceAgentPool struct {
 	// Agent Pool ID.
+	// Must match pattern: ^apool-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^apool-[a-zA-Z0-9]+$"
 	//+optional
@@ -34,6 +35,7 @@ type WorkspaceAgentPool struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 type ConsumerWorkspace struct {
 	// Consumer Workspace ID.
+	// Must match pattern: ^ws-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
@@ -51,6 +53,7 @@ type ConsumerWorkspace struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 type RemoteStateSharing struct {
 	// Allow access to the state for all workspaces within the same organization.
+	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
 	//+optional
@@ -69,6 +72,7 @@ type RemoteStateSharing struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
 type WorkspaceRunTask struct {
 	// Run Task ID.
+	// Must match pattern: ^task-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^task-[a-zA-Z0-9]+$"
 	//+optional
@@ -79,12 +83,16 @@ type WorkspaceRunTask struct {
 	//+optional
 	Name string `json:"name,omitempty"`
 	// Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`.
+	// Must be one of the following values: `advisory`, `mandatory`
+	// Default: `advisory`.
 	//
 	//+kubebuilder:validation:Pattern:="^(advisory|mandatory)$"
 	//+kubebuilder:default:=advisory
 	//+optional
 	EnforcementLevel string `json:"enforcementLevel"`
-	// Run Task Stage. Can be one of `pre_apply`, `pre_plan`, or `post_plan`. Default: `post_plan`.
+	// Run Task Stage.
+	// Must be one of the following values: `pre_apply`, `pre_plan`, `post_plan`.
+	// Default: `post_plan`.
 	//
 	//+kubebuilder:validation:Pattern:="^(pre_apply|pre_plan|post_plan)$"
 	//+kubebuilder:default:=post_plan
@@ -100,6 +108,7 @@ type WorkspaceRunTask struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
 	// Source Workspace ID.
+	// Must match pattern: ^ws-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
@@ -119,6 +128,7 @@ type RunTrigger struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 type Team struct {
 	// Team ID.
+	// Must match pattern: ^team-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^team-[a-zA-Z0-9]+$"
 	//+optional
@@ -133,28 +143,48 @@ type Team struct {
 // Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-workspace-permissions
-//
-// +optional
 type CustomPermissions struct {
+	// Run access.
+	// Must be one of the following values: `apply`, `plan`, `read`.
+	// Default: `read`.
+	//
 	//+kubebuilder:validation:Pattern:="^(apply|plan|read)$"
 	//+kubebuilder:default:=read
 	//+optional
 	Runs string `json:"runs,omitempty"`
+	// Manage Workspace Run Tasks.
+	// Default: `false`.
+	//
 	//+kubebuilder:validation:default:=false
 	//+optional
 	RunTasks bool `json:"runTasks,omitempty"`
+	// Download Sentinel mocks.
+	// Must be one of the following values: `none`, `read`.
+	// Default: `none`.
+	//
 	//+kubebuilder:validation:Pattern:="^(none|read)$"
 	//+kubebuilder:default:=none
 	//+optional
 	Sentinel string `json:"sentinel,omitempty"`
+	// State access.
+	// Must be one of the following values: `none`, `read`, `read-outputs`, `write`.
+	// Default: `none`.
+	//
 	//+kubebuilder:validation:Pattern:="^(none|read|read-outputs|write)$"
 	//+kubebuilder:default:=none
 	//+optional
 	StateVersions string `json:"stateVersions,omitempty"`
+	// Variable access.
+	// Must be one of the following values: `none`, `read`, `write`.
+	// Default: `none`.
+	//
 	//+kubebuilder:validation:Pattern:="^(none|read|write)$"
 	//+kubebuilder:default:=none
 	//+optional
 	Variables string `json:"variables,omitempty"`
+	// Lock/unlock workspace.
+	// Default: `false`.
+	//
 	//+kubebuilder:default:=false
 	//+optional
 	WorkspaceLocking bool `json:"workspaceLocking,omitempty"`
@@ -172,6 +202,7 @@ type TeamAccess struct {
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 	Team Team `json:"team"`
 	// There are two ways to choose which permissions a given team has on a workspace: fixed permission sets, and custom permissions.
+	// Must be one of the following values: `admin`, `custom`, `plan`, `read`, `write`.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#workspace-permissions
 	//
@@ -191,13 +222,14 @@ type Token struct {
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef"`
 }
 
-// ValueFrom source for the variable's value. Cannot be used if value is not empty.
+// ValueFrom source for the variable's value.
+// Cannot be used if value is not empty.
 type ValueFrom struct {
 	// Selects a key of a ConfigMap.
 	//
 	//+optional
 	ConfigMapKeyRef *corev1.ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
-	// Selects a key of a secret in the workspace's namespace.
+	// Selects a key of a Secret.
 	//
 	//+optional
 	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
@@ -217,11 +249,14 @@ type Variable struct {
 	//+optional
 	Description string `json:"description,omitempty"`
 	// Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
+	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
 	//+optional
 	HCL bool `json:"hcl,omitempty"`
-	// Sensitive variables are never shown in the UI or API. They may appear in Terraform logs if your configuration is designed to output them.
+	// Sensitive variables are never shown in the UI or API.
+	// They may appear in Terraform logs if your configuration is designed to output them.
+	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
 	//+optional
@@ -244,6 +279,7 @@ type Variable struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/vcs
 type VersionControl struct {
 	// The VCS Connection (OAuth Connection + Token) to use.
+	// Must match pattern: ^ot-[a-zA-Z0-9]+$
 	//
 	//+kubebuilder:validation:Pattern:="^ot-[a-zA-Z0-9]+$"
 	OAuthTokenID string `json:"oAuthTokenID,omitempty"`
@@ -264,9 +300,14 @@ type VersionControl struct {
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 type SSHKey struct {
+	// SSH key ID.
+	// Must match pattern: ^sshkey-[a-zA-Z0-9]+$
+	//
 	//+kubebuilder:validation:Pattern:="^sshkey-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
+	// SSH key name.
+	//
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
@@ -274,12 +315,14 @@ type SSHKey struct {
 
 // Tags allows you to correlate, organize, and even filter workspaces based on the assigned tags.
 // Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number.
+// Must match pattern: ^[A-Za-z0-9][A-Za-z0-9:_-]*$
 //
 // +kubebuilder:validation:Pattern:="^[A-Za-z0-9][A-Za-z0-9:_-]*$"
 type Tag string
 
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 // This must be aligned with go-tfe type `NotificationTriggerType`.
+// Must be one of the following values: `run:applying`, `assessment:check_failure`, `run:completed`, `run:created`, `assessment:drifted`, `run:errored`, `assessment:failed`, `run:needs_attention`, `run:planning`.
 //
 // +kubebuilder:validation:Enum:="run:applying";"assessment:check_failure";"run:completed";"run:created";"assessment:drifted";"run:errored";"assessment:failed";"run:needs_attention";"run:planning"
 type NotificationTrigger string
@@ -293,11 +336,12 @@ type Notification struct {
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 	// The type of the notification.
-	// Valid values: `email`, `generic`, `microsoft-teams`, `slack`.
+	// Must be one of the following values: `email`, `generic`, `microsoft-teams`, `slack`.
 	//
 	//+kubebuilder:validation:Enum:=email;generic;microsoft-teams;slack
 	Type tfc.NotificationDestinationType `json:"type"`
-	// Whether the notification configuration should be enabled or not. Default: `true`.
+	// Whether the notification configuration should be enabled or not.
+	// Default: `true`.
 	//
 	//+kubebuilder:default=true
 	//+optional
@@ -317,6 +361,7 @@ type Notification struct {
 	//+optional
 	Triggers []NotificationTrigger `json:"triggers,omitempty"`
 	// The URL of the notification.
+	// Must match pattern: ^https?://.*
 	//
 	//+kubebuilder:validation:Pattern:="^https?://.*"
 	//+optional
@@ -350,6 +395,8 @@ type WorkspaceSpec struct {
 	Token Token `json:"token"`
 
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
+	// Must be one of the following values: `auto`, `manual`.
+	// Default: `manual`.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
 	//
@@ -358,6 +405,7 @@ type WorkspaceSpec struct {
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
 	// Allows a destroy plan to be created and applied.
+	// Default: `true`.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
 	//
@@ -376,6 +424,8 @@ type WorkspaceSpec struct {
 	//+optional
 	AgentPool *WorkspaceAgentPool `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
+	// Must be one of the following values: `agent`, `local`, `remote`.
+	// Default: `remote`.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode
 	//
@@ -408,6 +458,7 @@ type WorkspaceSpec struct {
 	TeamAccess []*TeamAccess `json:"teamAccess,omitempty"`
 	// The version of Terraform to use for this workspace.
 	// If not specified, the latest available version will be used.
+	// Must match pattern: ^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$
 	// More information:
 	//   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
 	//
