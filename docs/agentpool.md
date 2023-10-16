@@ -229,9 +229,16 @@ Deleting the AgentPool will result in deletion of the associated agent Deploymen
       autoscaling:
         minReplicas: 2
         maxReplicas: 4
+        # The targetWorkspace field is optional. When omitted 
+        # the operator will target all workspaces that are
+        # associated with the AgentPool. 
         targetWorkspaces:
+        # Target by workspace name
         - name: test-workspace1
-        - name: test-workspace2
+        # Target by workspace ID
+        - ID: ws-abcdef1234
+        # Target by wildcard search
+        - wildcardName: test-*
     ```
 
 If you have any questions, please check out the [FAQ](./faq.md#agent-pool-controller) to see if you can find answers there.
