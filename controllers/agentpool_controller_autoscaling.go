@@ -34,10 +34,25 @@ func getWorkspaceQueueDepth(ctx context.Context, ap *agentPoolInstance, workspac
 	return len(runs.Items), nil
 }
 
+func getAllAgentPoolWorkspaceIDs(ctx context.Context, ap *agentPoolInstance) ([]string, error) {
+	agentPool, err := ap.tfClient.Client.AgentPools.Read(ctx, ap.instance.Status.AgentPoolID)
+	if err != nil {
+		return []string{}, nil
+	}
+	ids := []string{}
+	for _, w := range agentPool.Workspaces {
+		ids = append(ids, w.ID)
+	}
+	return ids, nil
+}
+
 func getTargetWorkspaceIDs(ctx context.Context, ap *agentPoolInstance) ([]string, error) {
 	workspaces := ap.instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces
+	if workspaces == nil {
+		return getAllAgentPoolWorkspaceIDs(ctx, ap)
+	}
 	workspaceIDs := map[string]struct{}{} // NOTE: this is a map so we avoid duplicates when using wildcards
-	for _, w := range workspaces {
+	for _, w := range *workspaces {
 		if w.WildcardName != "" {
 			ids, err := getTargetWorkspaceIDsByWildcardName(ctx, ap, w)
 			if err != nil {
