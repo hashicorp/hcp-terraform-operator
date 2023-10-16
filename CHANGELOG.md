@@ -3,6 +3,8 @@
 ENHANCEMENT:
 
 * `Helm Chart`: Add the ability to configure `kube-rbac-proxy` image and resources. [[GH-259](https://github.com/hashicorp/terraform-cloud-operator/pull/259)] [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)]
+* `AgentPool`: Add the ability to use wildcard-name searches to target workspaces for autoscaling. [[GH-274](https://github.com/hashicorp/terraform-cloud-operator/pull/274)]
+* `AgentPool`: Make `targetWorkspaces` field optional and default to targeting all workspaces linked to an AgentPool. [[GH-274](https://github.com/hashicorp/terraform-cloud-operator/pull/274)]
 
 DOCS:
 
