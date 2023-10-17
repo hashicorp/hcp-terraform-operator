@@ -98,7 +98,7 @@ In the above example, the Operator will watch all namespaces in the Kubernetes c
 | operator.skipTLSVerify | bool | false | Whether or not to ignore TLS certification warnings. |
 | kubeRbacProxy.image.repository | string | "quay.io/brancz/kube-rbac-proxy" | Image repository. |
 | kubeRbacProxy.image.pullPolicy | string | "IfNotPresent" | Image pull policy. |
-| kubeRbacProxy.image.tag | string | "v0.14.3" | Image tag. |
+| kubeRbacProxy.image.tag | string | "v0.14.4" | Image tag. |
 | kubeRbacProxy.resources.limits.cpu | string | "500m" | Limits as a maximum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.limits.memory | string | "128Mi" | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | "50m" | Guaranteed minimum amount of CPU to be used by a container. |
