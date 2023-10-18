@@ -7577,7 +7577,9 @@ spec:
                     type: integer
                   targetWorkspaces:
                     description: TargetWorkspaces is a list of Terraform Cloud Workspaces
-                      which the agent pool should scale up to meet demand.
+                      which the agent pool should scale up to meet demand. When this
+                      field is ommited the autoscaler will target all workspaces that
+                      are associated with the AgentPool.
                     items:
                       description: TargetWorkspace is the name or ID of the workspace
                         you want autoscale against.
@@ -7589,12 +7591,16 @@ spec:
                           description: Workspace Name
                           minLength: 1
                           type: string
+                        wildcardName:
+                          description: Wildcard Name to match match workspace names
+                            using `*` on name suffix, prefix, or both.
+                          minLength: 1
+                          type: string
                       type: object
                     type: array
                 required:
                 - maxReplicas
                 - minReplicas
-                - targetWorkspaces
                 type: object
               name:
                 description: 'Agent Pool name. More information: - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools'

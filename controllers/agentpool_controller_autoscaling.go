@@ -34,6 +34,48 @@ func getWorkspaceQueueDepth(ctx context.Context, ap *agentPoolInstance, workspac
 	return len(runs.Items), nil
 }
 
+func getAllAgentPoolWorkspaceIDs(ctx context.Context, ap *agentPoolInstance) ([]string, error) {
+	agentPool, err := ap.tfClient.Client.AgentPools.Read(ctx, ap.instance.Status.AgentPoolID)
+	if err != nil {
+		return []string{}, nil
+	}
+	ids := []string{}
+	for _, w := range agentPool.Workspaces {
+		ids = append(ids, w.ID)
+	}
+	return ids, nil
+}
+
+func getTargetWorkspaceIDs(ctx context.Context, ap *agentPoolInstance) ([]string, error) {
+	workspaces := ap.instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces
+	if workspaces == nil {
+		return getAllAgentPoolWorkspaceIDs(ctx, ap)
+	}
+	workspaceIDs := map[string]struct{}{} // NOTE: this is a map so we avoid duplicates when using wildcards
+	for _, w := range *workspaces {
+		if w.WildcardName != "" {
+			ids, err := getTargetWorkspaceIDsByWildcardName(ctx, ap, w)
+			if err != nil {
+				return []string{}, err
+			}
+			for _, id := range ids {
+				workspaceIDs[id] = struct{}{}
+			}
+			continue
+		}
+		id, err := getTargetWorkspaceID(ctx, ap, w)
+		if err != nil {
+			return []string{}, err
+		}
+		workspaceIDs[id] = struct{}{}
+	}
+	ids := []string{}
+	for v := range workspaceIDs {
+		ids = append(ids, v)
+	}
+	return ids, nil
+}
+
 func getTargetWorkspaceID(ctx context.Context, ap *agentPoolInstance, targetWorkspace appv1alpha2.TargetWorkspace) (string, error) {
 	if targetWorkspace.ID != "" {
 		return targetWorkspace.ID, nil
@@ -52,14 +94,27 @@ func getTargetWorkspaceID(ctx context.Context, ap *agentPoolInstance, targetWork
 	return "", fmt.Errorf("no such workspace found %q", targetWorkspace.Name)
 }
 
+func getTargetWorkspaceIDsByWildcardName(ctx context.Context, ap *agentPoolInstance, targetWorkspace appv1alpha2.TargetWorkspace) ([]string, error) {
+	list, err := ap.tfClient.Client.Workspaces.List(ctx, ap.instance.Spec.Organization, &tfc.WorkspaceListOptions{
+		WildcardName: targetWorkspace.WildcardName,
+	})
+	if err != nil {
+		return []string{}, err
+	}
+	workspaceIDs := []string{}
+	for _, w := range list.Items {
+		workspaceIDs = append(workspaceIDs, w.ID)
+	}
+	return workspaceIDs, nil
+}
+
 func getQueueDepth(ctx context.Context, ap *agentPoolInstance) (int, error) {
-	workspaces := ap.instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces
 	depth := 0
-	for _, w := range workspaces {
-		id, err := getTargetWorkspaceID(ctx, ap, w)
-		if err != nil {
-			return 0, err
-		}
+	workspaceIDs, err := getTargetWorkspaceIDs(ctx, ap)
+	if err != nil {
+		return 0, err
+	}
+	for _, id := range workspaceIDs {
 		runs, err := getWorkspaceQueueDepth(ctx, ap, id)
 		if err != nil {
 			return 0, err

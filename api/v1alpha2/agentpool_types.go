@@ -43,20 +43,30 @@ type TargetWorkspace struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
+
+	// Wildcard Name to match match workspace names using `*` on name suffix, prefix, or both.
+	//
+	//+kubebuilder:validation:MinLength:=1
+	//+optional
+	WildcardName string `json:"wildcardName,omitempty"`
 }
 
 // AgentDeploymentAutoscaling allows you to configure the operator
 // to scale the deployment for an AgentPool up and down to meet demand.
 type AgentDeploymentAutoscaling struct {
-	// TargetWorkspaces is a list of Terraform Cloud Workspaces which
-	// the agent pool should scale up to meet demand.
-	TargetWorkspaces []TargetWorkspace `json:"targetWorkspaces"`
-
 	// MaxReplicas is the maximum number of replicas for the Agent deployment.
 	MaxReplicas *int32 `json:"maxReplicas"`
 
 	// MinReplicas is the minimum number of replicas for the Agent deployment.
 	MinReplicas *int32 `json:"minReplicas"`
+
+	// TargetWorkspaces is a list of Terraform Cloud Workspaces which
+	// the agent pool should scale up to meet demand. When this field
+	// is ommited the autoscaler will target all workspaces that are
+	// associated with the AgentPool.
+	//
+	//+optional
+	TargetWorkspaces *[]TargetWorkspace `json:"targetWorkspaces"`
 
 	// CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300.
 	//
