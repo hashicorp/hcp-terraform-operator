@@ -209,7 +209,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 				Time: time.Now(),
 			},
 		}
-		r.updateStatus(ctx, ap, nil)
+		// r.updateStatus(ctx, ap, nil)
 	}
 	return nil
 }

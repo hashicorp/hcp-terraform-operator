@@ -390,6 +390,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		It("can autoscale agent deployments by targeting specific workspaces", func() {
 			createTestAgentPool(instance)
 
+			workspaceInstance, workspaceName := testWorkspace("test-workspace", "default", instance.Spec.Name)
+			createWorkspace(workspaceInstance, workspaceName)
+
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Spec.AgentDeployment).To(BeNil())
 
@@ -397,8 +400,8 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			instance.Spec.AgentDeploymentAutoscaling = &appv1alpha2.AgentDeploymentAutoscaling{
 				TargetWorkspaces: &[]appv1alpha2.TargetWorkspace{
 					{Name: "test-workspace"},
-					{ID: "ws-uUhs993hnf-3"},
 					{WildcardName: "test-*"},
+					{ID: workspaceInstance.Status.WorkspaceID},
 				},
 				MinReplicas:           pointer.PointerOf(int32(3)),
 				MaxReplicas:           pointer.PointerOf(int32(5)),
@@ -411,14 +414,16 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeployment.Replicas).To(BeNil())
 			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
 			Expect(instance.Spec.AgentDeploymentAutoscaling).ToNot(BeNil())
-			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(Equal([]appv1alpha2.TargetWorkspace{
+			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(Equal(&[]appv1alpha2.TargetWorkspace{
 				{Name: "test-workspace"},
-				{ID: "ws-uUhs993hnf-3"},
 				{WildcardName: "test-*"},
+				{ID: workspaceInstance.Status.WorkspaceID},
 			}))
 			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(pointer.PointerOf(int32(3))))
 			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))
 			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(pointer.PointerOf(int32(60))))
+
+			deleteWorkspace(workspaceInstance, workspaceName)
 		})
 	})
 })
@@ -573,4 +578,41 @@ func compareAgentTokens(aTokens, bTokens []string) bool {
 	}
 
 	return true
+}
+
+func testWorkspace(name, namespace, agentPoolName string) (*appv1alpha2.Workspace, types.NamespacedName) {
+	workspaceName := types.NamespacedName{
+		Name:      "test-workspace-autoscaling",
+		Namespace: "default",
+	}
+	instance := &appv1alpha2.Workspace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "app.terraform.io/v1alpha2",
+			Kind:       "Workspace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              workspaceName.Name,
+			Namespace:         workspaceName.Namespace,
+			DeletionTimestamp: nil,
+			Finalizers:        []string{},
+		},
+		Spec: appv1alpha2.WorkspaceSpec{
+			Organization: organization,
+			Token: appv1alpha2.Token{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: namespacedName.Name,
+					},
+					Key: secretKey,
+				},
+			},
+			Name:          fmt.Sprintf("test-workspace-%v", GinkgoRandomSeed()),
+			ExecutionMode: "agent",
+			AgentPool: &appv1alpha2.WorkspaceAgentPool{
+				Name: agentPoolName,
+			},
+		},
+		Status: appv1alpha2.WorkspaceStatus{},
+	}
+	return instance, workspaceName
 }
