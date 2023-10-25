@@ -105,13 +105,6 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	ap.log.Info("Agent Pool Controller", "msg", "successfully reconcilied agent pool")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully reconcilied agent pool ID %s", ap.instance.Status.AgentPoolID)
 
-	err = r.reconcileAgentAutoscaling(ctx, &ap)
-	if err != nil {
-		ap.log.Error(err, "Agent Pool Controller", "msg", "reconcile agent pool")
-		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to reconcile agent pool")
-		return requeueAfter(requeueInterval)
-	}
-
 	return requeueAfter(agentPoolSyncPeriodSeconds * time.Second)
 }
 
@@ -358,8 +351,18 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentDeployment", "Failed to reconcile agent deployment in agent pool: %s", err)
 		return err
 	}
-	ap.log.Info("Reconcile Agent Tokens", "msg", "successfully reconcilied agent deployment")
-	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentTokens", "Reconcilied agent deployment in agent pool ID %s", ap.instance.Status.AgentPoolID)
+	ap.log.Info("Reconcile Agent Deployment", "msg", "successfully reconcilied agent deployment")
+	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentDeployment", "Reconcilied agent deployment in agent pool ID %s", ap.instance.Status.AgentPoolID)
+
+	// Reconcile Agent Autoscaling
+	err = r.reconcileAgentAutoscaling(ctx, ap)
+	if err != nil {
+		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "reconcile agent autoscaling")
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentAutoscaling", "Failed to reconcile agent autoscaling in agent Pool ID%s", ap.instance.Status.AgentPoolID)
+		return nil
+	}
+	ap.log.Info("Reconcile Agent Autoscaling", "msg", "successfully reconcilied agent autoscaling")
+	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentAutoscaling", "Reconcilied agent autoscaling in agent pool ID %s", ap.instance.Status.AgentPoolID)
 
 	return nil
 }
