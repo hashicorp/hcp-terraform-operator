@@ -1,5 +1,10 @@
 ## 2.0.0 (UNRELEASED)
 
+BUG FIXES:
+
+* `Workspace`: fix an issue of properly handling special characters when generating string output. [[GH-289](https://github.com/hashicorp/terraform-cloud-operator/pull/289)]
+* `Module`: fix an issue of properly handling special characters when generating string output. [[GH-289](https://github.com/hashicorp/terraform-cloud-operator/pull/289)]
+
 ENHANCEMENT:
 
 * `Helm Chart`: Add the ability to configure `kube-rbac-proxy` image and resources. [[GH-259](https://github.com/hashicorp/terraform-cloud-operator/pull/259)] [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)]
