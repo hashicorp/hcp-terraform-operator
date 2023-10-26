@@ -82,7 +82,7 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) er
 	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs.Items {
 		var out string
-		// The Terraform supports the following types:
+		// Terraform supports the following types:
 		// - https://developer.hashicorp.com/terraform/language/expressions/types
 		switch o.Type {
 		case "boolean":
