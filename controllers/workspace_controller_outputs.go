@@ -5,9 +5,7 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -87,29 +85,17 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		return err
 	}
 
-	// TODO:
-	// - make outputs sync more generic since it is used more than once(+Module)
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs.Items {
 		var out string
 		// Terraform supports the following types:
 		// - https://developer.hashicorp.com/terraform/language/expressions/types
-		switch o.Type {
-		case "boolean":
-			out = strconv.FormatBool(o.Value.(bool))
-		case "number":
-			out = fmt.Sprint(o.Value.(float64))
-		case "string":
-			out = o.Value.(string)
-		default:
-			b, err := json.Marshal(o.Value)
-			if err != nil {
-				w.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
-				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
-				continue
-			}
-			out = string(b)
+		out, err := formatOutput(o)
+		if err != nil {
+			w.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
+			continue
 		}
 		if o.Sensitive {
 			sensitiveOutput[o.Name] = []byte(out)
