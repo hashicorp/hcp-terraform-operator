@@ -93,7 +93,7 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs.Items {
 		var out string
-		// The Terraform supports the following types:
+		// Terraform supports the following types:
 		// - https://developer.hashicorp.com/terraform/language/expressions/types
 		switch o.Type {
 		case "boolean":
