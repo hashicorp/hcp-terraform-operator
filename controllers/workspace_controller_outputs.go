@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -62,10 +62,6 @@ func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *app
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
 }
 
-func trimDoubleQuotes(bytes []byte) []byte {
-	return []byte(strings.Trim(string(bytes), `"`))
-}
-
 // func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance) error {
 	workspace, err := w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
@@ -86,24 +82,39 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	nonSensitiveOutput := make(map[string]string)
-	sensitiveOutput := make(map[string][]byte)
-
 	outputs, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
 	if err != nil {
 		return err
 	}
+
+	// TODO:
+	// - make outputs sync more generic since it is used more than once(+Module)
+	nonSensitiveOutput := make(map[string]string)
+	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs.Items {
-		bytes, err := json.Marshal(o.Value)
-		if err != nil {
-			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
-			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
-			continue
+		var out string
+		// The Terraform supports the following types:
+		// - https://developer.hashicorp.com/terraform/language/expressions/types
+		switch o.Type {
+		case "boolean":
+			out = strconv.FormatBool(o.Value.(bool))
+		case "number":
+			out = fmt.Sprint(o.Value.(float64))
+		case "string":
+			out = o.Value.(string)
+		default:
+			b, err := json.Marshal(o.Value)
+			if err != nil {
+				w.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
+				continue
+			}
+			out = string(b)
 		}
 		if o.Sensitive {
-			sensitiveOutput[o.Name] = trimDoubleQuotes(bytes)
+			sensitiveOutput[o.Name] = []byte(out)
 		} else {
-			nonSensitiveOutput[o.Name] = string(trimDoubleQuotes(bytes))
+			nonSensitiveOutput[o.Name] = out
 		}
 	}
 
