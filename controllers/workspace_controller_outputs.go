@@ -88,9 +88,6 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs.Items {
-		var out string
-		// Terraform supports the following types:
-		// - https://developer.hashicorp.com/terraform/language/expressions/types
 		out, err := formatOutput(o)
 		if err != nil {
 			w.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
