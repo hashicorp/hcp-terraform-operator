@@ -5,7 +5,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -70,24 +69,24 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) er
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	nonSensitiveOutput := make(map[string]string)
-	sensitiveOutput := make(map[string][]byte)
-
 	outputs, err := m.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
 	if err != nil {
 		return err
 	}
+
+	nonSensitiveOutput := make(map[string]string)
+	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs.Items {
-		bytes, err := json.Marshal(o.Value)
+		out, err := formatOutput(o)
 		if err != nil {
 			m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
 			r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
 			continue
 		}
 		if o.Sensitive {
-			sensitiveOutput[o.Name] = trimDoubleQuotes(bytes)
+			sensitiveOutput[o.Name] = []byte(out)
 		} else {
-			nonSensitiveOutput[o.Name] = string(trimDoubleQuotes(bytes))
+			nonSensitiveOutput[o.Name] = out
 		}
 	}
 
