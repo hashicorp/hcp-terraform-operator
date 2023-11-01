@@ -17,7 +17,7 @@ DOCS:
 
 DEPENDENCIES:
 
-* Bump `sigs.k8s.io/controller-runtime` from 0.15.1 to 0.15.2. [[GH-258](https://github.com/hashicorp/terraform-cloud-operator/pull/258)]
+* Bump `sigs.k8s.io/controller-runtime` from 0.15.1 to 0.15.3. [[GH-258](https://github.com/hashicorp/terraform-cloud-operator/pull/258)] [[GH-294](https://github.com/hashicorp/terraform-cloud-operator/pull/294)]
 * Bump `github.com/hashicorp/go-slug` from 0.12.1 to 0.12.2. [[GH-261](https://github.com/hashicorp/terraform-cloud-operator/pull/261)]
 * Bump `k8s.io/api` from 0.27.5 to 0.27.7. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)] [[GH-292](https://github.com/hashicorp/terraform-cloud-operator/pull/292)]
 * Bump `k8s.io/apimachinery` from 0.27.5 to 0.27.7. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)] [[GH-292](https://github.com/hashicorp/terraform-cloud-operator/pull/292)]
