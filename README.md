@@ -8,10 +8,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/hashicorp/terraform-cloud-operator)](https://hub.docker.com/r/hashicorp/terraform-cloud-operator)
 [![GitHub](https://img.shields.io/github/license/hashicorp/terraform-cloud-operator)](https://github.com/hashicorp/terraform-cloud-operator/blob/main/LICENSE)
 
-
-> **Warning**
-> Please note that this is a beta version still undergoing final testing before the official release.
-
 Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via Kubernetes Custom Resources.
 
 > **Note**
@@ -22,16 +18,6 @@ The Operator can manage the following types of resources:
 - `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools) and [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 - `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
-
-## :warning: Beta :warning:
-
-Welcome to the `v2-beta` version of the Kubernetes Operator for Terraform Cloud the successor of [`v1`](https://github.com/hashicorp/terraform-k8s). This new iteration of the Operator is being developed based on feedback from issues that practitioners have experienced with the first version.
-
-We are still working on finalizing the project's life-cycle processes and thus we ask you to use the following instructions to install and upgrade the Helm chart for the Operator beta. The rest instructions remain valid.
-
-Please, take into account the beta stage of this project and DO NOT use it in your production or critical environment. It has not been "battle tested" yet.
-
-We deeply appreciate everyone who is participating in the Operator beta and looking forward to hearing your feedback.
 
 ## Getting started
 
@@ -163,7 +149,3 @@ We appreciate your enthusiasm for participating in the development of the Terraf
 If you think you've found a security vulnerability, we'd love to hear from you.
 
 Follow the instructions in [SECURITY.md](.github/SECURITY.md) to make a report.
-
-## Experimental Status
-
-By using the software in this repository (the "Software"), you acknowledge that: (1) the Software is still in development, may change, and has not been released as a commercial product by HashiCorp and is not currently supported in any way by HashiCorp; (2) the Software is provided on an "as-is" basis, and may include bugs, errors, or other issues; (3) the Software is NOT INTENDED FOR PRODUCTION USE, use of the Software may result in unexpected results, loss of data, or other unexpected results, and HashiCorp disclaims any and all liability resulting from use of the Software; and (4) HashiCorp reserves all rights to make all decisions about the features, functionality and commercial release (or non-release) of the Software, at any time and without any obligation or liability whatsoever.
