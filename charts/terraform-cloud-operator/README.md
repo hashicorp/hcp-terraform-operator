@@ -1,13 +1,5 @@
 # Installation
 
-## :warning: Beta :warning:
-
-By default, Helm does not display development versions (alpha, beta, and release candidate releases). In order to list them, use the following command when looking for available versions:
-
-```console
-$ helm search repo hashicorp/terraform-cloud-operator --versions --devel
-```
-
 Use the option `--version VERSION` with `helm install` and `helm upgrade` commands to specify the version you want to install.
 
 ## Steps
