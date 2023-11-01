@@ -195,7 +195,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 
 	minReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas
 	maxReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
-	desiredReplicas := computeDesiredReplicas(requiredAgents, maxReplicas, minReplicas)
+	desiredReplicas := computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas)
 	if desiredReplicas != currentReplicas {
 		scalingEvent := fmt.Sprintf("Scaling agent deployment from %v to %v replicas", currentReplicas, desiredReplicas)
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", scalingEvent)
