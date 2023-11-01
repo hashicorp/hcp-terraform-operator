@@ -15,7 +15,7 @@ Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via K
 
 The Operator can manage the following types of resources:
 
-- `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools) and [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens)
+- `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 - `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
@@ -78,27 +78,6 @@ YAML manifests examples live [here](./docs/examples/).
 If you come across articles, videos, how-tos, or any other resources that could assist individuals in adopting and utilizing the operator with greater efficiency, kindly inform us by initiating a [pull request](https://github.com/hashicorp/terraform-cloud-operator/pulls) and placing a link within this designated section.
 
 Your participation matters. Thank you for being a part of our community! :raised_hands:
-
-## Operator Options
-
-Global options:
-
-- `sync-period` -- the minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc. Default: `5m`.
-- `namespace` -- Namespace to watch. Default: `watch all namespaces`.
-
-`AgentPool` controller has the following options:
-
-- `agent-pool-workers` -- the number of the Agent Pool controller workers. Default: `1`.
-
-`Module` controller has the following options:
-
-- `module-workers` -- the number of the Module controller workers. Default: `1`.
-
-`Workspace` controller has the following options:
-
-- `workspace-workers` -- the number of the Workspace controller workers. Default: `1`.
-
-In order to change the default values of the options, use the corresponding Helm chart value.
 
 ## Troubleshooting
 
