@@ -120,6 +120,8 @@ func (r *AgentPoolReconciler) deleteDeployment(ctx context.Context, ap *agentPoo
 	return nil
 }
 
+var agentTerminationGracePeriod int64 = 900 // 15 minutes
+
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var r *int32 = pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
@@ -139,6 +141,11 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	}
 	if ap.instance.Spec.AgentDeployment.Spec != nil {
 		s = *ap.instance.Spec.AgentDeployment.Spec
+	}
+	if s.TerminationGracePeriodSeconds == nil {
+		// set a more sensible termination grace period to allow
+		// agents still active to complete their run
+		s.TerminationGracePeriodSeconds = &agentTerminationGracePeriod
 	}
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -175,7 +182,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 }
 
 func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
-	evs := []corev1.EnvVar{
+	envs := []corev1.EnvVar{
 		{
 			Name: "TFC_AGENT_TOKEN",
 			ValueFrom: &corev1.EnvVarSource{
@@ -201,14 +208,14 @@ func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 	// Set TFE_ADDRESS on agent Pod if differnet than default TFC endpoint.
 	bURL := ap.tfClient.Client.BaseURL()
 	if defURL, perr := url.Parse(tfc.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
-		evs = append(evs, corev1.EnvVar{
+		envs = append(envs, corev1.EnvVar{
 			Name:  "TFC_ADDRESS",
 			Value: bURL.String(),
 		})
 	}
 	// Inject agent specific environment vars to each container in the Deployment.
 	for ci := range d.Spec.Template.Spec.Containers {
-		d.Spec.Template.Spec.Containers[ci].Env = append(d.Spec.Template.Spec.Containers[ci].Env, evs...)
+		d.Spec.Template.Spec.Containers[ci].Env = append(d.Spec.Template.Spec.Containers[ci].Env, envs...)
 	}
 }
 
