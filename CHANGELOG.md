@@ -29,6 +29,7 @@ DEPENDENCIES:
 * Bump `golang.org/x/text` from 0.12.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `github.com/hashicorp/go-tfe` from 1.32.1 to 1.35.0. [[GH-273](https://github.com/hashicorp/terraform-cloud-operator/pull/273)]
 * Bump `github.com/onsi/gomega` from 1.28.1 to 1.29.0. [[GH-291](https://github.com/hashicorp/terraform-cloud-operator/pull/291)]
+* Bump `github.com/go-logr/logr` from 1.2.4 to 1.3.0. [[GH-293](https://github.com/hashicorp/terraform-cloud-operator/pull/293)]
 
 ## Community Contributors :raised_hands:
 - @kieranbrown made their contribution in https://github.com/hashicorp/terraform-cloud-operator/pull/259
