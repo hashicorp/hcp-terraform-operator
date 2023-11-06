@@ -22,6 +22,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecRunTasks()...)
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
+	allErrs = append(allErrs, w.validateSpecProject()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -419,6 +420,35 @@ func (w *Workspace) validateSpecSSHKey() field.ErrorList {
 	}
 
 	if w.Spec.SSHKey.ID != "" && w.Spec.SSHKey.Name != "" {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"only one of the field ID or Name is allowed"),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecProject() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.Project
+
+	if spec == nil {
+		return allErrs
+	}
+
+	f := field.NewPath("spec").Child("project")
+
+	if spec.ID == "" && spec.Name == "" {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"one of the field ID or Name must be set"),
+		)
+	}
+
+	if spec.ID != "" && spec.Name != "" {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
