@@ -1,6 +1,6 @@
 # `AgentPool`
 
-`AgentPool` controller allows managing [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools) and [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) via Kubernetes Custom Resources. The Kubernetes CR acts as a single source of truth. It means that all Agent Pool changes made outside of the CR will be returned to the state specified in the CR.
+`AgentPool` controller allows managing [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling. The Kubernetes CR acts as a single source of truth. It means that all Agent Pool changes made outside of the CR will be returned to the state specified in the CR.
 
 ## Agent Pool Custom Resorce
 
