@@ -1,4 +1,4 @@
-## 2.0.0 (UNRELEASED)
+## 2.0.0 (November 06, 2023)
 
 BUG FIXES:
 
