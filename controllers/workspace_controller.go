@@ -312,6 +312,17 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		options.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
 	}
 
+	if spec.Project != nil {
+		prjID, err := r.getProjectID(ctx, w)
+		if err != nil {
+			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get project ID")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get project ID")
+			return nil, err
+		}
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("project ID %s will be used", prjID))
+		options.Project = &tfc.Project{ID: prjID}
+	}
+
 	workspace, err := w.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
 		w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
@@ -397,6 +408,7 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			return ws, err
 		}
 	}
+
 	if spec.VersionControl != nil {
 		updateOptions.VCSRepo = &tfc.VCSRepoOptions{
 			OAuthTokenID: tfc.String(spec.VersionControl.OAuthTokenID),
@@ -404,6 +416,27 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
 		updateOptions.FileTriggersEnabled = tfc.Bool(false)
+	}
+
+	if spec.Project != nil {
+		prjID, err := r.getProjectID(ctx, w)
+		if err != nil {
+			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get project ID")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get project ID")
+			return nil, err
+		}
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("project ID %s will be used", prjID))
+		updateOptions.Project = &tfc.Project{ID: prjID}
+	} else {
+		// Setting up `Project` to nil(tfc.WorkspaceUpdateOptions{Project: nil}) won't move the workspace to the default project after the update.
+		org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
+		if err != nil {
+			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
+			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
+			return nil, err
+		}
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
+		updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
 	}
 
 	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
