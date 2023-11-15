@@ -145,6 +145,8 @@ func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1al
 			ID:     cv.ID,
 			Status: string(cv.Status),
 		}
+		// Erase the run status since we proceeding with a new config version
+		instance.Status.Run = nil
 	}
 
 	return r.Status().Update(ctx, instance)
@@ -289,12 +291,13 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 			return err
 		}
 		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
-		return r.updateStatusDestroy(ctx, &m.instance, run)
-	}
 
-	if _, ok := runCompleteStatus[m.instance.Status.Run.Status]; ok {
-		m.log.Info("Delete Module", "msg", "destroy run finished")
-		return r.removeFinalizer(ctx, m)
+		if _, ok := runCompleteStatus[string(run.Status)]; ok {
+			m.log.Info("Delete Module", "msg", "destroy run finished")
+			return r.removeFinalizer(ctx, m)
+		}
+
+		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
 	return nil
