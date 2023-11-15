@@ -44,6 +44,13 @@ type moduleInstance struct {
 	tfClient TerraformCloudClient
 }
 
+var (
+	runCompleteStatus = map[string]struct{}{
+		string(tfc.RunApplied):            {},
+		string(tfc.RunPlannedAndFinished): {},
+	}
+)
+
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/finalizers,verbs=update
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/status,verbs=get;update;patch
@@ -249,7 +256,8 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		return r.removeFinalizer(ctx, m)
 	}
 
-	// check whether a Run was ever running, if no, delete the Kubernetes object without running the 'Destroy' run
+	// check whether a Run was ever running, if no then there is nothing to delete,
+	// so delete the Kubernetes object without running the 'Destroy' run
 	if m.instance.Status.Run == nil {
 		m.log.Info("Delete Module", "msg", "run is empty, removing finalizer")
 		return r.removeFinalizer(ctx, m)
@@ -284,7 +292,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
-	if m.instance.Status.Run.Status == string(tfc.RunApplied) {
+	if _, ok := runCompleteStatus[m.instance.Status.Run.Status]; ok {
 		m.log.Info("Delete Module", "msg", "destroy run finished")
 		return r.removeFinalizer(ctx, m)
 	}
