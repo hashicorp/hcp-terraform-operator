@@ -1,3 +1,9 @@
+## 2.1.0 (UNRELEASED)
+
+ENHANCEMENT:
+
+* `Workspace`: Add the ability to configure the project for the workspace via a new field `spec.project.[id | name]`.  [[GH-300](https://github.com/hashicorp/terraform-cloud-operator/pull/300)]
+
 ## 2.0.0 (November 06, 2023)
 
 BUG FIXES:
