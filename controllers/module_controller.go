@@ -265,8 +265,36 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		return r.removeFinalizer(ctx, m)
 	}
 
-	// if 'DestroyOnDeletion' is true and 'status.destroyRunID' is empty execute a new 'Destroy' run
-	if m.instance.Spec.DestroyOnDeletion && m.instance.Status.DestroyRunID == "" {
+	// if 'status.destroyRunID' is empty we first check if there is another ongoing 'Destroy' run and if so,
+	// update the status with the run status. Otherwise, execute a new 'Destroy' run.
+	if m.instance.Status.DestroyRunID == "" {
+		m.log.Info("Delete Module", "msg", "get workspace")
+		ws, err := m.tfClient.Client.Workspaces.ReadByID(ctx, m.instance.Status.WorkspaceID)
+		if err != nil {
+			m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get workspace: %s", m.instance.Status.WorkspaceID))
+			return err
+		}
+		m.log.Info("Delete Module", "msg", "successfully got workspace")
+		if ws.CurrentRun != nil {
+			m.log.Info("Delete Module", "msg", "get current run")
+			// Have to read the individual run here, since the one associated with workspace doesn't contain the necessary info
+			cr, err := m.tfClient.Client.Runs.Read(ctx, ws.CurrentRun.ID)
+			if err != nil {
+				m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get current run: %s", ws.CurrentRun.ID))
+				return err
+			}
+			if cr.IsDestroy {
+				m.log.Info("Delete Module", "msg", fmt.Sprintf("current run %s is destroy", cr.ID))
+				if _, ok := runCompleteStatus[string(cr.Status)]; ok {
+					m.log.Info("Delete Module", "msg", "current destroy run finished")
+					return r.removeFinalizer(ctx, m)
+				}
+			}
+
+			return r.updateStatusDestroy(ctx, &m.instance, cr)
+		}
+		m.log.Info("Delete Module", "msg", "current run is not destroy")
+
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			IsDestroy: tfc.Bool(true),

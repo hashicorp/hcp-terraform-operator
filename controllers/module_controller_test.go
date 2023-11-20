@@ -128,9 +128,7 @@ var _ = Describe("Module controller", Ordered, func() {
 				if instance.Status.ConfigurationVersion == nil {
 					return false
 				}
-				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded) ||
-					// If the Configuration Version upload is errored then exit from the Eventually and validate it after
-					instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationErrored)
+				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded)
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo(string(tfc.ConfigurationErrored)))
@@ -140,9 +138,7 @@ var _ = Describe("Module controller", Ordered, func() {
 				if instance.Status.Run == nil {
 					return false
 				}
-				return instance.Status.Run.Status == string(tfc.RunApplied) ||
-					// If the Run execution is errored then exit from the Eventually and validate it after
-					instance.Status.Run.Status == string(tfc.RunErrored)
+				return instance.Status.Run.Status == string(tfc.RunApplied)
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
@@ -181,9 +177,7 @@ var _ = Describe("Module controller", Ordered, func() {
 				if instance.Status.ConfigurationVersion == nil {
 					return false
 				}
-				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded) ||
-					// If the Configuration Version upload is errored then exit from the Eventually and validate it after
-					instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationErrored)
+				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded)
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo(string(tfc.ConfigurationErrored)))
@@ -193,12 +187,67 @@ var _ = Describe("Module controller", Ordered, func() {
 				if instance.Status.Run == nil {
 					return false
 				}
-				return instance.Status.Run.Status == string(tfc.RunApplied) ||
-					// If the Run execution is errored then exit from the Eventually and validate it after
-					instance.Status.Run.Status == string(tfc.RunErrored)
+				return instance.Status.Run.Status == string(tfc.RunApplied)
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
+		})
+		It("can handle external deletion", func() {
+			// Create a new TFC Workspace
+			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+				Name:      &workspace,
+				AutoApply: tfc.Bool(true),
+			})
+			Expect(err).Should(Succeed())
+			Expect(ws).ShouldNot(BeNil())
+
+			// Create TFC Workspace variables
+			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+				Key:      tfc.String("name"),
+				Value:    tfc.String("Pluto"),
+				HCL:      tfc.Bool(false),
+				Category: tfc.Category(tfc.CategoryTerraform),
+			})
+			Expect(err).Should(Succeed())
+
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
+			// Create a new Module
+			instance.Spec.Name = "operator"
+			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+
+			// Make sure a new module is created and executed
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				return instance.Status.ObservedGeneration == instance.Generation
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.Run.Status == string(tfc.RunApplied)
+			}).Should(BeTrue())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
+
+			// Manually run destrory
+			dr, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
+				IsDestroy: tfc.Bool(true),
+				Workspace: &tfc.Workspace{
+					ID: instance.Status.WorkspaceID,
+				},
+			})
+			Expect(err).Should(Succeed())
+			Expect(dr).ShouldNot(BeNil())
+
+			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+
+			// Make sure the destroy run ID is the same as the manual one
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				return instance.Status.DestroyRunID == dr.ID
+			}).Should(BeTrue())
 		})
 	})
 })
