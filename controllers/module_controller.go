@@ -154,6 +154,7 @@ func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1al
 
 func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace, run *tfc.Run) error {
 	instance.Status.WorkspaceID = workspace.ID
+	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.Run = &appv1alpha2.RunStatus{
 		ID:                   run.ID,
 		Status:               string(run.Status),
@@ -165,12 +166,14 @@ func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1a
 
 func (r *ModuleReconciler) updateStatusOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace) error {
 	instance.Status.WorkspaceID = workspace.ID
+	instance.Status.ObservedGeneration = instance.Generation
 
 	return r.Status().Update(ctx, instance)
 }
 
 func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *appv1alpha2.Module, run *tfc.Run) error {
 	instance.Status.DestroyRunID = run.ID
+	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.Run = &appv1alpha2.RunStatus{
 		ID:                   run.ID,
 		Status:               string(run.Status),
