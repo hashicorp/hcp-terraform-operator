@@ -289,11 +289,10 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 					m.log.Info("Delete Module", "msg", "current destroy run finished")
 					return r.removeFinalizer(ctx, m)
 				}
+				return r.updateStatusDestroy(ctx, &m.instance, cr)
 			}
-
-			return r.updateStatusDestroy(ctx, &m.instance, cr)
+			m.log.Info("Delete Module", "msg", "current run is not destroy")
 		}
-		m.log.Info("Delete Module", "msg", "current run is not destroy")
 
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
@@ -446,7 +445,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to get workspace")
 		return err
 	}
-	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully get workspace ID %s", workspace.ID))
+	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully got workspace ID %s", workspace.ID))
 
 	// checks if a new version of the CV needs to be uploaded
 	if needToUploadModule(&m.instance) {
