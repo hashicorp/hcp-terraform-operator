@@ -1,3 +1,9 @@
+## 2.1.0 (UNRELEASED)
+
+BUG FIXES:
+
+* `Module`: fix an issue when initiating foreground cascading deletion results in two destroy runs being triggered, and even after both runs are successfully executed, a module object persists in Kubernetes. [[GH-301](https://github.com/hashicorp/terraform-cloud-operator/pull/301)]
+
 ## 2.0.0 (November 06, 2023)
 
 BUG FIXES:
