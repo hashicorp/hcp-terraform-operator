@@ -434,8 +434,8 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the module
 	if m.instance.IsDeletionCandidate(moduleFinalizer) {
-		m.log.Info("Reconcile Module", "msg", "object marked as deleted, need to delete module first")
-		r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted, need to delete module first")
+		m.log.Info("Reconcile Module", "msg", "object marked as deleted")
+		r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted")
 		return r.deleteModule(ctx, m)
 	}
 
