@@ -33,6 +33,10 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
+const (
+	LOG_LEVEL_VAR = "TF_LOG_OPERATOR"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -71,6 +75,16 @@ func main() {
 	zapConfig.Encoding = "console"
 	zapConfig.DisableCaller = true
 	zapConfig.DisableStacktrace = true
+
+	if ls, ok := os.LookupEnv(LOG_LEVEL_VAR); ok {
+		lv, lerr := zap.ParseAtomicLevel(ls)
+		if lerr == nil {
+			setupLog.Info("Set logging level to %q", ls)
+			zapConfig.Level = lv
+		} else {
+			setupLog.Error(lerr, "unable to set logging level")
+		}
+	}
 
 	logger, err := zapConfig.Build(zap.AddStacktrace(zapcore.DPanicLevel))
 	if err != nil {
