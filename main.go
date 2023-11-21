@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	LOG_LEVEL_VAR = "TF_LOG"
+	LOG_LEVEL_VAR = "TF_LOG_OPERATOR"
 )
 
 var (
