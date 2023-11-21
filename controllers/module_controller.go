@@ -45,9 +45,9 @@ type moduleInstance struct {
 }
 
 var (
-	runCompleteStatus = map[string]struct{}{
-		string(tfc.RunApplied):            {},
-		string(tfc.RunPlannedAndFinished): {},
+	runCompleteStatus = map[tfc.RunStatus]struct{}{
+		tfc.RunApplied:            {},
+		tfc.RunPlannedAndFinished: {},
 	}
 )
 
@@ -288,7 +288,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 			}
 			if cr.IsDestroy {
 				m.log.Info("Delete Module", "msg", fmt.Sprintf("current run %s is destroy", cr.ID))
-				if _, ok := runCompleteStatus[string(cr.Status)]; ok {
+				if _, ok := runCompleteStatus[cr.Status]; ok {
 					m.log.Info("Delete Module", "msg", "current destroy run finished")
 					return r.removeFinalizer(ctx, m)
 				}
@@ -322,7 +322,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		}
 		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
 
-		if _, ok := runCompleteStatus[string(run.Status)]; ok {
+		if _, ok := runCompleteStatus[run.Status]; ok {
 			m.log.Info("Delete Module", "msg", "destroy run finished")
 			return r.removeFinalizer(ctx, m)
 		}
