@@ -44,6 +44,13 @@ type moduleInstance struct {
 	tfClient TerraformCloudClient
 }
 
+var (
+	runCompleteStatus = map[tfc.RunStatus]struct{}{
+		tfc.RunApplied:            {},
+		tfc.RunPlannedAndFinished: {},
+	}
+)
+
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/finalizers,verbs=update
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/status,verbs=get;update;patch
@@ -138,6 +145,8 @@ func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1al
 			ID:     cv.ID,
 			Status: string(cv.Status),
 		}
+		// Erase the run status since we proceeding with a new config version
+		instance.Status.Run = nil
 	}
 
 	return r.Status().Update(ctx, instance)
@@ -145,6 +154,7 @@ func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1al
 
 func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace, run *tfc.Run) error {
 	instance.Status.WorkspaceID = workspace.ID
+	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.Run = &appv1alpha2.RunStatus{
 		ID:                   run.ID,
 		Status:               string(run.Status),
@@ -156,12 +166,14 @@ func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1a
 
 func (r *ModuleReconciler) updateStatusOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace) error {
 	instance.Status.WorkspaceID = workspace.ID
+	instance.Status.ObservedGeneration = instance.Generation
 
 	return r.Status().Update(ctx, instance)
 }
 
 func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *appv1alpha2.Module, run *tfc.Run) error {
 	instance.Status.DestroyRunID = run.ID
+	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.Run = &appv1alpha2.RunStatus{
 		ID:                   run.ID,
 		Status:               string(run.Status),
@@ -249,14 +261,42 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		return r.removeFinalizer(ctx, m)
 	}
 
-	// check whether a Run was ever running, if no, delete the Kubernetes object without running the 'Destroy' run
+	// check whether a Run was ever running, if no then there is nothing to delete,
+	// so delete the Kubernetes object without running the 'Destroy' run
 	if m.instance.Status.Run == nil {
 		m.log.Info("Delete Module", "msg", "run is empty, removing finalizer")
 		return r.removeFinalizer(ctx, m)
 	}
 
-	// if 'DestroyOnDeletion' is true and 'status.destroyRunID' is empty execute a new 'Destroy' run
-	if m.instance.Spec.DestroyOnDeletion && m.instance.Status.DestroyRunID == "" {
+	// if 'status.destroyRunID' is empty we first check if there is another ongoing 'Destroy' run and if so,
+	// update the status with the run status. Otherwise, execute a new 'Destroy' run.
+	if m.instance.Status.DestroyRunID == "" {
+		m.log.Info("Delete Module", "msg", "get workspace")
+		ws, err := m.tfClient.Client.Workspaces.ReadByID(ctx, m.instance.Status.WorkspaceID)
+		if err != nil {
+			m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get workspace: %s", m.instance.Status.WorkspaceID))
+			return err
+		}
+		m.log.Info("Delete Module", "msg", "successfully got workspace")
+		if ws.CurrentRun != nil {
+			m.log.Info("Delete Module", "msg", "get current run")
+			// Have to read the individual run here, since the one associated with workspace doesn't contain the necessary info
+			cr, err := m.tfClient.Client.Runs.Read(ctx, ws.CurrentRun.ID)
+			if err != nil {
+				m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get current run: %s", ws.CurrentRun.ID))
+				return err
+			}
+			if cr.IsDestroy {
+				m.log.Info("Delete Module", "msg", fmt.Sprintf("current run %s is destroy", cr.ID))
+				if _, ok := runCompleteStatus[cr.Status]; ok {
+					m.log.Info("Delete Module", "msg", "current destroy run finished")
+					return r.removeFinalizer(ctx, m)
+				}
+				return r.updateStatusDestroy(ctx, &m.instance, cr)
+			}
+			m.log.Info("Delete Module", "msg", "current run is not destroy")
+		}
+
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			IsDestroy: tfc.Bool(true),
@@ -281,12 +321,13 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 			return err
 		}
 		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
-		return r.updateStatusDestroy(ctx, &m.instance, run)
-	}
 
-	if m.instance.Status.Run.Status == string(tfc.RunApplied) {
-		m.log.Info("Delete Module", "msg", "destroy run finished")
-		return r.removeFinalizer(ctx, m)
+		if _, ok := runCompleteStatus[run.Status]; ok {
+			m.log.Info("Delete Module", "msg", "destroy run finished")
+			return r.removeFinalizer(ctx, m)
+		}
+
+		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
 	return nil
@@ -396,8 +437,8 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the module
 	if m.instance.IsDeletionCandidate(moduleFinalizer) {
-		m.log.Info("Reconcile Module", "msg", "object marked as deleted, need to delete module first")
-		r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted, need to delete module first")
+		m.log.Info("Reconcile Module", "msg", "object marked as deleted")
+		r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted")
 		return r.deleteModule(ctx, m)
 	}
 
@@ -407,7 +448,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to get workspace")
 		return err
 	}
-	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully get workspace ID %s", workspace.ID))
+	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully got workspace ID %s", workspace.ID))
 
 	// checks if a new version of the CV needs to be uploaded
 	if needToUploadModule(&m.instance) {

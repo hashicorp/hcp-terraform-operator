@@ -4,6 +4,8 @@
 package controllers
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -22,6 +24,14 @@ func handlePredicates() predicate.Predicate {
 			// Update event has no new object to update.
 			if e.ObjectNew == nil {
 				return false
+			}
+
+			// Do not trigger reconciliation if an object was deleted with the `foreground` option.
+			// Let Kubernetes first delete all dependent objects and only then the operator proceeds with the deletion of the parent object.
+			// This helps to avoid the situation when the operator triggers deletion twice.
+			// The second deletion get triggered when Kubernetes GC removes the `foregroundDeletion` finalizer.
+			if e.ObjectNew.GetDeletionTimestamp() != nil {
+				return !controllerutil.ContainsFinalizer(e.ObjectNew, metav1.FinalizerDeleteDependents)
 			}
 
 			// Generation of an object changes when .spec has been updated.

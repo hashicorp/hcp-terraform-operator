@@ -186,7 +186,7 @@ HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.11.3
 CRD_REF_DOCS_VERSION ?= v0.0.10
-HASHICORP_COPYWRITE_VERSION ?= 0.16.4
+HASHICORP_COPYWRITE_VERSION ?= 0.17.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
