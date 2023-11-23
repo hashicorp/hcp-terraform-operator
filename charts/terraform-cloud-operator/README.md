@@ -1,13 +1,5 @@
 # Installation
 
-## :warning: Beta :warning:
-
-By default, Helm does not display development versions (alpha, beta, and release candidate releases). In order to list them, use the following command when looking for available versions:
-
-```console
-$ helm search repo hashicorp/terraform-cloud-operator --versions --devel
-```
-
 Use the option `--version VERSION` with `helm install` and `helm upgrade` commands to specify the version you want to install.
 
 ## Steps
@@ -28,7 +20,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/terraform-cloud-operator \
-      --version 2.0.0-beta8 \
+      --version 2.0.0 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -39,7 +31,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
-  --version 2.0.0-beta8 \
+  --version 2.0.0 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -57,7 +49,7 @@ If targeting a Terraform Enterprise instance rather than Terraform Cloud, set th
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
-  --version 2.0.0-beta8 \
+  --version 2.0.0 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -69,7 +61,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/terraform-cloud-operator \
-  --version 2.0.0-beta8 \
+  --version 2.0.0 \
   --namespace tfc-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \

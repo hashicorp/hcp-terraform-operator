@@ -16,14 +16,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
-	"github.com/hashicorp/terraform-cloud-operator/internal/pointer"
 )
 
-func getWorkspaceQueueDepth(ctx context.Context, ap *agentPoolInstance, workspaceID string) (int, error) {
+func computeRequiredAgentsForWorkspace(ctx context.Context, ap *agentPoolInstance, workspaceID string) (int, error) {
 	statuses := []string{
-		string(tfc.RunPending),
 		string(tfc.RunPlanQueued),
 		string(tfc.RunApplyQueued),
+		string(tfc.RunApplying),
+		string(tfc.RunPlanning),
 	}
 	runs, err := ap.tfClient.Client.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
 		Status: strings.Join(statuses, ","),
@@ -108,20 +108,29 @@ func getTargetWorkspaceIDsByWildcardName(ctx context.Context, ap *agentPoolInsta
 	return workspaceIDs, nil
 }
 
-func getQueueDepth(ctx context.Context, ap *agentPoolInstance) (int, error) {
-	depth := 0
+func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, error) {
+	required := 0
 	workspaceIDs, err := getTargetWorkspaceIDs(ctx, ap)
 	if err != nil {
 		return 0, err
 	}
-	for _, id := range workspaceIDs {
-		runs, err := getWorkspaceQueueDepth(ctx, ap, id)
+	for _, workspaceID := range workspaceIDs {
+		r, err := computeRequiredAgentsForWorkspace(ctx, ap, workspaceID)
 		if err != nil {
 			return 0, err
 		}
-		depth += runs
+		required += r
 	}
-	return depth, nil
+	return int32(required), nil
+}
+
+func computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas int32) int32 {
+	if requiredAgents <= minReplicas {
+		return minReplicas
+	} else if requiredAgents >= maxReplicas {
+		return maxReplicas
+	}
+	return requiredAgents
 }
 
 func getAgentDeploymentNamespacedName(ap *agentPoolInstance) types.NamespacedName {
@@ -131,13 +140,13 @@ func getAgentDeploymentNamespacedName(ap *agentPoolInstance) types.NamespacedNam
 	}
 }
 
-func (r *AgentPoolReconciler) getAgentDeploymentReplicas(ctx context.Context, ap *agentPoolInstance) (*int32, error) {
+func (r *AgentPoolReconciler) getAgentDeploymentReplicas(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	deployment := appsv1.Deployment{}
 	err := r.Client.Get(ctx, getAgentDeploymentNamespacedName(ap), &deployment)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return deployment.Spec.Replicas, nil
+	return *deployment.Spec.Replicas, nil
 }
 
 func (r *AgentPoolReconciler) scaleAgentDeployment(ctx context.Context, ap *agentPoolInstance, target *int32) error {
@@ -170,9 +179,9 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		}
 	}
 
-	queueDepth, err := getQueueDepth(ctx, ap)
+	requiredAgents, err := computeRequiredAgents(ctx, ap)
 	if err != nil {
-		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to get pending runs")
+		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to get agents needed")
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
 		return err
 	}
@@ -184,27 +193,21 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		return err
 	}
 
-	desiredReplicas := currentReplicas
-	if queueDepth == 0 {
-		desiredReplicas = ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas
-	} else if (int(*currentReplicas) + queueDepth) > int(*ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas) {
-		desiredReplicas = ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
-	} else if queueDepth > int(*currentReplicas) {
-		desiredReplicas = pointer.PointerOf(int32(int(*currentReplicas) + queueDepth))
-	}
-
-	if *desiredReplicas != *currentReplicas {
-		scalingEvent := fmt.Sprintf("Scaling agent deployment from %v to %v replicas", *currentReplicas, *desiredReplicas)
+	minReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas
+	maxReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
+	desiredReplicas := computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas)
+	if desiredReplicas != currentReplicas {
+		scalingEvent := fmt.Sprintf("Scaling agent deployment from %v to %v replicas", currentReplicas, desiredReplicas)
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", scalingEvent)
 		r.Recorder.Event(&ap.instance, corev1.EventTypeNormal, "AutoscaleAgentPoolDeployment", scalingEvent)
-		err := r.scaleAgentDeployment(ctx, ap, desiredReplicas)
+		err := r.scaleAgentDeployment(ctx, ap, &desiredReplicas)
 		if err != nil {
 			ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to scale agent deployment")
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
 			return err
 		}
 		ap.instance.Status.AgentDeploymentAutoscalingStatus = &appv1alpha2.AgentDeploymentAutoscalingStatus{
-			DesiredReplicas: desiredReplicas,
+			DesiredReplicas: &desiredReplicas,
 			LastScalingEvent: &v1.Time{
 				Time: time.Now(),
 			},

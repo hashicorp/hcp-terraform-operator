@@ -174,3 +174,7 @@
 - **What will happen if I delete an Agent Pool Customer Resource?**
 
   The Agent Pool controller will delete Agent Pool from Terraform Cloud, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.
+
+- **What triggers Agents scaling?**
+
+  The Operator regularly monitors specific workspaces and boosts the agent count when pending runs are detected. The maximum number of agents can be increased up to the value defined in `autoscaling.maxReplicas` or limited by the license, depending on which limit is reached first. If there are no pending runs, the Operator will reduce the number of agents to the specified value in `autoscaling.minReplicas` within the timeframe of `autoscaling.cooldownPeriodSeconds`.

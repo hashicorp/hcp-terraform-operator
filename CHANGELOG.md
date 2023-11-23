@@ -1,10 +1,17 @@
-## 2.0.0 (UNRELEASED)
+## 2.0.0 (November 06, 2023)
+
+BUG FIXES:
+
+* `Workspace`: fix an issue of properly handling special characters when generating string output. [[GH-289](https://github.com/hashicorp/terraform-cloud-operator/pull/289)]
+* `Module`: fix an issue of properly handling special characters when generating string output. [[GH-289](https://github.com/hashicorp/terraform-cloud-operator/pull/289)]
 
 ENHANCEMENT:
 
 * `Helm Chart`: Add the ability to configure `kube-rbac-proxy` image and resources. [[GH-259](https://github.com/hashicorp/terraform-cloud-operator/pull/259)] [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)]
 * `AgentPool`: Add the ability to use wildcard-name searches to target workspaces for autoscaling. [[GH-274](https://github.com/hashicorp/terraform-cloud-operator/pull/274)]
 * `AgentPool`: Make `targetWorkspaces` field optional and default to targeting all workspaces linked to an AgentPool. [[GH-274](https://github.com/hashicorp/terraform-cloud-operator/pull/274)]
+* `AgentPool`: Tweak autoscaling to take into account Planning and Applying states when computing the replica count for agents  [[GH-290](https://github.com/hashicorp/terraform-cloud-operator/pull/290)]
+* `AgentPool`: Default agent pods to have a `terminationGracePeriod` of 15 minutes. [[GH-290](https://github.com/hashicorp/terraform-cloud-operator/pull/290)]
 
 DOCS:
 
@@ -12,17 +19,19 @@ DOCS:
 
 DEPENDENCIES:
 
-* Bump `sigs.k8s.io/controller-runtime` from 0.15.1 to 0.15.2. [[GH-258](https://github.com/hashicorp/terraform-cloud-operator/pull/258)]
+* Bump `sigs.k8s.io/controller-runtime` from 0.15.1 to 0.15.3. [[GH-258](https://github.com/hashicorp/terraform-cloud-operator/pull/258)] [[GH-294](https://github.com/hashicorp/terraform-cloud-operator/pull/294)]
 * Bump `github.com/hashicorp/go-slug` from 0.12.1 to 0.12.2. [[GH-261](https://github.com/hashicorp/terraform-cloud-operator/pull/261)]
-* Bump `k8s.io/api` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
-* Bump `k8s.io/apimachinery` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
-* Bump `k8s.io/client-go` from 0.27.5 to 0.27.6. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)]
+* Bump `k8s.io/api` from 0.27.5 to 0.27.7. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)] [[GH-292](https://github.com/hashicorp/terraform-cloud-operator/pull/292)]
+* Bump `k8s.io/apimachinery` from 0.27.5 to 0.27.7. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)] [[GH-292](https://github.com/hashicorp/terraform-cloud-operator/pull/292)]
+* Bump `k8s.io/client-go` from 0.27.5 to 0.2776. [[GH-264](https://github.com/hashicorp/terraform-cloud-operator/pull/264)] [[GH-292](https://github.com/hashicorp/terraform-cloud-operator/pull/292)]
 * Bump `kube-rbac-proxy` image from `0.14.2` to `0.14.4`. [[GH-271](https://github.com/hashicorp/terraform-cloud-operator/pull/271)] [[GH-281](https://github.com/hashicorp/terraform-cloud-operator/pull/281)]
 * Bump `golang.org/x/net` from 0.14.0 to 0.17.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `golang.org/x/sys` from 0.11.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `golang.org/x/term` from 0.11.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `golang.org/x/text` from 0.12.0 to 0.13.0. [[GH-272](https://github.com/hashicorp/terraform-cloud-operator/pull/272)]
 * Bump `github.com/hashicorp/go-tfe` from 1.32.1 to 1.35.0. [[GH-273](https://github.com/hashicorp/terraform-cloud-operator/pull/273)]
+* Bump `github.com/onsi/gomega` from 1.28.1 to 1.29.0. [[GH-291](https://github.com/hashicorp/terraform-cloud-operator/pull/291)]
+* Bump `github.com/go-logr/logr` from 1.2.4 to 1.3.0. [[GH-293](https://github.com/hashicorp/terraform-cloud-operator/pull/293)]
 
 ## Community Contributors :raised_hands:
 - @kieranbrown made their contribution in https://github.com/hashicorp/terraform-cloud-operator/pull/259
