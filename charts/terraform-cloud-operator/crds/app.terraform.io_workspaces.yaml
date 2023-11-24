@@ -256,6 +256,19 @@ spec:
                   More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
                 minLength: 1
                 type: string
+              project:
+                description: 'Projects let you organize your workspaces into groups.
+                  Default: default organization project. More information: - https://developer.hashicorp.com/terraform/tutorials/cloud/projects'
+                properties:
+                  id:
+                    description: 'Project ID. Must match pattern: ^prj-[a-zA-Z0-9]+$'
+                    pattern: ^prj-[a-zA-Z0-9]+$
+                    type: string
+                  name:
+                    description: Project name.
+                    minLength: 1
+                    type: string
+                type: object
               remoteStateSharing:
                 description: 'Remote state access between workspaces. By default,
                   new workspaces in Terraform Cloud do not allow other workspaces

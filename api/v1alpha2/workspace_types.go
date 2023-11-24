@@ -379,6 +379,25 @@ type Notification struct {
 	EmailUsers []string `json:"emailUsers,omitempty"`
 }
 
+// Projects let you organize your workspaces into groups.
+// Only one of the fields `ID` or `Name` is allowed.
+// At least one of the fields `ID` or `Name` is mandatory.
+// More information:
+//   - https://developer.hashicorp.com/terraform/tutorials/cloud/projects
+type WorkspaceProject struct {
+	// Project ID.
+	// Must match pattern: ^prj-[a-zA-Z0-9]+$
+	//
+	//+kubebuilder:validation:Pattern:="^prj-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Project name.
+	//
+	//+kubebuilder:validation:MinLength:=1
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
 // WorkspaceSpec defines the desired state of Workspace.
 type WorkspaceSpec struct {
 	// Workspace name.
@@ -526,6 +545,13 @@ type WorkspaceSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Notifications []Notification `json:"notifications,omitempty"`
+	// Projects let you organize your workspaces into groups.
+	// Default: default organization project.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/projects
+	//
+	//+optional
+	Project *WorkspaceProject `json:"project,omitempty"`
 }
 
 type RunStatus struct {

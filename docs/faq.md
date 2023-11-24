@@ -147,6 +147,16 @@
 
   Regardless of the scenario, you can always refer to `status.terraformVersion` to determine the version of Terraform being used in the Workplace.
 
+- **Can I create a workspace or move the one that already exists to a specific project?**
+
+  Yes, you can do this. Bear in mind that a project must exist before referring to it; otherwise, the create or update operation will fail:
+  
+  - If this is a new workspace and the referred project doesn’t exist, the workspace creation will fail with a corresponding error/event message.
+
+  - If this involves migrating an existing workspace and the referred project doesn’t exist, the workspace will remain within the same project, and a corresponding error/event message will be provided.
+
+  If the `spec.project` field is not specified, the workspace will be created or moved to the default project.
+
 ## Module Controller
 
 - **Where can I find Module outputs?**

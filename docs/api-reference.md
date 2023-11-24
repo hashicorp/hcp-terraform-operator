@@ -533,6 +533,21 @@ _Appears in:_
 | `name` _string_ | Agent Pool name. |
 
 
+#### WorkspaceProject
+
+
+
+Projects let you organize your workspaces into groups. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information: - https://developer.hashicorp.com/terraform/tutorials/cloud/projects
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | Project ID. Must match pattern: ^prj-[a-zA-Z0-9]+$ |
+| `name` _string_ | Project name. |
+
+
 #### WorkspaceRunTask
 
 
@@ -581,6 +596,7 @@ _Appears in:_
 | `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow. Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider. More information: - https://www.terraform.io/cloud-docs/run/ui - https://www.terraform.io/cloud-docs/vcs |
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
+| `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups. Default: default organization project. More information: - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
 
 
 
