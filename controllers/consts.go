@@ -3,7 +3,9 @@
 
 package controllers
 
-import "time"
+import (
+	"time"
+)
 
 // SHARED CONSTANTS
 const (

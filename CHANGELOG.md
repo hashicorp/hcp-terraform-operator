@@ -4,6 +4,10 @@ ENHANCEMENT:
 
 * `Workspace`: Add the ability to configure the project for the workspace via a new field `spec.project.[id | name]`.  [[GH-300](https://github.com/hashicorp/terraform-cloud-operator/pull/300)]
 
+BUG FIXES:
+
+* `Module`: fix an issue when initiating foreground cascading deletion results in two destroy runs being triggered, and even after both runs are successfully executed, a module object persists in Kubernetes. [[GH-301](https://github.com/hashicorp/terraform-cloud-operator/pull/301)]
+
 ## 2.0.0 (November 06, 2023)
 
 BUG FIXES:
