@@ -1,4 +1,4 @@
-## 2.1.0 (UNRELEASED)
+## 2.1.0 (November 27, 2023)
 
 ENHANCEMENT:
 
