@@ -5,6 +5,7 @@ DEPENDENCIES:
 * Bump `k8s.io/api` from 0.27.7 to 0.27.8. [[GH-306](https://github.com/hashicorp/terraform-cloud-operator/pull/306)]
 * Bump `k8s.io/apimachinery` from 0.27.7 to 0.27.8. [[GH-306](https://github.com/hashicorp/terraform-cloud-operator/pull/306)]
 * Bump `k8s.io/client-go` from 0.27.7 to 0.27.8. [[GH-306](https://github.com/hashicorp/terraform-cloud-operator/pull/306)]
+* Bump `github.com/go-logr/zapr` from 1.2.4 to 1.3.0. [[GH-305](https://github.com/hashicorp/terraform-cloud-operator/pull/305)]
 
 ## 2.1.0 (November 27, 2023)
 
