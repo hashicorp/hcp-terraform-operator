@@ -56,6 +56,11 @@ output "{{ $o.Name }}" {
 `
 )
 
+// PROJECT CONTROLLER'S CONSTANTS
+const (
+	projectFinalizer = "project.app.terraform.io/finalizer"
+)
+
 // WORKSPACE CONTROLLER'S CONSTANTS
 const (
 	workspaceFinalizerAlpha1 = "finalizer.workspace.app.terraform.io"

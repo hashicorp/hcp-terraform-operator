@@ -145,15 +145,16 @@ var _ = BeforeSuite(func() {
 					"Workspace.app.terraform.io": 5,
 					"Module.app.terraform.io":    5,
 					"AgentPool.app.terraform.io": 5,
+					"Project.app.terraform.io":   5,
 				},
 			},
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&WorkspaceReconciler{
+		err = (&AgentPoolReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
-			Recorder: k8sManager.GetEventRecorderFor("WorkspaceController"),
+			Recorder: k8sManager.GetEventRecorderFor("AgentPoolController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -164,10 +165,17 @@ var _ = BeforeSuite(func() {
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&AgentPoolReconciler{
+		err = (&ProjectReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
-			Recorder: k8sManager.GetEventRecorderFor("AgentPoolController"),
+			Recorder: k8sManager.GetEventRecorderFor("ProjectController"),
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = (&WorkspaceReconciler{
+			Client:   k8sManager.GetClient(),
+			Scheme:   k8sManager.GetScheme(),
+			Recorder: k8sManager.GetEventRecorderFor("WorkspaceController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
