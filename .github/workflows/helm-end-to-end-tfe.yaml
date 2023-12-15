@@ -83,6 +83,7 @@ jobs:
             --set operator.syncPeriod=30s \
             --set controllers.agentPool.workers=5 \
             --set controllers.module.workers=5 \
+            --set controllers.project.workers=5 \
             --set controllers.workspace.workers=5
 
       - name: Run end-to-end test suite
