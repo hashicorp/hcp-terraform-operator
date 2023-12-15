@@ -10,6 +10,8 @@ import (
 )
 
 func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]AgentPool{
 		"HasOnlyName": {
 			Spec: AgentPoolSpec{

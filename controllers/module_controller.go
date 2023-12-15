@@ -97,7 +97,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	err = r.getTerraformClient(ctx, &m)
 	if err != nil {
-		m.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
+		m.log.Error(err, "Module Controller", "msg", "failed to get terraform cloud client")
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
@@ -228,7 +228,7 @@ func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInst
 	}
 
 	if insecure {
-		m.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
+		m.log.Info("Reconcile Module", "msg", "client configured to skip TLS certificate verifications")
 	}
 
 	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}

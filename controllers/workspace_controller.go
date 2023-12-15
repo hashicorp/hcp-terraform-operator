@@ -325,8 +325,6 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 
 	workspace, err := w.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
 	if err != nil {
-		w.log.Error(err, "Reconcile Workspace", "msg", "failed to create a new workspace")
-		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to create a new workspace")
 		return nil, err
 	}
 
@@ -549,6 +547,8 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update workspace ID %s", w.instance.Status.WorkspaceID)
 			return err
 		}
+		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Successfully updated workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully updated workspace ID %s", w.instance.Status.WorkspaceID)
 	} else {
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are matching, no need to update workspace ID %s", w.instance.Status.WorkspaceID))
 	}
@@ -605,7 +605,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Team Access
-	err = r.reconcileTeamAccess(ctx, w, workspace)
+	err = r.reconcileTeamAccess(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Team Access", "msg", fmt.Sprintf("failed to reconcile team access in workspace ID %s", w.instance.Status.WorkspaceID))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileTeamAccess", "Failed to reconcile team access in workspace ID %s", w.instance.Status.WorkspaceID)
