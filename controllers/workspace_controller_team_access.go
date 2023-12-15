@@ -226,7 +226,7 @@ func (r *WorkspaceReconciler) updateTeamAccess(ctx context.Context, w *workspace
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, w *workspaceInstance) error {
 	w.log.Info("Reconcile Team Access", "msg", "new reconciliation event")
 
 	specTeamAccess, err := r.getInstanceTeamAccess(ctx, w)
