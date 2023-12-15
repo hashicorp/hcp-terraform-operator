@@ -163,6 +163,10 @@
 
 ## Project Controller
 
+- **Can I delete a project that has workspaces in it?**
+
+  No, you can only delete a project if it is empty and you have the proper permissions.
+
 ## Workspace Controller
 
 - **Can a single deployment of the Operator manage the Workspaces of different Organizations?**
