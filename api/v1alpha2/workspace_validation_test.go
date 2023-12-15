@@ -10,6 +10,8 @@ import (
 )
 
 func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{
@@ -61,6 +63,8 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"AgentWithAgentPoolWithID": {
 			Spec: WorkspaceSpec{
@@ -106,6 +110,8 @@ func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecNotifications(t *testing.T) {
+	t.Parallel()
+
 	token := "token"
 	url := "https://example.com"
 	successCases := map[string]Workspace{
@@ -442,6 +448,8 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"HasOnlyAllWorkspaces": {
 			Spec: WorkspaceSpec{
@@ -594,6 +602,8 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecRunTasks(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{
@@ -692,6 +702,8 @@ func TestValidateWorkspaceSpecRunTasks(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecRunTriggers(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{
@@ -790,6 +802,8 @@ func TestValidateWorkspaceSpecRunTriggers(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{
@@ -841,6 +855,8 @@ func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
 }
 
 func TestValidateWorkspaceSpecProject(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{

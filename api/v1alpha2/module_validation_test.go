@@ -8,6 +8,8 @@ import (
 )
 
 func TestValidateModuleSpecWorkspace(t *testing.T) {
+	t.Parallel()
+
 	successCases := map[string]Module{
 		"HasOnlyID": {
 			Spec: ModuleSpec{
