@@ -29,6 +29,7 @@ spec:
           - --sync-period={{ .Values.operator.syncPeriod }}
           - --agent-pool-workers={{ .Values.controllers.agentPool.workers }}
           - --module-workers={{ .Values.controllers.module.workers }}
+          - --project-workers={{ .Values.controllers.project.workers }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
           {{- range .Values.operator.watchedNamespaces }}
           - --namespace={{ . }}
