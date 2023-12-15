@@ -1,5 +1,9 @@
 ## 2.2.0 (UNRELEASED)
 
+FEATURES:
+
+* `Project`: add a new controller `Project` that allows managing Terraform Cloud Projects. [[GH-309](https://github.com/hashicorp/terraform-cloud-operator/pull/309)].
+
 DEPENDENCIES:
 
 * Bump `k8s.io/api` from 0.27.7 to 0.27.8. [[GH-306](https://github.com/hashicorp/terraform-cloud-operator/pull/306)]
