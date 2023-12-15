@@ -1,6 +1,6 @@
 # `Workspace`
 
-`Workspace` controller allows managing Terraform Cloud Workspace via Kubernetes Custom Resources.
+`Workspace` controller allows managing Terraform Cloud Workspaces via Kubernetes Custom Resources.
 
 Please refer to the [CRD](../config/crd/bases/app.terraform.io_workspaces.yaml) and [API Reference](./api-reference.md#workspace) to get the full list of available options.
 
