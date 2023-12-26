@@ -84,7 +84,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	m.log.Info("Spec Validation", "msg", "spec is valid")
 
-	if m.instance.NeedToAddFinalizer(moduleFinalizer) {
+	if needToAddFinalizer(&m.instance, moduleFinalizer) {
 		err := r.addFinalizer(ctx, &m.instance)
 		if err != nil {
 			m.log.Error(err, "Module Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", moduleFinalizer))
@@ -436,7 +436,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	m.log.Info("Reconcile Module", "msg", "reconciling module")
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the module
-	if m.instance.IsDeletionCandidate(moduleFinalizer) {
+	if isDeletionCandidate(&m.instance, moduleFinalizer) {
 		m.log.Info("Reconcile Module", "msg", "object marked as deleted")
 		r.Recorder.Event(&m.instance, corev1.EventTypeNormal, "ReconcileModule", "Object marked as deleted")
 		return r.deleteModule(ctx, m)

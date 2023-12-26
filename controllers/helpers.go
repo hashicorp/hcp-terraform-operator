@@ -10,6 +10,8 @@ import (
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -47,4 +49,16 @@ func formatOutput(o *tfc.StateVersionOutput) (string, error) {
 		}
 		return string(b), nil
 	}
+}
+
+type Object interface {
+	client.Object
+}
+
+func needToAddFinalizer[T Object](o T, finalizer string) bool {
+	return o.GetDeletionTimestamp().IsZero() && !controllerutil.ContainsFinalizer(o, finalizer)
+}
+
+func isDeletionCandidate[T Object](o T, finalizer string) bool {
+	return !o.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(o, finalizer)
 }
