@@ -452,6 +452,12 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=remote
 	//+optional
 	ExecutionMode string `json:"executionMode,omitempty"`
+	// Whether to queue all runs. Unless this is set to true, runs triggered by
+	// a webhook will not be queued until at least one run is manually queued.
+	//
+	//+kubebuilder:default=false
+	//+optional
+	QueueAllRuns bool `json:"queueAllRuns,omitempty"`
 	// Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks

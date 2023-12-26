@@ -266,6 +266,12 @@ spec:
                     minLength: 1
                     type: string
                 type: object
+              queueAllRuns:
+                default: false
+                description: Whether to queue all runs. Unless this is set to true,
+                  runs triggered by a webhook will not be queued until at least one
+                  run is manually queued.
+                type: boolean
               remoteStateSharing:
                 description: 'Remote state access between workspaces. By default,
                   new workspaces in Terraform Cloud do not allow other workspaces
