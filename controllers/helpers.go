@@ -55,10 +55,14 @@ type Object interface {
 	client.Object
 }
 
+// needToAddFinalizer reports true when a given object doesn't contain a given finalizer and it is not marked for deletion.
+// Otherwise, it reports false.
 func needToAddFinalizer[T Object](o T, finalizer string) bool {
 	return o.GetDeletionTimestamp().IsZero() && !controllerutil.ContainsFinalizer(o, finalizer)
 }
 
+// isDeletionCandidate reports true when a given object contains a given finalizer and it is marked for deletion.
+// Otherwise, it reports false.
 func isDeletionCandidate[T Object](o T, finalizer string) bool {
 	return !o.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(o, finalizer)
 }
