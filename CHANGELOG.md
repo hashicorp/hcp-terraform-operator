@@ -7,6 +7,8 @@ DEPENDENCIES:
 * Bump `k8s.io/client-go` from 0.27.7 to 0.27.8. [[GH-306](https://github.com/hashicorp/terraform-cloud-operator/pull/306)]
 * Bump `github.com/go-logr/zapr` from 1.2.4 to 1.3.0. [[GH-305](https://github.com/hashicorp/terraform-cloud-operator/pull/305)]
 * Bump `github.com/onsi/ginkgo/v2` from 2.13.0 to 2.13.2. [[GH-307](https://github.com/hashicorp/terraform-cloud-operator/pull/307)]
+* Bump `github.com/hashicorp/go-tfe` from 1.37.0 to 1.41.0. [[GH-316](https://github.com/hashicorp/terraform-cloud-operator/pull/316)]
+* Bump `github.com/hashicorp/go-slug` from 0.12.2 to 0.13.3. [[GH-316](https://github.com/hashicorp/terraform-cloud-operator/pull/316)]
 
 ## 2.1.0 (November 27, 2023)
 
