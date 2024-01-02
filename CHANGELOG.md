@@ -9,6 +9,7 @@ DEPENDENCIES:
 * Bump `github.com/onsi/ginkgo/v2` from 2.13.0 to 2.13.2. [[GH-307](https://github.com/hashicorp/terraform-cloud-operator/pull/307)]
 * Bump `github.com/hashicorp/go-tfe` from 1.37.0 to 1.41.0. [[GH-316](https://github.com/hashicorp/terraform-cloud-operator/pull/316)]
 * Bump `github.com/hashicorp/go-slug` from 0.12.2 to 0.13.3. [[GH-316](https://github.com/hashicorp/terraform-cloud-operator/pull/316)]
+* Bump `github.com/go-logr/logr` from 1.3.0 to 1.4.1. [[GH-317](https://github.com/hashicorp/terraform-cloud-operator/pull/317)]
 
 ## 2.1.0 (November 27, 2023)
 
