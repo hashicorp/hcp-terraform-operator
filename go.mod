@@ -6,8 +6,8 @@ require (
 	github.com/go-logr/logr v1.3.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
-	github.com/hashicorp/go-slug v0.12.2
-	github.com/hashicorp/go-tfe v1.37.0
+	github.com/hashicorp/go-slug v0.13.3
+	github.com/hashicorp/go-tfe v1.41.0
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.29.0
 	go.uber.org/zap v1.26.0
@@ -37,7 +37,7 @@ require (
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/jsonapi v0.0.0-20210826224640-ee7dae0fb22d // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
@@ -57,11 +57,11 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
+	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
