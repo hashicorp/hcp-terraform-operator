@@ -10,6 +10,7 @@ DEPENDENCIES:
 * Bump `github.com/hashicorp/go-tfe` from 1.37.0 to 1.41.0. [[GH-316](https://github.com/hashicorp/terraform-cloud-operator/pull/316)]
 * Bump `github.com/hashicorp/go-slug` from 0.12.2 to 0.13.3. [[GH-316](https://github.com/hashicorp/terraform-cloud-operator/pull/316)]
 * Bump `github.com/go-logr/logr` from 1.3.0 to 1.4.1. [[GH-317](https://github.com/hashicorp/terraform-cloud-operator/pull/317)]
+* Bump `kube-rbac-proxy` image from 0.14.4 to 0.15.0. [[GH-320](https://github.com/hashicorp/terraform-cloud-operator/pull/320)]
 
 ## 2.1.0 (November 27, 2023)
 
