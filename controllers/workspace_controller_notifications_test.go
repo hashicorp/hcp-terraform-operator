@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -196,51 +195,51 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 })
 
 func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
-	Eventually(func() bool {
-		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		s := instance.Spec.Notifications
+	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
+	m, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, &tfc.OrganizationMembershipListOptions{})
+	Expect(err).Should(Succeed())
+	Expect(m).ShouldNot(BeNil())
+	memberships := make(map[string]string, len(m.Items))
+	for _, ms := range m.Items {
+		memberships[ms.User.ID] = ms.Email
+	}
+
+	Eventually(func() []appv1alpha2.Notification {
 		notifications, err := tfClient.NotificationConfigurations.List(ctx, instance.Status.WorkspaceID, &tfc.NotificationConfigurationListOptions{})
 		Expect(err).Should(Succeed())
 		Expect(notifications).ShouldNot(BeNil())
 
-		members, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, &tfc.OrganizationMembershipListOptions{})
-		Expect(err).Should(Succeed())
-		Expect(members).ShouldNot(BeNil())
-
-		m := make(map[string]string)
-		for _, ms := range members.Items {
-			m[ms.User.ID] = ms.Email
-		}
-
-		if len(instance.Spec.Notifications) != len(notifications.Items) {
-			return false
-		}
-
-		var w []appv1alpha2.Notification
+		// Do not use make()
+		// workspace must be nil if there are no triggers
+		var workspace []appv1alpha2.Notification
 		for _, n := range notifications.Items {
-			var nt []appv1alpha2.NotificationTrigger
-			for _, t := range n.Triggers {
-				nt = append(nt, appv1alpha2.NotificationTrigger(t))
+			// Do not use make()
+			// t must be nil if there are no triggers
+			var t []appv1alpha2.NotificationTrigger
+			for _, v := range n.Triggers {
+				t = append(t, appv1alpha2.NotificationTrigger(v))
 			}
-			var nu []string
-			for _, u := range n.EmailUsers {
-				nu = append(nu, m[u.ID])
+			// Do not use make()
+			// eu must be nil if there are no email users
+			var eu []string
+			for _, v := range n.EmailUsers {
+				eu = append(eu, memberships[v.ID])
 			}
-			w = append(w, appv1alpha2.Notification{
+			workspace = append(workspace, appv1alpha2.Notification{
 				Name:           n.Name,
 				Type:           n.DestinationType,
 				Enabled:        n.Enabled,
 				Token:          n.Token,
-				Triggers:       nt,
+				Triggers:       t,
 				URL:            n.URL,
 				EmailAddresses: n.EmailAddresses,
-				EmailUsers:     nu,
+				EmailUsers:     eu,
 			})
 		}
 
-		return cmp.Equal(s, w)
-	}).Should(BeTrue())
+		return workspace
+	}).Should(HaveExactElements(instance.Spec.Notifications))
 }
 
 func createOrgMember(email string) string {
