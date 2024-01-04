@@ -10,11 +10,21 @@ import (
 	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var _ = Describe("Helpers", func() {
+type TestObject struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+}
+
+func (in *TestObject) DeepCopyObject() runtime.Object {
+	return nil
+}
+
+var _ = Describe("Helpers", Label("Unit"), func() {
 	Context("Returns", func() {
 		It("do not requeue", func() {
 			result, err := doNotRequeue()
@@ -100,6 +110,56 @@ var _ = Describe("Helpers", func() {
 			result, err := formatOutput(o)
 			Expect(result).To(BeEquivalentTo(e))
 			Expect(err).To(BeNil())
+		})
+	})
+
+	Context("NeedToAddFinalizer", func() {
+		testFinalizer := "test.app.terraform.io/finalizer"
+		o := TestObject{}
+		It("No deletion timestamp and no finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = nil
+			o.ObjectMeta.Finalizers = []string{}
+			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeTrue())
+		})
+		It("No deletion timestamp and finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = nil
+			o.ObjectMeta.Finalizers = []string{testFinalizer}
+			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeFalse())
+		})
+		It("Deletion timestamp and no finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+			o.ObjectMeta.Finalizers = []string{}
+			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeFalse())
+		})
+		It("Deletion timestamp and finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+			o.ObjectMeta.Finalizers = []string{testFinalizer}
+			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeFalse())
+		})
+	})
+
+	Context("IsDeletionCandidate", func() {
+		testFinalizer := "test.app.terraform.io/finalizer"
+		o := TestObject{}
+		It("No deletion timestamp and no finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = nil
+			o.ObjectMeta.Finalizers = []string{}
+			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeFalse())
+		})
+		It("No deletion timestamp and finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = nil
+			o.ObjectMeta.Finalizers = []string{testFinalizer}
+			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeFalse())
+		})
+		It("Deletion timestamp and no finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+			o.ObjectMeta.Finalizers = []string{}
+			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeFalse())
+		})
+		It("Deletion timestamp and finalizer", func() {
+			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+			o.ObjectMeta.Finalizers = []string{testFinalizer}
+			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeTrue())
 		})
 	})
 })
