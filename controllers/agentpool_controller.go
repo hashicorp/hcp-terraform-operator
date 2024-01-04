@@ -78,7 +78,7 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	ap.log.Info("Spec Validation", "msg", "spec is valid")
 
-	if ap.instance.NeedToAddFinalizer(agentPoolFinalizer) {
+	if needToAddFinalizer(&ap.instance, agentPoolFinalizer) {
 		err := r.addFinalizer(ctx, &ap.instance)
 		if err != nil {
 			ap.log.Error(err, "Agent Pool Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", agentPoolFinalizer))
@@ -284,7 +284,7 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 	var agentPool *tfc.AgentPool
 	var err error
 
-	if ap.instance.IsDeletionCandidate(agentPoolFinalizer) {
+	if isDeletionCandidate(&ap.instance, agentPoolFinalizer) {
 		ap.log.Info("Reconcile Agent Pool", "msg", "object marked as deleted, need to delete agent pool first")
 		r.Recorder.Event(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Object marked as deleted, need to delete agent pool first")
 		return r.deleteAgentPool(ctx, ap)

@@ -85,7 +85,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	w.log.Info("Spec Validation", "msg", "spec is valid")
 
-	if w.instance.NeedToAddFinalizer(workspaceFinalizer) {
+	if needToAddFinalizer(&w.instance, workspaceFinalizer) {
 		err := r.addFinalizer(ctx, &w.instance)
 		if err != nil {
 			w.log.Error(err, "Workspace Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", workspaceFinalizer))
@@ -495,7 +495,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}()
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the workspace
-	if w.instance.IsDeletionCandidate(workspaceFinalizer) {
+	if isDeletionCandidate(&w.instance, workspaceFinalizer) {
 		w.log.Info("Reconcile Workspace", "msg", "object marked as deleted, need to delete workspace first")
 		r.Recorder.Event(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Object marked as deleted, need to delete workspace first")
 		return r.deleteWorkspace(ctx, w)
