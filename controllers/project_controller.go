@@ -72,7 +72,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	p.log.Info("Spec Validation", "msg", "spec is valid")
 
-	if p.instance.NeedToAddFinalizer(projectFinalizer) {
+	if needToAddFinalizer(&p.instance, projectFinalizer) {
 		err := r.addFinalizer(ctx, &p.instance)
 		if err != nil {
 			p.log.Error(err, "Project Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", projectFinalizer))
@@ -299,7 +299,7 @@ func (r *ProjectReconciler) reconcileProject(ctx context.Context, p *projectInst
 	}()
 
 	// verify whether the Kubernetes object has been marked as deleted and if so delete the project
-	if p.instance.IsDeletionCandidate(projectFinalizer) {
+	if isDeletionCandidate(&p.instance, projectFinalizer) {
 		p.log.Info("Reconcile Project", "msg", "object marked as deleted, need to delete project first")
 		r.Recorder.Event(&p.instance, corev1.EventTypeNormal, "ReconcileProject", "Object marked as deleted, need to delete project first")
 		return r.deleteProject(ctx, p)
