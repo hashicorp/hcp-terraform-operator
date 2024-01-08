@@ -8,7 +8,7 @@ The Semantic Versioning agreement is being followed by this project. Further det
 
 To create a new release, adhere to the following steps:
 
-- Decide on the version number that you intend to release. Throughout the following steps, it will be denoted as <SEMVER>.
+- Decide on the version number that you intend to release. Throughout the following steps, it will be denoted as `<SEMVER>`.
 
 - Create a new branch from the `main`. The branch name is required to adhere to the following template: `release/v<SEMVER>`.
 
