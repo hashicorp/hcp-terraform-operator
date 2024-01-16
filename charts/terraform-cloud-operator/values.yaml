@@ -53,6 +53,9 @@ controllers:
   module:
     # The number of the Module controller workers.
     workers: 1
+  project:
+    # The number of the Project controller workers.
+    workers: 1
   workspace:
     # The number of the Workspace controller workers.
     workers: 1

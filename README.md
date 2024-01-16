@@ -17,12 +17,14 @@ The Operator can manage the following types of resources:
 
 - `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
+- `Project` manages [Terraform Cloud Projects](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects)
 - `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
 ## Getting started
 
 To get started see our tutorials on the HashiCorp Developer Portal:
 
+- [Terraform Cloud Operator for Kubernetes overview](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes)
 - [Deploy infrastructure with the Terraform Cloud Kubernetes Operator v2](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2)
 - [Manage agent pools with the Terraform Cloud Kubernetes Operator v2](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2-agentpool)
 - [Terraform Cloud Kubernetes Operator v2 Migration Guide](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes/ops-v2-migration)
@@ -31,7 +33,7 @@ To get started see our tutorials on the HashiCorp Developer Portal:
 
 ### Supported Features
 
-The full list of supported Terraform Cloud features can be found [here](./docs/features.md).
+The full list of supported Terraform Cloud features can be found on our [Developer portal](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes#supported-terraform-cloud-features).
 
 ### Installation
 
@@ -55,6 +57,7 @@ Controllers usage guides:
 
 - [AgentPool](./docs/agentpool.md)
 - [Module](./docs/module.md)
+- [Project](./docs/project.md)
 - [Workspace](./docs/workspace.md)
 
 ### Metrics
@@ -106,6 +109,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     ```console
     $ kubectl get agentpool <NAME>
     $ kubectl get module <NAME>
+    $ kubectl get project <NAME>
     $ kubectl get workspace <NAME>
     ```
 
@@ -114,6 +118,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     ```console
     $ kubectl describe agentpool <NAME>
     $ kubectl describe module <NAME>
+    $ kubectl describe project <NAME>
     $ kubectl describe workspace <NAME>
     ```
 

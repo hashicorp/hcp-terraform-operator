@@ -1,0 +1,31 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+---
+apiVersion: app.terraform.io/v1alpha2
+kind: Project
+metadata:
+  name: this
+spec:
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  name: project-demo
+  teamAccess:
+  - team:
+      name: demo
+    access: custom
+    custom:
+      projectAccess: read
+      teamManagement: read
+      createWorkspace: false
+      deleteWorkspace: false
+      moveWorkspace: false
+      lockWorkspace: false
+      runs: read
+      runTasks: false
+      sentinelMocks: read
+      stateVersions: read-outputs
+      variables: read

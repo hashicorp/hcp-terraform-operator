@@ -34,8 +34,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
 		// Create Projects
-		projectID = createProject(projectName)
-		projectID2 = createProject(projectName2)
+		projectID = createTestProject(projectName)
+		projectID2 = createTestProject(projectName2)
 	})
 
 	AfterAll(func() {
@@ -134,7 +134,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createProject(projectName string) string {
+func createTestProject(projectName string) string {
 	prj, err := tfClient.Projects.Create(ctx, organization, tfc.ProjectCreateOptions{
 		Name: projectName,
 	})

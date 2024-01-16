@@ -109,6 +109,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - app.terraforp.io
+  resources:
+  - projects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.terraforp.io
+  resources:
+  - projects/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - app.terraforp.io
+  resources:
+  - projects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - apps
   resources:
   - deployments

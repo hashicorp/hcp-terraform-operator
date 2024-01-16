@@ -129,6 +129,44 @@
 
   Please refer to the [CRDs](../config/crd/bases) and [API Reference](./api-reference.md) to see if the feature you use supports `ID` or `Name`.
 
+## Agent Pool Controller
+
+- **Where can I find Agent tokens?**
+
+  The Agent tokens are sensitive and will be saved in a Secret. The name of the Secret object will be generated automatically and has the following pattern: `<metadata.name>-agent-pool`.
+
+- **Does the Operator restore tokens if I delete the whole Secret containing the Agent Tokens or a single token from it?**
+
+  No. You will have to update the Custom Resource to re-create tokens.
+
+- **What will happen if I delete an Agent Pool Customer Resource?**
+
+  The Agent Pool controller will delete Agent Pool from Terraform Cloud, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.
+
+- **What triggers Agents scaling?**
+
+  The Operator regularly monitors specific workspaces and boosts the agent count when pending runs are detected. The maximum number of agents can be increased up to the value defined in `autoscaling.maxReplicas` or limited by the license, depending on which limit is reached first. If there are no pending runs, the Operator will reduce the number of agents to the specified value in `autoscaling.minReplicas` within the timeframe of `autoscaling.cooldownPeriodSeconds`.
+
+## Module Controller
+
+- **Where can I find Module outputs?**
+
+  Non-sensitive outputs will be saved in a ConfigMap. Sensitive outputs will be saved in a Secret. In both cases, the name of the corresponding Kubernetes object will be generated automatically and has the following pattern: `<metadata.name>-module-outputs`. When the underlying workspace is managed by the operator, all outputs will be duplicated in the corresponding ConfigMap or Secret.
+
+- **Can I execute a new Run without changing any Workspace or Module attributes?**
+
+  Yes. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
+
+  ```console
+  $ kubectl patch module <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
+  ```
+
+## Project Controller
+
+- **Can I delete a project that has workspaces in it?**
+
+  No, you can only delete a project if it is empty and you have the proper permissions.
+
 ## Workspace Controller
 
 - **Can a single deployment of the Operator manage the Workspaces of different Organizations?**
@@ -156,35 +194,3 @@
   - If this involves migrating an existing workspace and the referred project doesn’t exist, the workspace will remain within the same project, and a corresponding error/event message will be provided.
 
   If the `spec.project` field is not specified, the workspace will be created or moved to the default project.
-
-## Module Controller
-
-- **Where can I find Module outputs?**
-
-  Non-sensitive outputs will be saved in a ConfigMap. Sensitive outputs will be saved in a Secret. In both cases, the name of the corresponding Kubernetes object will be generated automatically and has the following pattern: `<metadata.name>-module-outputs`. When the underlying workspace is managed by the operator, all outputs will be duplicated in the corresponding ConfigMap or Secret.
-
-- **Can I execute a new Run without changing any Workspace or Module attributes?**
-
-  Yes. There is a special attribute `spec.restartedAt` that you need to update in order to trigger a new Run execution. For example:
-
-  ```console
-  $ kubectl patch module <NAME> --type=merge --patch '{"spec": {"restartedAt": "'`date -u -Iseconds`'"}}'
-  ```
-
-## Agent Pool Controller
-
-- **Where can I find Agent tokens?**
-
-  The Agent tokens are sensitive and will be saved in a Secret. The name of the Secret object will be generated automatically and has the following pattern: `<metadata.name>-agent-pool`.
-
-- **Does the Operator restore tokens if I delete the whole Secret containing the Agent Tokens or a single token from it?**
-
-  No. You will have to update the Custom Resource to re-create tokens.
-
-- **What will happen if I delete an Agent Pool Customer Resource?**
-
-  The Agent Pool controller will delete Agent Pool from Terraform Cloud, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.
-
-- **What triggers Agents scaling?**
-
-  The Operator regularly monitors specific workspaces and boosts the agent count when pending runs are detected. The maximum number of agents can be increased up to the value defined in `autoscaling.maxReplicas` or limited by the license, depending on which limit is reached first. If there are no pending runs, the Operator will reduce the number of agents to the specified value in `autoscaling.minReplicas` within the timeframe of `autoscaling.cooldownPeriodSeconds`.

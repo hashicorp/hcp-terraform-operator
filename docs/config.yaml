@@ -6,8 +6,9 @@ processor:
   ignoreTypes:
     - "AgentPoolList$"
     - "ModuleList$"
+    - "ProjectList$"
     - "WorkspaceList$"
   ignoreFields:
     - "status$"
 render:
-  kubernetesVersion: 1.26
+  kubernetesVersion: 1.27

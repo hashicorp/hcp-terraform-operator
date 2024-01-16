@@ -38,6 +38,7 @@ $ helm install demo hashicorp/terraform-cloud-operator \
   --set 'operator.watchedNamespaces={white,blue,red}' \
   --set controllers.agentPool.workers=5 \
   --set controllers.module.workers=5 \
+  --set controllers.project.workers=5 \
   --set controllers.workspace.workers=5
 ```
 
@@ -66,6 +67,7 @@ $ helm upgrade demo hashicorp/terraform-cloud-operator \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
   --set controllers.module.workers=10 \
+  --set controllers.project.workers=2 \
   --set controllers.workspace.workers=20
 ```
 
@@ -97,5 +99,6 @@ In the above example, the Operator will watch all namespaces in the Kubernetes c
 | kubeRbacProxy.resources.requests.memory | string | "64Mi" | Guaranteed minimum amount of memory to be used by a container. |
 | controllers.agentPool.workers | int | 1 | The number of the Agent Pool controller workers. |
 | controllers.module.workers | int | 1 | The number of the Module controller workers. |
+| controllers.project.workers | int | 1 | The number of the Project controller workers. |
 | controllers.workspace.workers | int | 1 | The number of the Workspace controller workers. |
 | customCAcertificates | string | "" | Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates. |

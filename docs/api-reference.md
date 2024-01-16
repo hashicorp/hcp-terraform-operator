@@ -11,6 +11,7 @@ Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
 ### Resource Types
 - [AgentPool](#agentpool)
 - [Module](#module)
+- [Project](#project)
 - [Workspace](#workspace)
 
 
@@ -27,7 +28,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `replicas` _integer_ |  |
-| `spec` _[PodSpec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#podspec-v1-core)_ |  |
+| `spec` _[PodSpec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podspec-v1-core)_ |  |
 
 
 #### AgentDeploymentAutoscaling
@@ -59,7 +60,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `desiredReplicas` _integer_ | Desired number of agent replicas |
-| `lastScalingEvent` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#time-v1-meta)_ | Last time the agent pool was scaledx |
+| `lastScalingEvent` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#time-v1-meta)_ | Last time the agent pool was scaledx |
 
 
 #### AgentPool
@@ -76,7 +77,7 @@ AgentPool is the Schema for the agentpools API.
 | `kind` _string_ | `AgentPool`
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[AgentPoolSpec](#agentpoolspec)_ |  |
 
 
@@ -167,6 +168,30 @@ _Appears in:_
 | `workspaceLocking` _boolean_ | Lock/unlock workspace. Default: `false`. |
 
 
+#### CustomProjectPermissions
+
+
+
+Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-project-permissions - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-workspace-permissions
+
+_Appears in:_
+- [ProjectTeamAccess](#projectteamaccess)
+
+| Field | Description |
+| --- | --- |
+| `projectAccess` _[ProjectSettingsPermissionType](#projectsettingspermissiontype)_ | Project access. Must be one of the following values: `delete`, `read`, `update`. Default: `read`. |
+| `teamManagement` _[ProjectTeamsPermissionType](#projectteamspermissiontype)_ | Team management. Must be one of the following values: `manage`, `none`, `read`. Default: `none`. |
+| `createWorkspace` _boolean_ | Allow users to create workspaces in the project. This grants read access to all workspaces in the project. Default: `false`. |
+| `deleteWorkspace` _boolean_ | Allows users to delete workspaces in the project. Default: `false`. |
+| `moveWorkspace` _boolean_ | Allows users to move workspaces out of the project. A user must have this permission on both the source and destination project to successfully move a workspace from one project to another. Default: `false`. |
+| `lockWorkspace` _boolean_ | Allows users to manually lock the workspace to temporarily prevent runs. When a workspace's execution mode is set to "local", users must have this permission to perform local CLI runs using the workspace's state. Default: `false`. |
+| `runs` _[WorkspaceRunsPermissionType](#workspacerunspermissiontype)_ | Run access. Must be one of the following values: `apply`, `plan`, `read`. Default: `read`. |
+| `runTasks` _boolean_ | Manage Workspace Run Tasks. Default: `false`. |
+| `sentinelMocks` _[WorkspaceSentinelMocksPermissionType](#workspacesentinelmockspermissiontype)_ | Download Sentinel mocks. Must be one of the following values: `none`, `read`. Default: `none`. |
+| `stateVersions` _[WorkspaceStateVersionsPermissionType](#workspacestateversionspermissiontype)_ | State access. Must be one of the following values: `none`, `read`, `read-outputs`, `write`. Default: `none`. |
+| `variables` _[WorkspaceVariablesPermissionType](#workspacevariablespermissiontype)_ | Variable access. Must be one of the following values: `none`, `read`, `write`. Default: `none`. |
+
+
 #### Module
 
 
@@ -181,7 +206,7 @@ Module is the Schema for the modules API Module implements the API-driven Run Wo
 | `kind` _string_ | `Module`
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[ModuleSpec](#modulespec)_ |  |
 
 
@@ -314,6 +339,59 @@ _Appears in:_
 | `runID` _string_ | Run ID of the latest run that updated the outputs. |
 
 
+#### Project
+
+
+
+Project is the Schema for the projects API
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `Project`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[ProjectSpec](#projectspec)_ |  |
+
+
+#### ProjectSpec
+
+
+
+ProjectSpec defines the desired state of Project. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects
+
+_Appears in:_
+- [Project](#project)
+
+| Field | Description |
+| --- | --- |
+| `organization` _string_ | Organization name where the Workspace will be created. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `token` _[Token](#token)_ | API Token to be used for API calls. |
+| `name` _string_ | Name of the Project. |
+| `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization, users must belong to a team that has been granted the appropriate permissions. You can assign project-specific permissions to teams. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
+
+
+
+
+#### ProjectTeamAccess
+
+
+
+Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization, users must belong to a team that has been granted the appropriate permissions. You can assign project-specific permissions to teams. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions
+
+_Appears in:_
+- [ProjectSpec](#projectspec)
+
+| Field | Description |
+| --- | --- |
+| `team` _[Team](#team)_ | Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams |
+| `access` _[TeamProjectAccessType](#teamprojectaccesstype)_ | There are two ways to choose which permissions a given team has on a project: fixed permission sets, and custom permissions. Must be one of the following values: `admin`, `custom`, `maintain`, `read`, `write`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-project-permissions |
+| `custom` _[CustomProjectPermissions](#customprojectpermissions)_ | Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-project-permissions |
+
+
 #### RemoteStateSharing
 
 
@@ -410,6 +488,7 @@ _Appears in:_
 Teams are groups of Terraform Cloud users within an organization. If a user belongs to at least one team in an organization, they are considered a member of that organization. Only one of the fields `ID` or `Name` is allowed. At least one of the fields `ID` or `Name` is mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 
 _Appears in:_
+- [ProjectTeamAccess](#projectteamaccess)
 - [TeamAccess](#teamaccess)
 
 | Field | Description |
@@ -443,11 +522,12 @@ Token refers to a Kubernetes Secret object within the same namespace as the Work
 _Appears in:_
 - [AgentPoolSpec](#agentpoolspec)
 - [ModuleSpec](#modulespec)
+- [ProjectSpec](#projectspec)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |
 | --- | --- |
-| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
+| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#secretkeyselector-v1-core)_ | Selects a key of a secret in the workspace's namespace |
 
 
 #### ValueFrom
@@ -461,8 +541,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `configMapKeyRef` _[ConfigMapKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#configmapkeyselector-v1-core)_ | Selects a key of a ConfigMap. |
-| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#secretkeyselector-v1-core)_ | Selects a key of a Secret. |
+| `configMapKeyRef` _[ConfigMapKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#configmapkeyselector-v1-core)_ | Selects a key of a ConfigMap. |
+| `secretKeyRef` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#secretkeyselector-v1-core)_ | Selects a key of a Secret. |
 
 
 #### Variable
@@ -514,7 +594,7 @@ Workspace is the Schema for the workspaces API
 | `kind` _string_ | `Workspace`
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[WorkspaceSpec](#workspacespec)_ |  |
 
 

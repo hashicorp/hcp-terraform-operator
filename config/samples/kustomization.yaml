@@ -3,4 +3,5 @@ resources:
 - app_v1alpha2_workspace.yaml
 - app_v1alpha2_module.yaml
 - app_v1alpha2_agentpool.yaml
+- app_v1alpha2_project.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
