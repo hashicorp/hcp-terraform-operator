@@ -1,4 +1,4 @@
-## 2.2.0 (UNRELEASED)
+## 2.2.0 (January 16, 2024)
 
 FEATURES:
 
