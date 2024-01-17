@@ -172,6 +172,20 @@ There are two main pieces of the Operator `API` and `Controller`. Depending on w
 
     Every test should be executable through a make target, and the target should have a prefix of "test-".
 
+### Write a changelog
+
+We use the [Changie](https://changie.dev/) automation tool for changelog management.
+
+To add a new entry to the `CHANGELOG` install Changie using the following [instructions](https://changie.dev/guide/installation/) and run the following command:
+
+```console
+$ changie new
+```
+
+Follow the interactive menu steps to generate a new changelog entry in a `*.yaml` file that will appear in the `.changes/unreleased` folder. In the case of multiple changes, run the above command as many times as necessary.
+
+Ensure that the generated files are pushed to the repository along with any code changes.
+
 ## Submitting Changes
 
 ### Creating a Pull Request
@@ -181,8 +195,6 @@ We're excited that you're ready to contribute to the Operator by creating a pull
 1. **Description**: write a detailed description of your changes. Keep in mind, that it should be clear why you make this change, what you have changed, and how this will affect the Operator users. If you are working on a fix for an existing issue, you can provide less details about it.
 
 1. **Usage Example**: if your change is API-related, make sure you have provided **Before** and **After** usage examples.
-
-1. **Release Note**: write down a change log within the PR and update the [CHANGELOG.MD](./CHANGELOG.md) file respectively.
 
 1. **References**: if you fix an existing issue, please provide a reference to it by using a relevant [GitHub keyword](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests#linking-a-pull-request-to-an-issue).
 
