@@ -8,20 +8,47 @@ The Semantic Versioning agreement is being followed by this project. Further det
 
 To create a new release, adhere to the following steps:
 
-- Decide on the version number that you intend to release. Throughout the following steps, it will be denoted as `<SEMVER>`.
+- Switch to the `main` branch and fetch the latest changes.
+
+  ```console
+  $ git switch main
+  $ git pull
+  ```
+
+- Generate the version number that will be released. Throughout the following steps, it will be denoted as `<SEMVER>`.
+
+  ```console
+  $ export TFC_OPERATOR_RELEASE_VERSION=`changie next auto`
+  ```
 
 - Create a new branch from the `main`. The branch name is required to adhere to the following template: `release/v<SEMVER>`.
 
-- Modify the `version/VERSION` file to reflect the version number that you plan to release. The version number in this file must correspond with the `<SEMVER>` of the release branch name.
+  ```console
+  $ git checkout -b release/v$TFC_OPERATOR_RELEASE_VERSION
+  ```
 
-- Revise the [`CHANGELOG`](./CHANGELOG.md) file by renaming the unreleased version section to the version number of the release if necessary(for example, it might be `X.Y.Z`) or creating it if it doesn't already exist. The version number in this file must correspond with the `<SEMVER>` of the release branch name. Substitute `UNRELEASED` in the breast adjacent to the release version with the planned release date expressed as `Month DD, YYYY` format. Alternatively, execute the script [release-date.sh](./scripts/release-date.sh) to modify the [`CHANGELOG`](./CHANGELOG.md) file by substituting `UNRELEASED` with the current date.
+- Modify the `version/VERSION` file to reflect the version number that you plan to release.
 
-- Execute script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file to match the desired release number:
+  ```console
+  $ echo $TFC_OPERATOR_RELEASE_VERSION > version/VERSION
+  ```
 
-  - The values of `version` and `appVersion` will be updated based on the value set in the environment variable `VERSION`, or if it is not set, it will be derived from the file `version/VERSION`.
+- Update the [`CHANGELOG`](./CHANGELOG.md) file with the change that were made since the last release.
 
-- Create a pull request against the `main` branch and follow the regular code review and merge procedures.
+  ```console
+  $ changie batch auto
+  $ changie marge
+  ```
 
-- After merging the release branch into the `main` branch, a git tag should have been automatically created for the new release version number. The version number in the tag must correspond with the `<SEMVER>` of the merged release branch name. Confirm this succeeded by viewing the repository [tags](https://github.com/hashicorp/terraform-cloud-operator/tags).
+- Execute the script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file and match the desired release number. _The values of `version` and `appVersion` will be updated accordingly to the <SEMVER> value._
+
+
+  ```console
+  $ scripts/update-helm-chart.sh
+  ```
+
+- Create a pull request against the `main` branch and follow the standard code review and merge procedures.
+
+- After merging the release branch into the `main` branch, a git tag should have been automatically created for the new release version number. The version number in the tag must correspond with the `<SEMVER>` of the merged release branch name. Confirm this success by viewing the repository [tags](https://github.com/hashicorp/terraform-cloud-operator/tags).
 
 - Follow the [CRT Usage](https://hashicorp.atlassian.net/wiki/spaces/RELENG/pages/2309390389/Part+3+CRT+Usage) guide to promote the release to the staging and production states.
