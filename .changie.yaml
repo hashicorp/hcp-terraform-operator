@@ -3,6 +3,7 @@ unreleasedDir: unreleased
 changelogPath: CHANGELOG.md
 versionExt: md
 versionFormat: '## {{.Version}} ({{.Time.Format "January 02, 2006"}})'
+fragmentFileFormat: '{{.Kind}}-{{.Custom.PR}}-{{.Time.Format "20060102-150405"}}'
 kindFormat: '{{.Kind}}:'
 changeFormat: '* {{.Body}} [[GH-{{.Custom.PR}}](https://github.com/hashicorp/terraform-cloud-operator/pull/{{.Custom.PR}})]'
 custom:
@@ -12,11 +13,17 @@ custom:
     minInt: 1
 kinds:
   - label: BREAKING CHANGES
+    auto: minor
   - label: BUG FIXES
+    auto: patch
   - label: DEPENDENCIES
+    auto: minor
   - label: ENHANCEMENTS
+    auto: minor
   - label: FEATURES
+    auto: minor
   - label: NOTES
+    auto: minor
 newlines:
   afterKind: 1
   beforeKind: 1
