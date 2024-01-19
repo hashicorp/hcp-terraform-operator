@@ -47,6 +47,13 @@ To create a new release, adhere to the following steps:
   $ scripts/update-helm-chart.sh
   ```
 
+- Commit and push all changes that were made.
+
+  ```console
+  $ git add -A
+  $ git push
+  ```
+
 - Create a pull request against the `main` branch and follow the standard code review and merge procedures.
 
 - After merging the release branch into the `main` branch, a git tag should have been automatically created for the new release version number. The version number in the tag must correspond with the `<SEMVER>` of the merged release branch name. Confirm this success by viewing the repository [tags](https://github.com/hashicorp/terraform-cloud-operator/tags).
