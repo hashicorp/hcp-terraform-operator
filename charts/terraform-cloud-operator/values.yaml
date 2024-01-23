@@ -1,6 +1,8 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
+imagePullSecrets: []
+
 # -- The number of Terraform Cloud Operator replicas.
 replicaCount: 2
 
