@@ -92,7 +92,7 @@
 
 - **Why can't I use newly added fields and CRDs after the upgrade?**
 
-  The main reason here is that [Helm does not upgrade CRDs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations) when the upgrade operation is performed. This affects both scenarios: when an existing CRD is updated and when a new controller, and thus a new CRD, is added. In both cases, manual steps have to be performed in order to add a new CRD or upgrade the existing one.
+  The main reason here is that [Helm does not upgrade CRDs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations) when the upgrade operation is performed. This affects both scenarios: when an existing CRD is updated and when a new controller, and thus a new CRD, is added. In both cases, manual steps are required to add a new CRD or upgrade the existing one.
 
   When a new version of the Operator adds a new controller and, consequently, a new CRD, the following steps must be performed for a smooth update:
 

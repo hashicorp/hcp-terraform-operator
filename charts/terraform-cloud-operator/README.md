@@ -73,6 +73,36 @@ $ helm upgrade demo hashicorp/terraform-cloud-operator \
 
 In the above example, the Operator will watch all namespaces in the Kubernetes cluster.
 
+In some cases, such as when a new version of the Operator adds a new controller and, consequently, a new CRD, or when it changes an existing CRD schema, manual steps will be required to update the CRD. This is necessary because [Helm does not upgrade CRDs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations) during the upgrade operation. In both cases, manual steps involving [`kubectl apply`](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply) or [`kubectl replace`](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#replace) must be performed to add a new CRD or upgrade the existing one.
+
+For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#general-questions).
+
+#### Upgrade recommendations
+
+  - `2.1.0` to `2.2.0`
+
+    - A new controller `Project` has been added:
+
+      ```console
+      $ kubectl apply -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.2.0/charts/terraform-cloud-operator/crds/app.terraform.io_projects.yaml
+      ```
+
+  - `2.0.0` to `2.1.0`
+
+    - The `Workspace` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.1.0/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+      ```
+
+  - `2.0.0-betaX` to `2.0.0`
+
+    - The `AgentPool` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.0.0/charts/terraform-cloud-operator/crds/app.terraform.io_agentpools.yaml
+      ```
+
 <!-- TODO: automate Values section generation: https://github.com/norwoodj/helm-docs -->
 # Values
 
