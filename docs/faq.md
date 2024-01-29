@@ -90,6 +90,54 @@
 
   The `kube-rbac-proxy` is a small HTTP proxy for a single upstream, that can perform RBAC authorization against the Kubernetes API. This allows providing RBAC-based access to the operator [metrics](./metrics.md) within the Kubernetes cluster. More information is in the author's [blog post](https://www.brancz.com/2018/02/27/using-kube-rbac-proxy-to-secure-kubernetes-workloads/).
 
+- **Why can't I use newly added fields and CRDs after the upgrade?**
+
+  The main reason here is that [Helm does not upgrade CRDs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations) when the upgrade operation is performed. This affects both scenarios: when an existing CRD is updated and when a new controller, and thus a new CRD, is added. In both cases, manual steps have to be performed in order to add a new CRD or upgrade the existing one.
+
+  When a new version of the Operator adds a new controller and, consequently, a new CRD, the following steps must be performed for a smooth update:
+
+  1. Create an environment variable that will contain the target version:
+
+     ```console
+     $ export TFC_OPERATOR_VERSION=2.2.0
+     ```
+
+  2. Install the new CRD from the target release:
+
+     ```console
+     $ kubectl apply -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v$TFC_OPERATOR_VERSION/charts/terraform-cloud-operator/crds/app.terraform.io_projects.yaml
+     ```
+
+  3. Upgrade the Operator via Helm:
+
+     ```console
+     $ helm upgrade <RELEASE-NAME> hashicorp/terraform-cloud-operator --version $TFC_OPERATOR_VERSION <ADDITIONAL-OPTIONS>
+     ```
+
+  In the above example, the target version is set to `2.2.0`. This version introduces a new controller, `Project`, the CRD of which we have installed.
+
+  When a new version of the Operator modifies an existing CRD schema, the following steps must be performed for a smooth update:
+
+  1. Create an environment variable that will contain the target version:
+
+     ```console
+     $ export TFC_OPERATOR_VERSION=2.1.0
+     ```
+
+  2. Replace the existing CRD with the new one from the target release:
+
+     ```console
+     $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v$TFC_OPERATOR_VERSION/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+     ```
+
+  3. Upgrade the Operator via Helm:
+
+     ```console
+     $ helm upgrade <RELEASE-NAME> hashicorp/terraform-cloud-operator --version $TFC_OPERATOR_VERSION <ADDITIONAL-OPTIONS>
+     ```
+
+  In the above example, the target version is set to `2.1.0`. This version introduces a new field, `spec.project.[id | name]`, to the `Workspace` controller, the CRD of which we have replaced.
+
 ## Performance
 
 - **How many Custom Resources can be managed by a single deployment of the Operator?**
