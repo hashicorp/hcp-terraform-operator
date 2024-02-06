@@ -135,4 +135,4 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
-| replicaCount | int | `2` | Number of Terraform Cloud Operator replicas. |
+| replicaCount | int | `2` | The number of Terraform Cloud Operator replicas. |
