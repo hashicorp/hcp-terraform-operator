@@ -37,7 +37,7 @@ To create a new release, adhere to the following steps:
 
   ```console
   $ changie batch auto
-  $ changie marge
+  $ changie merge
   ```
 
 - Execute the script [update-helm-chart.sh](./scripts/update-helm-chart.sh) to update the [`Chart.yaml`](./charts/terraform-cloud-operator/Chart.yaml) file and match the desired release number. _The values of `version` and `appVersion` will be updated accordingly to the <SEMVER> value._
