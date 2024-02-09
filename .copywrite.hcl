@@ -9,5 +9,8 @@ project {
     # Some files were scaffolded during the first run of the operator-sdk CLI tool and never changed
     # The dev team is not working with these files they all serve a supporting role
     "config/**",
+    # Changie is a tool to manage changelog entries
+    ".changes/unreleased/*.yaml",
+    ".changie.yaml",
   ]
 }

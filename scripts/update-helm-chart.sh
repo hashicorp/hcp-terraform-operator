@@ -13,7 +13,7 @@ function update_chart_file {
   C_VERSION=`yq '.appVersion' $CHART_DIR/$CHART_FILE`
   C_CHART_VERSION=`yq '.version' $CHART_DIR/$CHART_FILE`
 
-  if [[ $C_VERSION == $VERSION && $C_CHART_VERSION == $VERSION ]]; then
+  if [[ $C_VERSION == $TFC_OPERATOR_RELEASE_VERSION && $C_CHART_VERSION == $TFC_OPERATOR_RELEASE_VERSION ]]; then
     echo "No changes in the $CHART_FILE file."
     return 0
   fi
@@ -27,19 +27,19 @@ function update_chart_file {
 
 function main {
   if [[ -z "${VERSION}" ]]; then
-    echo "The environment variable VERSION is not set. Read value from ${VERSION_FILE}."
-    export VERSION=`cat $VERSION_FILE`
+    echo "The environment variable TFC_OPERATOR_RELEASE_VERSION is not set."
+    exit 1
   fi
 
   GIT_BRANCH=`git rev-parse --abbrev-ref HEAD | sed -e 's/^release\/v//'`
 
-  if [[ "$VERSION" != "$GIT_BRANCH" ]]; then
-    echo "The version in the git branch name '${GIT_BRANCH}' does not match with the release version '${VERSION}'."
+  if [[ "$TFC_OPERATOR_RELEASE_VERSION" != "$GIT_BRANCH" ]]; then
+    echo "The version in the git branch name '${GIT_BRANCH}' does not match with the release version '${TFC_OPERATOR_RELEASE_VERSION}'."
     echo "Exiting!"
     exit 1
   fi
 
-  echo "Version: ${VERSION}"
+  echo "Version: ${TFC_OPERATOR_RELEASE_VERSION}"
 
   update_chart_file
 }

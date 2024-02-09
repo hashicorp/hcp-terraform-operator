@@ -11,27 +11,19 @@ Thank you!
 --->
 
 ### Description
+
 <!---
 Please describe your changes in detail.
 --->
 
 ### Usage Example
+
 <!---
 Please provide a usage example if you have implemented a new feature.
 --->
 
-### Release Note
-Release note for [CHANGELOG](https://github.com/hashicorp/terraform-cloud-operator/blob/main/CHANGELOG.md):
-<!--
-Please write a release note message.
-If the change is not user-facing, leave "NONE" in the release-note block below.
--->
-
-```release-note
-NONE
-```
-
 ### References
+
 <!---
 Are there any other GitHub issues (open or closed) or Pull Requests that should be linked here?
 For example:
