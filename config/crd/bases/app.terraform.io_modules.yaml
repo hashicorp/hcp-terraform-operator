@@ -145,7 +145,7 @@ spec:
                 description: Workspace to execute the module.
                 properties:
                   id:
-                    description: 'Module Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$'
+                    description: 'Module Workspace ID. Must match pattern: `^ws-[a-zA-Z0-9]+$`'
                     pattern: ^ws-[a-zA-Z0-9]+$
                     type: string
                   name:

@@ -48,7 +48,7 @@ spec:
                   - https://developer.hashicorp.com/terraform/cloud-docs/agents'
                 properties:
                   id:
-                    description: 'Agent Pool ID. Must match pattern: ^apool-[a-zA-Z0-9]+$'
+                    description: 'Agent Pool ID. Must match pattern: `^apool-[a-zA-Z0-9]+$`'
                     pattern: ^apool-[a-zA-Z0-9]+$
                     type: string
                   name:
@@ -242,7 +242,7 @@ spec:
                       type: string
                     url:
                       description: 'The URL of the notification. Must match pattern:
-                        ^https?://.*'
+                        `^https?://.*`'
                       pattern: ^https?://.*
                       type: string
                   required:
@@ -261,7 +261,7 @@ spec:
                   Default: default organization project. More information: - https://developer.hashicorp.com/terraform/tutorials/cloud/projects'
                 properties:
                   id:
-                    description: 'Project ID. Must match pattern: ^prj-[a-zA-Z0-9]+$'
+                    description: 'Project ID. Must match pattern: `^prj-[a-zA-Z0-9]+$`'
                     pattern: ^prj-[a-zA-Z0-9]+$
                     type: string
                   name:
@@ -290,7 +290,7 @@ spec:
                       properties:
                         id:
                           description: 'Consumer Workspace ID. Must match pattern:
-                            ^ws-[a-zA-Z0-9]+$'
+                            `^ws-[a-zA-Z0-9]+$`'
                           pattern: ^ws-[a-zA-Z0-9]+$
                           type: string
                         name:
@@ -320,7 +320,7 @@ spec:
                       pattern: ^(advisory|mandatory)$
                       type: string
                     id:
-                      description: 'Run Task ID. Must match pattern: ^task-[a-zA-Z0-9]+$'
+                      description: 'Run Task ID. Must match pattern: `^task-[a-zA-Z0-9]+$`'
                       pattern: ^task-[a-zA-Z0-9]+$
                       type: string
                     name:
@@ -350,7 +350,7 @@ spec:
                     mandatory. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers'
                   properties:
                     id:
-                      description: 'Source Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$'
+                      description: 'Source Workspace ID. Must match pattern: `^ws-[a-zA-Z0-9]+$`'
                       pattern: ^ws-[a-zA-Z0-9]+$
                       type: string
                     name:
@@ -365,7 +365,7 @@ spec:
                   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys'
                 properties:
                   id:
-                    description: 'SSH key ID. Must match pattern: ^sshkey-[a-zA-Z0-9]+$'
+                    description: 'SSH key ID. Must match pattern: `^sshkey-[a-zA-Z0-9]+$`'
                     pattern: ^sshkey-[a-zA-Z0-9]+$
                     type: string
                   name:
@@ -452,7 +452,7 @@ spec:
                       description: 'Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams'
                       properties:
                         id:
-                          description: 'Team ID. Must match pattern: ^team-[a-zA-Z0-9]+$'
+                          description: 'Team ID. Must match pattern: `^team-[a-zA-Z0-9]+$`'
                           pattern: ^team-[a-zA-Z0-9]+$
                           type: string
                         name:
@@ -551,7 +551,7 @@ spec:
               terraformVersion:
                 description: 'The version of Terraform to use for this workspace.
                   If not specified, the latest available version will be used. Must
-                  match pattern: ^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$ More information:
+                  match pattern: `^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$` More information:
                   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version'
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                 type: string
@@ -594,12 +594,12 @@ spec:
                     type: string
                   oAuthTokenID:
                     description: 'The VCS Connection (OAuth Connection + Token) to
-                      use. Must match pattern: ^ot-[a-zA-Z0-9]+$'
+                      use. Must match pattern: `^ot-[a-zA-Z0-9]+$`'
                     pattern: ^ot-[a-zA-Z0-9]+$
                     type: string
                   repository:
                     description: A reference to your VCS repository in the format
-                      <organization>/<repository> where <organization> and <repository>
+                      `<organization>/<repository>` where `<organization>` and `<repository>`
                       refer to the organization and repository in your VCS provider.
                     minLength: 1
                     type: string

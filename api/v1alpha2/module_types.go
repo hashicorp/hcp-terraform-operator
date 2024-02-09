@@ -27,7 +27,7 @@ type ModuleSource struct {
 // At least one of the fields `ID` or `Name` is mandatory.
 type ModuleWorkspace struct {
 	// Module Workspace ID.
-	// Must match pattern: ^ws-[a-zA-Z0-9]+$
+	// Must match pattern: `^ws-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
