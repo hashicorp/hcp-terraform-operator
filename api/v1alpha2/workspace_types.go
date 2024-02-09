@@ -430,7 +430,7 @@ type WorkspaceSpec struct {
 	//
 	//+kubebuilder:default=true
 	//+optional
-	AllowDestroyPlan bool `json:"allowDestroyPlan,omitempty"`
+	AllowDestroyPlan bool `json:"allowDestroyPlan"`
 	// Workspace description.
 	//
 	//+kubebuilder:validation:MinLength:=1
