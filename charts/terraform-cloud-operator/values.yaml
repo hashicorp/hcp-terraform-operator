@@ -1,65 +1,77 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
+# -- The number of Terraform Cloud Operator replicas.
 replicaCount: 2
 
+# Operator-global options.
 operator:
   image:
+    # -- Image repository.
     repository: hashicorp/terraform-cloud-operator
+    # -- Image pull policy.
     pullPolicy: IfNotPresent
-    # 'tag' defaults to '.Chart.AppVersion'.
+    # -- Image tag. Defaults to `.Chart.AppVersion`.
     tag: ""
   resources:
     limits:
+      # -- Limits as a maximum amount of CPU to be used by a container.
       cpu: 500m
+      # -- Limits as a maximum amount of memory to be used by a container.
       memory: 128Mi
     requests:
+      # -- Guaranteed minimum amount of CPU to be used by a container.
       cpu: 50m
+      # -- Guaranteed minimum amount of memory to be used by a container.
       memory: 64Mi
 
-  # Operator-global options.
-  # The minimum frequency at which watched resources are reconciled.
-  # Format: 5s, 1m, etc.
+  # -- The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc.
   syncPeriod: 5m
 
-  # List of namespaces the controllers should watch.
+  # -- List of namespaces the controllers should watch.
   watchedNamespaces: []
 
-  # The API URL of a TFE instance.
+  # -- The API URL of a Terraform Enterprise instance.
   tfeAddress: ""
 
-  # Whether or not to ignore TLS certification warnings.
+  # -- Whether or not to ignore TLS certification warnings.
   skipTLSVerify: false
 
 kubeRbacProxy:
   image:
+    # -- Image repository.
     repository: quay.io/brancz/kube-rbac-proxy
+    # -- Image pull policy.
     pullPolicy: IfNotPresent
+    # -- Image tag.
     tag: v0.15.0
 
   resources:
     limits:
+      # -- Limits as a maximum amount of CPU to be used by a container.
       cpu: 500m
+      # -- Limits as a maximum amount of memory to be used by a container.
       memory: 128Mi
     requests:
+      # -- Guaranteed minimum amount of CPU to be used by a container.
       cpu: 50m
+      # -- Guaranteed minimum amount of memory to be used by a container.
       memory: 64Mi
 
 # Controllers-specific options.
 controllers:
   agentPool:
-    # The number of the AgentPool controller workers.
+    # --  The number of the Agent Pool controller workers.
     workers: 1
   module:
-    # The number of the Module controller workers.
+    # -- The number of the Module controller workers.
     workers: 1
   project:
-    # The number of the Project controller workers.
+    # -- The number of the Project controller workers.
     workers: 1
   workspace:
-    # The number of the Workspace controller workers.
+    # -- The number of the Workspace controller workers.
     workers: 1
 
-# Custom Certificate Authority bundle to validate API TLS certificates.
-# Expects a path to a CRT file containing concatenated certificates.
+# -- Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates.
 customCAcertificates: ""

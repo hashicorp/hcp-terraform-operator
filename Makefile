@@ -89,6 +89,10 @@ help: ## Display this help.
 docs: crd-ref-docs ## Generate API reference documentation.
 	$(CRD_REF_DOCS) --renderer=markdown --source-path ./api/v1alpha2/ --config=./docs/config.yaml --output-path ./docs/api-reference.md
 
+.PHONY: helm-docs
+helm-docs: install-helm-docs ## Generate Helm chart documentation.
+	$(HELM_DOCS) --log-level=debug --chart-search-root=./charts/terraform-cloud-operator/
+
 ##@ Development
 
 .PHONY: manifests
@@ -180,12 +184,14 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
+HELM_DOCS ?= $(LOCALBIN)/helm-docs
 HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.11.3
 CRD_REF_DOCS_VERSION ?= v0.0.10
+HELM_DOCS_VERSION ?= v1.12.0
 HASHICORP_COPYWRITE_VERSION ?= 0.17.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
@@ -208,6 +214,11 @@ $(ENVTEST): $(LOCALBIN)
 crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
 $(CRD_REF_DOCS): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(CRD_REF_DOCS_VERSION)
+
+.PHONY: install-helm-docs
+install-helm-docs: $(HELM_DOCS) ## Download helm-docs locally if necessary.
+$(HELM_DOCS): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION)
 
 .PHONY: install-copywrite
 install-copywrite: $(HASHICORP_COPYWRITE) ## Download HashiCorp copywrite locally if necessary.

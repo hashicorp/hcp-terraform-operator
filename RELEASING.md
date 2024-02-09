@@ -47,6 +47,8 @@ To create a new release, adhere to the following steps:
   $ scripts/update-helm-chart.sh
   ```
 
+- Run `make helm-docs` to update the Helm Chart [`README.md`](./charts/terraform-cloud-operator/README.md) file.
+
 - Commit and push all changes that were made.
 
   ```console
