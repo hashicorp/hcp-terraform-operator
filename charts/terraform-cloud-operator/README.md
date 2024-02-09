@@ -119,7 +119,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | customCAcertificates | string | `""` | Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates. |
 | kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | kubeRbacProxy.image.repository | string | `"quay.io/brancz/kube-rbac-proxy"` | Image repository. |
-| kubeRbacProxy.image.tag | string | `"v0.15.0"` | Image tag. |
+| kubeRbacProxy.image.tag | string | `"v0.16.0"` | Image tag. |
 | kubeRbacProxy.resources.limits.cpu | string | `"500m"` | Limits as a maximum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
