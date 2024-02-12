@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-slug v0.13.3
 	github.com/hashicorp/go-tfe v1.41.0
 	github.com/onsi/ginkgo/v2 v2.15.0
-	github.com/onsi/gomega v1.30.0
+	github.com/onsi/gomega v1.31.1
 	go.uber.org/zap v1.26.0
 	k8s.io/api v0.27.8
 	k8s.io/apimachinery v0.27.8
