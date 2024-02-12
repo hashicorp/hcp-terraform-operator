@@ -1,5 +1,5 @@
 kind: BUG FIXES
-body: '`Workspace`: Fix an issue when a boolean attribute that has the default value
+body: '`Workspace`: Fix an issue when a boolean attribute `allowDestroyPlan` that has the default value
   `true` and is set to `false` gets mutated back to `true` during the creation.'
 time: 2024-02-09T14:31:30.56886+01:00
 custom:
