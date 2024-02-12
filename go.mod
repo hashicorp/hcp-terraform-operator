@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.30.0
 	go.uber.org/zap v1.26.0
 	k8s.io/api v0.27.8
-	k8s.io/apimachinery v0.27.8
+	k8s.io/apimachinery v0.27.10
 	k8s.io/client-go v0.27.8
 	sigs.k8s.io/controller-runtime v0.15.3
 )
