@@ -23,8 +23,10 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/go-logr/zapr"
 
@@ -105,9 +107,14 @@ func main() {
 				"Project.app.terraform.io":   projectWorkers,
 			},
 		},
-		Scheme:                        scheme,
-		SyncPeriod:                    &syncPeriod,
-		MetricsBindAddress:            "127.0.0.1:8080",
+		Scheme: scheme,
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{},
+			SyncPeriod:        &syncPeriod,
+		},
+		Metrics: server.Options{
+			BindAddress: "127.0.0.1:8080",
+		},
 		HealthProbeBindAddress:        ":8081",
 		LeaderElection:                true,
 		LeaderElectionReleaseOnCancel: true,
@@ -130,7 +137,9 @@ func main() {
 
 	if len(watchNamespaces) != 0 {
 		setupLog.Info("Watching namespaces: " + strings.Join(watchNamespaces, " "))
-		options.Cache.Namespaces = watchNamespaces
+		for _, n := range watchNamespaces {
+			options.Cache.DefaultNamespaces[n] = cache.Config{}
+		}
 	} else {
 		setupLog.Info("Watching all namespaces")
 	}
