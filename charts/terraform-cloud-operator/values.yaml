@@ -1,6 +1,7 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
+# -- Reference to one or more secrets essential for pulling container images.
 imagePullSecrets: []
 
 # -- The number of Terraform Cloud Operator replicas.
