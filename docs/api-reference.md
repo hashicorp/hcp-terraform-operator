@@ -145,7 +145,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Consumer Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$ |
+| `id` _string_ | Consumer Workspace ID. Must match pattern: `^ws-[a-zA-Z0-9]+$` |
 | `name` _string_ | Consumer Workspace name. |
 
 
@@ -289,7 +289,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Module Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$ |
+| `id` _string_ | Module Workspace ID. Must match pattern: `^ws-[a-zA-Z0-9]+$` |
 | `name` _string_ | Module Workspace Name. |
 
 
@@ -309,7 +309,7 @@ _Appears in:_
 | `enabled` _boolean_ | Whether the notification configuration should be enabled or not. Default: `true`. |
 | `token` _string_ | The token of the notification. |
 | `triggers` _[NotificationTrigger](#notificationtrigger) array_ | The list of run events that will trigger notifications. Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states. There are two categories of triggers: - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`. - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`. |
-| `url` _string_ | The URL of the notification. Must match pattern: ^https?://.* |
+| `url` _string_ | The URL of the notification. Must match pattern: `^https?://.*` |
 | `emailAddresses` _string array_ | The list of email addresses that will receive notification emails. It is only available for Terraform Enterprise users. It is not available in Terraform Cloud. |
 | `emailUsers` _string array_ | The list of users belonging to the organization that will receive notification emails. |
 
@@ -435,7 +435,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Source Workspace ID. Must match pattern: ^ws-[a-zA-Z0-9]+$ |
+| `id` _string_ | Source Workspace ID. Must match pattern: `^ws-[a-zA-Z0-9]+$` |
 | `name` _string_ | Source Workspace Name. |
 
 
@@ -450,7 +450,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | SSH key ID. Must match pattern: ^sshkey-[a-zA-Z0-9]+$ |
+| `id` _string_ | SSH key ID. Must match pattern: `^sshkey-[a-zA-Z0-9]+$` |
 | `name` _string_ | SSH key name. |
 
 
@@ -493,7 +493,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Team ID. Must match pattern: ^team-[a-zA-Z0-9]+$ |
+| `id` _string_ | Team ID. Must match pattern: `^team-[a-zA-Z0-9]+$` |
 | `name` _string_ | Team name. |
 
 
@@ -575,8 +575,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `oAuthTokenID` _string_ | The VCS Connection (OAuth Connection + Token) to use. Must match pattern: ^ot-[a-zA-Z0-9]+$ |
-| `repository` _string_ | A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider. |
+| `oAuthTokenID` _string_ | The VCS Connection (OAuth Connection + Token) to use. Must match pattern: `^ot-[a-zA-Z0-9]+$` |
+| `repository` _string_ | A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
 
 
@@ -609,7 +609,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Agent Pool ID. Must match pattern: ^apool-[a-zA-Z0-9]+$ |
+| `id` _string_ | Agent Pool ID. Must match pattern: `^apool-[a-zA-Z0-9]+$` |
 | `name` _string_ | Agent Pool name. |
 
 
@@ -624,7 +624,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Project ID. Must match pattern: ^prj-[a-zA-Z0-9]+$ |
+| `id` _string_ | Project ID. Must match pattern: `^prj-[a-zA-Z0-9]+$` |
 | `name` _string_ | Project name. |
 
 
@@ -639,7 +639,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Run Task ID. Must match pattern: ^task-[a-zA-Z0-9]+$ |
+| `id` _string_ | Run Task ID. Must match pattern: `^task-[a-zA-Z0-9]+$` |
 | `name` _string_ | Run Task Name. |
 | `enforcementLevel` _string_ | Run Task Enforcement Level. Can be one of `advisory` or `mandatory`. Default: `advisory`. Must be one of the following values: `advisory`, `mandatory` Default: `advisory`. |
 | `stage` _string_ | Run Task Stage. Must be one of the following values: `pre_apply`, `pre_plan`, `post_plan`. Default: `post_plan`. |
@@ -667,7 +667,7 @@ _Appears in:_
 | `runTasks` _[WorkspaceRunTask](#workspaceruntask) array_ | Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks |
 | `tags` _[Tag](#tag) array_ | Workspace tags are used to help identify and group together workspaces. Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number. |
 | `teamAccess` _[TeamAccess](#teamaccess) array_ | Terraform Cloud workspaces can only be accessed by users with the correct permissions. You can manage permissions for a workspace on a per-team basis. When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it, with full admin permissions. These teams' access can't be removed from a workspace. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
-| `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. Must match pattern: ^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$ More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
+| `terraformVersion` _string_ | The version of Terraform to use for this workspace. If not specified, the latest available version will be used. Must match pattern: `^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$` More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
 | `workingDirectory` _string_ | The directory where Terraform will execute, specified as a relative path from the root of the configuration directory. More information: - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory |
 | `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all plans and applies in this workspace. Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables |
 | `terraformVariables` _[Variable](#variable) array_ | Terraform variables for all plans and applies in this workspace. Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key. More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables |

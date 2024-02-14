@@ -178,7 +178,7 @@ spec:
                       description: 'Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams'
                       properties:
                         id:
-                          description: 'Team ID. Must match pattern: ^team-[a-zA-Z0-9]+$'
+                          description: 'Team ID. Must match pattern: `^team-[a-zA-Z0-9]+$`'
                           pattern: ^team-[a-zA-Z0-9]+$
                           type: string
                         name:
