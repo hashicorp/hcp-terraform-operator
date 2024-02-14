@@ -117,6 +117,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
 | controllers.workspace.workers | int | `1` | The number of the Workspace controller workers. |
 | customCAcertificates | string | `""` | Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates. |
+| imagePullSecrets | list | `[]` | Reference to one or more secrets essential for pulling container images. |
 | kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | kubeRbacProxy.image.repository | string | `"quay.io/brancz/kube-rbac-proxy"` | Image repository. |
 | kubeRbacProxy.image.tag | string | `"v0.15.0"` | Image tag. |
