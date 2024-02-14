@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `kube-rbac-proxy` image from 0.15.0 to 0.16.0.
+time: 2024-02-09T12:06:43.008046+01:00
+custom:
+  PR: "335"
