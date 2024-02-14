@@ -21,6 +21,10 @@ spec:
         {{- include "terraform-cloud-operator.selectorLabels" . | nindent 8 }}
         control-plane: {{ .Release.Name }}-controller-manager
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: manager
           image: {{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}

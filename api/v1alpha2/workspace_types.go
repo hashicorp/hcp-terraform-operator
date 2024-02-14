@@ -16,7 +16,7 @@ import (
 //   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 type WorkspaceAgentPool struct {
 	// Agent Pool ID.
-	// Must match pattern: ^apool-[a-zA-Z0-9]+$
+	// Must match pattern: `^apool-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^apool-[a-zA-Z0-9]+$"
 	//+optional
@@ -35,7 +35,7 @@ type WorkspaceAgentPool struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#remote-state-access-controls
 type ConsumerWorkspace struct {
 	// Consumer Workspace ID.
-	// Must match pattern: ^ws-[a-zA-Z0-9]+$
+	// Must match pattern: `^ws-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
@@ -72,7 +72,7 @@ type RemoteStateSharing struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
 type WorkspaceRunTask struct {
 	// Run Task ID.
-	// Must match pattern: ^task-[a-zA-Z0-9]+$
+	// Must match pattern: `^task-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^task-[a-zA-Z0-9]+$"
 	//+optional
@@ -108,7 +108,7 @@ type WorkspaceRunTask struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 type RunTrigger struct {
 	// Source Workspace ID.
-	// Must match pattern: ^ws-[a-zA-Z0-9]+$
+	// Must match pattern: `^ws-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^ws-[a-zA-Z0-9]+$"
 	//+optional
@@ -128,7 +128,7 @@ type RunTrigger struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
 type Team struct {
 	// Team ID.
-	// Must match pattern: ^team-[a-zA-Z0-9]+$
+	// Must match pattern: `^team-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^team-[a-zA-Z0-9]+$"
 	//+optional
@@ -279,11 +279,11 @@ type Variable struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/vcs
 type VersionControl struct {
 	// The VCS Connection (OAuth Connection + Token) to use.
-	// Must match pattern: ^ot-[a-zA-Z0-9]+$
+	// Must match pattern: `^ot-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^ot-[a-zA-Z0-9]+$"
 	OAuthTokenID string `json:"oAuthTokenID,omitempty"`
-	// A reference to your VCS repository in the format <organization>/<repository> where <organization> and <repository> refer to the organization and repository in your VCS provider.
+	// A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider.
 	//
 	//+kubebuilder:validation:MinLength:=1
 	Repository string `json:"repository,omitempty"`
@@ -301,7 +301,7 @@ type VersionControl struct {
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys
 type SSHKey struct {
 	// SSH key ID.
-	// Must match pattern: ^sshkey-[a-zA-Z0-9]+$
+	// Must match pattern: `^sshkey-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^sshkey-[a-zA-Z0-9]+$"
 	//+optional
@@ -361,7 +361,7 @@ type Notification struct {
 	//+optional
 	Triggers []NotificationTrigger `json:"triggers,omitempty"`
 	// The URL of the notification.
-	// Must match pattern: ^https?://.*
+	// Must match pattern: `^https?://.*`
 	//
 	//+kubebuilder:validation:Pattern:="^https?://.*"
 	//+optional
@@ -386,7 +386,7 @@ type Notification struct {
 //   - https://developer.hashicorp.com/terraform/tutorials/cloud/projects
 type WorkspaceProject struct {
 	// Project ID.
-	// Must match pattern: ^prj-[a-zA-Z0-9]+$
+	// Must match pattern: `^prj-[a-zA-Z0-9]+$`
 	//
 	//+kubebuilder:validation:Pattern:="^prj-[a-zA-Z0-9]+$"
 	//+optional
@@ -477,7 +477,7 @@ type WorkspaceSpec struct {
 	TeamAccess []*TeamAccess `json:"teamAccess,omitempty"`
 	// The version of Terraform to use for this workspace.
 	// If not specified, the latest available version will be used.
-	// Must match pattern: ^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$
+	// Must match pattern: `^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$`
 	// More information:
 	//   - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version
 	//

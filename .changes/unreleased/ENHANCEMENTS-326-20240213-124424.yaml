@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: '`Helm Chart`: Add a new attribute `imagePullSecrets` to enable pulling the
+  Operator images from private repositories.'
+time: 2024-02-13T12:44:24.317364-07:00
+custom:
+  PR: "326"

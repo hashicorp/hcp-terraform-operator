@@ -1,6 +1,9 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
+# -- Reference to one or more secrets essential for pulling container images.
+imagePullSecrets: []
+
 # -- The number of Terraform Cloud Operator replicas.
 replicaCount: 2
 
@@ -44,7 +47,7 @@ kubeRbacProxy:
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Image tag.
-    tag: v0.15.0
+    tag: v0.16.0
 
   resources:
     limits:
