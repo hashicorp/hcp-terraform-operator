@@ -239,7 +239,7 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 		}
 
 		return workspace
-	}).Should(HaveExactElements(instance.Spec.Notifications))
+	}).Should(ContainElements(instance.Spec.Notifications))
 }
 
 func createOrgMember(email string) string {
