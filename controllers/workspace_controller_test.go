@@ -56,7 +56,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name:             workspace,
 				ApplyMethod:      "auto",
-				AllowDestroyPlan: true,
+				AllowDestroyPlan: false,
 				Description:      "Description",
 				ExecutionMode:    "remote",
 				WorkingDirectory: "aws/us-west-1/vpc",
@@ -121,16 +121,38 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 
 		It("can change basic workspace attributes", func() {
+			// Make a copy of the original instance to then compare Workspace against it
+			// It helps to make sure that the 'Spec' part is not mutated
+			instanceCopy := instance.DeepCopy()
+
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance, namespacedName)
 
+			// Validate that all attributes are set correctly
+			// Do not validate the Terraform version since it will be set to the latest available by default
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				return ws.AutoApply == applyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
+					ws.Description == instanceCopy.Spec.Description &&
+					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&
+					ws.WorkingDirectory == instanceCopy.Spec.WorkingDirectory
+			}).Should(BeTrue())
+
 			// Update the Kubernetes workspace object fields(basic workspace attributes)
 			instance.Spec.ApplyMethod = "manual"
-			instance.Spec.AllowDestroyPlan = false
+			instance.Spec.AllowDestroyPlan = true
 			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
 			instance.Spec.ExecutionMode = "local"
 			instance.Spec.TerraformVersion = "1.4.4"
 			instance.Spec.WorkingDirectory = fmt.Sprintf("%v/new", instance.Spec.WorkingDirectory)
+
+			// Make a copy of the original instance to then compare Workspace against it
+			// It helps to make sure that the 'Spec' part is not mutated
+			instanceCopy = instance.DeepCopy()
+
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
 			// Wait until the controller updates Terraform Cloud workspace
@@ -138,12 +160,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
-				return ws.AutoApply == applyMethodToBool(instance.Spec.ApplyMethod) &&
-					ws.AllowDestroyPlan == instance.Spec.AllowDestroyPlan &&
-					ws.Description == instance.Spec.Description &&
-					ws.ExecutionMode == instance.Spec.ExecutionMode &&
-					ws.TerraformVersion == instance.Spec.TerraformVersion &&
-					ws.WorkingDirectory == instance.Spec.WorkingDirectory
+				return ws.AutoApply == applyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
+					ws.Description == instanceCopy.Spec.Description &&
+					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&
+					ws.TerraformVersion == instanceCopy.Spec.TerraformVersion &&
+					ws.WorkingDirectory == instanceCopy.Spec.WorkingDirectory
 			}).Should(BeTrue())
 		})
 
