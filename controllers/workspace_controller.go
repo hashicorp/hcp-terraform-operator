@@ -266,13 +266,13 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
 	spec := w.instance.Spec
 	options := tfc.WorkspaceCreateOptions{
-		Name:               tfc.String(spec.Name),
-		AllowDestroyPlan:   tfc.Bool(spec.AllowDestroyPlan),
-		AutoApply:          tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
-		Description:        tfc.String(spec.Description),
-		ExecutionMode:      tfc.String(spec.ExecutionMode),
-		TerraformVersion:   tfc.String(spec.TerraformVersion),
-		WorkingDirectory:   tfc.String(spec.WorkingDirectory),
+		Name:             tfc.String(spec.Name),
+		AllowDestroyPlan: tfc.Bool(spec.AllowDestroyPlan),
+		AutoApply:        tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
+		Description:      tfc.String(spec.Description),
+		ExecutionMode:    tfc.String(spec.ExecutionMode),
+		TerraformVersion: tfc.String(spec.TerraformVersion),
+		WorkingDirectory: tfc.String(spec.WorkingDirectory),
 	}
 
 	if spec.ExecutionMode == "agent" {
