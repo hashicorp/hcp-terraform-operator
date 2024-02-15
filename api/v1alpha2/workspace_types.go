@@ -292,6 +292,14 @@ type VersionControl struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Branch string `json:"branch,omitempty"`
+	// Whether this workspace allows automatic speculative plans on PR.
+	// Default: `true`.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans
+	//
+	//+kubebuilder:default=true
+	//+optional
+	SpeculativePlan bool `json:"speculativePlan"`
 }
 
 // SSH key used to clone Terraform modules.
