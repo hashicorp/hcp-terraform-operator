@@ -295,6 +295,7 @@ type VersionControl struct {
 	// Whether this workspace allows automatic speculative plans on PR.
 	// Default: `true`.
 	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans
 	//
 	//+kubebuilder:default=true
