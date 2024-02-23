@@ -10,7 +10,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-func handlePredicates() predicate.Predicate {
+// genericPredicates return predicates that are common for all controllers.
+// Controller specific predicates should be named <CONTROLLER-NAME>Predicates.
+// For example: workspacePredicates().
+func genericPredicates() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return true
