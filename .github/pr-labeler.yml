@@ -12,8 +12,8 @@ dependencies:
 - 'go.sum'
 
 documentation:
-- '!CHANGELOG.md'
-- '*.md'
+- any: ['*.md']
+  all: ['!CHANGELOG.md']
 - 'charts/**/*.md'
 - 'docs/*.md'
 
