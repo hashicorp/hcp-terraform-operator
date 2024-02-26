@@ -117,6 +117,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueConfigurationUploadInterval)
 	}
 
+	if r.waitForUploadWorkspace(ctx, &w) {
+		w.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
+		return requeueAfter(requeueConfigurationUploadInterval)
+	}
+
 	if workspaceNeedNewRun(&w.instance) {
 		w.log.Info("Module Controller", "msg", "new config version is available, need a new run")
 		return requeueAfter(requeueNewRunInterval)
@@ -139,6 +144,36 @@ func workspaceWaitForUploadModule(instance *appv1alpha2.Workspace) bool {
 	}
 
 	return true
+}
+
+func (r *WorkspaceReconciler) waitForUploadWorkspace(ctx context.Context, w *workspaceInstance) bool {
+	workspaceVariables, err := r.getWorkspaceVariables(ctx, w)
+	if err != nil {
+		w.log.Error(err, "Reconcile Workspace", "msg", "failed to get workspace variables")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get workspace variables")
+		return false
+	}
+	instanceVariables, err := r.getVariablesByCategory(ctx, w, tfc.CategoryTerraform, true)
+	if err != nil {
+		return true
+	}
+	terraformWorkspaceVariables := getWorkspaceVariablesByCategory(workspaceVariables, tfc.CategoryTerraform)
+
+	if len(getVariablesToCreate(instanceVariables, terraformWorkspaceVariables)) > 0 {
+		return true
+	}
+
+	instanceVariables, err = r.getVariablesByCategory(ctx, w, tfc.CategoryEnv, true)
+	if err != nil {
+		return true
+	}
+	envWorkspaceVariables := getWorkspaceVariablesByCategory(workspaceVariables, tfc.CategoryEnv)
+
+	if len(getVariablesToCreate(instanceVariables, envWorkspaceVariables)) > 0 {
+		return true
+	}
+
+	return false
 }
 
 // needNewRun checks is a new Run is required
@@ -709,6 +744,11 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
+
+	if r.waitForUploadWorkspace(ctx, w) {
+		w.log.Info("Reconcile Workspace", "msg", "waiting for configuration version to be uploaded")
+		return r.updateStatus(ctx, w, workspace)
+	}
 
 	if workspaceNeedNewRun(&w.instance) {
 		w.log.Info("Reconcile Workspace", "msg", "new config version is available, need a new run")
