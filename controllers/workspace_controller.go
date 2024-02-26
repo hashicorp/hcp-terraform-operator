@@ -581,16 +581,6 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Run Triggers", "msg", "successfully reconcilied run triggers")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRunTriggers", "Reconcilied run triggers in workspace ID %s", w.instance.Status.WorkspaceID)
 
-	// Reconcile Outputs
-	err = r.reconcileOutputs(ctx, w, workspace)
-	if err != nil {
-		w.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", w.instance.Status.WorkspaceID)
-		return err
-	}
-	w.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
-	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
-
 	// Reconcile Team Access
 	err = r.reconcileTeamAccess(ctx, w)
 	if err != nil {
@@ -632,6 +622,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconsile Runs (Status)
+	// This reconciliation should always be before `reconcileOutputs`
 	err = r.reconcileRuns(ctx, w, workspace)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to reconcile runs")
@@ -640,6 +631,19 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 	w.log.Info("Reconcile Runs", "msg", "successfully reconcilied runs")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRuns", "Successfully reconcilied runs in workspace ID %s", w.instance.Status.WorkspaceID)
+
+	// Reconcile Outputs
+	// This reconciliation should always be the last one
+	// TODO:
+	// - improve this once rather than rely on the comment that says it always should be that order
+	err = r.reconcileOutputs(ctx, w)
+	if err != nil {
+		w.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	return r.updateStatus(ctx, w, workspace)
 }
