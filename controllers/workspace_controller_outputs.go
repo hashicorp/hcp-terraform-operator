@@ -73,12 +73,6 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		return fmt.Errorf("current workspace state version is not available")
 	}
 
-	outputs, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
-	if err != nil {
-		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", workspace.CurrentStateVersion.ID))
-		return err
-	}
-
 	oName := outputObjectName(w.instance.Name)
 
 	if !r.configMapAvailable(ctx, &w.instance) {
@@ -87,6 +81,12 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 
 	if !r.secretAvailable(ctx, &w.instance) {
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
+	}
+
+	outputs, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
+	if err != nil {
+		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", workspace.CurrentStateVersion.ID))
+		return err
 	}
 
 	nonSensitiveOutput := make(map[string]string)
