@@ -19,10 +19,11 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
-		projectName  = fmt.Sprintf("project-%v", GinkgoRandomSeed())
+		projectName  = fmt.Sprintf("project-%v", randomNumber())
 		projectName2 = fmt.Sprintf("%v-2", projectName)
 		projectID    = ""
 		projectID2   = ""
@@ -65,7 +66,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -78,14 +79,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Project", func() {
 		It("can handle project by name", func() {
 			instance.Spec.Project = &appv1alpha2.WorkspaceProject{Name: projectName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledProjectByName(instance)
 
 			// Update the Project by Name
@@ -110,7 +111,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle project by id", func() {
 			instance.Spec.Project = &appv1alpha2.WorkspaceProject{ID: projectID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledProjectByID(instance)
 
 			// Update the Project by ID
@@ -144,6 +145,8 @@ func createTestProject(projectName string) string {
 }
 
 func isReconciledProjectByID(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -154,6 +157,8 @@ func isReconciledProjectByID(instance *appv1alpha2.Workspace) {
 }
 
 func isReconciledProjectByName(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -167,6 +172,8 @@ func isReconciledProjectByName(instance *appv1alpha2.Workspace) {
 }
 
 func isReconciledDefaultProject(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)

@@ -19,10 +19,11 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
-		agentPoolName  = fmt.Sprintf("kubernetes-operator-agent-%v", GinkgoRandomSeed())
+		agentPoolName  = fmt.Sprintf("kubernetes-operator-agent-%v", randomNumber())
 		agentPoolName2 = fmt.Sprintf("%v-2", agentPoolName)
 		agentPoolID    = ""
 		agentPoolID2   = ""
@@ -65,7 +66,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -79,14 +80,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Workspace controller", func() {
 		It("can handle agent pool by name", func() {
 			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{Name: agentPoolName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledAgentPoolByName(instance)
 
 			// Update the Agent Pool by Name
@@ -99,7 +100,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle agent pool by id", func() {
 			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{ID: agentPoolID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledAgentPoolByID(instance)
 
 			// Update the Agent Pool by ID
@@ -121,6 +122,8 @@ func createAgentPool(agentPoolName string) string {
 }
 
 func isReconciledAgentPoolByID(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -131,6 +134,8 @@ func isReconciledAgentPoolByID(instance *appv1alpha2.Workspace) {
 }
 
 func isReconciledAgentPoolByName(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)

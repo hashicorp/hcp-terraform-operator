@@ -23,11 +23,11 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance *appv1alpha2.Workspace
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
-
-		sshKeyName  = fmt.Sprintf("kubernetes-operator-sshkey-%v", GinkgoRandomSeed())
+		sshKeyName  = fmt.Sprintf("kubernetes-operator-sshkey-%v", randomNumber())
 		sshKeyName2 = fmt.Sprintf("%v-2", sshKeyName)
 		sshKeyID    = ""
 		sshKeyID2   = ""
@@ -70,7 +70,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -83,7 +83,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Workspace controller", func() {
@@ -92,7 +92,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Name: sshKeyName,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledSSHKeyByName(instance)
 
 			// Delete the SSH key manually and wait until the controller revert this change
@@ -121,7 +121,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ID: sshKeyID,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledSSHKeyByID(instance)
 
 			// Delete the SSH key manually and wait until the controller revert this change
@@ -148,6 +148,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 })
 
 func isReconciledSSHKeyByName(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -165,6 +167,8 @@ func isReconciledSSHKeyByName(instance *appv1alpha2.Workspace) {
 }
 
 func isReconciledSSHKeyByID(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -179,6 +183,8 @@ func isReconciledSSHKeyByID(instance *appv1alpha2.Workspace) {
 }
 
 func isSSHKeyEmpty(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)

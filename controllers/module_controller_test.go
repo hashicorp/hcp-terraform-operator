@@ -22,8 +22,9 @@ import (
 
 var _ = Describe("Module controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Module
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Module
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
@@ -53,7 +54,7 @@ var _ = Describe("Module controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},

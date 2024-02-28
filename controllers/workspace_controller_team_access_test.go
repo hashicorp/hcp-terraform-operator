@@ -19,9 +19,10 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		team      *tfc.Team
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		team           *tfc.Team
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
@@ -56,7 +57,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -69,7 +70,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Workspace controller", func() {
@@ -83,7 +84,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -115,7 +116,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -139,7 +140,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -206,7 +207,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -261,6 +262,8 @@ func createTeam(teamName string) *tfc.Team {
 }
 
 func isTeamAccessReconciled(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		Expect(instance.Spec.TeamAccess).ShouldNot(BeNil())
