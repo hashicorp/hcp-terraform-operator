@@ -19,11 +19,12 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
-		wsName  = fmt.Sprintf("kubernetes-operator-source-%v", GinkgoRandomSeed())
-		wsName2 = fmt.Sprintf("kubernetes-operator-source2-%v", GinkgoRandomSeed())
+		wsName  = fmt.Sprintf("kubernetes-operator-source-%v", randomNumber())
+		wsName2 = fmt.Sprintf("kubernetes-operator-source2-%v", randomNumber())
 		wsID    = ""
 		wsID2   = ""
 	)
@@ -64,7 +65,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -77,7 +78,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Workspace controller", func() {
@@ -87,7 +88,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: wsName2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			Eventually(func() bool {
 				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
@@ -105,7 +106,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{ID: wsID2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			Eventually(func() bool {
 				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
@@ -123,7 +124,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: wsName2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			Eventually(func() bool {
 				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{

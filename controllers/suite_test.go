@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -53,10 +54,12 @@ var cloudEndpoint = tfcDefaultAddress
 var syncPeriod = 30 * time.Second
 
 var secretKey = "token"
-var namespacedName = types.NamespacedName{
+var secretNamespacedName = types.NamespacedName{
 	Name:      "this",
-	Namespace: "default",
+	Namespace: metav1.NamespaceDefault,
 }
+
+var rndm = rand.New(rand.NewSource(GinkgoRandomSeed()))
 
 func TestControllersAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -144,10 +147,10 @@ var _ = BeforeSuite(func() {
 			},
 			Controller: config.Controller{
 				GroupKindConcurrency: map[string]int{
-					"Workspace.app.terraform.io": 5,
-					"Module.app.terraform.io":    5,
 					"AgentPool.app.terraform.io": 5,
+					"Module.app.terraform.io":    5,
 					"Project.app.terraform.io":   5,
+					"Workspace.app.terraform.io": 5,
 				},
 			},
 		})
@@ -191,8 +194,8 @@ var _ = BeforeSuite(func() {
 	// Create a secret object with a TFC token that will be used by the controller
 	err = k8sClient.Create(ctx, &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      namespacedName.Name,
-			Namespace: namespacedName.Namespace,
+			Name:      secretNamespacedName.Name,
+			Namespace: secretNamespacedName.Namespace,
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -207,8 +210,8 @@ var _ = AfterSuite(func() {
 	// WORKS WHEN RUN ON EXISTING CLUSTER
 	err := k8sClient.Delete(ctx, &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      namespacedName.Name,
-			Namespace: namespacedName.Namespace,
+			Name:      secretNamespacedName.Name,
+			Namespace: secretNamespacedName.Namespace,
 		},
 	})
 	Expect(err).ToNot(HaveOccurred(), "failed to delete a token secret")
@@ -218,3 +221,24 @@ var _ = AfterSuite(func() {
 	err = testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
+
+func randomNumber() int32 {
+	GinkgoHelper()
+	return rndm.Int31()
+}
+
+func newNamespacedName() types.NamespacedName {
+	GinkgoHelper()
+	return types.NamespacedName{
+		Name:      fmt.Sprintf("this-%v", randomNumber()),
+		Namespace: metav1.NamespaceDefault,
+	}
+}
+
+func getNamespacedName[T Object](o T) types.NamespacedName {
+	GinkgoHelper()
+	return types.NamespacedName{
+		Namespace: o.GetNamespace(),
+		Name:      o.GetName(),
+	}
+}

@@ -31,17 +31,14 @@ func containsOwnerReference(ownerReferences []metav1.OwnerReference, UID types.U
 	return false
 }
 
-func getNamespacedName(instance *appv1alpha2.Workspace) types.NamespacedName {
-	return types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      outputObjectName(instance.Name),
-	}
-}
-
 // configMapAvailable validates whether a Kubernetes ConfigMap is available for creation or update by the operator
 func (r *WorkspaceReconciler) configMapAvailable(ctx context.Context, instance *appv1alpha2.Workspace) bool {
 	o := &corev1.ConfigMap{}
-	err := r.Client.Get(ctx, getNamespacedName(instance), o)
+	namespacedName := types.NamespacedName{
+		Namespace: instance.Namespace,
+		Name:      outputObjectName(instance.Name),
+	}
+	err := r.Client.Get(ctx, namespacedName, o)
 	if err != nil {
 		return errors.IsNotFound(err)
 	}
@@ -52,7 +49,11 @@ func (r *WorkspaceReconciler) configMapAvailable(ctx context.Context, instance *
 // secretAvailable validates whether a Kubernetes Secret is available for creation or update by the operator
 func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *appv1alpha2.Workspace) bool {
 	o := &corev1.Secret{}
-	err := r.Client.Get(ctx, getNamespacedName(instance), o)
+	namespacedName := types.NamespacedName{
+		Namespace: instance.Namespace,
+		Name:      outputObjectName(instance.Name),
+	}
+	err := r.Client.Get(ctx, namespacedName, o)
 	if err != nil {
 		return errors.IsNotFound(err)
 	}

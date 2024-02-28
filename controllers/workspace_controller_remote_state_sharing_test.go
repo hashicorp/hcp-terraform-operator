@@ -19,8 +19,9 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
 		wsName  = fmt.Sprintf("%s-share", workspace)
 		wsName2 = fmt.Sprintf("%s-share2", workspace)
@@ -56,7 +57,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -69,7 +70,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	AfterAll(func() {
@@ -88,7 +89,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				AllWorkspaces: true,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledGlobalRemoteStateSharing(instance)
 
 			// Manually change Global Remote State Sharing to false
@@ -107,7 +108,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually delete the workspace from Remote State Sharing
@@ -138,7 +139,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually delete the workspace from Remote State Sharing
@@ -165,6 +166,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 })
 
 func isReconciledGlobalRemoteStateSharing(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -175,6 +178,8 @@ func isReconciledGlobalRemoteStateSharing(instance *appv1alpha2.Workspace) {
 }
 
 func isReconciledRemoteStateSharingForWorkspaces(instance *appv1alpha2.Workspace, workspaceID string) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		rsc, err := tfClient.Workspaces.ListRemoteStateConsumers(ctx, instance.Status.WorkspaceID, &tfc.RemoteStateConsumersListOptions{})

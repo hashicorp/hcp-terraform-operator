@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
@@ -21,8 +20,9 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
@@ -49,7 +49,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -67,18 +67,18 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Workspace controller", func() {
 		It("can create and delete a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 		})
 
 		It("can re-create a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			initWorkspaceID := instance.Status.WorkspaceID
 
@@ -97,7 +97,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can clean up a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			// Delete the Terraform Cloud workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
@@ -105,7 +105,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can change workspace name", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			// Update the Kubernetes workspace object Name
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
@@ -126,7 +126,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instanceCopy := instance.DeepCopy()
 
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			// Validate that all attributes are set correctly
 			// Do not validate the Terraform version since it will be set to the latest available by default
@@ -172,7 +172,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can keep Terraform version", func() {
 			instance.Spec.TerraformVersion = "1.4.1"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			// Remove TerraformVersion from the 'spec'
 			instance.Spec.TerraformVersion = ""
@@ -196,7 +196,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			instance.Spec.Tags = []appv1alpha2.Tag{"kubernetes-operator"}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Make sure that the TFC Workspace has all desired tags
 			Eventually(func() bool {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
@@ -240,7 +240,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createWorkspace(instance *appv1alpha2.Workspace, namespacedName types.NamespacedName) {
+func createWorkspace(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	// Create a new Kubernetes workspace object
 	Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 	// Wait until the controller finishes the reconciliation
@@ -253,7 +255,9 @@ func createWorkspace(instance *appv1alpha2.Workspace, namespacedName types.Names
 	Expect(instance.Status.WorkspaceID).Should(HavePrefix("ws-"))
 }
 
-func deleteWorkspace(instance *appv1alpha2.Workspace, namespacedName types.NamespacedName) {
+func deleteWorkspace(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	// Delete the Kubernetes workspace object
 	Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
 

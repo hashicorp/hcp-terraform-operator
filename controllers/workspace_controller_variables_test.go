@@ -22,16 +22,14 @@ import (
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance        *appv1alpha2.Workspace
+		instance       *appv1alpha2.Workspace
+		namespacedName = types.NamespacedName{
+			Name:      "this",
+			Namespace: "default",
+		}
 		secretVariables *corev1.Secret
-
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		workspace       = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
-
-	namespacedName := types.NamespacedName{
-		Name:      "this",
-		Namespace: "default",
-	}
 
 	BeforeAll(func() {
 		// Set default Eventually timers
@@ -74,7 +72,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -87,7 +85,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Reconcile terraform variables", func() {
@@ -102,7 +100,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			// Make sure that the TFC Workspace has all desired Terraform variables
 			Eventually(func() bool {
@@ -160,7 +158,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			// Make sure that the TFC Workspace has all desired Terraform variables
 			Eventually(func() bool {
@@ -198,7 +196,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			// Make sure that the TFC Workspace has all desired Terraform variables
 			Eventually(func() bool {
@@ -238,7 +236,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			// Make sure that the TFC Workspace has all desired Environment variables
 			Eventually(func() bool {
@@ -296,7 +294,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			// Make sure that the TFC Workspace has all desired environment variables
 			Eventually(func() bool {
@@ -334,7 +332,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			// Make sure that the TFC Workspace has all desired environment variables
 			Eventually(func() bool {
