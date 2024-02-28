@@ -112,24 +112,26 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	w.log.Info("Workspace Controller", "msg", "successfully reconcilied workspace")
 
-	if workspaceWaitForUploadModule(&w.instance) {
-		w.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
-		return requeueAfter(requeueConfigurationUploadInterval)
-	}
+	if w.instance.Spec.InitialRun == true {
+		if workspaceWaitForUploadModule(&w.instance) {
+			w.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
+			return requeueAfter(requeueConfigurationUploadInterval)
+		}
 
-	if r.waitForUploadWorkspace(ctx, &w) {
-		w.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
-		return requeueAfter(requeueConfigurationUploadInterval)
-	}
+		if r.waitForUploadWorkspace(ctx, &w) {
+			w.log.Info("Module Controller", "msg", "waiting for configuration version to be uploaded")
+			return requeueAfter(requeueConfigurationUploadInterval)
+		}
 
-	if workspaceNeedNewRun(&w.instance) {
-		w.log.Info("Module Controller", "msg", "new config version is available, need a new run")
-		return requeueAfter(requeueNewRunInterval)
-	}
+		if workspaceNeedNewRun(&w.instance) {
+			w.log.Info("Module Controller", "msg", "new config version is available, need a new run")
+			return requeueAfter(requeueNewRunInterval)
+		}
 
-	if workspaceWaitRunToFinish(&w.instance) {
-		w.log.Info("Module Controller", "msg", "waiting for run to finish")
-		return requeueAfter(requeueRunStatusInterval)
+		if workspaceWaitRunToFinish(&w.instance) {
+			w.log.Info("Module Controller", "msg", "waiting for run to finish")
+			return requeueAfter(requeueRunStatusInterval)
+		}
 	}
 
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully reconcilied workspace ID %s", w.instance.Status.WorkspaceID)
@@ -745,40 +747,47 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
 
-	if r.waitForUploadWorkspace(ctx, w) {
-		w.log.Info("Reconcile Workspace", "msg", "waiting for configuration version to be uploaded")
-		return r.updateStatus(ctx, w, workspace)
-	}
-
-	if workspaceNeedNewRun(&w.instance) {
-		w.log.Info("Reconcile Workspace", "msg", "new config version is available, need a new run")
-
-		run, err := w.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
-			Workspace: workspace,
-		})
-		if err != nil {
-			w.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")
-			return err
+	if w.instance.Spec.InitialRun == true {
+		if r.waitForUploadWorkspace(ctx, w) {
+			w.log.Info("Reconcile Workspace", "msg", "waiting for configuration version to be uploaded")
+			return r.updateStatus(ctx, w, workspace)
 		}
-		w.log.Info("Reconcile Run", "msg", "successfully created a new run")
 
-		// It can take a while to proceed with a new run
-		// To unblock a worker we return the object back to the queue
-		// and validate the run status during the next reconciliation
-		return r.updateStatusRun(ctx, &w.instance, workspace, run)
-	}
+		if workspaceNeedNewRun(&w.instance) {
+			w.log.Info("Reconcile Workspace", "msg", "new config version is available, need a new run")
 
-	// checks if a new version of the Run is finished
-	if workspaceWaitRunToFinish(&w.instance) {
-		w.log.Info("Reconcile Run", "msg", "check the run status")
-		run, err := w.tfClient.Client.Runs.Read(ctx, w.instance.Status.Run.ID)
-		if err != nil {
-			w.log.Error(err, "Reconcile Run", "msg", "failed to get run status")
-			return err
+			planOnly := false
+			if w.instance.Spec.InitialRunType == "plan" {
+				planOnly = true
+			}
+			run, err := w.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
+				Message:   tfc.String("Triggered by the Kubernetes Operator"),
+				Workspace: workspace,
+				PlanOnly:  tfc.Bool(planOnly),
+			})
+			if err != nil {
+				w.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")
+				return err
+			}
+			w.log.Info("Reconcile Run", "msg", "successfully created a new run")
+
+			// It can take a while to proceed with a new run
+			// To unblock a worker we return the object back to the queue
+			// and validate the run status during the next reconciliation
+			return r.updateStatusRun(ctx, &w.instance, workspace, run)
 		}
-		w.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", run.Status))
-		return r.updateStatusRun(ctx, &w.instance, workspace, run)
+
+		// checks if a new version of the Run is finished
+		if workspaceWaitRunToFinish(&w.instance) {
+			w.log.Info("Reconcile Run", "msg", "check the run status")
+			run, err := w.tfClient.Client.Runs.Read(ctx, w.instance.Status.Run.ID)
+			if err != nil {
+				w.log.Error(err, "Reconcile Run", "msg", "failed to get run status")
+				return err
+			}
+			w.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", run.Status))
+			return r.updateStatusRun(ctx, &w.instance, workspace, run)
+		}
 	}
 
 	return r.updateStatus(ctx, w, workspace)
