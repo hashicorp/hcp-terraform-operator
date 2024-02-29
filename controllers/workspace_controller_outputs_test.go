@@ -75,57 +75,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
 
-			// Create a temporary dir in the current one
-			cd, err := os.Getwd()
-			Expect(err).Should(Succeed())
-			td, err := os.MkdirTemp(cd, "tf-*")
-			Expect(err).Should(Succeed())
-			defer os.RemoveAll(td)
-			// Create a temporary file in the temporary dir
-			f, err := os.CreateTemp(td, "*.tf")
-			Expect(err).Should(Succeed())
-			defer os.Remove(f.Name())
-			// Terraform code to upload
-			o := "hoi"
-			tf := fmt.Sprintf(`
-			output "sensitive" {
-				value = "%s"
-				sensitive = true
-			}
-			output "non_sensitive" {
-				value = "%s"
-			}`, o, o)
-			// Save the Terraform code to the temporary file
-			_, err = f.WriteString(tf)
-			Expect(err).Should(Succeed())
-
-			cv, err := tfClient.ConfigurationVersions.Create(ctx, instance.Status.WorkspaceID, tfc.ConfigurationVersionCreateOptions{
-				AutoQueueRuns: tfc.Bool(true),
-				Speculative:   tfc.Bool(false),
-			})
-			Expect(cv).ShouldNot(BeNil())
-			Expect(err).Should(Succeed())
-
-			Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
-
-			By("Validating configuration version successful upload")
-			Eventually(func() bool {
-				cv, err := tfClient.ConfigurationVersions.Read(ctx, cv.ID)
-				if err != nil {
-					return false
-				}
-				if cv.Status == tfc.ConfigurationUploaded {
-					return true
-				}
-				return false
-			}).Should(BeTrue())
+			outputValue := "hoi"
+			cv := createAndUploadConfigurationVersion(instance, outputValue)
 
 			By("Validating configuration version and workspace run")
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+
 				runs, err := tfClient.Runs.List(ctx, instance.Status.WorkspaceID, &tfc.RunListOptions{})
-				Expect(runs).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
+				Expect(runs).ShouldNot(BeNil())
 
 				for _, r := range runs.Items {
 					if r.ConfigurationVersion.ID == cv.ID && r.ID == instance.Status.Run.OutputRunID {
@@ -145,7 +104,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, outputsNamespacedName, s)).Should(Succeed())
 				if v, ok := s.Data["sensitive"]; ok {
-					if string(v) == o {
+					if string(v) == outputValue {
 						return true
 					}
 				}
@@ -157,7 +116,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, outputsNamespacedName, cm)).Should(Succeed())
 				if v, ok := cm.Data["non_sensitive"]; ok {
-					if v == o {
+					if v == outputValue {
 						return true
 					}
 				}
@@ -166,3 +125,52 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 	})
 })
+
+func createAndUploadConfigurationVersion(instance *appv1alpha2.Workspace, outputValue string) *tfc.ConfigurationVersion {
+	GinkgoHelper()
+	// Create a temporary dir in the current one
+	cd, err := os.Getwd()
+	Expect(err).Should(Succeed())
+	td, err := os.MkdirTemp(cd, "tf-*")
+	Expect(err).Should(Succeed())
+	defer os.RemoveAll(td)
+	// Create a temporary file in the temporary dir
+	f, err := os.CreateTemp(td, "*.tf")
+	Expect(err).Should(Succeed())
+	defer os.Remove(f.Name())
+	// Terraform code to upload
+	tf := fmt.Sprintf(`
+				output "sensitive" {
+					value = "%s"
+					sensitive = true
+				}
+				output "non_sensitive" {
+					value = "%s"
+				}`, outputValue, outputValue)
+	// Save the Terraform code to the temporary file
+	_, err = f.WriteString(tf)
+	Expect(err).Should(Succeed())
+
+	cv, err := tfClient.ConfigurationVersions.Create(ctx, instance.Status.WorkspaceID, tfc.ConfigurationVersionCreateOptions{
+		AutoQueueRuns: tfc.Bool(true),
+		Speculative:   tfc.Bool(false),
+	})
+	Expect(cv).ShouldNot(BeNil())
+	Expect(err).Should(Succeed())
+
+	Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
+
+	By("Validating configuration version successful upload")
+	Eventually(func() bool {
+		c, err := tfClient.ConfigurationVersions.Read(ctx, cv.ID)
+		if err != nil {
+			return false
+		}
+		if c.Status == tfc.ConfigurationUploaded {
+			return true
+		}
+		return false
+	}).Should(BeTrue())
+
+	return cv
+}
