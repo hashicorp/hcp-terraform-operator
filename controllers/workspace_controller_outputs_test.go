@@ -155,8 +155,8 @@ func createAndUploadConfigurationVersion(instance *appv1alpha2.Workspace, output
 		AutoQueueRuns: tfc.Bool(true),
 		Speculative:   tfc.Bool(false),
 	})
-	Expect(cv).ShouldNot(BeNil())
 	Expect(err).Should(Succeed())
+	Expect(cv).ShouldNot(BeNil())
 
 	Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
 
