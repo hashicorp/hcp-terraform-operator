@@ -174,7 +174,7 @@ func (r *WorkspaceReconciler) reconcileOutputs(ctx context.Context, w *workspace
 		}
 		if runApplied {
 			w.log.Info("Reconcile Outputs", "mgs", "run successfully applied")
-			if w.instance.Status.Run.OutputRunID != workspace.CurrentRun.ID {
+			if w.instance.Status.Run != nil && w.instance.Status.Run.OutputRunID != workspace.CurrentRun.ID {
 				w.log.Info("Reconcile Outputs", "mgs", "creating or updating outputs")
 				err = r.setOutputs(ctx, w)
 				if err != nil {
