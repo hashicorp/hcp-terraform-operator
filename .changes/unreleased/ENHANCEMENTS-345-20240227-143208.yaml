@@ -1,6 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: The `status` now includes the current configuration version in
-  `status.run.configurationVersion`.'
-time: 2024-02-27T14:32:08.498409+01:00
-custom:
-  PR: "345"
