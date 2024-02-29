@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: '`Module`: The output will be synchronized when the run status is either `applied`
+  or `planned_and_finished`, whereas previously it was only `applied`.'
+time: 2024-02-29T09:23:21.918703+01:00
+custom:
+  PR: "351"

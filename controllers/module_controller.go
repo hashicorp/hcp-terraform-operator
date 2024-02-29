@@ -120,7 +120,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return requeueAfter(requeueNewRunInterval)
 	}
 
-	if waitRunToFinish(&m.instance) {
+	if waitRunToComplete(m.instance.Status.Run) {
 		m.log.Info("Module Controller", "msg", "waiting for run to finish")
 		return requeueAfter(requeueRunStatusInterval)
 	}
@@ -314,7 +314,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
-	if waitRunToFinish(&m.instance) {
+	if waitRunToComplete(m.instance.Status.Run) {
 		m.log.Info("Delete Module", "msg", "get destroy run status")
 		run, err := m.tfClient.Client.Runs.Read(ctx, m.instance.Status.Run.ID)
 		if err != nil {
@@ -410,27 +410,15 @@ func needNewRun(instance *appv1alpha2.Module) bool {
 	return false
 }
 
-// waitRunToFinish checks if need to wait for Run to finish
-func waitRunToFinish(instance *appv1alpha2.Module) bool {
-	if instance.Status.Run == nil {
+// waitRunToComplete validates whether need to wait for the current Run to finish.
+func waitRunToComplete(runStatus *appv1alpha2.RunStatus) bool {
+	// In the current Run status is not available yet, there is nothing to wait for.
+	if runStatus == nil {
 		return false
 	}
 
-	// Run is not finished until it get one of the below statuses
-	switch instance.Status.Run.Status {
-	case string(tfc.RunApplied):
-		return false
-	case string(tfc.RunPlannedAndFinished):
-		return false
-	case string(tfc.RunErrored):
-		return false
-	case string(tfc.RunCanceled):
-		return false
-	case string(tfc.RunDiscarded):
-		return false
-	}
-
-	return true
+	// Wait if the current Run is not completed.
+	return !runStatus.RunCompleted()
 }
 
 func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstance) error {
@@ -518,7 +506,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	}
 
 	// checks if a new version of the Run is finished
-	if waitRunToFinish(&m.instance) {
+	if waitRunToComplete(m.instance.Status.Run) {
 		m.log.Info("Reconcile Run", "msg", "check the run status")
 		run, err := m.tfClient.Client.Runs.Read(ctx, m.instance.Status.Run.ID)
 		if err != nil {

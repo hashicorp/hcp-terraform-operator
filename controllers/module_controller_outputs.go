@@ -147,7 +147,7 @@ func needToUpdateOutput(instance *appv1alpha2.Module) bool {
 	if status.Output == nil {
 		return true
 	}
-	if status.Run.Status == string(tfc.RunApplied) && status.Run.ID != status.Output.RunID {
+	if status.Run.RunApplied() && status.Run.ID != status.Output.RunID {
 		return true
 	}
 
