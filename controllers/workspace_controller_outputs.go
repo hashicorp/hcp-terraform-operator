@@ -7,13 +7,12 @@ import (
 	"context"
 	"fmt"
 
+	tfc "github.com/hashicorp/go-tfe"
+	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
