@@ -31,7 +31,7 @@ func runCompleted(status string) bool {
 }
 
 func (rs *RunStatus) RunApplied() bool {
-	return runCompleted(rs.Status)
+	return runApplied(rs.Status)
 }
 
 // runApplied returns true if the run is applied
