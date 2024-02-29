@@ -641,8 +641,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
 
-	// Reconsile Runs
-	// This reconciliation should always be before `reconcileOutputs`
+	// Reconsile Runs (Status)
 	err = r.reconcileRuns(ctx, w, workspace)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to reconcile runs")
