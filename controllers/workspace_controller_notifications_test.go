@@ -209,16 +209,6 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 		memberships[ms.User.ID] = ms.Email
 	}
 
-	// The webhook URL is sensitive and write-only when the notification type is 'slack'.
-	// Make a deep copy of an instance and remove the URL when the notification type is 'slack'.
-	// It will be used to compare against the object returned by the TFC.
-	instanceCopy := instance.DeepCopy()
-	for i, n := range instanceCopy.Spec.Notifications {
-		if n.Type == tfc.NotificationDestinationTypeSlack {
-			instanceCopy.Spec.Notifications[i].URL = ""
-		}
-	}
-
 	Eventually(func() []appv1alpha2.Notification {
 		notifications, err := tfClient.NotificationConfigurations.List(ctx, instance.Status.WorkspaceID, &tfc.NotificationConfigurationListOptions{})
 		Expect(err).Should(Succeed())
@@ -253,7 +243,7 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 		}
 
 		return workspace
-	}).Should(ContainElements(instanceCopy.Spec.Notifications))
+	}).Should(ContainElements(instance.Spec.Notifications))
 }
 
 func createOrgMember(email string) string {
