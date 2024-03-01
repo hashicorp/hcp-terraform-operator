@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `go.uber.org/zap` from 1.26.0 to 1.27.0.
+time: 2024-03-01T14:18:11.638242+01:00
+custom:
+  PR: "355"
