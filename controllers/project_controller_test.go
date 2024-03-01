@@ -13,15 +13,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
 var _ = Describe("Project controller", Ordered, func() {
 	var (
-		instance *appv1alpha2.Project
-		project  = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Project
+		namespacedName = newNamespacedName()
+		project        = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
@@ -51,7 +51,7 @@ var _ = Describe("Project controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -82,11 +82,11 @@ var _ = Describe("Project controller", Ordered, func() {
 	Context("Project controller", func() {
 		It("can create and delete a project", func() {
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 		})
 		It("can restore a project", func() {
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 
 			initProjectID := instance.Status.ID
 
@@ -104,7 +104,7 @@ var _ = Describe("Project controller", Ordered, func() {
 		})
 		It("can change basic project attributes", func() {
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 
 			// Update the Kubernetes project object Name
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
@@ -120,7 +120,7 @@ var _ = Describe("Project controller", Ordered, func() {
 		})
 		It("can revert external changes", func() {
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 
 			// Change the Terraform Cloud project name
 			prj, err := tfClient.Projects.Update(ctx, instance.Status.ID, tfc.ProjectUpdateOptions{
@@ -143,7 +143,9 @@ var _ = Describe("Project controller", Ordered, func() {
 	})
 })
 
-func createProject(instance *appv1alpha2.Project, namespacedName types.NamespacedName) {
+func createProject(instance *appv1alpha2.Project) {
+	namespacedName := getNamespacedName(instance)
+
 	// Create a new Kubernetes project object
 	Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 	// Wait until the controller finishes the reconciliation

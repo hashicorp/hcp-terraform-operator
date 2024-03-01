@@ -24,8 +24,9 @@ import (
 
 var _ = Describe("Agent Pool controller", Ordered, func() {
 	var (
-		instance  *appv1alpha2.AgentPool
-		agentPool = fmt.Sprintf("kubernetes-operator-agent-pool-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.AgentPool
+		namespacedName = newNamespacedName()
+		agentPool      = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
@@ -53,7 +54,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -390,8 +391,8 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		It("can autoscale agent deployments by targeting specific workspaces", func() {
 			createTestAgentPool(instance)
 
-			workspaceInstance, workspaceName := testWorkspace("test-workspace", "default", instance.Spec.Name)
-			createWorkspace(workspaceInstance, workspaceName)
+			workspaceInstance := testWorkspace("test-workspace", "default", instance.Spec.Name)
+			createWorkspace(workspaceInstance)
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Spec.AgentDeployment).To(BeNil())
@@ -423,16 +424,13 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))
 			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(pointer.PointerOf(int32(60))))
 
-			deleteWorkspace(workspaceInstance, workspaceName)
+			deleteWorkspace(workspaceInstance)
 		})
 	})
 })
 
 func agentPoolTestGenerationsMatch(instance *appv1alpha2.AgentPool) {
-	namespacedName = types.NamespacedName{
-		Name:      instance.Name,
-		Namespace: instance.Namespace,
-	}
+	namespacedName := getNamespacedName(instance)
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -441,10 +439,7 @@ func agentPoolTestGenerationsMatch(instance *appv1alpha2.AgentPool) {
 }
 
 func createTestAgentPool(instance *appv1alpha2.AgentPool) {
-	namespacedName = types.NamespacedName{
-		Name:      instance.Name,
-		Namespace: instance.Namespace,
-	}
+	namespacedName := getNamespacedName(instance)
 
 	Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 	Eventually(func() bool {
@@ -457,10 +452,7 @@ func createTestAgentPool(instance *appv1alpha2.AgentPool) {
 
 func validateAgentPoolTestStatus(ctx context.Context, instance *appv1alpha2.AgentPool) {
 	// VALIDATE SPEC AGAINST STATUS
-	namespacedName := types.NamespacedName{
-		Name:      instance.Name,
-		Namespace: instance.Namespace,
-	}
+	namespacedName := getNamespacedName(instance)
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -480,10 +472,7 @@ func validateAgentPoolTestStatus(ctx context.Context, instance *appv1alpha2.Agen
 
 func validateAgentPoolTestTokens(ctx context.Context, instance *appv1alpha2.AgentPool) {
 	// VALIDATE TOKENS
-	namespacedName := types.NamespacedName{
-		Name:      instance.Name,
-		Namespace: instance.Namespace,
-	}
+	namespacedName := getNamespacedName(instance)
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -547,6 +536,8 @@ func validateAgentPoolDeployment(ctx context.Context, instance *appv1alpha2.Agen
 }
 
 func validateAgentPoolDeploymentDeleted(ctx context.Context, instance *appv1alpha2.AgentPool) {
+	namespacedName := getNamespacedName(instance)
+
 	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 	Expect(instance.Spec.AgentDeployment).To(BeNil())
 
@@ -580,7 +571,7 @@ func compareAgentTokens(aTokens, bTokens []string) bool {
 	return true
 }
 
-func testWorkspace(name, namespace, agentPoolName string) (*appv1alpha2.Workspace, types.NamespacedName) {
+func testWorkspace(name, namespace, agentPoolName string) *appv1alpha2.Workspace {
 	workspaceName := types.NamespacedName{
 		Name:      "test-workspace-autoscaling",
 		Namespace: "default",
@@ -601,12 +592,12 @@ func testWorkspace(name, namespace, agentPoolName string) (*appv1alpha2.Workspac
 			Token: appv1alpha2.Token{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: namespacedName.Name,
+						Name: secretNamespacedName.Name,
 					},
 					Key: secretKey,
 				},
 			},
-			Name:          fmt.Sprintf("test-workspace-%v", GinkgoRandomSeed()),
+			Name:          fmt.Sprintf("test-workspace-%v", randomNumber()),
 			ExecutionMode: "agent",
 			AgentPool: &appv1alpha2.WorkspaceAgentPool{
 				Name: agentPoolName,
@@ -614,5 +605,5 @@ func testWorkspace(name, namespace, agentPoolName string) (*appv1alpha2.Workspac
 		},
 		Status: appv1alpha2.WorkspaceStatus{},
 	}
-	return instance, workspaceName
+	return instance
 }

@@ -19,11 +19,12 @@ import (
 
 var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func() {
 	var (
-		instance  *appv1alpha2.Workspace
-		workspace = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Workspace
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
-		memberEmail  = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", GinkgoRandomSeed())
-		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", GinkgoRandomSeed())
+		memberEmail  = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", randomNumber())
+		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", randomNumber())
 		memberID     = ""
 		memberID2    = ""
 	)
@@ -54,7 +55,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -73,7 +74,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Notifications", func() {
@@ -84,7 +85,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				URL:  "https://example.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -104,7 +105,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -119,7 +120,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				URL:  "https://example.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -145,7 +146,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -166,7 +167,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -187,7 +188,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 				EmailAddresses: []string{"user@example.com"},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -195,11 +196,14 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 })
 
 func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
 	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
 	m, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, &tfc.OrganizationMembershipListOptions{})
 	Expect(err).Should(Succeed())
 	Expect(m).ShouldNot(BeNil())
+
 	memberships := make(map[string]string, len(m.Items))
 	for _, ms := range m.Items {
 		memberships[ms.User.ID] = ms.Email
@@ -246,5 +250,6 @@ func createOrgMember(email string) string {
 	m, err := tfClient.OrganizationMemberships.Create(ctx, organization, tfc.OrganizationMembershipCreateOptions{Email: &email})
 	Expect(err).Should(Succeed())
 	Expect(m).ShouldNot(BeNil())
+
 	return m.ID
 }

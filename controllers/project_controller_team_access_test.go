@@ -19,9 +19,10 @@ import (
 
 var _ = Describe("Project controller", Ordered, func() {
 	var (
-		instance *appv1alpha2.Project
-		team     *tfc.Team
-		project  = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		instance       *appv1alpha2.Project
+		namespacedName = newNamespacedName()
+		team           *tfc.Team
+		project        = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
@@ -56,7 +57,7 @@ var _ = Describe("Project controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -95,7 +96,7 @@ var _ = Describe("Project controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 			isProjectTeamAccessReconciled(instance)
 
 			prjTeamAccess := buildProjectTeamAccessByName(instance.Status.ID, nil)
@@ -115,7 +116,7 @@ var _ = Describe("Project controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 			isProjectTeamAccessReconciled(instance)
 
 			prjTeamAccess := buildProjectTeamAccessByName(instance.Status.ID, &appv1alpha2.CustomProjectPermissions{
@@ -144,7 +145,7 @@ var _ = Describe("Project controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 			isProjectTeamAccessReconciled(instance)
 
 			prjTeamAccess := buildProjectTeamAccessByName(instance.Status.ID, nil)
@@ -198,7 +199,7 @@ var _ = Describe("Project controller", Ordered, func() {
 				},
 			})
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
-			createProject(instance, namespacedName)
+			createProject(instance)
 			isProjectTeamAccessReconciled(instance)
 
 			prjTeamAccess := buildProjectTeamAccessByName(instance.Status.ID, &appv1alpha2.CustomProjectPermissions{
@@ -241,6 +242,8 @@ var _ = Describe("Project controller", Ordered, func() {
 })
 
 func isProjectTeamAccessReconciled(instance *appv1alpha2.Project) {
+	namespacedName := getNamespacedName(instance)
+
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		Expect(instance.Spec.TeamAccess).ShouldNot(BeNil())

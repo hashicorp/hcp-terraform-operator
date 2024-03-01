@@ -22,7 +22,7 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance     *appv1alpha2.Workspace
-		workspace    = fmt.Sprintf("kubernetes-operator-%v", GinkgoRandomSeed())
+		workspace    = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		oAuthTokenID = os.Getenv("TFC_OAUTH_TOKEN")
 		repository   = os.Getenv("TFC_VCS_REPO")
 	)
@@ -62,7 +62,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: namespacedName.Name,
+							Name: secretNamespacedName.Name,
 						},
 						Key: secretKey,
 					},
@@ -80,13 +80,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
-		deleteWorkspace(instance, namespacedName)
+		deleteWorkspace(instance)
 	})
 
 	Context("Workspace controller", func() {
 		It("can attach VCS to the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -104,7 +104,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can update VCS", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			instance.Spec.VersionControl.Branch = "main"
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
@@ -125,7 +125,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can revert manual changes VCS", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
 				VCSRepo: &tfc.VCSRepoOptions{
@@ -151,7 +151,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can revert manual detach of VCS from the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			ws, err := tfClient.Workspaces.RemoveVCSConnectionByID(ctx, instance.Status.WorkspaceID)
 			Expect(ws).ShouldNot(BeNil())
@@ -173,7 +173,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can detach VCS from the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			instance.Spec.VersionControl = nil
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
