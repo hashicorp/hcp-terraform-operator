@@ -15,27 +15,29 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
 	if workspace.CurrentRun == nil {
-		w.log.Info("Reconcile Runs", "msg", "there is no current run")
+		w.log.Info("Reconcile Runs", "msg", "there are currently no ongoing runs that are not speculative")
 		return nil
 	}
 
-	if w.instance.Status.Run == nil {
-		w.instance.Status.Run = &appv1alpha2.RunStatus{}
+	if w.instance.Status.Run != nil {
+		if workspace.CurrentRun.ID == w.instance.Status.Run.ID && w.instance.Status.Run.RunCompleted() {
+			w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("the run %s status is synchronized no actions is required", workspace.CurrentRun.ID))
+			return nil
+		}
 	}
 
-	// Update current run status
-	if workspace.CurrentRun.ID != w.instance.Status.Run.ID || !w.instance.Status.Run.RunCompleted() {
-		w.log.Info("Reconcile Runs", "msg", "get the current run status")
-		run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
-		if err != nil {
-			w.log.Error(err, "Reconcile Runs", "msg", "failed to get the current run status")
-			return err
-		}
-		w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the current run status %s", run.Status))
-		// Update status
-		w.instance.Status.Run.ID = run.ID
-		w.instance.Status.Run.Status = string(run.Status)
-		w.instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
+	w.log.Info("Reconcile Runs", "msg", "get the current run status")
+	run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
+	if err != nil {
+		w.log.Error(err, "Reconcile Runs", "msg", "failed to get the current run status")
+		return err
+	}
+	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the current run status %s", run.Status))
+
+	w.instance.Status.Run = &appv1alpha2.RunStatus{
+		ID:                   run.ID,
+		Status:               string(run.Status),
+		ConfigurationVersion: run.ConfigurationVersion.ID,
 	}
 
 	return nil
