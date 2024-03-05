@@ -127,11 +127,11 @@ func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *
 	return o, nil
 }
 
-func getNotificationsToCreate(ctx context.Context, spec, ws []tfc.NotificationConfiguration) []tfc.NotificationConfiguration {
+func getNotificationsToCreate(spec, ws []tfc.NotificationConfiguration) []tfc.NotificationConfiguration {
 	return notificationsDifference(spec, ws)
 }
 
-func getNotificationsToUpdate(ctx context.Context, spec, ws []tfc.NotificationConfiguration) []tfc.NotificationConfiguration {
+func getNotificationsToUpdate(spec, ws []tfc.NotificationConfiguration) []tfc.NotificationConfiguration {
 	o := []tfc.NotificationConfiguration{}
 
 	if len(spec) == 0 || len(ws) == 0 {
@@ -153,7 +153,7 @@ func getNotificationsToUpdate(ctx context.Context, spec, ws []tfc.NotificationCo
 	return o
 }
 
-func getNotificationsToDelete(ctx context.Context, spec, ws []tfc.NotificationConfiguration) []tfc.NotificationConfiguration {
+func getNotificationsToDelete(spec, ws []tfc.NotificationConfiguration) []tfc.NotificationConfiguration {
 	return notificationsDifference(ws, spec)
 }
 
@@ -236,7 +236,7 @@ func (r *WorkspaceReconciler) reconcileNotifications(ctx context.Context, w *wor
 		return err
 	}
 
-	delete := getNotificationsToDelete(ctx, spec, ws)
+	delete := getNotificationsToDelete(spec, ws)
 	if len(delete) > 0 {
 		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("deleting %d notifications", len(delete)))
 		err := r.deleteNotifications(ctx, w, delete)
@@ -246,7 +246,7 @@ func (r *WorkspaceReconciler) reconcileNotifications(ctx context.Context, w *wor
 		}
 	}
 
-	create := getNotificationsToCreate(ctx, spec, ws)
+	create := getNotificationsToCreate(spec, ws)
 	if len(create) > 0 {
 		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("creating %d notifications", len(create)))
 		err := r.createNotifications(ctx, w, create)
@@ -262,7 +262,7 @@ func (r *WorkspaceReconciler) reconcileNotifications(ctx context.Context, w *wor
 		return err
 	}
 
-	update := getNotificationsToUpdate(ctx, spec, ws)
+	update := getNotificationsToUpdate(spec, ws)
 	if len(update) > 0 {
 		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("updating %d notifications", len(update)))
 		err := r.updateNotifications(ctx, w, update)

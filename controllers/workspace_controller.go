@@ -232,16 +232,6 @@ func applyMethodToBool(applyMethod string) bool {
 	return applyMethod == "auto"
 }
 
-// autoApplyToStr turns the Workspace AutoApply field into string to align with spec.applyMethod
-// `AutoApply: true` is equal to `spec.applyMethod: auto`
-// `AutoApply: false` is equal to `spec.applyMethod: manual`
-func autoApplyToStr(autoApply bool) string {
-	if autoApply {
-		return "auto"
-	}
-	return "manual"
-}
-
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
 
@@ -572,7 +562,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Variables
-	err = r.reconcileVariables(ctx, w, workspace)
+	err = r.reconcileVariables(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID)

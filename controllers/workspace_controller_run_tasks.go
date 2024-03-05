@@ -24,11 +24,11 @@ func runTasksDifference(a, b map[string]*tfc.WorkspaceRunTask) map[string]*tfc.W
 	return d
 }
 
-func getRunTasksToCreate(ctx context.Context, spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+func getRunTasksToCreate(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
 	return runTasksDifference(spec, ws)
 }
 
-func getRunTasksToUpdate(ctx context.Context, spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+func getRunTasksToUpdate(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
 	o := make(map[string]*tfc.WorkspaceRunTask)
 
 	if len(spec) == 0 || len(ws) == 0 {
@@ -47,7 +47,7 @@ func getRunTasksToUpdate(ctx context.Context, spec, ws map[string]*tfc.Workspace
 	return o
 }
 
-func getRunTasksToDelete(ctx context.Context, spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+func getRunTasksToDelete(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
 	return runTasksDifference(ws, spec)
 }
 
@@ -171,7 +171,7 @@ func (r *WorkspaceReconciler) reconcileRunTasks(ctx context.Context, w *workspac
 		return err
 	}
 
-	create := getRunTasksToCreate(ctx, spec, ws)
+	create := getRunTasksToCreate(spec, ws)
 	if len(create) > 0 {
 		w.log.Info("Reconcile Run Tasks", "msg", fmt.Sprintf("creating %d run tasks", len(create)))
 		err := r.createRunTasks(ctx, w, create)
@@ -181,7 +181,7 @@ func (r *WorkspaceReconciler) reconcileRunTasks(ctx context.Context, w *workspac
 		}
 	}
 
-	update := getRunTasksToUpdate(ctx, spec, ws)
+	update := getRunTasksToUpdate(spec, ws)
 	if len(update) > 0 {
 		w.log.Info("Reconcile Run Tasks", "msg", fmt.Sprintf("updating %d run tasks", len(update)))
 		err := r.updateRunTasks(ctx, w, update)
@@ -191,7 +191,7 @@ func (r *WorkspaceReconciler) reconcileRunTasks(ctx context.Context, w *workspac
 		}
 	}
 
-	delete := getRunTasksToDelete(ctx, spec, ws)
+	delete := getRunTasksToDelete(spec, ws)
 	if len(delete) > 0 {
 		w.log.Info("Reconcile Run Tasks", "msg", fmt.Sprintf("deleting %d run tasks", len(delete)))
 		err := r.deleteRunTasks(ctx, w, delete)

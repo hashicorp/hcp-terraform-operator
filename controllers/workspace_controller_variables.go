@@ -303,7 +303,7 @@ func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, 
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileVariables(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) reconcileVariables(ctx context.Context, w *workspaceInstance) error {
 	w.log.Info("Reconcile Variables", "msg", "new reconciliation event")
 
 	workspaceVariables, err := r.getWorkspaceVariables(ctx, w)
