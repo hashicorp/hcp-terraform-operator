@@ -81,6 +81,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			By("Validating configuration version and workspace run")
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
 
 				runs, err := tfClient.Runs.List(ctx, instance.Status.WorkspaceID, &tfc.RunListOptions{})
 				Expect(err).Should(Succeed())
