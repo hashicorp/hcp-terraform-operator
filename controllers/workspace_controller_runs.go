@@ -15,7 +15,7 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
 	if workspace.CurrentRun == nil {
-		w.log.Info("Reconcile Runs", "msg", "there are currently no ongoing runs that are not speculative")
+		w.log.Info("Reconcile Runs", "msg", "there are no ongoing non-speculative runs")
 		return nil
 	}
 
@@ -26,13 +26,13 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 		}
 	}
 
-	w.log.Info("Reconcile Runs", "msg", "get the current run status")
+	w.log.Info("Reconcile Runs", "msg", "get the ongoing non-speculative run status")
 	run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
 	if err != nil {
-		w.log.Error(err, "Reconcile Runs", "msg", "failed to get the current run status")
+		w.log.Error(err, "Reconcile Runs", "msg", "failed to get the ongoing non-speculative run status")
 		return err
 	}
-	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the current run status %s", run.Status))
+	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the ongoing non-speculative run status %s", run.Status))
 
 	w.instance.Status.Run = &appv1alpha2.RunStatus{
 		ID:                   run.ID,
