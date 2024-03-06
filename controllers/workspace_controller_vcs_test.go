@@ -69,9 +69,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name: workspace,
 				VersionControl: &appv1alpha2.VersionControl{
-					OAuthTokenID: oAuthTokenID,
-					Repository:   repository,
-					Branch:       "operator",
+					OAuthTokenID:    oAuthTokenID,
+					Repository:      repository,
+					Branch:          "operator",
 					SpeculativePlan: true,
 				},
 			},
@@ -194,7 +194,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instanceCopy := instance.DeepCopy()
 
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance, namespacedName)
+			createWorkspace(instance)
 
 			// Validate that all attributes are set correctly
 			Eventually(func() bool {
