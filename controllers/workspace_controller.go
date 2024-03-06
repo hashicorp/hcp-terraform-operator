@@ -633,9 +633,9 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRuns", "Successfully reconcilied runs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Outputs
-	// This reconciliation should always be the last one
+	// This reconciliation should always be after `reconcileRuns`
 	// TODO:
-	// - improve this once rather than rely on the comment that says it always should be that order
+	// - move the output reconciliation to runs reconciliation since they depend on each other
 	err = r.reconcileOutputs(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
