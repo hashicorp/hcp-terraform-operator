@@ -633,7 +633,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRuns", "Successfully reconcilied runs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Outputs
-	// This reconciliation should always be after `reconcileRuns`
+	// This reconciliation should always happen after `reconcileRuns`
 	// TODO:
 	// - move the output reconciliation to runs reconciliation since they depend on each other
 	err = r.reconcileOutputs(ctx, w)
