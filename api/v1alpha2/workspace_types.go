@@ -563,6 +563,17 @@ type WorkspaceSpec struct {
 	Project *WorkspaceProject `json:"project,omitempty"`
 }
 
+type RunPlanOnlyStatus struct {
+	// Latest plan-only/speculative plan Terraform Cloud run ID.
+	//
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Latest plan-only/speculative plan Terraform Cloud run status.
+	//
+	//+optional
+	Status string `json:"status,omitempty"`
+}
+
 type RunStatus struct {
 	// Current(both active and finished) Terraform Cloud run ID.
 	//
@@ -578,6 +589,10 @@ type RunStatus struct {
 	//
 	//+optional
 	OutputRunID string `json:"outputRunID,omitempty"`
+	// Run status of plan-only/speculative plan that was triggered manually.
+	//
+	//+optional
+	PlanOnly *RunPlanOnlyStatus `json:"planOnly,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace.
