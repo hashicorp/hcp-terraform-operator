@@ -65,4 +65,14 @@ const (
 const (
 	workspaceFinalizerAlpha1 = "finalizer.workspace.app.terraform.io"
 	workspaceFinalizer       = "workspace.app.terraform.io/finalizer"
+
+	workspaceAnnotationRunAt               = "workspace.app.terraform.io/run-at"
+	workspaceAnnotationRestartedAt         = "workspace.app.terraform.io/run-restarted-at"
+	workspaceAnnotationRunType             = "workspace.app.terraform.io/run-type"
+	workspaceAnnotationRunTerraformVersion = "workspace.app.terraform.io/run-terraform-version"
+
+	runTypePlanOnly     = "planOnly"
+	runTypePlanAndApply = "planAndApply"
+	runTypeRefreshState = "refreshState"
+	runTypeDefault      = runTypePlanOnly
 )
