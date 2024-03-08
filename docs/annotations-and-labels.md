@@ -2,11 +2,11 @@
 
 ## Annotations
 
-| Annotation key | Target resource(es) | Possible values | Description |
+| Annotation key | Target resources | Possible values | Description |
 |----------------|---------------------|-----------------|-------------|
 | `workspace.app.terraform.io/run-at` | Workspace | any | |
 | `workspace.app.terraform.io/run-restarted-at` | Workspace | any | |
-| `workspace.app.terraform.io/run-type` | Workspace | `planOnly`, `planAndApply`, `refreshState` | |
+| `workspace.app.terraform.io/run-type` | Workspace | `plan`, `apply`, `refresh` | |
 
 ## Labels
 

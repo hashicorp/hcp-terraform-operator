@@ -28,13 +28,13 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 		}
 
 		switch runType {
-		case runTypePlanOnly:
+		case runTypePlan:
 			options.PlanOnly = tfc.Bool(true)
 			// TODO:
 			// - Handle Terraform version, annotation: `workspace.app.terraform.io/run-terraform-version`
-		case runTypePlanAndApply:
+		case runTypeApply:
 			options.PlanOnly = tfc.Bool(false)
-		case runTypeRefreshState:
+		case runTypeRefresh:
 			options.RefreshOnly = tfc.Bool(true)
 		default:
 			return fmt.Errorf("run type %q is not valid", runType)
@@ -56,7 +56,7 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 			return err
 		}
 
-		if runType == runTypePlanOnly {
+		if runType == runTypePlan {
 			if w.instance.Status.Run == nil {
 				w.instance.Status.Run = &appv1alpha2.RunStatus{
 					PlanOnly: &appv1alpha2.RunPlanOnlyStatus{},

@@ -71,8 +71,8 @@ const (
 	workspaceAnnotationRunType             = "workspace.app.terraform.io/run-type"
 	workspaceAnnotationRunTerraformVersion = "workspace.app.terraform.io/run-terraform-version"
 
-	runTypePlanOnly     = "planOnly"
-	runTypePlanAndApply = "planAndApply"
-	runTypeRefreshState = "refreshState"
-	runTypeDefault      = runTypePlanOnly
+	runTypePlan    = "plan"
+	runTypeApply   = "apply"
+	runTypeRefresh = "refresh"
+	runTypeDefault = runTypePlan
 )
