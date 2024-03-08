@@ -205,6 +205,19 @@ spec:
                   outputRunID:
                     description: Run ID of the latest run that could update the outputs.
                     type: string
+                  planOnly:
+                    description: Run status of plan-only/speculative plan that was
+                      triggered manually.
+                    properties:
+                      id:
+                        description: Latest plan-only/speculative plan Terraform Cloud
+                          run ID.
+                        type: string
+                      status:
+                        description: Latest plan-only/speculative plan Terraform Cloud
+                          run status.
+                        type: string
+                    type: object
                   status:
                     description: Current(both active and finished) Terraform Cloud
                       run status.
