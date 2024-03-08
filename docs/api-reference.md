@@ -329,7 +329,7 @@ _Appears in:_
 
 
 
-Module Outputs status.
+Outputs status.
 
 _Appears in:_
 - [ModuleStatus](#modulestatus)
