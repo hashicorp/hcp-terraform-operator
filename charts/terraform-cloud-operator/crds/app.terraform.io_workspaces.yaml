@@ -603,7 +603,7 @@ spec:
                       refer to the organization and repository in your VCS provider.
                     minLength: 1
                     type: string
-                  speculativePlan:
+                  speculativePlans:
                     default: true
                     description: 'Whether this workspace allows automatic speculative
                       plans on PR. Default: `true`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests

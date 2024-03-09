@@ -300,7 +300,7 @@ type VersionControl struct {
 	//
 	//+kubebuilder:default=true
 	//+optional
-	SpeculativePlan bool `json:"speculativePlan"`
+	SpeculativePlans bool `json:"speculativePlans"`
 }
 
 // SSH key used to clone Terraform modules.

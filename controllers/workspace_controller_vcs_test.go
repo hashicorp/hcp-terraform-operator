@@ -69,10 +69,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name: workspace,
 				VersionControl: &appv1alpha2.VersionControl{
-					OAuthTokenID:    oAuthTokenID,
-					Repository:      repository,
-					Branch:          "operator",
-					SpeculativePlan: true,
+					OAuthTokenID:     oAuthTokenID,
+					Repository:       repository,
+					Branch:           "operator",
+					SpeculativePlans: true,
 				},
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
@@ -208,11 +208,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				return ws.VCSRepo.OAuthTokenID == instanceCopy.Spec.VersionControl.OAuthTokenID &&
 					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
 					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
-					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlan
+					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
 			}).Should(BeTrue())
 
 			// Update the Kubernetes workspace object fields
-			instance.Spec.VersionControl.SpeculativePlan = false
+			instance.Spec.VersionControl.SpeculativePlans = false
 			// Make a copy of the original instance to then compare Workspace against it
 			// It helps to make sure that the 'Spec' part is not mutated
 			instanceCopy = instance.DeepCopy()
@@ -230,7 +230,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				return ws.VCSRepo.OAuthTokenID == instanceCopy.Spec.VersionControl.OAuthTokenID &&
 					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
 					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
-					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlan
+					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
 			}).Should(BeTrue())
 		})
 	})
