@@ -7,6 +7,7 @@
 | `workspace.app.terraform.io/run-at` | Workspace | any | |
 | `workspace.app.terraform.io/run-restarted-at` | Workspace | any | |
 | `workspace.app.terraform.io/run-type` | Workspace | `plan`, `apply`, `refresh` | |
+| `workspace.app.terraform.io/run-terraform-version` | Workspace | | |
 
 ## Labels
 

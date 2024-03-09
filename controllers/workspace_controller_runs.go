@@ -15,8 +15,6 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
 	if runAt, ok := w.instance.Annotations[workspaceAnnotationRunAt]; ok && runAt != w.instance.Annotations[workspaceAnnotationRestartedAt] {
-		w.log.Info("Reconcile Runs", "msg", "NEW RUN")
-
 		options := tfc.RunCreateOptions{
 			Message:   tfc.String("Triggered by the Kubernetes Operator"),
 			Workspace: workspace,
@@ -30,8 +28,9 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 		switch runType {
 		case runTypePlan:
 			options.PlanOnly = tfc.Bool(true)
-			// TODO:
-			// - Handle Terraform version, annotation: `workspace.app.terraform.io/run-terraform-version`
+			if t, ok := w.instance.Annotations[workspaceAnnotationRunTerraformVersion]; ok {
+				options.TerraformVersion = tfc.String(t)
+			}
 		case runTypeApply:
 			options.PlanOnly = tfc.Bool(false)
 		case runTypeRefresh:
@@ -134,7 +133,7 @@ func (r *WorkspaceReconciler) reconcileSpeculativeRun(ctx context.Context, w *wo
 			return err
 		}
 		w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the speculative run status %s", run.Status))
-		// Update status
+
 		w.instance.Status.Run.PlanOnly.ID = run.ID
 		w.instance.Status.Run.PlanOnly.Status = string(run.Status)
 	}
