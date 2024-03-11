@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: '''`Workspace`: The controller will reconcile the workspace more frequently
+  during incomplete runs to synchronize outputs faster.'''
+time: 2024-02-29T14:37:43.54109+01:00
+custom:
+  PR: "353"

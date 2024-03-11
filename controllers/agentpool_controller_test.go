@@ -573,8 +573,8 @@ func compareAgentTokens(aTokens, bTokens []string) bool {
 
 func testWorkspace(name, namespace, agentPoolName string) *appv1alpha2.Workspace {
 	workspaceName := types.NamespacedName{
-		Name:      "test-workspace-autoscaling",
-		Namespace: "default",
+		Name:      name,
+		Namespace: namespace,
 	}
 	instance := &appv1alpha2.Workspace{
 		TypeMeta: metav1.TypeMeta{

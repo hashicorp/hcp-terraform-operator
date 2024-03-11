@@ -113,6 +113,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	w.log.Info("Workspace Controller", "msg", "successfully reconcilied workspace")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully reconcilied workspace ID %s", w.instance.Status.WorkspaceID)
 
+	if w.instance.Status.Run != nil && !w.instance.Status.Run.RunCompleted() {
+		w.log.Info("Workspace Controller", "msg", fmt.Sprintf("current run %s status %s is not completed need to requeue", w.instance.Status.Run.ID, w.instance.Status.Run.Status))
+		return requeueAfter(requeueRunStatusInterval)
+	}
+
 	return doNotRequeue()
 }
 
@@ -227,16 +232,6 @@ func applyMethodToBool(applyMethod string) bool {
 	return applyMethod == "auto"
 }
 
-// autoApplyToStr turns the Workspace AutoApply field into string to align with spec.applyMethod
-// `AutoApply: true` is equal to `spec.applyMethod: auto`
-// `AutoApply: false` is equal to `spec.applyMethod: manual`
-func autoApplyToStr(autoApply bool) string {
-	if autoApply {
-		return "auto"
-	}
-	return "manual"
-}
-
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
 
@@ -263,15 +258,6 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 	w.instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
 	w.instance.Status.WorkspaceID = workspace.ID
 	w.instance.Status.TerraformVersion = workspace.TerraformVersion
-
-	if workspace.CurrentRun != nil {
-		w.instance.Status.Run.ID = workspace.CurrentRun.ID
-		run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
-		if err != nil {
-			return err
-		}
-		w.instance.Status.Run.Status = string(run.Status)
-	}
 
 	return r.Status().Update(ctx, &w.instance)
 }
@@ -591,7 +577,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Variables
-	err = r.reconcileVariables(ctx, w, workspace)
+	err = r.reconcileVariables(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID)
@@ -609,16 +595,6 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 	w.log.Info("Reconcile Run Triggers", "msg", "successfully reconcilied run triggers")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRunTriggers", "Reconcilied run triggers in workspace ID %s", w.instance.Status.WorkspaceID)
-
-	// Reconcile Outputs
-	err = r.reconcileOutputs(ctx, w, workspace)
-	if err != nil {
-		w.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", w.instance.Status.WorkspaceID)
-		return err
-	}
-	w.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
-	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Team Access
 	err = r.reconcileTeamAccess(ctx, w)
@@ -659,6 +635,30 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
+
+	// Reconsile Runs (Status)
+	// This reconciliation should always happen before `reconcileOutputs`
+	err = r.reconcileRuns(ctx, w, workspace)
+	if err != nil {
+		w.log.Error(err, "Reconcile Runs", "msg", "failed to reconcile runs")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileRuns", "Failed to reconcile runs in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Runs", "msg", "successfully reconcilied runs")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileRuns", "Successfully reconcilied runs in workspace ID %s", w.instance.Status.WorkspaceID)
+
+	// Reconcile Outputs
+	// This reconciliation should always happen after `reconcileRuns`
+	// TODO:
+	// - move the output reconciliation to runs reconciliation since they depend on each other
+	err = r.reconcileOutputs(ctx, w)
+	if err != nil {
+		w.log.Error(err, "Reconcile Outputs", "msg", "failed to reconcile outputs")
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "Failed to reconcile outputs in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Outputs", "msg", "successfully reconcilied outputs")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	return r.updateStatus(ctx, w, workspace)
 }

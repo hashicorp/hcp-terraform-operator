@@ -123,15 +123,15 @@ func teamAccessDifference(a, b map[string]*tfc.TeamAccess) map[string]*tfc.TeamA
 	return d
 }
 
-func getTeamAccessToCreate(ctx context.Context, specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamAccess) map[string]*tfc.TeamAccess {
+func getTeamAccessToCreate(specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamAccess) map[string]*tfc.TeamAccess {
 	return teamAccessDifference(specTeamAccess, workspaceTeamAccess)
 }
 
-func getTeamAccessToDelete(ctx context.Context, specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamAccess) map[string]*tfc.TeamAccess {
+func getTeamAccessToDelete(specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamAccess) map[string]*tfc.TeamAccess {
 	return teamAccessDifference(workspaceTeamAccess, specTeamAccess)
 }
 
-func getTeamAccessToUpdate(ctx context.Context, specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamAccess) map[string]*tfc.TeamAccess {
+func getTeamAccessToUpdate(specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamAccess) map[string]*tfc.TeamAccess {
 	ta := make(map[string]*tfc.TeamAccess)
 
 	if len(specTeamAccess) == 0 || len(workspaceTeamAccess) == 0 {
@@ -241,7 +241,7 @@ func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, w *worksp
 		return err
 	}
 
-	createTeamAccess := getTeamAccessToCreate(ctx, specTeamAccess, workspaceTeamAccess)
+	createTeamAccess := getTeamAccessToCreate(specTeamAccess, workspaceTeamAccess)
 	if len(createTeamAccess) > 0 {
 		w.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("creating %d team accesses", len(createTeamAccess)))
 		err := r.createTeamAccess(ctx, w, createTeamAccess)
@@ -250,7 +250,7 @@ func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, w *worksp
 		}
 	}
 
-	updateTeamAccess := getTeamAccessToUpdate(ctx, specTeamAccess, workspaceTeamAccess)
+	updateTeamAccess := getTeamAccessToUpdate(specTeamAccess, workspaceTeamAccess)
 	if len(updateTeamAccess) > 0 {
 		w.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("updating %d team accesses", len(updateTeamAccess)))
 		err := r.updateTeamAccess(ctx, w, updateTeamAccess)
@@ -259,7 +259,7 @@ func (r *WorkspaceReconciler) reconcileTeamAccess(ctx context.Context, w *worksp
 		}
 	}
 
-	deleteTeamAccess := getTeamAccessToDelete(ctx, specTeamAccess, workspaceTeamAccess)
+	deleteTeamAccess := getTeamAccessToDelete(specTeamAccess, workspaceTeamAccess)
 	if len(deleteTeamAccess) > 0 {
 		w.log.Info("Reconcile Team Access", "msg", fmt.Sprintf("deleting %d team accesses", len(deleteTeamAccess)))
 		err := r.deleteTeamAccess(ctx, w, deleteTeamAccess)

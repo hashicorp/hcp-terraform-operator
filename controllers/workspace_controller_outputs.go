@@ -7,13 +7,12 @@ import (
 	"context"
 	"fmt"
 
+	tfc "github.com/hashicorp/go-tfe"
+	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -65,8 +64,10 @@ func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *app
 func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance) error {
 	workspace, err := w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
 	if err != nil {
+		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to read workspace by ID %q", w.instance.Status.WorkspaceID))
 		return err
 	}
+
 	if workspace.CurrentStateVersion == nil {
 		return fmt.Errorf("current workspace state version is not available")
 	}
@@ -83,6 +84,7 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 
 	outputs, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
 	if err != nil {
+		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", workspace.CurrentStateVersion.ID))
 		return err
 	}
 
@@ -91,7 +93,7 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 	for _, o := range outputs.Items {
 		out, err := formatOutput(o)
 		if err != nil {
-			w.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
 			continue
 		}
@@ -150,41 +152,30 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 	return nil
 }
 
-func (r *WorkspaceReconciler) runApplied(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (bool, error) {
-	run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
-	if err != nil {
-		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to read current run ID %s", workspace.CurrentRun.ID))
-		return false, err
-	}
-
-	if run.Status == tfc.RunApplied {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (r *WorkspaceReconciler) reconcileOutputs(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) reconcileOutputs(ctx context.Context, w *workspaceInstance) error {
 	w.log.Info("Reconcile Outputs", "mgs", "new reconciliation event")
 
-	if workspace.CurrentRun != nil {
-		runApplied, err := r.runApplied(ctx, w, workspace)
-		if err != nil {
-			return err
-		}
-		if runApplied {
-			w.log.Info("Reconcile Outputs", "mgs", "run successfully applied")
-			if w.instance.Status.Run.OutputRunID != workspace.CurrentRun.ID {
-				w.log.Info("Reconcile Outputs", "mgs", "creating or updating outputs")
-				err = r.setOutputs(ctx, w)
-				if err != nil {
-					return err
-				}
-				w.instance.Status.Run.OutputRunID = workspace.CurrentRun.ID
-				return nil
-			}
-			w.log.Info("Reconcile Outputs", "mgs", "no need to update outputs")
-		}
+	if w.instance.Status.Run == nil {
+		w.log.Info("Reconcile Outputs", "mgs", "no need to update outputs")
+		return nil
 	}
+
+	if !w.instance.Status.Run.RunApplied() {
+		w.log.Info("Reconcile Outputs", "message", "no need to update outputs")
+		return nil
+	}
+
+	if w.instance.Status.Run.OutputRunID == w.instance.Status.Run.ID {
+		w.log.Info("Reconcile Outputs", "message", "no need to update outputs")
+		return nil
+	}
+
+	w.log.Info("Reconcile Outputs", "mgs", "creating or updating outputs")
+	if err := r.setOutputs(ctx, w); err != nil {
+		return err
+	}
+
+	w.instance.Status.Run.OutputRunID = w.instance.Status.Run.ID
+
 	return nil
 }

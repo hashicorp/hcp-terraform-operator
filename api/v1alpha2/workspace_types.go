@@ -602,7 +602,7 @@ type WorkspaceStatus struct {
 	// Workspace Runs status.
 	//
 	//+optional
-	Run RunStatus `json:"runStatus,omitempty"`
+	Run *RunStatus `json:"runStatus,omitempty"`
 	// Workspace Terraform version.
 	//
 	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"

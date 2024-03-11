@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '`Workspace`: The output will be synchronized faster and require fewer API calls.'
+time: 2024-02-27T14:31:07.446525+01:00
+custom:
+  PR: "345"
