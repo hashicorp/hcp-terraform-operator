@@ -14,7 +14,7 @@ import (
 func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
-	if runAt, ok := w.instance.Annotations[workspaceAnnotationRunAt]; ok && runAt != w.instance.Annotations[workspaceAnnotationRestartedAt] {
+	if runAt, ok := w.instance.Annotations[workspaceAnnotationRunAt]; ok && runAt != w.instance.Annotations[workspaceAnnotationTriggeredAt] {
 		if err := r.triggerRun(ctx, w, workspace); err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (r *WorkspaceReconciler) triggerRun(ctx context.Context, w *workspaceInstan
 	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new run %s type %s", run.ID, runType))
 
 	// Update annotations
-	w.instance.Annotations[workspaceAnnotationRestartedAt] = w.instance.Annotations[workspaceAnnotationRunAt]
+	w.instance.Annotations[workspaceAnnotationTriggeredAt] = w.instance.Annotations[workspaceAnnotationRunAt]
 	err = r.Update(ctx, &w.instance)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to update instance")
