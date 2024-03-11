@@ -480,7 +480,7 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"FileTriggersEnabled must be set to true in order to use TriggerPatterns"),
+			"TriggerPatterns requires FileTriggersEnabled set to true"),
 		)
 	}
 
@@ -488,7 +488,7 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"FileTriggersEnabled must be set to true in order to use TriggerPatterns"),
+			"TriggerPrefixes requires FileTriggersEnabled set to true"),
 		)
 	}
 
@@ -498,7 +498,7 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"WorkingDirectory must be set to true in order to use TriggerPrefixes"),
+			"TriggerPrefixes requires a non-empty WorkingDirectory"),
 		)
 	}
 
