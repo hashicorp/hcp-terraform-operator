@@ -60,6 +60,8 @@ Controllers usage guides:
 - [Project](./docs/project.md)
 - [Workspace](./docs/workspace.md)
 
+Annotations and Labels used by Terraform Cloud Operator can be found [here](./docs/annotations-and-labels.md).
+
 ### Metrics
 
 The Operator exposes metrics in the [Prometheus](https://prometheus.io/) format for each controller. More information can be found [here](./docs/metrics.md).
