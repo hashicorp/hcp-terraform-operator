@@ -23,6 +23,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
 	allErrs = append(allErrs, w.validateSpecProject()...)
+	allErrs = append(allErrs, w.validateSpecFileTriggers()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -453,6 +454,51 @@ func (w *Workspace) validateSpecProject() field.ErrorList {
 			f,
 			"",
 			"only one of the field ID or Name is allowed"),
+		)
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec
+
+	f := field.NewPath("spec")
+
+	if len(spec.TriggerPatterns) > 0 && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"only one of the field TriggerPatterns or TriggerPrefixes is allowed"),
+		)
+	}
+
+	f = field.NewPath("spec").Child("fileTriggerEnabled")
+
+	if !spec.FileTriggersEnabled && len(spec.TriggerPatterns) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"FileTriggersEnabled must be set to true in order to use TriggerPatterns"),
+		)
+	}
+
+	if !spec.FileTriggersEnabled && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"FileTriggersEnabled must be set to true in order to use TriggerPatterns"),
+		)
+	}
+
+	f = field.NewPath("spec").Child("workingDirectory")
+
+	if spec.WorkingDirectory == "" && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"WorkingDirectory must be set to true in order to use TriggerPrefixes"),
 		)
 	}
 
