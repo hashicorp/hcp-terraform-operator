@@ -339,6 +339,22 @@ _Appears in:_
 | `runID` _string_ | Run ID of the latest run that updated the outputs. |
 
 
+#### PlanStatus
+
+
+
+
+
+_Appears in:_
+- [WorkspaceStatus](#workspacestatus)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | Latest plan-only/speculative plan Terraform Cloud run ID. |
+| `terraformVersion` _string_ |  |
+| `triggeredAt` _string_ |  |
+
+
 #### Project
 
 
@@ -407,20 +423,6 @@ _Appears in:_
 | `workspaces` _[ConsumerWorkspace](#consumerworkspace) array_ | Allow access to the state for specific workspaces within the same organization. |
 
 
-#### RunPlanOnlyStatus
-
-
-
-
-
-_Appears in:_
-- [RunStatus](#runstatus)
-
-| Field | Description |
-| --- | --- |
-| `id` _string_ | Latest plan-only/speculative plan Terraform Cloud run ID. |
-
-
 #### RunStatus
 
 
@@ -436,7 +438,7 @@ _Appears in:_
 | `id` _string_ | Current(both active and finished) Terraform Cloud run ID. |
 | `configurationVersion` _string_ |  |
 | `outputRunID` _string_ | Run ID of the latest run that could update the outputs. |
-| `planOnly` _[RunPlanOnlyStatus](#runplanonlystatus)_ | Run status of plan-only/speculative plan that was triggered manually. |
+| `triggeredAt` _string_ |  |
 
 
 #### RunTrigger

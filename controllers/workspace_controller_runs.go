@@ -14,9 +14,21 @@ import (
 func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
-	if runAt, ok := w.instance.Annotations[workspaceAnnotationRunAt]; ok && runAt != w.instance.Annotations[workspaceAnnotationTriggeredAt] {
-		if err := r.triggerRun(ctx, w, workspace); err != nil {
-			return err
+	if runAt, ok := w.instance.Annotations[workspaceAnnotationRunAt]; ok {
+		runType := runTypeDefault
+		if rt, ok := w.instance.Annotations[workspaceAnnotationRunType]; ok {
+			runType = rt
+		}
+
+		switch runType {
+		case runTypePlan:
+			if w.instance.Status.Plan == nil || runAt != w.instance.Status.Plan.TriggeredAt {
+				return r.triggerRun(ctx, w, workspace)
+			}
+		default:
+			if w.instance.Status.Run == nil || runAt != w.instance.Status.Run.TriggeredAt {
+				return r.triggerRun(ctx, w, workspace)
+			}
 		}
 	}
 
@@ -64,36 +76,36 @@ func (r *WorkspaceReconciler) reconcileCurrentRun(ctx context.Context, w *worksp
 }
 
 func (r *WorkspaceReconciler) reconcileSpeculativeRun(ctx context.Context, w *workspaceInstance) error {
-	if w.instance.Status.Run == nil || w.instance.Status.Run.PlanOnly == nil {
+	if w.instance.Status.Run == nil || w.instance.Status.Plan == nil {
 		w.log.Info("Reconcile Runs", "msg", "there are no ongoing speculative runs")
 		return nil
 	}
 
 	// Update speculative run status
-	if !w.instance.Status.Run.PlanOnly.RunCompleted() {
+	if !w.instance.Status.Plan.RunCompleted() {
 		w.log.Info("Reconcile Runs", "msg", "get the speculative run status")
-		run, err := w.tfClient.Client.Runs.Read(ctx, w.instance.Status.Run.PlanOnly.ID)
+		run, err := w.tfClient.Client.Runs.Read(ctx, w.instance.Status.Plan.ID)
 		if err != nil {
 			w.log.Error(err, "Reconcile Runs", "msg", "failed to get the speculative run status")
 			return err
 		}
 		w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the speculative run status %s", run.Status))
-		w.instance.Status.Run.PlanOnly.ID = run.ID
-		w.instance.Status.Run.PlanOnly.Status = string(run.Status)
+		w.instance.Status.Plan.ID = run.ID
+		w.instance.Status.Plan.Status = string(run.Status)
 	}
 
 	return nil
 }
 
 func (r *WorkspaceReconciler) triggerRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
-	options := tfc.RunCreateOptions{
-		Message:   tfc.String("Triggered by the Kubernetes Operator"),
-		Workspace: workspace,
-	}
-
 	runType := runTypeDefault
 	if rt, ok := w.instance.Annotations[workspaceAnnotationRunType]; ok {
 		runType = rt
+	}
+
+	options := tfc.RunCreateOptions{
+		Message:   tfc.String("Triggered by the Kubernetes Operator"),
+		Workspace: workspace,
 	}
 
 	switch runType {
@@ -118,27 +130,13 @@ func (r *WorkspaceReconciler) triggerRun(ctx context.Context, w *workspaceInstan
 	}
 	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new run %s type %s", run.ID, runType))
 
-	// Update annotations
-	w.instance.Annotations[workspaceAnnotationTriggeredAt] = w.instance.Annotations[workspaceAnnotationRunAt]
-	err = r.Update(ctx, &w.instance)
-	if err != nil {
-		w.log.Error(err, "Reconcile Runs", "msg", "failed to update instance")
-		return err
-	}
-
 	if runType == runTypePlan {
-		if w.instance.Status.Run == nil {
-			w.instance.Status.Run = &appv1alpha2.RunStatus{
-				PlanOnly: &appv1alpha2.RunPlanOnlyStatus{},
-			}
+		w.instance.Status.Plan = &appv1alpha2.PlanStatus{
+			ID:               run.ID,
+			Status:           string(run.Status),
+			TriggeredAt:      w.instance.Annotations[workspaceAnnotationRunAt],
+			TerraformVersion: run.TerraformVersion,
 		}
-
-		if w.instance.Status.Run.PlanOnly == nil {
-			w.instance.Status.Run.PlanOnly = &appv1alpha2.RunPlanOnlyStatus{}
-		}
-
-		w.instance.Status.Run.PlanOnly.ID = run.ID
-		w.instance.Status.Run.PlanOnly.Status = string(run.Status)
 
 		return nil
 	}
@@ -148,9 +146,12 @@ func (r *WorkspaceReconciler) triggerRun(ctx context.Context, w *workspaceInstan
 	if workspace.CurrentRun == nil {
 		workspace.CurrentRun = &tfc.Run{}
 	}
+	w.instance.Status.Run.ID = run.ID
+	w.instance.Status.Run.Status = string(run.Status)
+	w.instance.Status.Run.TriggeredAt = w.instance.Annotations[workspaceAnnotationRunAt]
 	// workspace.CurrentRun is a relation connection and contains only RunID.
 	// Update it here to avoid an unnecessary read workspace API call.
-	workspace.CurrentRun.ID = run.ID
+	// workspace.CurrentRun.ID = run.ID
 
 	return nil
 }

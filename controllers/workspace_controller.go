@@ -119,8 +119,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			w.log.Info("Workspace Controller", "msg", fmt.Sprintf("current run %s status %s is not completed need to requeue", w.instance.Status.Run.ID, w.instance.Status.Run.Status))
 			return requeueAfter(requeueRunStatusInterval)
 		}
-		if w.instance.Status.Run.PlanOnly != nil && !w.instance.Status.Run.PlanOnly.RunCompleted() {
-			w.log.Info("Workspace Controller", "msg", fmt.Sprintf("speculative plan run %s status %s is not completed need to requeue", w.instance.Status.Run.PlanOnly.ID, w.instance.Status.Run.PlanOnly.Status))
+		if w.instance.Status.Plan != nil && !w.instance.Status.Plan.RunCompleted() {
+			w.log.Info("Workspace Controller", "msg", fmt.Sprintf("speculative plan run %s status %s is not completed need to requeue", w.instance.Status.Plan.ID, w.instance.Status.Plan.Status))
 			return requeueAfter(requeueRunStatusInterval)
 		}
 	}

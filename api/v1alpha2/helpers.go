@@ -11,7 +11,7 @@ func (rs *RunStatus) RunCompleted() bool {
 	return runCompleted(rs.Status)
 }
 
-func (rs *RunPlanOnlyStatus) RunCompleted() bool {
+func (rs *PlanStatus) RunCompleted() bool {
 	return runCompleted(rs.Status)
 }
 
