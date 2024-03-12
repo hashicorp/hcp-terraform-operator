@@ -638,15 +638,19 @@ spec:
                       run status.
                     type: string
                   terraformVersion:
+                    description: The version of Terraform to use for this run.
                     pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                     type: string
                   triggeredAt:
+                    description: Value of the annotation `workspace.app.terraform.io/run-at`
+                      when a new run has been triggered.
                     type: string
                 type: object
               runStatus:
                 description: Workspace Runs status.
                 properties:
                   configurationVersion:
+                    description: The configuration version of this run.
                     type: string
                   id:
                     description: Current(both active and finished) Terraform Cloud
@@ -660,6 +664,8 @@ spec:
                       run status.
                     type: string
                   triggeredAt:
+                    description: Value of the annotation `workspace.app.terraform.io/run-at`
+                      when a new run has been triggered.
                     type: string
                 type: object
               terraformVersion:

@@ -148,10 +148,8 @@ func (r *WorkspaceReconciler) triggerRun(ctx context.Context, w *workspaceInstan
 	}
 	w.instance.Status.Run.ID = run.ID
 	w.instance.Status.Run.Status = string(run.Status)
+	w.instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
 	w.instance.Status.Run.TriggeredAt = w.instance.Annotations[workspaceAnnotationRunAt]
-	// workspace.CurrentRun is a relation connection and contains only RunID.
-	// Update it here to avoid an unnecessary read workspace API call.
-	// workspace.CurrentRun.ID = run.ID
 
 	return nil
 }

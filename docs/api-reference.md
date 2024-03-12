@@ -351,8 +351,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `id` _string_ | Latest plan-only/speculative plan Terraform Cloud run ID. |
-| `terraformVersion` _string_ |  |
-| `triggeredAt` _string_ |  |
+| `terraformVersion` _string_ | The version of Terraform to use for this run. |
+| `triggeredAt` _string_ | Value of the annotation `workspace.app.terraform.io/run-at` when a new run has been triggered. |
 
 
 #### Project
@@ -436,9 +436,9 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `id` _string_ | Current(both active and finished) Terraform Cloud run ID. |
-| `configurationVersion` _string_ |  |
+| `configurationVersion` _string_ | The configuration version of this run. |
 | `outputRunID` _string_ | Run ID of the latest run that could update the outputs. |
-| `triggeredAt` _string_ |  |
+| `triggeredAt` _string_ | Value of the annotation `workspace.app.terraform.io/run-at` when a new run has been triggered. |
 
 
 #### RunTrigger

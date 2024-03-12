@@ -572,9 +572,13 @@ type PlanStatus struct {
 	//
 	//+optional
 	Status string `json:"status,omitempty"`
+	// The version of Terraform to use for this run.
+	//
 	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
+	// Value of the annotation `workspace.app.terraform.io/run-at` when a new run has been triggered.
+	//
 	//+optional
 	TriggeredAt string `json:"triggeredAt,omitempty"`
 }
@@ -588,12 +592,16 @@ type RunStatus struct {
 	//
 	//+optional
 	Status string `json:"status,omitempty"`
+	// The configuration version of this run.
+	//
 	//+optional
 	ConfigurationVersion string `json:"configurationVersion,omitempty"`
 	// Run ID of the latest run that could update the outputs.
 	//
 	//+optional
 	OutputRunID string `json:"outputRunID,omitempty"`
+	// Value of the annotation `workspace.app.terraform.io/run-at` when a new run has been triggered.
+	//
 	//+optional
 	TriggeredAt string `json:"triggeredAt,omitempty"`
 }
