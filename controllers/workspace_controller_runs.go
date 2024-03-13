@@ -76,7 +76,7 @@ func (r *WorkspaceReconciler) reconcileCurrentRun(ctx context.Context, w *worksp
 }
 
 func (r *WorkspaceReconciler) reconcileSpeculativeRun(ctx context.Context, w *workspaceInstance) error {
-	if w.instance.Status.Run == nil || w.instance.Status.Plan == nil {
+	if w.instance.Status.Plan == nil {
 		w.log.Info("Reconcile Runs", "msg", "there are no ongoing speculative runs")
 		return nil
 	}
@@ -141,10 +141,8 @@ func (r *WorkspaceReconciler) triggerRun(ctx context.Context, w *workspaceInstan
 		return nil
 	}
 
-	// If a new workspace has been created and a new run is triggered via annotations,
-	// then the Workspace doesn't have a current Run reference.
-	if workspace.CurrentRun == nil {
-		workspace.CurrentRun = &tfc.Run{}
+	if w.instance.Status.Run == nil {
+		w.instance.Status.Run = &appv1alpha2.RunStatus{}
 	}
 	w.instance.Status.Run.ID = run.ID
 	w.instance.Status.Run.Status = string(run.Status)

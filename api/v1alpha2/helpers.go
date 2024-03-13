@@ -37,6 +37,10 @@ func (rs *RunStatus) RunApplied() bool {
 	return runApplied(rs.Status)
 }
 
+func (rs *PlanStatus) RunApplied() bool {
+	return runApplied(rs.Status)
+}
+
 // runApplied returns true if the run is applied
 func runApplied(status string) bool {
 	// The following Run statuses indicate the completion
