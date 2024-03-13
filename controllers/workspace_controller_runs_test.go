@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
 		namespacedName = newNamespacedName()
@@ -109,11 +109,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				return instance.Status.Run.RunApplied()
 			}).Should(BeTrue())
 
+			tf := "1.7.3"
 			// Trigger a new plan run with annotations
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunAt:   time.Now().UTC().Format("2006-01-02T15:04:05+00:00"),
-				workspaceAnnotationRunType: runTypePlan,
+				workspaceAnnotationRunAt:               time.Now().UTC().Format("2006-01-02T15:04:05+00:00"),
+				workspaceAnnotationRunType:             runTypePlan,
+				workspaceAnnotationRunTerraformVersion: tf,
 			})
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -122,7 +124,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				if instance.Status.Plan == nil {
 					return false
 				}
-				return instance.Status.Plan.RunApplied()
+				return instance.Status.Plan.RunApplied() && instance.Status.Plan.TerraformVersion == tf
 			}).Should(BeTrue())
 		})
 	})
