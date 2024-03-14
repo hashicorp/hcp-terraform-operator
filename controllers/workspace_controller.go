@@ -27,6 +27,7 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 type TerraformCloudClient struct {
@@ -189,6 +190,9 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 	config := &tfc.Config{
 		Token:      token,
 		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
 	}
 	w.tfClient.Client, err = tfc.NewClient(config)
 

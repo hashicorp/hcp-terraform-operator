@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '`Operator`: Add a new option `--version` to print out the version of the operator.'
+time: 2024-03-14T10:33:56.259183+01:00
+custom:
+  PR: "365"

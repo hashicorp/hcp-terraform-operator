@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -127,6 +128,9 @@ var _ = BeforeSuite(func() {
 	tfcConfig := &tfc.Config{
 		Token:      os.Getenv("TFC_TOKEN"),
 		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
 	}
 	tfClient, err = tfc.NewClient(tfcConfig)
 	Expect(err).Should(Succeed())
