@@ -37,6 +37,7 @@ COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
 COPY internal/ internal/
+COPY version/ version/
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -trimpath -o $BIN_NAME main.go
 

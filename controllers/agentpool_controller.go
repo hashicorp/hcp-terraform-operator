@@ -27,6 +27,7 @@ import (
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 // AgentPoolReconciler reconciles a AgentPool object
@@ -170,6 +171,9 @@ func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentP
 	config := &tfc.Config{
 		Token:      token,
 		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
 	}
 	ap.tfClient.Client, err = tfc.NewClient(config)
 

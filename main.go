@@ -32,6 +32,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"github.com/hashicorp/terraform-cloud-operator/controllers"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -58,6 +59,8 @@ func main() {
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
 	var watchNamespaces cliNamespaces
 	flag.Var(&watchNamespaces, "namespace", "Namespace to watch")
+	var opVersion bool
+	flag.BoolVar(&opVersion, "version", false, "Print operator version")
 	// OPERATOR OPRTIONS
 	var agentPoolWorkers int
 	flag.IntVar(&agentPoolWorkers, "agent-pool-workers", 1,
@@ -73,6 +76,11 @@ func main() {
 		"The number of the Workspace controller workers.")
 
 	flag.Parse()
+
+	if opVersion {
+		fmt.Println(version.Version)
+		os.Exit(0)
+	}
 
 	zapConfig := zap.NewProductionConfig()
 	zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
@@ -193,6 +201,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	setupLog.Info(fmt.Sprintf("Terraform Cloud Operator Version: %s", version.Version))
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
