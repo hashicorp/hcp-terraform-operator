@@ -80,7 +80,7 @@ var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 			}).Should(BeTrue())
 		})
 
-		It("cat trigger a new run", func() {
+		It("can trigger a new run", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
 
