@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `google.golang.org/protobuf` from 1.31.0 to 1.33.0.
+time: 2024-03-14T09:07:47.013479+01:00
+custom:
+  PR: "367"
