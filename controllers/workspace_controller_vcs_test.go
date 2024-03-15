@@ -69,9 +69,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name: workspace,
 				VersionControl: &appv1alpha2.VersionControl{
-					OAuthTokenID: oAuthTokenID,
-					Repository:   repository,
-					Branch:       "operator",
+					OAuthTokenID:     oAuthTokenID,
+					Repository:       repository,
+					Branch:           "operator",
+					SpeculativePlans: true,
 				},
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
@@ -184,6 +185,52 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
 				return ws.VCSRepo == nil
+			}).Should(BeTrue())
+		})
+
+		It("can disable speculative plan", func() {
+			// Make a copy of the original instance to then compare Workspace against it
+			// It helps to make sure that the 'Spec' part is not mutated
+			instanceCopy := instance.DeepCopy()
+
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+
+			// Validate that all attributes are set correctly
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				if ws.VCSRepo == nil {
+					return false
+				}
+				return ws.VCSRepo.OAuthTokenID == instanceCopy.Spec.VersionControl.OAuthTokenID &&
+					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
+					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
+					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
+			}).Should(BeTrue())
+
+			// Update the Kubernetes workspace object fields
+			instance.Spec.VersionControl.SpeculativePlans = false
+			// Make a copy of the original instance to then compare Workspace against it
+			// It helps to make sure that the 'Spec' part is not mutated
+			instanceCopy = instance.DeepCopy()
+
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			// Validate that all attributes are set correctly
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(ws).ShouldNot(BeNil())
+				Expect(err).Should(Succeed())
+				if ws.VCSRepo == nil {
+					return false
+				}
+				return ws.VCSRepo.OAuthTokenID == instanceCopy.Spec.VersionControl.OAuthTokenID &&
+					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
+					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
+					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
 			}).Should(BeTrue())
 		})
 	})
