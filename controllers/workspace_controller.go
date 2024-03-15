@@ -297,6 +297,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
 		options.FileTriggersEnabled = tfc.Bool(false)
+		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
 	}
 
 	if spec.RemoteStateSharing != nil {
@@ -405,6 +406,10 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
 		updateOptions.FileTriggersEnabled = tfc.Bool(false)
+
+		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
+			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		}
 	}
 
 	if spec.Project != nil {
