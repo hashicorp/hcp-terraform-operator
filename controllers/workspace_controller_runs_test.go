@@ -106,7 +106,7 @@ var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 				if instance.Status.Run == nil {
 					return false
 				}
-				return instance.Status.Run.RunApplied()
+				return instance.Status.Run.RunCompleted()
 			}).Should(BeTrue())
 
 			tf := "1.7.3"
@@ -124,7 +124,7 @@ var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 				if instance.Status.Plan == nil {
 					return false
 				}
-				return instance.Status.Plan.RunApplied() && instance.Status.Plan.TerraformVersion == tf
+				return instance.Status.Plan.RunCompleted() && instance.Status.Plan.TerraformVersion == tf
 			}).Should(BeTrue())
 		})
 	})
