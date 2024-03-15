@@ -67,8 +67,8 @@ func workspacePredicates() predicate.Predicate {
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			// Validate if a certain annotation persists in a new object and does not match the old one.
 			// In that case, it is a new or updated annotation and we need to trigger a reconciliation cycle.
-			if na, ok := e.ObjectNew.GetAnnotations()[workspaceAnnotationRunAt]; ok && na != "" {
-				return na != e.ObjectOld.GetAnnotations()[workspaceAnnotationRunAt]
+			if a, ok := e.ObjectNew.GetAnnotations()[workspaceAnnotationRunNew]; ok && a == annotationTrue {
+				return true
 			}
 
 			// Do not call reconciliation in all other cases

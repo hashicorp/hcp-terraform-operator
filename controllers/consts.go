@@ -10,6 +10,8 @@ import (
 // SHARED CONSTANTS
 const (
 	requeueInterval = 15 * time.Second
+	annotationTrue  = "true"
+	annotationFalse = "false"
 )
 
 // AGENT POOL CONTROLLER'S CONSTANTS
@@ -66,7 +68,7 @@ const (
 	workspaceFinalizerAlpha1 = "finalizer.workspace.app.terraform.io"
 	workspaceFinalizer       = "workspace.app.terraform.io/finalizer"
 
-	workspaceAnnotationRunAt               = "workspace.app.terraform.io/run-at"
+	workspaceAnnotationRunNew              = "workspace.app.terraform.io/run-new"
 	workspaceAnnotationRunType             = "workspace.app.terraform.io/run-type"
 	workspaceAnnotationRunTerraformVersion = "workspace.app.terraform.io/run-terraform-version"
 

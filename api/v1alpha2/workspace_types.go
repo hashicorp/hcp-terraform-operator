@@ -577,10 +577,6 @@ type PlanStatus struct {
 	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
-	// Value of the annotation `workspace.app.terraform.io/run-at` when a new run has been triggered.
-	//
-	//+optional
-	TriggeredAt string `json:"triggeredAt,omitempty"`
 }
 
 type RunStatus struct {
@@ -600,10 +596,6 @@ type RunStatus struct {
 	//
 	//+optional
 	OutputRunID string `json:"outputRunID,omitempty"`
-	// Value of the annotation `workspace.app.terraform.io/run-at` when a new run has been triggered.
-	//
-	//+optional
-	TriggeredAt string `json:"triggeredAt,omitempty"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace.
