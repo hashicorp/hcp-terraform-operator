@@ -19,7 +19,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Workspace controller", Label("VCS"), Ordered, func() {
 	var (
 		instance     *appv1alpha2.Workspace
 		workspace    = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
@@ -92,8 +92,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
 				if ws.VCSRepo == nil {
 					return false
 				}
@@ -113,8 +113,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
 				if ws.VCSRepo == nil {
 					return false
 				}
@@ -139,8 +139,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
 				if ws.VCSRepo == nil {
 					return false
 				}
@@ -155,8 +155,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 
 			ws, err := tfClient.Workspaces.RemoveVCSConnectionByID(ctx, instance.Status.WorkspaceID)
-			Expect(ws).ShouldNot(BeNil())
 			Expect(err).Should(Succeed())
+			Expect(ws).ShouldNot(BeNil())
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -182,8 +182,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
 				return ws.VCSRepo == nil
 			}).Should(BeTrue())
 		})
@@ -231,6 +231,45 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
 					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
 					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
+			}).Should(BeTrue())
+		})
+
+		It("cat trigger a new apply run on creation", func() {
+			instance.SetAnnotations(map[string]string{
+				workspaceAnnotationRunNew:  annotationTrue,
+				workspaceAnnotationRunType: runTypeApply,
+			})
+			instance.Spec.ApplyMethod = "auto"
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Annotations[workspaceAnnotationRunNew] == annotationTrue {
+					return false
+				}
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.Run.RunCompleted()
+			}).Should(BeTrue())
+		})
+
+		It("cat trigger a new plan run on creation", func() {
+			instance.SetAnnotations(map[string]string{
+				workspaceAnnotationRunNew:  annotationTrue,
+				workspaceAnnotationRunType: runTypePlan,
+			})
+			instance.Spec.ApplyMethod = "auto"
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Plan == nil {
+					return false
+				}
+				return instance.Status.Plan.RunCompleted()
 			}).Should(BeTrue())
 		})
 	})

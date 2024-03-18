@@ -50,7 +50,7 @@ type ConfigurationVersionStatus struct {
 	Status string `json:"status"`
 }
 
-// Module Outputs status.
+// Outputs status.
 type OutputStatus struct {
 	// Run ID of the latest run that updated the outputs.
 	RunID string `json:"runID"`
