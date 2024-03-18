@@ -1,0 +1,7 @@
+kind: ENHANCEMENTS
+body: '`Workspace`: Add the ability to configure automatic speculative plan on pull
+  requests when using Version Control via a new optional field `spec.versionControl.speculativePlans`.
+  Default to `true`.'
+time: 2024-02-15T11:18:18.677792+01:00
+custom:
+  PR: "342"

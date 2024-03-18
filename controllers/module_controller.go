@@ -29,6 +29,7 @@ import (
 	"github.com/hashicorp/go-slug"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 // ModuleReconciler reconciles a Module object
@@ -237,6 +238,9 @@ func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInst
 	config := &tfc.Config{
 		Token:      token,
 		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
 	}
 	m.tfClient.Client, err = tfc.NewClient(config)
 

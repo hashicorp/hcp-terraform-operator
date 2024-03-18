@@ -27,6 +27,7 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 type TerraformCloudClient struct {
@@ -189,6 +190,9 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 	config := &tfc.Config{
 		Token:      token,
 		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
 	}
 	w.tfClient.Client, err = tfc.NewClient(config)
 
@@ -295,6 +299,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
+		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
 	}
 
 	if spec.RemoteStateSharing != nil {
@@ -415,6 +420,10 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			OAuthTokenID: tfc.String(spec.VersionControl.OAuthTokenID),
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
+		}
+
+		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
+			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
 		}
 	}
 

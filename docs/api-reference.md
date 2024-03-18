@@ -578,6 +578,7 @@ _Appears in:_
 | `oAuthTokenID` _string_ | The VCS Connection (OAuth Connection + Token) to use. Must match pattern: `^ot-[a-zA-Z0-9]+$` |
 | `repository` _string_ | A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
+| `speculativePlans` _boolean_ | Whether this workspace allows automatic speculative plans on PR. Default: `true`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans |
 
 
 #### Workspace

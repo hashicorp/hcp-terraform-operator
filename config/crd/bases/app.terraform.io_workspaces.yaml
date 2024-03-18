@@ -619,6 +619,12 @@ spec:
                       refer to the organization and repository in your VCS provider.
                     minLength: 1
                     type: string
+                  speculativePlans:
+                    default: true
+                    description: 'Whether this workspace allows automatic speculative
+                      plans on PR. Default: `true`. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests
+                      - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans'
+                    type: boolean
                 type: object
               workingDirectory:
                 description: 'The directory where Terraform will execute, specified

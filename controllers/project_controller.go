@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
 // ProjectReconciler reconciles a Project object
@@ -162,6 +163,9 @@ func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectIn
 	config := &tfc.Config{
 		Token:      token,
 		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
 	}
 	p.tfClient.Client, err = tfc.NewClient(config)
 
