@@ -90,6 +90,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(runs).ShouldNot(BeNil())
 
 				for _, r := range runs.Items {
+					if instance.Status.Run == nil {
+						return false
+					}
 					if r.ConfigurationVersion.ID == cv.ID && r.ID == instance.Status.Run.OutputRunID {
 						return true
 					}

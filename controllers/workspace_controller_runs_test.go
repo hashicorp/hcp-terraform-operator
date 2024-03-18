@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -15,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
 		namespacedName = newNamespacedName()
@@ -71,29 +70,67 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			namespacedName := getNamespacedName(instance)
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
-
-			outputValue := "hoi"
-			cv := createAndUploadConfigurationVersion(instance, outputValue)
-
-			By("Validating configuration version and workspace run")
+			createAndUploadConfigurationVersion(instance, "hoi")
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				if instance.Status.Run == nil {
 					return false
 				}
+				return instance.Status.Run.RunCompleted()
+			}).Should(BeTrue())
+		})
 
-				runs, err := tfClient.Runs.List(ctx, instance.Status.WorkspaceID, &tfc.RunListOptions{})
-				Expect(err).Should(Succeed())
-				Expect(runs).ShouldNot(BeNil())
+		It("can trigger a new run", func() {
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
 
-				for _, r := range runs.Items {
-					if r.ConfigurationVersion.ID == cv.ID {
-						if r.ID == instance.Status.Run.ID && instance.Status.Run.RunCompleted() {
-							return true
-						}
-					}
+			createAndUploadConfigurationVersion(instance, "hoi")
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
 				}
-				return false
+				return instance.Status.Run.RunCompleted()
+			}).Should(BeTrue())
+
+			// Trigger a new apply run with annotations
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.SetAnnotations(map[string]string{
+				workspaceAnnotationRunNew:  annotationTrue,
+				workspaceAnnotationRunType: runTypeApply,
+			})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Annotations[workspaceAnnotationRunNew] == annotationTrue {
+					return false
+				}
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.Run.RunCompleted()
+			}).Should(BeTrue())
+
+			tf := "1.7.3"
+			// Trigger a new plan run with annotations
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.SetAnnotations(map[string]string{
+				workspaceAnnotationRunNew:              annotationTrue,
+				workspaceAnnotationRunType:             runTypePlan,
+				workspaceAnnotationRunTerraformVersion: tf,
+			})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Annotations[workspaceAnnotationRunNew] == annotationTrue {
+					return false
+				}
+				if instance.Status.Plan == nil {
+					return false
+				}
+				return instance.Status.Plan.RunCompleted() && instance.Status.Plan.TerraformVersion == tf
 			}).Should(BeTrue())
 		})
 	})

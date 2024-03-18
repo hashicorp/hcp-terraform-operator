@@ -1,0 +1,6 @@
+kind: FEATURES
+body: '`Workspace`: Add annotations support to trigger a new run. New annotations:
+  `workspace.app.terraform.io/run-new`, `workspace.app.terraform.io/run-type`, `workspace.app.terraform.io/run-terraform-version`.'
+time: 2024-03-13T16:17:41.284793+01:00
+custom:
+  PR: "364"
