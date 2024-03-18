@@ -3,11 +3,11 @@
 ## Annotations
 
 | Annotation key | Target resources | Possible values | Description |
-|----------------|---------------------|-----------------|-------------|
-| `workspace.app.terraform.io/run-new` | Workspace | "true" | Set this annotation to `"true"` to trigger a new run.<br><br> Example: `kubectl annotate workspace <WORKSPACE-NAME> workspace.app.terraform.io/run-new="true"`. |
-| `workspace.app.terraform.io/run-type` | Workspace | `plan`, `apply`, `refresh` | Specify the run type. More information: [Run Modes and Options](https://developer.hashicorp.com/terraform/cloud-docs/run/modes-and-options). It defaults to `plan`.<br><br> Changing this annotation **DOES NOT** trigger a new run. |
-| `workspace.app.terraform.io/run-terraform-version` | Workspace | valid Terraform version | Specify the Terraform version to use. This setting works only when the annotation `workspace.app.terraform.io/run-type` is set to `plan`. It defaults to the Workspace version.<br><br> Changing this annotation **DOES NOT** trigger a new run. |
+| --- | --- | --- | --- |
+| `workspace.app.terraform.io/run-new` | Workspace | `"true"` | Set this annotation to `"true"` to trigger a new run. Example: `kubectl annotate workspace <WORKSPACE-NAME> workspace.app.terraform.io/run-new="true"`. |
+| `workspace.app.terraform.io/run-type` | Workspace | `plan`, `apply`, `refresh` | Specifies the run type. Changing this annotation does not start a new run. Refer to [Run Modes and Options](https://developer.hashicorp.com/terraform/cloud-docs/run/modes-and-options) for more information. Defaults to `"plan"`. |
+| `workspace.app.terraform.io/run-terraform-version` | Workspace | Any valid Terraform version | Specifies the Terraform version to use. Changing this annotation does not start a new run. Only valid when the annotation `workspace.app.terraform.io/run-type` is set to `plan`. Defaults to the Workspace version. |
 
 ## Labels
 
-Terraform Cloud Operator uses no labels.
+Terraform Cloud Operator does not use any labels.
