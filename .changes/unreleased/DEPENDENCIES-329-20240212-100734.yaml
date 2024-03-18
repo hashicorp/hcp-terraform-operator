@@ -1,5 +1,0 @@
-kind: DEPENDENCIES
-body: Bump `github.com/onsi/gomega` from 1.30.0 to 1.31.1.
-time: 2024-02-12T10:07:34.492642+01:00
-custom:
-  PR: "329"
