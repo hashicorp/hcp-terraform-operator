@@ -578,6 +578,22 @@ type WorkspaceSpec struct {
 	Project *WorkspaceProject `json:"project,omitempty"`
 }
 
+type PlanStatus struct {
+	// Latest plan-only/speculative plan Terraform Cloud run ID.
+	//
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Latest plan-only/speculative plan Terraform Cloud run status.
+	//
+	//+optional
+	Status string `json:"status,omitempty"`
+	// The version of Terraform to use for this run.
+	//
+	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
+	//+optional
+	TerraformVersion string `json:"terraformVersion,omitempty"`
+}
+
 type RunStatus struct {
 	// Current(both active and finished) Terraform Cloud run ID.
 	//
@@ -587,6 +603,8 @@ type RunStatus struct {
 	//
 	//+optional
 	Status string `json:"status,omitempty"`
+	// The configuration version of this run.
+	//
 	//+optional
 	ConfigurationVersion string `json:"configurationVersion,omitempty"`
 	// Run ID of the latest run that could update the outputs.
@@ -612,6 +630,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	Run *RunStatus `json:"runStatus,omitempty"`
+	// Run status of plan-only/speculative plan that was triggered manually.
+	//
+	//+optional
+	Plan *PlanStatus `json:"plan,omitempty"`
 	// Workspace Terraform version.
 	//
 	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"

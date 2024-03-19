@@ -1,5 +1,0 @@
-kind: DEPENDENCIES
-body: Bump `github.com/onsi/ginkgo/v2` from 2.13.2 to 2.15.0.
-time: 2024-02-12T09:56:28.794441+01:00
-custom:
-  PR: "328"

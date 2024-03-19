@@ -197,6 +197,7 @@ spec:
                 description: 'Workspace Runs status. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/states'
                 properties:
                   configurationVersion:
+                    description: The configuration version of this run.
                     type: string
                   id:
                     description: Current(both active and finished) Terraform Cloud

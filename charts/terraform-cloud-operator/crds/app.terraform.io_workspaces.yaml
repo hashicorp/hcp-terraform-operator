@@ -647,10 +647,28 @@ spec:
                 description: Real world state generation.
                 format: int64
                 type: integer
+              plan:
+                description: Run status of plan-only/speculative plan that was triggered
+                  manually.
+                properties:
+                  id:
+                    description: Latest plan-only/speculative plan Terraform Cloud
+                      run ID.
+                    type: string
+                  status:
+                    description: Latest plan-only/speculative plan Terraform Cloud
+                      run status.
+                    type: string
+                  terraformVersion:
+                    description: The version of Terraform to use for this run.
+                    pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
+                    type: string
+                type: object
               runStatus:
                 description: Workspace Runs status.
                 properties:
                   configurationVersion:
+                    description: The configuration version of this run.
                     type: string
                   id:
                     description: Current(both active and finished) Terraform Cloud

@@ -11,7 +11,10 @@ func (rs *RunStatus) RunCompleted() bool {
 	return runCompleted(rs.Status)
 }
 
-// runCompleted returns true if the run is completed
+func (rs *PlanStatus) RunCompleted() bool {
+	return runCompleted(rs.Status)
+}
+
 func runCompleted(status string) bool {
 	// The following Run statuses indicate the completion
 	switch status {

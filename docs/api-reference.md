@@ -329,7 +329,7 @@ _Appears in:_
 
 
 
-Module Outputs status.
+Outputs status.
 
 _Appears in:_
 - [ModuleStatus](#modulestatus)
@@ -337,6 +337,21 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `runID` _string_ | Run ID of the latest run that updated the outputs. |
+
+
+#### PlanStatus
+
+
+
+
+
+_Appears in:_
+- [WorkspaceStatus](#workspacestatus)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | Latest plan-only/speculative plan Terraform Cloud run ID. |
+| `terraformVersion` _string_ | The version of Terraform to use for this run. |
 
 
 #### Project
@@ -420,7 +435,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `id` _string_ | Current(both active and finished) Terraform Cloud run ID. |
-| `configurationVersion` _string_ |  |
+| `configurationVersion` _string_ | The configuration version of this run. |
 | `outputRunID` _string_ | Run ID of the latest run that could update the outputs. |
 
 
