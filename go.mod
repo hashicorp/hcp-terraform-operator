@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-slug v0.14.0
-	github.com/hashicorp/go-tfe v1.47.1
+	github.com/hashicorp/go-tfe v1.48.0
 	github.com/onsi/ginkgo/v2 v2.16.0
 	github.com/onsi/gomega v1.31.1
 	go.uber.org/zap v1.27.0
