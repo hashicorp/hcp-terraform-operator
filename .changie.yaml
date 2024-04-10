@@ -14,15 +14,15 @@ custom:
 kinds:
   - label: BREAKING CHANGES
     auto: minor
+  - label: NOTES
+    auto: minor
   - label: BUG FIXES
     auto: patch
-  - label: DEPENDENCIES
+  - label: FEATURES
     auto: minor
   - label: ENHANCEMENTS
     auto: minor
-  - label: FEATURES
-    auto: minor
-  - label: NOTES
+  - label: DEPENDENCIES
     auto: minor
 newlines:
   afterKind: 1
