@@ -324,7 +324,7 @@ type SSHKey struct {
 
 // Tags allows you to correlate, organize, and even filter workspaces based on the assigned tags.
 // Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number.
-// Must match pattern: ^[A-Za-z0-9][A-Za-z0-9:_-]*$
+// Must match pattern: `^[A-Za-z0-9][A-Za-z0-9:_-]*$`
 //
 // +kubebuilder:validation:Pattern:="^[A-Za-z0-9][A-Za-z0-9:_-]*$"
 type Tag string
