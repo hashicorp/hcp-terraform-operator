@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -135,43 +134,13 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *WorkspaceReconciler) getConfigMap(ctx context.Context, name types.NamespacedName) (*corev1.ConfigMap, error) {
-	cm := &corev1.ConfigMap{}
-	err := r.Client.Get(ctx, name, cm)
-
-	return cm, err
-}
-
-func (r *WorkspaceReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
-func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
-	var secret *corev1.Secret
-
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	secret, err := r.getSecret(ctx, objectKey)
-	if err != nil {
-		return "", err
-	}
-
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
-}
-
 func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspaceInstance) error {
-	token, err := r.getToken(ctx, &w.instance)
+	objectKey := types.NamespacedName{
+		Namespace: w.instance.Namespace,
+		Name:      w.instance.Spec.Token.SecretKeyRef.Name,
+	}
+
+	token, err := secretKeyRef(ctx, r.Client, objectKey, w.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}

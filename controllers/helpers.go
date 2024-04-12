@@ -4,12 +4,16 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -65,4 +69,32 @@ func needToAddFinalizer[T Object](o T, finalizer string) bool {
 // Otherwise, it reports false.
 func isDeletionCandidate[T Object](o T, finalizer string) bool {
 	return !o.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(o, finalizer)
+}
+
+// configMapKeyRef fetches a given key name from a given Kubernetes Config Map.
+func configMapKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName, key string) (string, error) {
+	cm := &corev1.ConfigMap{}
+	if err := c.Get(ctx, nn, cm); err != nil {
+		return "", err
+	}
+
+	if k, ok := cm.Data[key]; ok {
+		return k, nil
+	}
+
+	return "", fmt.Errorf("unable to find key=%q configMap=%q namespace=%q", key, nn.Name, nn.Namespace)
+}
+
+// secretKeyRef fetches a given key name from a given Kubernetes Secret.
+func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName, key string) (string, error) {
+	secret := &corev1.Secret{}
+	if err := c.Get(ctx, nn, secret); err != nil {
+		return "", err
+	}
+
+	if k, ok := secret.Data[key]; ok {
+		return strings.TrimSpace(string(k)), nil
+	}
+
+	return "", fmt.Errorf("unable to find key=%q secret=%q namespace=%q", key, nn.Name, nn.Namespace)
 }
