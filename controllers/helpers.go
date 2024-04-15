@@ -96,5 +96,5 @@ func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName,
 		return strings.TrimSpace(string(k)), nil
 	}
 
-	return "", fmt.Errorf("unable to find key=%q secret=%q namespace=%q", key, nn.Name, nn.Namespace)
+	return "", fmt.Errorf("unable to find key=%q in secret=%q namespace=%q", key, nn.Name, nn.Namespace)
 }
