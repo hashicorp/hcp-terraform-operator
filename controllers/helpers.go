@@ -82,7 +82,7 @@ func configMapKeyRef(ctx context.Context, c client.Client, nn types.NamespacedNa
 		return k, nil
 	}
 
-	return "", fmt.Errorf("unable to find key=%q configMap=%q namespace=%q", key, nn.Name, nn.Namespace)
+	return "", fmt.Errorf("unable to find key=%q in configMap=%q namespace=%q", key, nn.Name, nn.Namespace)
 }
 
 // secretKeyRef fetches a given key name from a given Kubernetes Secret.
