@@ -180,9 +180,9 @@ func (r *WorkspaceReconciler) getVariablesByCategory(ctx context.Context, w *wor
 	}
 
 	for _, v := range instanceVariables {
-		var err error
 		value := v.Value
 		if v.ValueFrom != nil {
+			var err error
 			objectKey := types.NamespacedName{
 				Namespace: w.instance.Namespace,
 			}
