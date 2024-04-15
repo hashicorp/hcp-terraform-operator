@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -118,16 +117,7 @@ func (r *AgentPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *AgentPoolReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
 func (r *AgentPoolReconciler) getToken(ctx context.Context, instance *appv1alpha2.AgentPool) (string, error) {
-	var secret *corev1.Secret
-
 	secretName := instance.Spec.Token.SecretKeyRef.Name
 	secretKey := instance.Spec.Token.SecretKeyRef.Key
 
@@ -135,15 +125,12 @@ func (r *AgentPoolReconciler) getToken(ctx context.Context, instance *appv1alpha
 		Namespace: instance.Namespace,
 		Name:      secretName,
 	}
-	secret, err := r.getSecret(ctx, objectKey)
+	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
 	if err != nil {
 		return "", err
 	}
 
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
+	return token, nil
 }
 
 func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentPoolInstance) error {

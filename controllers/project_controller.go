@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
@@ -110,16 +109,7 @@ func (r *ProjectReconciler) addFinalizer(ctx context.Context, instance *appv1alp
 	return r.Update(ctx, instance)
 }
 
-func (r *ProjectReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
 func (r *ProjectReconciler) getToken(ctx context.Context, instance *appv1alpha2.Project) (string, error) {
-	var secret *corev1.Secret
-
 	secretName := instance.Spec.Token.SecretKeyRef.Name
 	secretKey := instance.Spec.Token.SecretKeyRef.Key
 
@@ -127,15 +117,12 @@ func (r *ProjectReconciler) getToken(ctx context.Context, instance *appv1alpha2.
 		Namespace: instance.Namespace,
 		Name:      secretName,
 	}
-	secret, err := r.getSecret(ctx, objectKey)
+	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
 	if err != nil {
 		return "", err
 	}
 
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
+	return token, nil
 }
 
 func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectInstance) error {

@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
@@ -185,16 +184,7 @@ func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *ap
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
 func (r *ModuleReconciler) getToken(ctx context.Context, instance *appv1alpha2.Module) (string, error) {
-	var secret *corev1.Secret
-
 	secretName := instance.Spec.Token.SecretKeyRef.Name
 	secretKey := instance.Spec.Token.SecretKeyRef.Key
 
@@ -202,15 +192,12 @@ func (r *ModuleReconciler) getToken(ctx context.Context, instance *appv1alpha2.M
 		Namespace: instance.Namespace,
 		Name:      secretName,
 	}
-	secret, err := r.getSecret(ctx, objectKey)
+	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
 	if err != nil {
 		return "", err
 	}
 
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
+	return token, nil
 }
 
 func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInstance) error {

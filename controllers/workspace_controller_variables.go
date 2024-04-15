@@ -172,27 +172,21 @@ func (r *WorkspaceReconciler) getValueFrom(ctx context.Context, instance *appv1a
 	cm := valueFrom.ConfigMapKeyRef
 	if cm != nil {
 		objectKey.Name = cm.Name
-		v, err := r.getConfigMap(ctx, objectKey)
+		v, err := configMapKeyRef(ctx, r.Client, objectKey, cm.Key)
 		if err != nil {
 			return "", err
 		}
-		if k, ok := v.Data[cm.Key]; ok {
-			return string(k), nil
-		}
-		return "", fmt.Errorf("key %s not found in ConfigMap %s", cm.Key, cm.Name)
+		return v, nil
 	}
 
 	s := valueFrom.SecretKeyRef
 	if s != nil {
 		objectKey.Name = s.Name
-		v, err := r.getSecret(ctx, objectKey)
+		v, err := secretKeyRef(ctx, r.Client, objectKey, s.Key)
 		if err != nil {
 			return "", err
 		}
-		if k, ok := v.Data[s.Key]; ok {
-			return string(k), nil
-		}
-		return "", fmt.Errorf("key %s not found in Secret %s", s.Key, s.Name)
+		return v, nil
 	}
 
 	return "", nil
