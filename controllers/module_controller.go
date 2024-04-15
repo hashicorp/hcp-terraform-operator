@@ -188,11 +188,11 @@ func (r *ModuleReconciler) getToken(ctx context.Context, instance *appv1alpha2.M
 	secretName := instance.Spec.Token.SecretKeyRef.Name
 	secretKey := instance.Spec.Token.SecretKeyRef.Key
 
-	nn := types.NamespacedName{
+	objectKey := types.NamespacedName{
 		Namespace: instance.Namespace,
 		Name:      secretName,
 	}
-	token, err := secretKeyRef(ctx, r.Client, nn, secretKey)
+	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
 	if err != nil {
 		return "", err
 	}
