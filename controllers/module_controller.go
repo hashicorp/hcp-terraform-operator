@@ -184,13 +184,24 @@ func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *ap
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInstance) error {
-	objectKey := types.NamespacedName{
-		Namespace: m.instance.Namespace,
-		Name:      m.instance.Spec.Token.SecretKeyRef.Name,
+func (r *ModuleReconciler) getToken(ctx context.Context, instance *appv1alpha2.Module) (string, error) {
+	secretName := instance.Spec.Token.SecretKeyRef.Name
+	secretKey := instance.Spec.Token.SecretKeyRef.Key
+
+	nn := types.NamespacedName{
+		Namespace: instance.Namespace,
+		Name:      secretName,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, secretKey)
+	if err != nil {
+		return "", err
 	}
 
-	token, err := secretKeyRef(ctx, r.Client, objectKey, m.instance.Spec.Token.SecretKeyRef.Key)
+	return token, nil
+}
+
+func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInstance) error {
+	token, err := r.getToken(ctx, &m.instance)
 	if err != nil {
 		return err
 	}
