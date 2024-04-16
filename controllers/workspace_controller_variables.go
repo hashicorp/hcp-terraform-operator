@@ -168,40 +168,6 @@ func (r *WorkspaceReconciler) deleteWorkspaceVariables(ctx context.Context, w *w
 	return nil
 }
 
-func (r *WorkspaceReconciler) getValueFrom(ctx context.Context, instance *appv1alpha2.Workspace, valueFrom *appv1alpha2.ValueFrom) (string, error) {
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-	}
-
-	cm := valueFrom.ConfigMapKeyRef
-	if cm != nil {
-		objectKey.Name = cm.Name
-		v, err := r.getConfigMap(ctx, objectKey)
-		if err != nil {
-			return "", err
-		}
-		if k, ok := v.Data[cm.Key]; ok {
-			return string(k), nil
-		}
-		return "", fmt.Errorf("key %s not found in ConfigMap %s", cm.Key, cm.Name)
-	}
-
-	s := valueFrom.SecretKeyRef
-	if s != nil {
-		objectKey.Name = s.Name
-		v, err := r.getSecret(ctx, objectKey)
-		if err != nil {
-			return "", err
-		}
-		if k, ok := v.Data[s.Key]; ok {
-			return string(k), nil
-		}
-		return "", fmt.Errorf("key %s not found in Secret %s", s.Key, s.Name)
-	}
-
-	return "", nil
-}
-
 // getVariablesByCategory returns a map of all instance variables by type.
 func (r *WorkspaceReconciler) getVariablesByCategory(ctx context.Context, w *workspaceInstance, category tfc.CategoryType) map[string]tfc.Variable {
 	variables := make(map[string]tfc.Variable)
@@ -218,10 +184,20 @@ func (r *WorkspaceReconciler) getVariablesByCategory(ctx context.Context, w *wor
 	}
 
 	for _, v := range instanceVariables {
-		var err error
 		value := v.Value
 		if v.ValueFrom != nil {
-			value, err = r.getValueFrom(ctx, &w.instance, v.ValueFrom)
+			var err error
+			objectKey := types.NamespacedName{
+				Namespace: w.instance.Namespace,
+			}
+			if cm := v.ValueFrom.ConfigMapKeyRef; cm != nil {
+				objectKey.Name = cm.Name
+				value, err = configMapKeyRef(ctx, r.Client, objectKey, cm.Key)
+			}
+			if s := v.ValueFrom.SecretKeyRef; s != nil {
+				objectKey.Name = s.Name
+				value, err = secretKeyRef(ctx, r.Client, objectKey, s.Key)
+			}
 			if err != nil {
 				w.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to get value for the variable %s", v.Name))
 				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to get value for a variable")

@@ -463,6 +463,10 @@ func (w *Workspace) validateSpecProject() field.ErrorList {
 //
 // + EnvironmentVariables names duplicate: spec.environmentVariables[].name
 // + TerraformVariables names duplicate: spec.terraformVariables[].name
+//
+// + EnvironmentVariables only one of the values from ConfigMapKeyRef or SecretKeyRef is allowed
+// + TerraformVariables only one of the values from ConfigMapKeyRef or SecretKeyRef is allowed
+//
 // + Tags duplicate: spec.tags[]
 //
 // + Invalid CR cannot be deleted until it is fixed -- need to discuss if we want to do something about it
