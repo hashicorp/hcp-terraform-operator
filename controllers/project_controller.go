@@ -109,24 +109,12 @@ func (r *ProjectReconciler) addFinalizer(ctx context.Context, instance *appv1alp
 	return r.Update(ctx, instance)
 }
 
-func (r *ProjectReconciler) getToken(ctx context.Context, instance *appv1alpha2.Project) (string, error) {
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
 func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectInstance) error {
-	token, err := r.getToken(ctx, &p.instance)
+	nn := types.NamespacedName{
+		Namespace: p.instance.Namespace,
+		Name:      p.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, p.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}
