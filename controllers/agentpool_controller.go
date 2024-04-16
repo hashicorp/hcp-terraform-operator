@@ -117,24 +117,12 @@ func (r *AgentPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *AgentPoolReconciler) getToken(ctx context.Context, instance *appv1alpha2.AgentPool) (string, error) {
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
 func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentPoolInstance) error {
-	token, err := r.getToken(ctx, &ap.instance)
+	nn := types.NamespacedName{
+		Namespace: ap.instance.Namespace,
+		Name:      ap.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, ap.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}

@@ -134,24 +134,12 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	token, err := secretKeyRef(ctx, r.Client, objectKey, secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
 func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspaceInstance) error {
-	token, err := r.getToken(ctx, &w.instance)
+	nn := types.NamespacedName{
+		Namespace: w.instance.Namespace,
+		Name:      w.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, w.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}
