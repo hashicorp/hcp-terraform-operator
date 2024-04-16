@@ -111,10 +111,14 @@ func (r *WorkspaceReconciler) createWorkspaceVariables(ctx context.Context, w *w
 }
 
 // getWorkspaceVariables returns a list of all variables associated with the workspace.
-func (r *WorkspaceReconciler) getWorkspaceVariables(ctx context.Context, w *workspaceInstance) ([]*tfc.Variable, error) {
+func (r *WorkspaceReconciler) getWorkspaceVariables(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) ([]*tfc.Variable, error) {
+	if workspace.Variables == nil {
+		return []*tfc.Variable{}, nil
+	}
+
 	v, err := w.tfClient.Client.Variables.List(ctx, w.instance.Status.WorkspaceID, &tfc.VariableListOptions{})
 	if err != nil {
-		return []*tfc.Variable{}, err
+		return nil, err
 	}
 	return v.Items, nil
 }
@@ -236,9 +240,15 @@ func getWorkspaceVariablesByCategory(workspaceVariables []*tfc.Variable, categor
 }
 
 func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, w *workspaceInstance, variables []*tfc.Variable, category tfc.CategoryType) error {
-	workspaceID := w.instance.Status.WorkspaceID
 	instanceVariables := r.getVariablesByCategory(ctx, w, category)
 	workspaceVariables := getWorkspaceVariablesByCategory(variables, category)
+
+	if len(instanceVariables) == 0 && len(workspaceVariables) == 0 {
+		w.log.Info("Reconcile Variables", "msg", fmt.Sprintf("there are no %s variables both in spec and workspace", category))
+		return nil
+	}
+
+	workspaceID := w.instance.Status.WorkspaceID
 
 	daleteVariables := getVariablesToDelete(instanceVariables, workspaceVariables)
 	if len(daleteVariables) > 0 {
@@ -279,20 +289,20 @@ func (r *WorkspaceReconciler) reconcileVariablesByCategory(ctx context.Context, 
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileVariables(ctx context.Context, w *workspaceInstance) error {
+func (r *WorkspaceReconciler) reconcileVariables(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	w.log.Info("Reconcile Variables", "msg", "new reconciliation event")
 
-	workspaceVariables, err := r.getWorkspaceVariables(ctx, w)
+	workspaceVariables, err := r.getWorkspaceVariables(ctx, w, workspace)
 	if err != nil {
 		return err
 	}
 
-	// Reconcilt Terraform Variables
+	// Reconcile Terraform Variables
 	if err = r.reconcileVariablesByCategory(ctx, w, workspaceVariables, tfc.CategoryTerraform); err != nil {
 		return err
 	}
 
-	// Reconcilt Environment Variables
+	// Reconcile Environment Variables
 	if err = r.reconcileVariablesByCategory(ctx, w, workspaceVariables, tfc.CategoryEnv); err != nil {
 		return err
 	}
