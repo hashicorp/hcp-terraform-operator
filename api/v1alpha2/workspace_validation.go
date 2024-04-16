@@ -23,6 +23,8 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
 	allErrs = append(allErrs, w.validateSpecProject()...)
+	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
+	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -459,13 +461,114 @@ func (w *Workspace) validateSpecProject() field.ErrorList {
 	return allErrs
 }
 
+func validateSpecVariables(fp *field.Path, spec []Variable) field.ErrorList {
+	allErrs := field.ErrorList{}
+	d := make(map[string]struct{})
+
+	for i, v := range spec {
+		f := fp.Child(fmt.Sprintf("[%d]", i))
+
+		if _, ok := d[v.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(f.Child("Name"), v.Name))
+		}
+		d[v.Name] = struct{}{}
+
+		if v.Value == "" && v.ValueFrom == nil {
+			allErrs = append(allErrs, field.Invalid(
+				f,
+				"",
+				"at least one of Value or ValueFrom must be set",
+			))
+		}
+
+		if len(v.Value) > 0 && v.ValueFrom != nil {
+			allErrs = append(allErrs, field.Invalid(
+				f,
+				"",
+				"only one of the field Value or ValueFrom is allowed"),
+			)
+		}
+
+		if v.ValueFrom != nil {
+			f = f.Child("ValueFrom")
+			if v.ValueFrom.ConfigMapKeyRef == nil && v.ValueFrom.SecretKeyRef == nil {
+				allErrs = append(allErrs, field.Invalid(
+					f,
+					"",
+					"at least one of ConfigMapKeyRef or SecretKeyRef must be set",
+				))
+			}
+
+			if v.ValueFrom.ConfigMapKeyRef != nil && v.ValueFrom.SecretKeyRef != nil {
+				allErrs = append(allErrs, field.Invalid(
+					f,
+					"",
+					"only one of the field ConfigMapKeyRef or SecretKeyRef is allowed"),
+				)
+			}
+
+			if v.ValueFrom.ConfigMapKeyRef != nil {
+				if v.ValueFrom.ConfigMapKeyRef.Name == "" {
+					allErrs = append(allErrs, field.Invalid(
+						f.Child("ConfigMapKeyRef"),
+						"",
+						"Name must be set",
+					))
+				}
+				if v.ValueFrom.ConfigMapKeyRef.Key == "" {
+					allErrs = append(allErrs, field.Invalid(
+						f.Child("ConfigMapKeyRef"),
+						"",
+						"Key must be set",
+					))
+				}
+			}
+
+			if v.ValueFrom.SecretKeyRef != nil {
+				if v.ValueFrom.SecretKeyRef.Name == "" {
+					allErrs = append(allErrs, field.Invalid(
+						f.Child("SecretKeyRef"),
+						"",
+						"Name must be set",
+					))
+				}
+				if v.ValueFrom.SecretKeyRef.Key == "" {
+					allErrs = append(allErrs, field.Invalid(
+						f.Child("SecretKeyRef"),
+						"",
+						"Key must be set",
+					))
+				}
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecTerraformVariables() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.TerraformVariables
+
+	if spec == nil {
+		return allErrs
+	}
+
+	return validateSpecVariables(field.NewPath("spec").Child("terraformVariables"), spec)
+}
+
+func (w *Workspace) validateSpecEnvironmentVariables() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.EnvironmentVariables
+
+	if spec == nil {
+		return allErrs
+	}
+
+	return validateSpecVariables(field.NewPath("spec").Child("environmentVariables"), spec)
+}
+
 // TODO:Validation
-//
-// + EnvironmentVariables names duplicate: spec.environmentVariables[].name
-// + TerraformVariables names duplicate: spec.terraformVariables[].name
-//
-// + EnvironmentVariables only one of the values from ConfigMapKeyRef or SecretKeyRef is allowed
-// + TerraformVariables only one of the values from ConfigMapKeyRef or SecretKeyRef is allowed
 //
 // + Tags duplicate: spec.tags[]
 //
