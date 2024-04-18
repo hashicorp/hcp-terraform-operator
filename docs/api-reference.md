@@ -638,6 +638,24 @@ _Appears in:_
 | `valueFrom` _[ValueFrom](#valuefrom)_ | Source for the variable's value. Cannot be used if value is not empty. |
 
 
+#### VariableStatus
+
+
+
+
+
+_Appears in:_
+- [WorkspaceStatus](#workspacestatus)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name of the variable. |
+| `id` _string_ | ID of the variable. |
+| `versionID` _string_ | VersionID is a hash of the variable on the TFC end. |
+| `valueID` _string_ | ValueID is a hash of the variable on the CRD end. |
+| `category` _string_ | Category of the variable. |
+
+
 #### VersionControl
 
 

@@ -598,6 +598,19 @@ type RunStatus struct {
 	OutputRunID string `json:"outputRunID,omitempty"`
 }
 
+type VariableStatus struct {
+	// Name of the variable.
+	Name string `json:"name"`
+	// ID of the variable.
+	ID string `json:"id"`
+	// VersionID is a hash of the variable on the TFC end.
+	VersionID string `json:"versionID"`
+	// ValueID is a hash of the variable on the CRD end.
+	ValueID string `json:"valueID"`
+	// Category of the variable.
+	Category string `json:"category"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace.
 type WorkspaceStatus struct {
 	// Workspace ID that is managed by the controller.
@@ -624,6 +637,10 @@ type WorkspaceStatus struct {
 	//+kubebuilder:validation:Pattern:="^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$"
 	//+optional
 	TerraformVersion string `json:"terraformVersion,omitempty"`
+	// Workspace variables.
+	//
+	//+optional
+	Variables []VariableStatus `json:"variables,omitempty"`
 }
 
 //+kubebuilder:object:root=true
