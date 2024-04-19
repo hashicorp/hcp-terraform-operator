@@ -84,6 +84,14 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 
 #### Upgrade recommendations
 
+  - `2.3.0` to `2.4.0`
+
+    - The `Workspace` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.4.0/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+      ```
+
   - `2.2.0` to `2.3.0`
 
     - The `Workspace` CRD has been changed:
