@@ -758,6 +758,34 @@ spec:
                 description: Workspace last update timestamp.
                 format: int64
                 type: integer
+              variables:
+                description: Workspace variables.
+                items:
+                  properties:
+                    category:
+                      description: Category of the variable.
+                      type: string
+                    id:
+                      description: ID of the variable.
+                      type: string
+                    name:
+                      description: Name of the variable.
+                      type: string
+                    valueID:
+                      description: ValueID is a hash of the variable on the CRD end.
+                      type: string
+                    versionID:
+                      description: VersionID is a hash of the variable on the TFC
+                        end.
+                      type: string
+                  required:
+                  - category
+                  - id
+                  - name
+                  - valueID
+                  - versionID
+                  type: object
+                type: array
               workspaceID:
                 description: Workspace ID that is managed by the controller.
                 type: string
