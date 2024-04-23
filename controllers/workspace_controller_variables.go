@@ -6,6 +6,7 @@ package controllers
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 
@@ -26,7 +27,7 @@ func variableValueID(v tfc.Variable) string {
 		Sensitive:   v.Sensitive,
 		Value:       v.Value,
 	}
-	hash.Write([]byte(fmt.Sprintf("%+v", hv)))
+	gob.NewEncoder(hash).Encode(hv)
 
 	return hex.EncodeToString(hash.Sum(nil))
 }
