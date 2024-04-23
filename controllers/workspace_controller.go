@@ -122,7 +122,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueRunStatusInterval)
 	}
 
-	return doNotRequeue()
+	return requeueAfter(WorkspaceSyncPeriod)
 }
 
 // SetupWithManager sets up the controller with the Manager.
