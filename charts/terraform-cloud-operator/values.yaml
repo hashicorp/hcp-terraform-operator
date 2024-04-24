@@ -4,7 +4,7 @@
 # -- Reference to one or more secrets essential for pulling container images.
 imagePullSecrets: []
 
-# -- The number of Terraform Cloud Operator replicas.
+# -- The number of Operator replicas.
 replicaCount: 2
 
 # Operator-global options.

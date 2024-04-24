@@ -32,7 +32,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	// KNOWN ISSUE
 	//
 	// Run Task should be created dynamically before run tests and then removed once tests are done.
-	// However, due to a bug on the Terraform Cloud end, a Run Task cannot be removed immediately once the workspace is removed.
+	// However, due to a bug on the HCP Terraform end, a Run Task cannot be removed immediately once the workspace is removed.
 	// The Run Task remains associated with the deleted workspace due to the "cool down" period of ~15 minutes.
 	//
 	// IPL-3276.

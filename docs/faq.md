@@ -16,19 +16,19 @@
 
 ## General Questions
 
-- **What is the difference between versions `v1` and `v2` of the Operator?**
+- **What is the difference between Terraform Cloud Operator and HCP Terraform Operator?**
 
-  The second version of the Operator was developed to address some major concerns that we encountered in the first version.
+  The HCP Terraform Operator was developed to address some major concerns that we encountered in the first version.
 
-  Here is the list of major improvements in the version 2:
+  Here is the list of major improvements in the HCP Terraform Operator compared to its predecessor, the [Terraform Cloud Operator](https://github.com/hashicorp/terraform-k8s):
 
   - A new operator option `--namespace` allows configuration of namespaces to watch. It can be one of the following: all, single, or multiple namespaces. By default, the Operator watches all namespaces, and as your setup grows, you can have multiple deployments of the Operator to better handle the load.
 
-  - A new operator option `--sync-period` allows configuration of the minimum frequency at which all watched resources are reconciled. This allows faster synchronization of the state between Custom Resources and Terraform Cloud.
+  - A new operator option `--sync-period` allows configuration of the minimum frequency at which all watched resources are reconciled. This allows faster synchronization of the state between Custom Resources and HCP Terraform.
 
-  - The Operator manages a Terraform Cloud client for each Custom Resource. This means that a single deployment of the Operator can work across multiple Terraform Cloud organizations.
+  - The Operator manages a HCP Terraform client for each Custom Resource. This means that a single deployment of the Operator can work across multiple HCP Terraform organizations.
 
-  - The Operator consists of multiple controllers that manage different Terraform Cloud resources. This provides additional flexibility, e.g. a module can be executed in a workspace that is not managed by the Operator. More details about controllers you can find in the [README](../README.md) file.
+  - The Operator consists of multiple controllers that manage different HCP Terraform resources. This provides additional flexibility, e.g. a module can be executed in a workspace that is not managed by the Operator. More details about controllers you can find in the [README](../README.md) file.
 
   - Each controller has the option to manage the number of workers it has. By default, each controller has 1 worker. A worker is a thread that runs the control loop for a given Custom Resource. The more workers the controller has, the more Customer Resources it can handle concurrently. This improves the Operator's performance. Please refer to the [performance FAQ section](./faq.md#performance) to better understand the pros and cons.
 
@@ -38,7 +38,7 @@
 
     - Controllers produce event messages for each Custom Resource.
 
-    - Better coverage of features supported by Terraform Cloud, more information [here](./features.md).
+    - Better coverage of features supported by HCP Terraform, more information [here](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes#supported-terraform-cloud-features).
 
     - Better test coverage.
 
@@ -62,7 +62,7 @@
 
 - **What will happen if I have multiple deployments of the Operator watching the same namespace(s)?**
 
-  Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Customer Resource objects are constantly reconciled and this can cause constant updates of Terraform Cloud objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
+  Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Customer Resource objects are constantly reconciled and this can cause constant updates of HCP Terraform objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
 
   It is definitely better to avoid such situations.
 
@@ -82,15 +82,15 @@
 
 - **Does the Operator work with Terraform Enterprise / TFE?**
 
-  Yes, the operator can be configured to use the custom TFE API endpoint using the [`operator.tfeAddress`](../charts/terraform-cloud-operator/README.md#values) value in the Helm chart. This value should be a valid URL including the protocol(`https://`), for the API of a Terraform Enterprise instance. Once the `operator.tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
+  Yes, the operator can be configured to use the custom TFE API endpoint using the [`operator.tfeAddress`](../charts/terraform-cloud-operator/README.md#values) value in the Helm chart. This value should be a valid URL including the protocol(`https://`), for the API of a Terraform Enterprise instance. Once the `operator.tfeAddress` attribute is set, the operator will no longer access the public HCP Terraform, but rather the private Terraform Enterprise instance.
 
-- **What can I do if the Operator cannot get a Terraform Cloud client due to a TLS certificate issue?**
+- **What can I do if the Operator cannot get a HCP Terraform client due to a TLS certificate issue?**
 
   There are multiple reasons why you may observe an error message in logs that indicate an issue with a TLS certificate. The error message example: _*tls: failed to verify certificate: x509: certificate has expired or is not yet valid*_
 
   * You have a Terraform Enterprise instance and use the TLS certificate that is signed by a Certificate Authority that is not recognized by the Operator. In this case, you can use the value `customCAcertificates` of the Helm chart to specify a Certificate Authority bundle to validate API TLS certificates.
   * You have a Terraform Enterprise instance and the TLS certificate has expired. In this case, you can use the value `operator.skipTLSVerify` of the Helm chart to skip the TLS validation. **Be aware of the potential security risks.**
-  * There is a TLS proxy between the Operator and Terraform Cloud / Enterprise instance that is installed by your security team to decrypt TLS connections. In this case, you can use the value `operator.skipTLSVerify` or `customCAcertificates` of the Helm chart to skip the TLS validation or specify a Certificate Authority bundle to validate API TLS certificates, respectively. Alternatively, you could talk to your security team to add an expection to this connection.
+  * There is a TLS proxy between the Operator and HCP Terraform / Enterprise instance that is installed by your security team to decrypt TLS connections. In this case, you can use the value `operator.skipTLSVerify` or `customCAcertificates` of the Helm chart to skip the TLS validation or specify a Certificate Authority bundle to validate API TLS certificates, respectively. Alternatively, you could talk to your security team to add an expection to this connection.
 
 - **What does `kube-rbac-proxy` do?**
 
@@ -148,7 +148,7 @@
 
 - **How many Custom Resources can be managed by a single deployment of the Operator?**
 
-  In theory, a single deployment of the Operator can manage thousands of resources. However, the Operator's performance depends on the number of API calls it does and the Terraform Cloud API [rate limit](https://developer.hashicorp.com/terraform/cloud-docs/api-docs#rate-limiting) for the token used.
+  In theory, a single deployment of the Operator can manage thousands of resources. However, the Operator's performance depends on the number of API calls it does and the HCP Terraform API [rate limit](https://developer.hashicorp.com/terraform/cloud-docs/api-docs#rate-limiting) for the token used.
 
   The number of API calls the Operator does depends on multiple factors:
 
@@ -158,13 +158,13 @@
 
   - The type of the resource.
 
-  - The Terraform Cloud features being used.
+  - The HCP Terraform features being used.
 
-  With the default values of `sync-period` (5 minutes) and `*-workers` (1 worker per controller), we recommend managing **100 resources per token**. This number can vary based on previously mentioned factors. This number can be updated later to accommodate changes in the Terraform Cloud API.
+  With the default values of `sync-period` (5 minutes) and `*-workers` (1 worker per controller), we recommend managing **100 resources per token**. This number can vary based on previously mentioned factors. This number can be updated later to accommodate changes in the HCP Terraform API.
 
 - **What can be done to improve performance?**
 
-  The Operator allows you to refer to Terraform Cloud resources by their name or ID. For example, the `Workspace` controller allows you to specify another workspace to use as a [Run Trigger](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers).  It accepts a list of workspaces that will be triggered where each item can either be the `ID` or `Name` of the workspace. When you use a name, the Operator does an API call on each reconciliation in order to get the ID of the target Workspace. This makes configurations easier to read, but causes more API calls to be as the operator needs to figure out what the ID of workspace is from the name. 
+  The Operator allows you to refer to HCP Terraform resources by their name or ID. For example, the `Workspace` controller allows you to specify another workspace to use as a [Run Trigger](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers).  It accepts a list of workspaces that will be triggered where each item can either be the `ID` or `Name` of the workspace. When you use a name, the Operator does an API call on each reconciliation in order to get the ID of the target Workspace. This makes configurations easier to read, but causes more API calls to be as the operator needs to figure out what the ID of workspace is from the name.
 
   One way to improve performance is to use the referred object ID. In this example, by the Workspace ID. In this case, the Operator will use the ID directly without trying to resolve it.
 
@@ -195,7 +195,7 @@
 
 - **What will happen if I delete an Agent Pool Customer Resource?**
 
-  The Agent Pool controller will delete Agent Pool from Terraform Cloud, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.
+  The Agent Pool controller will delete Agent Pool from HCP Terraform, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.
 
 - **What triggers Agents scaling?**
 

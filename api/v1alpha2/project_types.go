@@ -96,7 +96,7 @@ type CustomProjectPermissions struct {
 	Variables tfc.WorkspaceVariablesPermissionType `json:"variables,omitempty"`
 }
 
-// Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization,
+// HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
 // users must belong to a team that has been granted the appropriate permissions.
 // You can assign project-specific permissions to teams.
 // More information:
@@ -140,7 +140,7 @@ type ProjectSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name"`
 
-	// Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization,
+	// HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
 	// users must belong to a team that has been granted the appropriate permissions.
 	// You can assign project-specific permissions to teams.
 	// More information:

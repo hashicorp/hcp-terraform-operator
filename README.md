@@ -1,8 +1,8 @@
 <a href="https://cloud.hashicorp.com/products/terraform">
-    <img src=".github/tf_logo.png" alt="Terraform logo" title="Terraform Cloud" align="left" height="50" />
+    <img src=".github/tf_logo.png" alt="Terraform logo" title="HCP Terraform" align="left" height="50" />
 </a>
 
-# Terraform Cloud Operator v2 for Kubernetes
+# HCP Terraform Operator for Kubernetes
 
 [![GitHub release (with filter)](https://img.shields.io/github/v/release/hashicorp/terraform-cloud-operator)](https://github.com/hashicorp/terraform-cloud-operator/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hashicorp/terraform-cloud-operator)](https://hub.docker.com/r/hashicorp/terraform-cloud-operator)
@@ -15,25 +15,25 @@ Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via K
 
 The Operator can manage the following types of resources:
 
-- `AgentPool` manages [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling
+- `AgentPool` manages [HCP Terraform Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [HCP Terraform Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
-- `Project` manages [Terraform Cloud Projects](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects)
-- `Workspace` manages [Terraform Cloud Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
+- `Project` manages [HCP Terraform Projects](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects)
+- `Workspace` manages [HCP Terraform Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
 ## Getting started
 
 To get started see our tutorials on the HashiCorp Developer Portal:
 
-- [Terraform Cloud Operator for Kubernetes overview](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes)
-- [Deploy infrastructure with the Terraform Cloud Kubernetes Operator v2](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2)
-- [Manage agent pools with the Terraform Cloud Kubernetes Operator v2](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2-agentpool)
-- [Terraform Cloud Kubernetes Operator v2 Migration Guide](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes/ops-v2-migration)
+- [HCP Terraform Operator for Kubernetes overview](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes)
+- [Deploy infrastructure with the HCP Terraform Operator for Kubernetes](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2)
+- [Manage agent pools with the HCP Terraform Operator for Kubernetes](https://developer.hashicorp.com/terraform/tutorials/kubernetes/kubernetes-operator-v2-agentpool)
+- [HCP Terraform Operator for Kubernetes Migration Guide](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes/ops-v2-migration)
 
 ## Documentation
 
 ### Supported Features
 
-The full list of supported Terraform Cloud features can be found on our [Developer portal](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes#supported-terraform-cloud-features).
+The full list of supported HCP Terraform Operator features can be found on our [Developer portal](https://developer.hashicorp.com/terraform/cloud-docs/integrations/kubernetes#supported-terraform-cloud-features).
 
 ### Installation
 
@@ -60,7 +60,7 @@ Controllers usage guides:
 - [Project](./docs/project.md)
 - [Workspace](./docs/workspace.md)
 
-Annotations and Labels used by Terraform Cloud Operator can be found [here](./docs/annotations-and-labels.md).
+Annotations and Labels used by HCP Terraform Operator can be found [here](./docs/annotations-and-labels.md).
 
 ### Metrics
 
@@ -128,7 +128,7 @@ If you believe you've found a bug and cannot find an existing issue, feel free t
 
 ## Contributing to the Operator
 
-We appreciate your enthusiasm for participating in the development of the Terraform Cloud Operator. To contribute, please read the [contribution guidelines](./CONTRIBUTING.md).
+We appreciate your enthusiasm for participating in the development of the HCP Terraform Operator. To contribute, please read the [contribution guidelines](./CONTRIBUTING.md).
 
 ## Security Reporting
 

@@ -1,6 +1,6 @@
 # Contributor Guide
 
-We appreciate your enthusiasm for participating in the development of the Terraform Cloud Operator. Your contributions are warmly welcomed. Here you will find instructions on how to contribute to the Terraform Cloud Operator.
+We appreciate your enthusiasm for participating in the development of the HCP Terraform Operator. Your contributions are warmly welcomed. Here you will find instructions on how to contribute to the HCP Terraform Operator.
 
 If you're a newcomer to the realm of Kubernetes Operators and are eager to expand your knowledge, a great place to begin your journey is by exploring the [Kubebuilder Book](https://book.kubebuilder.io/).
 
@@ -64,7 +64,7 @@ We value your desire to contribute by introducing new features or enhancing exis
 
 1. Create an API token that you are going to use for development
 
-    We strongly advise creating a separate account, organization, and API token for development purposes. A free [Terraform Cloud](https://app.terraform.io/) account is more than enough for that purpose. Follow the steps in the [Usage guide](./docs/usage.md#prerequisites) to get more information on how to generate a token and keep it in the Kubernetes Secret.
+    We strongly advise creating a separate account, organization, and API token for development purposes. A free [HCP Terraform](https://app.terraform.io/) account is more than enough for that purpose. Follow the steps in the [Usage guide](./docs/usage.md#prerequisites) to get more information on how to generate a token and keep it in the Kubernetes Secret.
 
 1. Install Go
 

@@ -9,9 +9,10 @@ import (
 
 // SHARED CONSTANTS
 const (
-	requeueInterval = 15 * time.Second
 	annotationTrue  = "true"
 	annotationFalse = "false"
+	requeueInterval = 15 * time.Second
+	runMessage      = "Triggered by HCP Terraform Operator"
 )
 
 // AGENT POOL CONTROLLER'S CONSTANTS

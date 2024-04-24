@@ -28,7 +28,7 @@ import (
 	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
-type TerraformCloudClient struct {
+type HCPTerraformClient struct {
 	Client *tfc.Client
 }
 
@@ -43,7 +43,7 @@ type workspaceInstance struct {
 	instance appv1alpha2.Workspace
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 // +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -98,7 +98,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	err = r.getTerraformClient(ctx, &w)
 	if err != nil {
-		w.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
+		w.log.Error(err, "Workspace Controller", "msg", "failed to get HCP Terraform client")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
@@ -492,7 +492,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", w.instance.Status.WorkspaceID)
 	}
 
-	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
+	// read the HCP Terraform workspace to compare it with the Kubernetes object spec
 	workspace, err = r.readWorkspace(ctx, w)
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
@@ -514,7 +514,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		}
 	}
 
-	// update workspace if any changes have been made in the Kubernetes object spec or Terraform Cloud workspace
+	// update workspace if any changes have been made in the Kubernetes object spec or HCP Terraform workspace
 	if needToUpdateWorkspace(&w.instance, workspace) {
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are not matching, need to update workspace ID %s", w.instance.Status.WorkspaceID))
 		workspace, err = r.updateWorkspace(ctx, w, workspace)

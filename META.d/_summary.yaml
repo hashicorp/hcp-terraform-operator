@@ -10,6 +10,6 @@ partition: tf-ecosystem
 summary:
   owner: team-tf-hybrid-cloud
   description: |
-    The Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via Kubernetes Custom Resources.  
+    The Kubernetes Operator allows managing HCP Terraform / Enterprise resources via Kubernetes Custom Resources.
   
   visibility: external

@@ -65,7 +65,7 @@ spec:
                 type: string
               teamAccess:
                 description: |-
-                  Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization,
+                  HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
                   users must belong to a team that has been granted the appropriate permissions.
                   You can assign project-specific permissions to teams.
                   More information:
@@ -73,7 +73,7 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions
                 items:
                   description: |-
-                    Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization,
+                    HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
                     users must belong to a team that has been granted the appropriate permissions.
                     You can assign project-specific permissions to teams.
                     More information:

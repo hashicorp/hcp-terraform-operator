@@ -89,10 +89,10 @@ var _ = Describe("Module controller", Ordered, func() {
 			return errors.IsNotFound(err)
 		}).Should(BeTrue())
 
-		// Make sure that the Terraform Cloud workspace is deleted
+		// Make sure that the HCP Terraform workspace is deleted
 		Eventually(func() bool {
 			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-			// The Terraform Cloud client will return the error 'ResourceNotFound' once the workspace does not exist
+			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
 			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})

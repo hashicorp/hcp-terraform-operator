@@ -51,7 +51,7 @@ In the above example, the Operator will watch 3 namespaces in the Kubernetes clu
 
 ### Install to work with Terraform Enterprise
 
-If targeting a Terraform Enterprise instance rather than Terraform Cloud, set the API endpoint URL using the `operator.tfeAddress` value:
+If targeting a Terraform Enterprise instance rather than HCP Terraform, set the API endpoint URL using the `operator.tfeAddress` value:
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
@@ -153,4 +153,4 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
-| replicaCount | int | `2` | The number of Terraform Cloud Operator replicas. |
+| replicaCount | int | `2` | The number of Operator replicas. |

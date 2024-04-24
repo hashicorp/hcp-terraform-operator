@@ -39,7 +39,7 @@ type projectInstance struct {
 	instance appv1alpha2.Project
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 //+kubebuilder:rbac:groups=app.terraforp.io,resources=projects,verbs=get;list;watch;create;update;patch;delete

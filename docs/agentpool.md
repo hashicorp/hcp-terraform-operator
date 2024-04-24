@@ -1,12 +1,12 @@
 # `AgentPool`
 
-`AgentPool` controller allows managing [Terraform Cloud Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [Terraform Cloud Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling. The Kubernetes CR acts as a single source of truth. It means that all Agent Pool changes made outside of the CR will be returned to the state specified in the CR.
+`AgentPool` controller allows managing [HCP Terraform Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [HCP Terraform Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling. The Kubernetes CR acts as a single source of truth. It means that all Agent Pool changes made outside of the CR will be returned to the state specified in the CR.
 
 ## Agent Pool Custom Resorce
 
 Please refer to the [CRD](../config/crd/bases/app.terraform.io_agentpools.yaml) and [API Reference](./api-reference.md#agentpool) to get the full list of available options.
 
-In the following example, we are going to create a new Terraform Cloud Agent Pool with 3 agent tokens. Take a look at the [Prerequisites](./usage.md#prerequisites) before proceeding further.
+In the following example, we are going to create a new HCP Terraform Agent Pool with 3 agent tokens. Take a look at the [Prerequisites](./usage.md#prerequisites) before proceeding further.
 
 1. Create a YAML manifest.
 
@@ -41,7 +41,7 @@ In the following example, we are going to create a new Terraform Cloud Agent Poo
     $ kubectl apply -f agentpool.yaml
     ```
 
-3. Wait till the Operator creates a new agent pool `agent-pool-demo` under the `kubernetes-operator` organization, 3 agent tokens: `white`, `blue`, and `red` and the deployment for agent pods `agents-of-agent-pool-demo`. You can validate that either by logging in to the Terraform Cloud WEB UI and navigating to the Agent Pools or via CLI. Soon, the agent should register themselves with Terraform Cloud and appear in the Agent Pool UI.
+3. Wait till the Operator creates a new agent pool `agent-pool-demo` under the `kubernetes-operator` organization, 3 agent tokens: `white`, `blue`, and `red` and the deployment for agent pods `agents-of-agent-pool-demo`. You can validate that either by logging in to the HCP Terraform WEB UI and navigating to the Agent Pools or via CLI. Soon, the agent should register themselves with HCP Terraform and appear in the Agent Pool UI.
 
     Here is an example of the Status and Events outputs of the successfully created Agent Pool and Agent Tokens:
 

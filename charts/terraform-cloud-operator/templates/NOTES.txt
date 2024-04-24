@@ -1,4 +1,4 @@
-Thank you for installing HashiCorp Terraform Cloud Operator!
+Thank you for installing HashiCorp HCP Terraform Operator!
 
 Documentation:
  - https://github.com/hashicorp/terraform-cloud-operator

@@ -71,10 +71,10 @@ var _ = Describe("Project controller", Ordered, func() {
 			return errors.IsNotFound(err)
 		}).Should(BeTrue())
 
-		// Make sure that the Terraform Cloud project is deleted
+		// Make sure that the HCP Terraform project is deleted
 		Eventually(func() bool {
 			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
-			// The Terraform Cloud client will return the error 'ResourceNotFound' once the workspace does not exist
+			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
 			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})
@@ -90,7 +90,7 @@ var _ = Describe("Project controller", Ordered, func() {
 
 			initProjectID := instance.Status.ID
 
-			// Delete the Terraform Cloud project
+			// Delete the HCP Terraform project
 			Expect(tfClient.Projects.Delete(ctx, instance.Status.ID)).Should(Succeed())
 
 			// Wait until the controller re-creates the project and updates Status.ID with a new valid project ID
@@ -110,7 +110,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
-			// Wait until the controller updates Terraform Cloud workspace
+			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
 				prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
 				Expect(prj).ShouldNot(BeNil())
@@ -122,14 +122,14 @@ var _ = Describe("Project controller", Ordered, func() {
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
 			createProject(instance)
 
-			// Change the Terraform Cloud project name
+			// Change the HCP Terraform project name
 			prj, err := tfClient.Projects.Update(ctx, instance.Status.ID, tfc.ProjectUpdateOptions{
 				Name: tfc.String(fmt.Sprintf("%v-new", instance.Spec.Name)),
 			})
 			Expect(prj).ShouldNot(BeNil())
 			Expect(err).Should(Succeed())
 
-			// Wait until the controller updates Terraform Cloud project
+			// Wait until the controller updates HCP Terraform project
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, namespacedName, instance)
 				Expect(err).Should(Succeed())

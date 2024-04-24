@@ -1,4 +1,5 @@
-name: E2E on Terraform Cloud
+name: E2E on HCP Terraform Operator
+
 
 on:
   schedule:

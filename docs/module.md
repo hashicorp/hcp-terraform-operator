@@ -1,6 +1,6 @@
 # `Module`
 
-`Module` controller allows executing arbitrary Terraform Modules code in Terraform Cloud Workspace via Kubernetes Custom Resources.
+`Module` controller allows executing arbitrary Terraform Modules code in HCP Terraform Workspace via Kubernetes Custom Resources.
 
 Please refer to the [CRD](../config/crd/bases/app.terraform.io_modules.yaml) and [API Reference](./api-reference.md#module) to get the full list of available options.
 
