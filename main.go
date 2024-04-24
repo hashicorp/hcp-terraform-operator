@@ -81,6 +81,7 @@ func main() {
 		"The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc.")
 
 	// TODO
+	// - Add validation that 'sync-period' has a higher value than '*-sync-period'
 	// - Add '*-sync-period' option for all controllers.
 	// - Add a new CLI option named 'status' (or consider a different name) that will print out the operator settings passed via flags.
 

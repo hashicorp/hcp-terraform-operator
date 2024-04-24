@@ -78,6 +78,8 @@
 
   The controller synchronization period should be aligned with the number of managed Customer Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
 
+  The value of `sync-period` should be higher than the value of `*-sync-period`.
+
 - **Does the Operator work with Terraform Enterprise / TFE?**
 
   Yes, the operator can be configured to use the custom TFE API endpoint using the [`operator.tfeAddress`](../charts/terraform-cloud-operator/README.md#values) value in the Helm chart. This value should be a valid URL including the protocol(`https://`), for the API of a Terraform Enterprise instance. Once the `operator.tfeAddress` attribute is set, the operator will no longer access the public Terraform Cloud, but rather the private Terraform Enterprise instance.
