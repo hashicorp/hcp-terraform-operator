@@ -395,6 +395,12 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		updateOptions.Project = &tfc.Project{ID: prjID}
 	} else {
 		// Setting up `Project` to nil(tfc.WorkspaceUpdateOptions{Project: nil}) won't move the workspace to the default project after the update.
+		// TODO:
+		// - The default project can be renamed, but cannot be deleted.
+		//   We should do this API call once on a workspace creation and keep the default project ID in the status for future reference.
+		//   We could validate whether or not the default project ID in the status is empty or not during the update stage.
+		//   If the default project ID in the status is empty, then we make an API call to fill in this gap.
+		//   Ideally, it will never happen but can during the TFE upgrade.
 		org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
