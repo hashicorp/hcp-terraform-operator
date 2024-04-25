@@ -401,8 +401,10 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
 			return nil, err
 		}
-		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
-		updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+		if org.DefaultProject != nil {
+			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
+			updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+		}
 	}
 
 	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
