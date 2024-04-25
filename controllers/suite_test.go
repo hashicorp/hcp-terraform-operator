@@ -112,9 +112,6 @@ var _ = BeforeSuite(func() {
 		Fail("Environment variable TFC_TOKEN is required, but either not set or empty")
 	}
 	// Terraform Cloud Client
-	tfClient, err = tfc.NewClient(&tfc.Config{Token: os.Getenv("TFC_TOKEN")})
-	Expect(err).ToNot(HaveOccurred())
-	Expect(tfClient).ToNot(BeNil())
 	httpClient := tfc.DefaultConfig().HTTPClient
 	insecure := false
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
