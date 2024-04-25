@@ -1,0 +1,6 @@
+kind: BUG FIXES
+body: '`Workspace`: Fix an issue when the controller panics while accessing the default
+  Project.'
+time: 2024-04-25T10:09:57.892553+02:00
+custom:
+  PR: "394"
