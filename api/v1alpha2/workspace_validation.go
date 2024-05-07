@@ -22,10 +22,10 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecRunTasks()...)
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
-	allErrs = append(allErrs, w.validateSpecProject()...)d
-	allErrs = append(allErrs, w.validateSpecFileTriggers()...)d
+	allErrs = append(allErrs, w.validateSpecProject()...)
+	allErrs = append(allErrs, w.validateSpecFileTriggers()...)
 	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
-	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)d
+	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 
 	if len(allErrs) == 0 {
 		return nil
