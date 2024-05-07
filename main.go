@@ -61,19 +61,29 @@ func main() {
 	flag.Var(&watchNamespaces, "namespace", "Namespace to watch")
 	var opVersion bool
 	flag.BoolVar(&opVersion, "version", false, "Print operator version")
-	// OPERATOR OPRTIONS
+	// AGENT POOL CONTROLLER OPTIONS
 	var agentPoolWorkers int
 	flag.IntVar(&agentPoolWorkers, "agent-pool-workers", 1,
 		"The number of the Agent Pool controller workers.")
+	// MODULE CONTROLLER OPTIONS
 	var moduleWorkers int
 	flag.IntVar(&moduleWorkers, "module-workers", 1,
 		"The number of the Module controller workers.")
+	// PROJECT CONTROLLER OPTIONS
 	var projectWorkers int
 	flag.IntVar(&projectWorkers, "project-workers", 1,
 		"The number of the Workspace controller workers.")
+	// WORKSPACE CONTROLLER OPTIONS
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
 		"The number of the Workspace controller workers.")
+	flag.DurationVar(&controllers.WorkspaceSyncPeriod, "workspace-sync-period", 5*time.Minute,
+		"The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc.")
+
+	// TODO
+	// - Add validation that 'sync-period' has a higher value than '*-sync-period'
+	// - Add '*-sync-period' option for all controllers.
+	// - Add a new CLI option named 'status' (or consider a different name) that will print out the operator settings passed via flags.
 
 	flag.Parse()
 
@@ -111,8 +121,8 @@ func main() {
 			GroupKindConcurrency: map[string]int{
 				"AgentPool.app.terraform.io": agentPoolWorkers,
 				"Module.app.terraform.io":    moduleWorkers,
-				"Workspace.app.terraform.io": workspaceWorkers,
 				"Project.app.terraform.io":   projectWorkers,
+				"Workspace.app.terraform.io": workspaceWorkers,
 			},
 		},
 		Scheme: scheme,
@@ -151,6 +161,9 @@ func main() {
 	} else {
 		setupLog.Info("Watching all namespaces")
 	}
+
+	setupLog.Info(fmt.Sprintf("Operator sync period: %s", syncPeriod))
+	setupLog.Info(fmt.Sprintf("Workspace sync period: %s", controllers.WorkspaceSyncPeriod))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
@@ -201,7 +214,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info(fmt.Sprintf("Terraform Cloud Operator Version: %s", version.Version))
+	setupLog.Info(fmt.Sprintf("HCP Terraform Operator Version: %s", version.Version))
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

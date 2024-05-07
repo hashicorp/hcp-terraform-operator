@@ -87,7 +87,11 @@ help: ## Display this help.
 ##@ Documentation
 .PHONY: docs
 docs: crd-ref-docs ## Generate API reference documentation.
-	$(CRD_REF_DOCS) --renderer=markdown --source-path ./api/v1alpha2/ --config=./docs/config.yaml --output-path ./docs/api-reference.md
+	$(CRD_REF_DOCS) --renderer=markdown \
+		--source-path ./api/v1alpha2/ \
+		--config=./docs/config.yaml \
+		--templates-dir=./docs/templates/markdown \
+		--output-path ./docs/api-reference.md
 
 .PHONY: helm-docs
 helm-docs: install-helm-docs ## Generate Helm chart documentation.
@@ -189,8 +193,8 @@ HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
-CONTROLLER_TOOLS_VERSION ?= v0.11.3
-CRD_REF_DOCS_VERSION ?= v0.0.10
+CONTROLLER_TOOLS_VERSION ?= v0.14.0
+CRD_REF_DOCS_VERSION ?= v0.0.12
 HELM_DOCS_VERSION ?= v1.12.0
 HASHICORP_COPYWRITE_VERSION ?= 0.17.0
 

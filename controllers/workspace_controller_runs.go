@@ -21,7 +21,7 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 			runType = rt
 		}
 		options := tfc.RunCreateOptions{
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(runMessage),
 			Workspace: workspace,
 		}
 

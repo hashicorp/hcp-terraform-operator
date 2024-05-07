@@ -3,6 +3,13 @@
   Make changes _only_ in the README.md.gotmpl file and then run `make helm-docs` to generate the README.md file.
 -->
 
+> **Warning**
+> In upcoming releases, we shall proceed with renaming this project to HCP Terraform Operator for Kubernetes or simply HCP Terraform Operator. This measure is necessary in response to the recent announcement of [The Infrastructure Cloud](https://www.hashicorp.com/blog/introducing-the-infrastructure-cloud).
+>
+> The most noticeable change you can expect in version 2.6.0 is the renaming of this repository and related resources, such as the Helm chart and Docker Hub names.
+>
+> Please follow the changelogs for updates.
+
 # Installation
 
 Use the option `--version VERSION` with `helm install` and `helm upgrade` commands to specify the version you want to install.
@@ -25,7 +32,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/terraform-cloud-operator \
-      --version 2.3.0 \
+      --version 2.4.0 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -36,7 +43,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
-  --version 2.3.0 \
+  --version 2.4.0 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -51,11 +58,11 @@ In the above example, the Operator will watch 3 namespaces in the Kubernetes clu
 
 ### Install to work with Terraform Enterprise
 
-If targeting a Terraform Enterprise instance rather than Terraform Cloud, set the API endpoint URL using the `operator.tfeAddress` value:
+If targeting a Terraform Enterprise instance rather than HCP Terraform, set the API endpoint URL using the `operator.tfeAddress` value:
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
-  --version 2.3.0 \
+  --version 2.4.0 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -67,7 +74,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/terraform-cloud-operator \
-  --version 2.3.0 \
+  --version 2.4.0 \
   --namespace tfc-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
@@ -83,6 +90,14 @@ In some cases, such as when a new version of the Operator adds a new controller 
 For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#general-questions).
 
 #### Upgrade recommendations
+
+  - `2.3.0` to `2.4.0`
+
+    - The `Workspace` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.4.0/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+      ```
 
   - `2.2.0` to `2.3.0`
 
@@ -123,12 +138,13 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | controllers.agentPool.workers | int | `1` | The number of the Agent Pool controller workers. |
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
+| controllers.workspace.syncPeriod | string | `"5m"` | The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.workspace.workers | int | `1` | The number of the Workspace controller workers. |
 | customCAcertificates | string | `""` | Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates. |
 | imagePullSecrets | list | `[]` | Reference to one or more secrets essential for pulling container images. |
 | kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | kubeRbacProxy.image.repository | string | `"quay.io/brancz/kube-rbac-proxy"` | Image repository. |
-| kubeRbacProxy.image.tag | string | `"v0.16.0"` | Image tag. |
+| kubeRbacProxy.image.tag | string | `"v0.17.0"` | Image tag. |
 | kubeRbacProxy.resources.limits.cpu | string | `"500m"` | Limits as a maximum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
@@ -144,4 +160,4 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
-| replicaCount | int | `2` | The number of Terraform Cloud Operator replicas. |
+| replicaCount | int | `2` | The number of Operator replicas. |

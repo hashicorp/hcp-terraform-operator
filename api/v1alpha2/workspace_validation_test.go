@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	tfc "github.com/hashicorp/go-tfe"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
@@ -932,13 +934,13 @@ func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
 	}
 
 	for n, c := range successCases {
-		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecFileTriggers(); len(errs) != 0 {
+		t.Run(n, func(t *testing.T) {d
+			if errs := c.validateSpecFileTriggers(); len(errs) != 0 {d
 				t.Errorf("Unexpected validation errors: %v", errs)
 			}
 		})
 	}
-
+  
 	errorCases := map[string]Workspace{
 		"TriggerPrefixesWithoutWorkingDirectory": {
 			Spec: WorkspaceSpec{
@@ -969,6 +971,131 @@ func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecFileTriggers(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateWorkspaceSpecVariables(t *testing.T) {
+	t.Parallel()
+
+	f := field.NewPath("spec")
+
+	successCases := map[string][]Variable{
+		"HasOnlyValue": {{
+			Name:  "name",
+			Value: "42",
+		}},
+		"HasOnlyValueFromConfigMapKeyRef": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					Key:                  "this",
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+			},
+		}},
+		"HasOnlyValueFromSecretKeySelector": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					Key:                  "this",
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+			},
+		}},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := validateSpecVariables(f.Child("terraformVariables"), c); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+			if errs := validateSpecVariables(f.Child("environmentVariables"), c); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string][]Variable{
+		"HasDuplicateVariablesName": {
+			{
+				Name:  "name",
+				Value: "42",
+			},
+			{
+				Name:  "name",
+				Value: "42",
+			},
+		},
+		"HasValueAndValueFrom": {{
+			Name:  "name",
+			Value: "42",
+			ValueFrom: &ValueFrom{
+				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					Key:                  "this",
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+			},
+		}},
+		"HasEmptyValueFrom": {{
+			Name:      "name",
+			ValueFrom: &ValueFrom{},
+		}},
+		"HasValueFromConfigMapAndSecret": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					Key:                  "this",
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+				SecretKeyRef: &corev1.SecretKeySelector{
+					Key:                  "this",
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+			},
+		}},
+		"HasValueFromConfigMapWithoutName": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					Key: "this",
+				},
+			},
+		}},
+		"HasValueFromConfigMapWithoutKey": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+			},
+		}},
+		"HasValueFromSecretWithoutName": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					Key: "this",
+				},
+			},
+		}},
+		"HasValueFromSecretWithoutKey": {{
+			Name: "name",
+			ValueFrom: &ValueFrom{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "this"},
+				},
+			},
+		}},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := validateSpecVariables(f.Child("terraformVariables"), c); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+			if errs := validateSpecVariables(f.Child("environmentVariables"), c); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})

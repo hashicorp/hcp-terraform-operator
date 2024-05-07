@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
@@ -43,7 +42,7 @@ type moduleInstance struct {
 	instance appv1alpha2.Module
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 var (
@@ -99,8 +98,8 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	err = r.getTerraformClient(ctx, &m)
 	if err != nil {
-		m.log.Error(err, "Module Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		m.log.Error(err, "Module Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -185,36 +184,12 @@ func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *ap
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
-func (r *ModuleReconciler) getToken(ctx context.Context, instance *appv1alpha2.Module) (string, error) {
-	var secret *corev1.Secret
-
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	secret, err := r.getSecret(ctx, objectKey)
-	if err != nil {
-		return "", err
-	}
-
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
-}
-
 func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInstance) error {
-	token, err := r.getToken(ctx, &m.instance)
+	nn := types.NamespacedName{
+		Namespace: m.instance.Namespace,
+		Name:      m.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, m.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}
@@ -305,7 +280,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			IsDestroy: tfc.Bool(true),
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(runMessage),
 			Workspace: &tfc.Workspace{
 				ID: m.instance.Status.WorkspaceID,
 			},
@@ -494,7 +469,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	if needNewRun(&m.instance) {
 		m.log.Info("Reconcile Run", "msg", "create a new run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(runMessage),
 			Workspace: workspace,
 		})
 		if err != nil {

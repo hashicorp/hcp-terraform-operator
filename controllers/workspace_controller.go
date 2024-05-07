@@ -10,8 +10,9 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
+	"github.com/go-logr/logr"
+	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,14 +24,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/go-logr/logr"
-
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 	"github.com/hashicorp/terraform-cloud-operator/version"
 )
 
-type TerraformCloudClient struct {
+type HCPTerraformClient struct {
 	Client *tfc.Client
 }
 
@@ -45,7 +43,7 @@ type workspaceInstance struct {
 	instance appv1alpha2.Workspace
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 // +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -100,8 +98,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	err = r.getTerraformClient(ctx, &w)
 	if err != nil {
-		w.log.Error(err, "Workspace Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		w.log.Error(err, "Workspace Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -124,7 +122,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueRunStatusInterval)
 	}
 
-	return doNotRequeue()
+	return requeueAfter(WorkspaceSyncPeriod)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -135,43 +133,12 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *WorkspaceReconciler) getConfigMap(ctx context.Context, name types.NamespacedName) (*corev1.ConfigMap, error) {
-	cm := &corev1.ConfigMap{}
-	err := r.Client.Get(ctx, name, cm)
-
-	return cm, err
-}
-
-func (r *WorkspaceReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
-func (r *WorkspaceReconciler) getToken(ctx context.Context, instance *appv1alpha2.Workspace) (string, error) {
-	var secret *corev1.Secret
-
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	secret, err := r.getSecret(ctx, objectKey)
-	if err != nil {
-		return "", err
-	}
-
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
-}
-
 func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspaceInstance) error {
-	token, err := r.getToken(ctx, &w.instance)
+	nn := types.NamespacedName{
+		Namespace: w.instance.Namespace,
+		Name:      w.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, w.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}
@@ -443,14 +410,22 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		updateOptions.Project = &tfc.Project{ID: prjID}
 	} else {
 		// Setting up `Project` to nil(tfc.WorkspaceUpdateOptions{Project: nil}) won't move the workspace to the default project after the update.
+		// TODO:
+		// - The default project can be renamed, but cannot be deleted.
+		//   We should do this API call once on a workspace creation and keep the default project ID in the status for future reference.
+		//   We could validate whether or not the default project ID in the status is empty or not during the update stage.
+		//   If the default project ID in the status is empty, then we make an API call to fill in this gap.
+		//   Ideally, it will never happen but can during the TFE upgrade.
 		org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
 			return nil, err
 		}
-		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
-		updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+		if org.DefaultProject != nil {
+			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
+			updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+		}
 	}
 
 	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
@@ -532,7 +507,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileWorkspace", "Successfully created a new workspace with ID %s", w.instance.Status.WorkspaceID)
 	}
 
-	// read the Terraform Cloud workspace to compare it with the Kubernetes object spec
+	// read the HCP Terraform workspace to compare it with the Kubernetes object spec
 	workspace, err = r.readWorkspace(ctx, w)
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
@@ -554,7 +529,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		}
 	}
 
-	// update workspace if any changes have been made in the Kubernetes object spec or Terraform Cloud workspace
+	// update workspace if any changes have been made in the Kubernetes object spec or HCP Terraform workspace
 	if needToUpdateWorkspace(&w.instance, workspace) {
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("observed and desired states are not matching, need to update workspace ID %s", w.instance.Status.WorkspaceID))
 		workspace, err = r.updateWorkspace(ctx, w, workspace)
@@ -591,7 +566,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileTags", "Successfully reconcilied tags in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Variables
-	err = r.reconcileVariables(ctx, w)
+	err = r.reconcileVariables(ctx, w, workspace)
 	if err != nil {
 		w.log.Error(err, "Reconcile Variables", "msg", fmt.Sprintf("failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariables", "Failed to reconcile variables in workspace ID %s", w.instance.Status.WorkspaceID)

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -41,7 +40,7 @@ type agentPoolInstance struct {
 	instance appv1alpha2.AgentPool
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 // agentPoolSyncPeriodSeconds is how frequently the AgentPool controller should reconcile
@@ -93,8 +92,8 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	err = r.getTerraformClient(ctx, &ap)
 	if err != nil {
-		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -118,36 +117,12 @@ func (r *AgentPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *AgentPoolReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
-func (r *AgentPoolReconciler) getToken(ctx context.Context, instance *appv1alpha2.AgentPool) (string, error) {
-	var secret *corev1.Secret
-
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	secret, err := r.getSecret(ctx, objectKey)
-	if err != nil {
-		return "", err
-	}
-
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
-}
-
 func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentPoolInstance) error {
-	token, err := r.getToken(ctx, &ap.instance)
+	nn := types.NamespacedName{
+		Namespace: ap.instance.Namespace,
+		Name:      ap.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, ap.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}

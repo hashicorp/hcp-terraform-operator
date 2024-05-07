@@ -82,7 +82,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			initWorkspaceID := instance.Status.WorkspaceID
 
-			// Delete the Terraform Cloud workspace
+			// Delete the HCP Terraform workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
 
 			// Wait until the controller re-creates the workspace and updates Status.WorkspaceID with a new valid workspace ID
@@ -99,7 +99,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
 
-			// Delete the Terraform Cloud workspace
+			// Delete the HCP Terraform workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
 		})
 
@@ -111,7 +111,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
-			// Wait until the controller updates Terraform Cloud workspace
+			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 				Expect(ws).ShouldNot(BeNil())
@@ -155,7 +155,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
-			// Wait until the controller updates Terraform Cloud workspace
+			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 				Expect(ws).ShouldNot(BeNil())
@@ -178,7 +178,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.TerraformVersion = ""
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
-			// Wait until the controller updates Terraform Cloud workspace
+			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 				Expect(ws).ShouldNot(BeNil())
@@ -209,7 +209,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Update the Kubernetes workspace tags
 			instance.Spec.Tags = []appv1alpha2.Tag{"kubernetes-operator", "env:dev"}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
 				return compareTags(wsTags, expectTags)
@@ -268,10 +268,10 @@ func deleteWorkspace(instance *appv1alpha2.Workspace) {
 		return errors.IsNotFound(err)
 	}).Should(BeTrue())
 
-	// Make sure that the Terraform Cloud workspace is deleted
+	// Make sure that the HCP Terraform workspace is deleted
 	Eventually(func() bool {
 		err := tfClient.Workspaces.Delete(ctx, instance.Spec.Organization, instance.Spec.Name)
-		// The Terraform Cloud client will return the error 'ResourceNotFound' once the workspace does not exist
+		// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
 		return err == tfc.ErrResourceNotFound || err == nil
 	}).Should(BeTrue())
 }

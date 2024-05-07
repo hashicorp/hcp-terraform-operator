@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: modules.app.terraform.io
 spec:
   group: app.terraform.io
@@ -25,18 +24,26 @@ spec:
     name: v1alpha2
     schema:
       openAPIV3Schema:
-        description: 'Module is the Schema for the modules API Module implements the
-          API-driven Run Workflow More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/api'
+        description: |-
+          Module is the Schema for the modules API
+          Module implements the API-driven Run Workflow
+          More information:
+            - https://developer.hashicorp.com/terraform/cloud-docs/run/api
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -45,15 +52,18 @@ spec:
             properties:
               destroyOnDeletion:
                 default: false
-                description: 'Specify whether or not to execute a Destroy run when
-                  the object is deleted from the Kubernetes. Default: `false`.'
+                description: |-
+                  Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
+                  Default: `false`.
                 type: boolean
               module:
                 description: Module source and version to execute.
                 properties:
                   source:
-                    description: 'Non local Terraform module source. More information:
-                      - https://developer.hashicorp.com/terraform/language/modules/sources'
+                    description: |-
+                      Non local Terraform module source.
+                      More information:
+                        - https://developer.hashicorp.com/terraform/language/modules/sources
                     minLength: 1
                     type: string
                   version:
@@ -65,13 +75,16 @@ spec:
                 type: object
               name:
                 default: this
-                description: 'Name of the module that will be uploaded and executed.
-                  Default: `this`.'
+                description: |-
+                  Name of the module that will be uploaded and executed.
+                  Default: `this`.
                 minLength: 1
                 type: string
               organization:
-                description: 'Organization name where the Workspace will be created.
-                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
+                description: |-
+                  Organization name where the Workspace will be created.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
                 minLength: 1
                 type: string
               outputs:
@@ -87,8 +100,9 @@ spec:
                       type: string
                     sensitive:
                       default: false
-                      description: 'Specify whether or not the output is sensitive.
-                        Default: `false`.'
+                      description: |-
+                        Specify whether or not the output is sensitive.
+                        Default: `false`.
                       type: boolean
                   required:
                   - name
@@ -96,9 +110,9 @@ spec:
                 minItems: 1
                 type: array
               restartedAt:
-                description: 'Allows executing a new Run without changing any Workspace
-                  or Module attributes. Example: kubectl patch <KIND> <NAME> --type=merge
-                  --patch ''{"spec": {"restartedAt": "''\`date -u -Iseconds\`''"}}'''
+                description: |-
+                  Allows executing a new Run without changing any Workspace or Module attributes.
+                  Example: kubectl patch <KIND> <NAME> --type=merge --patch '{"spec": {"restartedAt": "'\`date -u -Iseconds\`'"}}'
                 minLength: 1
                 type: string
               token:
@@ -112,8 +126,10 @@ spec:
                           a valid secret key.
                         type: string
                       name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        description: |-
+                          Name of the referent.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?
                         type: string
                       optional:
                         description: Specify whether the Secret or its key must be
@@ -145,7 +161,9 @@ spec:
                 description: Workspace to execute the module.
                 properties:
                   id:
-                    description: 'Module Workspace ID. Must match pattern: `^ws-[a-zA-Z0-9]+$`'
+                    description: |-
+                      Module Workspace ID.
+                      Must match pattern: `^ws-[a-zA-Z0-9]+$`
                     pattern: ^ws-[a-zA-Z0-9]+$
                     type: string
                   name:
@@ -163,9 +181,11 @@ spec:
             description: ModuleStatus defines the observed state of Module.
             properties:
               configurationVersion:
-                description: 'A configuration version is a resource used to reference
-                  the uploaded configuration files. More information: - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
-                  - https://developer.hashicorp.com/terraform/cloud-docs/run/api'
+                description: |-
+                  A configuration version is a resource used to reference the uploaded configuration files.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/api-docs/configuration-versions
+                    - https://developer.hashicorp.com/terraform/cloud-docs/run/api
                 properties:
                   id:
                     description: Configuration Version ID.
@@ -194,21 +214,24 @@ spec:
                 - runID
                 type: object
               run:
-                description: 'Workspace Runs status. More information: - https://developer.hashicorp.com/terraform/cloud-docs/run/states'
+                description: |-
+                  Workspace Runs status.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/run/states
                 properties:
                   configurationVersion:
                     description: The configuration version of this run.
                     type: string
                   id:
-                    description: Current(both active and finished) Terraform Cloud
-                      run ID.
+                    description: Current(both active and finished) HCP Terraform run
+                      ID.
                     type: string
                   outputRunID:
                     description: Run ID of the latest run that could update the outputs.
                     type: string
                   status:
-                    description: Current(both active and finished) Terraform Cloud
-                      run status.
+                    description: Current(both active and finished) HCP Terraform run
+                      status.
                     type: string
                 type: object
               workspaceID:

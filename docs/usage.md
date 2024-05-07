@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- The Operator requires a Terraform Cloud [organization](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations) name and a [team 'owners' token](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#team-api-tokens) in order to access the Terraform Cloud API.
+- The Operator requires a HCP Terraform [organization](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations) name and a [team 'owners' token](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#team-api-tokens) in order to access the HCP Terraform API.
 - The API token must be stored in a Kubernetes secret.
-- A single instance of the Operator can manage Terraform Cloud resources for different organizations and/or different API tokens. For that purpose, the organization name and a reference to the corresponding Kubernetes secret are shipped within the custom resource.
+- A single instance of the Operator can manage HCP Terraform resources for different organizations and/or different API tokens. For that purpose, the organization name and a reference to the corresponding Kubernetes secret are shipped within the custom resource.
 
 Below are examples of how to create a Kubernetes secret and store the API token there. The examples assume that the API token is already known.
 

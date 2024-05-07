@@ -1,4 +1,4 @@
-# Annotations and Labels used by Terraform Cloud Operator
+# Annotations and Labels used by HCP Terraform Operator
 
 ## Annotations
 
@@ -10,4 +10,4 @@
 
 ## Labels
 
-Terraform Cloud Operator does not use any labels.
+HCP Terraform Operator does not use any labels.

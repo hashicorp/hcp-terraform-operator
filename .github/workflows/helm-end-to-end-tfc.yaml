@@ -1,4 +1,4 @@
-name: E2E on Terraform Cloud [Helm]
+name: E2E on HCP Terraform Operator [Helm]
 
 on:
   schedule:

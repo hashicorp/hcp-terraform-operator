@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
@@ -40,7 +39,7 @@ type projectInstance struct {
 	instance appv1alpha2.Project
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 //+kubebuilder:rbac:groups=app.terraforp.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -87,8 +86,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err = r.getTerraformClient(ctx, &p)
 	if err != nil {
-		p.log.Error(err, "Project Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&p.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		p.log.Error(err, "Project Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&p.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -110,36 +109,12 @@ func (r *ProjectReconciler) addFinalizer(ctx context.Context, instance *appv1alp
 	return r.Update(ctx, instance)
 }
 
-func (r *ProjectReconciler) getSecret(ctx context.Context, name types.NamespacedName) (*corev1.Secret, error) {
-	secret := &corev1.Secret{}
-	err := r.Client.Get(ctx, name, secret)
-
-	return secret, err
-}
-
-func (r *ProjectReconciler) getToken(ctx context.Context, instance *appv1alpha2.Project) (string, error) {
-	var secret *corev1.Secret
-
-	secretName := instance.Spec.Token.SecretKeyRef.Name
-	secretKey := instance.Spec.Token.SecretKeyRef.Key
-
-	objectKey := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      secretName,
-	}
-	secret, err := r.getSecret(ctx, objectKey)
-	if err != nil {
-		return "", err
-	}
-
-	if token, ok := secret.Data[secretKey]; ok {
-		return strings.TrimSuffix(string(token), "\n"), nil
-	}
-	return "", fmt.Errorf("token key %s does not exist in the secret %s", secretKey, secretName)
-}
-
 func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectInstance) error {
-	token, err := r.getToken(ctx, &p.instance)
+	nn := types.NamespacedName{
+		Namespace: p.instance.Namespace,
+		Name:      p.instance.Spec.Token.SecretKeyRef.Name,
+	}
+	token, err := secretKeyRef(ctx, r.Client, nn, p.instance.Spec.Token.SecretKeyRef.Key)
 	if err != nil {
 		return err
 	}

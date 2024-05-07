@@ -1,6 +1,6 @@
 # Releasing
 
-The purpose of this document is to outline the release process for the Terraform Cloud Operator.
+The purpose of this document is to outline the release process for the HCP Terraform Operator.
 
 The Semantic Versioning agreement is being followed by this project. Further details can be found [here](https://semver.org/). During the alpha or beta stages, the pre-release versions are not separated by dots. For example, `2.0.0-alpha1` or `2.0.0-beta5`.
 
@@ -53,6 +53,7 @@ To create a new release, adhere to the following steps:
 
   ```console
   $ git add -A
+  $ git commit -m "v$TFC_OPERATOR_RELEASE_VERSION"
   $ git push
   ```
 

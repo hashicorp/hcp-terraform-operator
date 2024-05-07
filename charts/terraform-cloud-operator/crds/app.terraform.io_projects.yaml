@@ -6,8 +6,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: projects.app.terraform.io
 spec:
   group: app.terraform.io
@@ -31,52 +30,63 @@ spec:
         description: Project is the Schema for the projects API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: 'ProjectSpec defines the desired state of Project. More information:
-              - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects'
+            description: |-
+              ProjectSpec defines the desired state of Project.
+              More information:
+                - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects
             properties:
               name:
                 description: Name of the Project.
                 minLength: 1
                 type: string
               organization:
-                description: 'Organization name where the Workspace will be created.
-                  More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations'
+                description: |-
+                  Organization name where the Workspace will be created.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
                 minLength: 1
                 type: string
               teamAccess:
-                description: 'Terraform Cloud''s access model is team-based. In order
-                  to perform an action within a Terraform Cloud organization, users
-                  must belong to a team that has been granted the appropriate permissions.
-                  You can assign project-specific permissions to teams. More information:
-                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions
-                  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions'
+                description: |-
+                  HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
+                  users must belong to a team that has been granted the appropriate permissions.
+                  You can assign project-specific permissions to teams.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions
+                    - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions
                 items:
-                  description: 'Terraform Cloud''s access model is team-based. In
-                    order to perform an action within a Terraform Cloud organization,
-                    users must belong to a team that has been granted the appropriate
-                    permissions. You can assign project-specific permissions to teams.
-                    More information: - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions
-                    - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions'
+                  description: |-
+                    HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
+                    users must belong to a team that has been granted the appropriate permissions.
+                    You can assign project-specific permissions to teams.
+                    More information:
+                      - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions
+                      - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions
                   properties:
                     access:
-                      description: 'There are two ways to choose which permissions
-                        a given team has on a project: fixed permission sets, and
-                        custom permissions. Must be one of the following values: `admin`,
-                        `custom`, `maintain`, `read`, `write`. More information: -
-                        https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions
-                        - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-project-permissions'
+                      description: |-
+                        There are two ways to choose which permissions a given team has on a project: fixed permission sets, and custom permissions.
+                        Must be one of the following values: `admin`, `custom`, `maintain`, `read`, `write`.
+                        More information:
+                          - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions
+                          - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-project-permissions
                       enum:
                       - admin
                       - custom
@@ -85,52 +95,60 @@ spec:
                       - write
                       type: string
                     custom:
-                      description: 'Custom permissions let you assign specific, finer-grained
-                        permissions to a team than the broader fixed permission sets
-                        provide. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-project-permissions'
+                      description: |-
+                        Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
+                        More information:
+                          - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-project-permissions
                       properties:
                         createWorkspace:
                           default: false
-                          description: 'Allow users to create workspaces in the project.
+                          description: |-
+                            Allow users to create workspaces in the project.
                             This grants read access to all workspaces in the project.
-                            Default: `false`.'
+                            Default: `false`.
                           type: boolean
                         deleteWorkspace:
                           default: false
-                          description: 'Allows users to delete workspaces in the project.
-                            Default: `false`.'
+                          description: |-
+                            Allows users to delete workspaces in the project.
+                            Default: `false`.
                           type: boolean
                         lockWorkspace:
                           default: false
-                          description: 'Allows users to manually lock the workspace
-                            to temporarily prevent runs. When a workspace''s execution
-                            mode is set to "local", users must have this permission
-                            to perform local CLI runs using the workspace''s state.
-                            Default: `false`.'
+                          description: |-
+                            Allows users to manually lock the workspace to temporarily prevent runs.
+                            When a workspace's execution mode is set to "local", users must have this permission to perform local CLI runs using the workspace's state.
+                            Default: `false`.
                           type: boolean
                         moveWorkspace:
                           default: false
-                          description: 'Allows users to move workspaces out of the
-                            project. A user must have this permission on both the
-                            source and destination project to successfully move a
-                            workspace from one project to another. Default: `false`.'
+                          description: |-
+                            Allows users to move workspaces out of the project.
+                            A user must have this permission on both the source and destination project to successfully move a workspace from one project to another.
+                            Default: `false`.
                           type: boolean
                         projectAccess:
                           default: read
-                          description: 'Project access. Must be one of the following
-                            values: `delete`, `read`, `update`. Default: `read`.'
+                          description: |-
+                            Project access.
+                            Must be one of the following values: `delete`, `read`, `update`.
+                            Default: `read`.
                           enum:
                           - delete
                           - read
                           - update
                           type: string
                         runTasks:
-                          description: 'Manage Workspace Run Tasks. Default: `false`.'
+                          description: |-
+                            Manage Workspace Run Tasks.
+                            Default: `false`.
                           type: boolean
                         runs:
                           default: read
-                          description: 'Run access. Must be one of the following values:
-                            `apply`, `plan`, `read`. Default: `read`.'
+                          description: |-
+                            Run access.
+                            Must be one of the following values: `apply`, `plan`, `read`.
+                            Default: `read`.
                           enum:
                           - apply
                           - plan
@@ -138,17 +156,20 @@ spec:
                           type: string
                         sentinelMocks:
                           default: none
-                          description: 'Download Sentinel mocks. Must be one of the
-                            following values: `none`, `read`. Default: `none`.'
+                          description: |-
+                            Download Sentinel mocks.
+                            Must be one of the following values: `none`, `read`.
+                            Default: `none`.
                           enum:
                           - none
                           - read
                           type: string
                         stateVersions:
                           default: none
-                          description: 'State access. Must be one of the following
-                            values: `none`, `read`, `read-outputs`, `write`. Default:
-                            `none`.'
+                          description: |-
+                            State access.
+                            Must be one of the following values: `none`, `read`, `read-outputs`, `write`.
+                            Default: `none`.
                           enum:
                           - none
                           - read
@@ -157,8 +178,10 @@ spec:
                           type: string
                         teamManagement:
                           default: none
-                          description: 'Team management. Must be one of the following
-                            values: `manage`, `none`, `read`. Default: `none`.'
+                          description: |-
+                            Team management.
+                            Must be one of the following values: `manage`, `none`, `read`.
+                            Default: `none`.
                           enum:
                           - manage
                           - none
@@ -166,8 +189,10 @@ spec:
                           type: string
                         variables:
                           default: none
-                          description: 'Variable access. Must be one of the following
-                            values: `none`, `read`, `write`. Default: `none`.'
+                          description: |-
+                            Variable access.
+                            Must be one of the following values: `none`, `read`, `write`.
+                            Default: `none`.
                           enum:
                           - none
                           - read
@@ -175,10 +200,15 @@ spec:
                           type: string
                       type: object
                     team:
-                      description: 'Team to grant access. More information: - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams'
+                      description: |-
+                        Team to grant access.
+                        More information:
+                          - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams
                       properties:
                         id:
-                          description: 'Team ID. Must match pattern: `^team-[a-zA-Z0-9]+$`'
+                          description: |-
+                            Team ID.
+                            Must match pattern: `^team-[a-zA-Z0-9]+$`
                           pattern: ^team-[a-zA-Z0-9]+$
                           type: string
                         name:
@@ -203,8 +233,10 @@ spec:
                           a valid secret key.
                         type: string
                       name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        description: |-
+                          Name of the referent.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?
                         type: string
                       optional:
                         description: Specify whether the Secret or its key must be

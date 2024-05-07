@@ -20,7 +20,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
 		namespacedName = types.NamespacedName{
@@ -120,7 +120,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -178,7 +178,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -216,7 +216,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -256,7 +256,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -314,7 +314,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -352,40 +352,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
 			}).Should(BeTrue())
-		})
-	})
-})
-
-var _ = Describe("Makes Sensitive Workspace Variables No Sensitive", func() {
-	Context("Update Variables", func() {
-		It("Instance No Sensitive, Workspace No Sensitive", func() {
-			instanceVariable := false
-			workspaceVariable := false
-			r := isNoLongerSensitive(instanceVariable, workspaceVariable)
-			Expect(r).Should(BeFalse())
-		})
-		It("Instance No Sensitive, Workspace Sensitive", func() {
-			instanceVariable := false
-			workspaceVariable := true
-			r := isNoLongerSensitive(instanceVariable, workspaceVariable)
-			Expect(r).Should(BeTrue())
-		})
-		It("Instance Sensitive, Workspace No Sensitive", func() {
-			instanceVariable := true
-			workspaceVariable := false
-			r := isNoLongerSensitive(instanceVariable, workspaceVariable)
-			Expect(r).Should(BeFalse())
-		})
-		It("Instance Sensitive, Workspace Sensitive", func() {
-			instanceVariable := true
-			workspaceVariable := true
-			r := isNoLongerSensitive(instanceVariable, workspaceVariable)
-			Expect(r).Should(BeFalse())
 		})
 	})
 })
