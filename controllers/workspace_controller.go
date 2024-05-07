@@ -99,7 +99,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = r.getTerraformClient(ctx, &w)
 	if err != nil {
 		w.log.Error(err, "Workspace Controller", "msg", "failed to get HCP Terraform client")
-		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 

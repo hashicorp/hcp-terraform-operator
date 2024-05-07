@@ -8,10 +8,17 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/hashicorp/terraform-cloud-operator)](https://hub.docker.com/r/hashicorp/terraform-cloud-operator)
 [![GitHub](https://img.shields.io/github/license/hashicorp/terraform-cloud-operator)](https://github.com/hashicorp/terraform-cloud-operator/blob/main/LICENSE)
 
-Kubernetes Operator allows managing Terraform Cloud / Enterprise resources via Kubernetes Custom Resources.
+> **Warning**
+> In upcoming releases, we shall proceed with renaming this project to either HCP Terraform Operator for Kubernetes or simply HCP Terraform Operator. This measure is necessary in response to the recent announcement of [The Infrastructure Cloud](https://www.hashicorp.com/blog/introducing-the-infrastructure-cloud).
+>
+> The most noticeable change you can expect in version 2.6.0 is the renaming of this repository and related resources, such as the Helm chart and Docker Hub names.
+>
+> Please follow the changelogs for updates.
+
+Kubernetes Operator allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources.
 
 > **Note**
-> _From this point forward, the terms Terraform Cloud or TFC can be used interchangeably with Terraform Enterprise or TFE in all documents, provided that the contrary is indicated._
+> _From this point forward, the terms HCP Terraform can be used interchangeably with Terraform Enterprise in all documents, provided that the contrary is indicated._
 
 The Operator can manage the following types of resources:
 
@@ -44,7 +51,7 @@ Three simple commands to install the Operator:
 ```console
 $ helm repo add hashicorp https://helm.releases.hashicorp.com
 $ helm repo update
-$ helm install demo hashicorp/terraform-cloud-operator --wait --version 2.1.0
+$ helm install demo hashicorp/terraform-cloud-operator --wait --version 2.3.0
 ```
 
 More detailed information about the installation and available values can be found [here](./charts/terraform-cloud-operator/README.md).

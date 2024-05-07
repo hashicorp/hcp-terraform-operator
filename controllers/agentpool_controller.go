@@ -93,7 +93,7 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = r.getTerraformClient(ctx, &ap)
 	if err != nil {
 		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get HCP Terraform client")
-		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
