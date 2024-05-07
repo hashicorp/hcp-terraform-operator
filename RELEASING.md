@@ -53,6 +53,7 @@ To create a new release, adhere to the following steps:
 
   ```console
   $ git add -A
+  $ git commit -m "v$TFC_OPERATOR_RELEASE_VERSION"
   $ git push
   ```
 
