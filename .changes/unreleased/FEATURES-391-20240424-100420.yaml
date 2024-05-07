@@ -1,6 +1,0 @@
-kind: FEATURES
-body: '`Helm`: Add a new value called `controllers.workspace.syncPeriod` to set the
-  CLI option `--workspace-sync-period`.'
-time: 2024-04-24T10:04:20.283556+02:00
-custom:
-  PR: "391"

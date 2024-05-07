@@ -1,6 +1,0 @@
-kind: FEATURES
-body: '`Workspace`: Add a new CLI option called `--workspace-sync-period` to set the
-  time interval for re-queuing Workspace resources once they are successfully reconciled.'
-time: 2024-04-24T10:04:18.078493+02:00
-custom:
-  PR: "391"

@@ -5,8 +5,6 @@
 
 CHART_DIR="charts/terraform-cloud-operator"
 CHART_FILE="Chart.yaml"
-VALUES_FILE="values.yaml"
-VERSION_FILE="version/VERSION"
 
 # Update the 'Chart.yaml' file with a new version of the Operator image tag.
 function update_chart_file {
@@ -22,11 +20,11 @@ function update_chart_file {
 
   yq \
     --inplace \
-    '.appVersion = strenv(VERSION) | .version = strenv(VERSION)' $CHART_DIR/$CHART_FILE
+    '.appVersion = strenv(TFC_OPERATOR_RELEASE_VERSION) | .version = strenv(TFC_OPERATOR_RELEASE_VERSION)' $CHART_DIR/$CHART_FILE
 }
 
 function main {
-  if [[ -z "${VERSION}" ]]; then
+  if [[ -z "${TFC_OPERATOR_RELEASE_VERSION}" ]]; then
     echo "The environment variable TFC_OPERATOR_RELEASE_VERSION is not set."
     exit 1
   fi
