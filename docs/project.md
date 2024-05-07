@@ -1,6 +1,6 @@
 # `Project`
 
-`Project` controller allows managing Terraform Cloud Projects via Kubernetes Custom Resources.
+`Project` controller allows managing HCP Terraform Projects via Kubernetes Custom Resources.
 
 Please refer to the [CRD](../config/crd/bases/app.terraform.io_projects.yaml) and [API Reference](./api-reference.md#project) to get the full list of available options.
 

@@ -14,7 +14,7 @@ spec:
       key: token
   name: kubernetes-operator-demo
   # More about Terraform variables: https://developer.hashicorp.com/terraform/language/values/variables#assigning-values-to-root-module-variables
-  # More about Terraform Cloud Workspace Variables: https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+  # More about HCP Terraform Workspace Variables: https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
   terraformVariables:
     - name: counter
       hcl: true

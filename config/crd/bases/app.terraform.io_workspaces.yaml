@@ -45,7 +45,7 @@ spec:
             properties:
               agentPool:
                 description: |-
-                  Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
+                  HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.
                   More information:
                     - https://developer.hashicorp.com/terraform/cloud-docs/agents
                 properties:
@@ -199,7 +199,7 @@ spec:
                     emailAddresses:
                       description: |-
                         The list of email addresses that will receive notification emails.
-                        It is only available for Terraform Enterprise users. It is not available in Terraform Cloud.
+                        It is only available for Terraform Enterprise users. It is not available in HCP Terraform.
                       items:
                         type: string
                       minItems: 1
@@ -300,7 +300,7 @@ spec:
               remoteStateSharing:
                 description: |-
                   Remote state access between workspaces.
-                  By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
+                  By default, new workspaces in HCP Terraform do not allow other workspaces to access their state.
                   More information:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
                 properties:
@@ -337,12 +337,12 @@ spec:
                 type: object
               runTasks:
                 description: |-
-                  Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+                  Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
                   More information:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
                 items:
                   description: |-
-                    Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+                    Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
                     Only one of the fields `ID` or `Name` is allowed.
                     At least one of the fields `ID` or `Name` is mandatory.
                     More information:
@@ -437,7 +437,7 @@ spec:
                 type: array
               teamAccess:
                 description: |-
-                  Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+                  HCP Terraform workspaces can only be accessed by users with the correct permissions.
                   You can manage permissions for a workspace on a per-team basis.
                   When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
                   with full admin permissions. These teams' access can't be removed from a workspace.
@@ -445,7 +445,7 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access
                 items:
                   description: |-
-                    Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+                    HCP Terraform workspaces can only be accessed by users with the correct permissions.
                     You can manage permissions for a workspace on a per-team basis.
                     When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
                     with full admin permissions. These teams' access can't be removed from a workspace.
@@ -717,12 +717,12 @@ spec:
                   manually.
                 properties:
                   id:
-                    description: Latest plan-only/speculative plan Terraform Cloud
-                      run ID.
+                    description: Latest plan-only/speculative plan HCP Terraform run
+                      ID.
                     type: string
                   status:
-                    description: Latest plan-only/speculative plan Terraform Cloud
-                      run status.
+                    description: Latest plan-only/speculative plan HCP Terraform run
+                      status.
                     type: string
                   terraformVersion:
                     description: The version of Terraform to use for this run.
@@ -736,15 +736,15 @@ spec:
                     description: The configuration version of this run.
                     type: string
                   id:
-                    description: Current(both active and finished) Terraform Cloud
-                      run ID.
+                    description: Current(both active and finished) HCP Terraform run
+                      ID.
                     type: string
                   outputRunID:
                     description: Run ID of the latest run that could update the outputs.
                     type: string
                   status:
-                    description: Current(both active and finished) Terraform Cloud
-                      run status.
+                    description: Current(both active and finished) HCP Terraform run
+                      status.
                     type: string
                 type: object
               terraformVersion:

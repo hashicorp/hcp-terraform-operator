@@ -77,10 +77,10 @@ var _ = Describe("Project controller", Ordered, func() {
 			return errors.IsNotFound(err)
 		}).Should(BeTrue())
 
-		// Make sure that the Terraform Cloud project is deleted
+		// Make sure that the HCP Terraform project is deleted
 		Eventually(func() bool {
 			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
-			// The Terraform Cloud client will return the error 'ResourceNotFound' once the project does not exist
+			// The HCP Terraform client will return the error 'ResourceNotFound' once the project does not exist
 			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})

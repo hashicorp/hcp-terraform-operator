@@ -40,7 +40,7 @@ type agentPoolInstance struct {
 	instance appv1alpha2.AgentPool
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 // agentPoolSyncPeriodSeconds is how frequently the AgentPool controller should reconcile
@@ -92,8 +92,8 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	err = r.getTerraformClient(ctx, &ap)
 	if err != nil {
-		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 

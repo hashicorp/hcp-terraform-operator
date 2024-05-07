@@ -42,7 +42,7 @@ type moduleInstance struct {
 	instance appv1alpha2.Module
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 var (
@@ -98,8 +98,8 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	err = r.getTerraformClient(ctx, &m)
 	if err != nil {
-		m.log.Error(err, "Module Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		m.log.Error(err, "Module Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
@@ -280,7 +280,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
 			IsDestroy: tfc.Bool(true),
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(runMessage),
 			Workspace: &tfc.Workspace{
 				ID: m.instance.Status.WorkspaceID,
 			},
@@ -469,7 +469,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	if needNewRun(&m.instance) {
 		m.log.Info("Reconcile Run", "msg", "create a new run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			Message:   tfc.String("Triggered by the Kubernetes Operator"),
+			Message:   tfc.String(runMessage),
 			Workspace: workspace,
 		})
 		if err != nil {

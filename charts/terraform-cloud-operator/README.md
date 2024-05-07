@@ -3,6 +3,13 @@
   Make changes _only_ in the README.md.gotmpl file and then run `make helm-docs` to generate the README.md file.
 -->
 
+> **Warning**
+> In upcoming releases, we shall proceed with renaming this project to HCP Terraform Operator for Kubernetes or simply HCP Terraform Operator. This measure is necessary in response to the recent announcement of [The Infrastructure Cloud](https://www.hashicorp.com/blog/introducing-the-infrastructure-cloud).
+>
+> The most noticeable change you can expect in version 2.6.0 is the renaming of this repository and related resources, such as the Helm chart and Docker Hub names.
+>
+> Please follow the changelogs for updates.
+
 # Installation
 
 Use the option `--version VERSION` with `helm install` and `helm upgrade` commands to specify the version you want to install.
@@ -51,7 +58,7 @@ In the above example, the Operator will watch 3 namespaces in the Kubernetes clu
 
 ### Install to work with Terraform Enterprise
 
-If targeting a Terraform Enterprise instance rather than Terraform Cloud, set the API endpoint URL using the `operator.tfeAddress` value:
+If targeting a Terraform Enterprise instance rather than HCP Terraform, set the API endpoint URL using the `operator.tfeAddress` value:
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
@@ -153,4 +160,4 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
-| replicaCount | int | `2` | The number of Terraform Cloud Operator replicas. |
+| replicaCount | int | `2` | The number of Operator replicas. |

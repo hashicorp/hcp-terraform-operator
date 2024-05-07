@@ -45,7 +45,7 @@ _Appears in:_
 | --- | --- |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
 | `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
-| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | TargetWorkspaces is a list of Terraform Cloud Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
+| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
 | `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300. |
 
 
@@ -107,7 +107,7 @@ _Appears in:_
 
 
 
-Agent Token is a secret token that a Terraform Cloud Agent is used to connect to the Terraform Cloud Agent Pool.
+Agent Token is a secret token that a HCP Terraform Agent is used to connect to the HCP Terraform Agent Pool.
 In `spec` only the field `Name` is allowed, the rest are used in `status`.
 More infromation:
   - https://developer.hashicorp.com/terraform/cloud-docs/agents
@@ -333,7 +333,7 @@ _Appears in:_
 | `token` _string_ | The token of the notification. |
 | `triggers` _[NotificationTrigger](#notificationtrigger) array_ | The list of run events that will trigger notifications.<br />Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.<br />There are two categories of triggers:<br />  - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.<br />  - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`. |
 | `url` _string_ | The URL of the notification.<br />Must match pattern: `^https?://.*` |
-| `emailAddresses` _string array_ | The list of email addresses that will receive notification emails.<br />It is only available for Terraform Enterprise users. It is not available in Terraform Cloud. |
+| `emailAddresses` _string array_ | The list of email addresses that will receive notification emails.<br />It is only available for Terraform Enterprise users. It is not available in HCP Terraform. |
 | `emailUsers` _string array_ | The list of users belonging to the organization that will receive notification emails. |
 
 
@@ -375,7 +375,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Latest plan-only/speculative plan Terraform Cloud run ID. |
+| `id` _string_ | Latest plan-only/speculative plan HCP Terraform run ID. |
 | `terraformVersion` _string_ | The version of Terraform to use for this run. |
 
 
@@ -413,7 +413,7 @@ _Appears in:_
 | `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `name` _string_ | Name of the Project. |
-| `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization,<br />users must belong to a team that has been granted the appropriate permissions.<br />You can assign project-specific permissions to teams.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
+| `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,<br />users must belong to a team that has been granted the appropriate permissions.<br />You can assign project-specific permissions to teams.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
 
 
 
@@ -422,7 +422,7 @@ _Appears in:_
 
 
 
-Terraform Cloud's access model is team-based. In order to perform an action within a Terraform Cloud organization,
+HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
 users must belong to a team that has been granted the appropriate permissions.
 You can assign project-specific permissions to teams.
 More information:
@@ -444,7 +444,7 @@ _Appears in:_
 
 
 RemoteStateSharing allows remote state access between workspaces.
-By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
+By default, new workspaces in HCP Terraform do not allow other workspaces to access their state.
 More information:
   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 
@@ -469,7 +469,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Current(both active and finished) Terraform Cloud run ID. |
+| `id` _string_ | Current(both active and finished) HCP Terraform run ID. |
 | `configurationVersion` _string_ | The configuration version of this run. |
 | `outputRunID` _string_ | Run ID of the latest run that could update the outputs. |
 
@@ -546,7 +546,7 @@ _Appears in:_
 
 
 
-Teams are groups of Terraform Cloud users within an organization.
+Teams are groups of HCP Terraform users within an organization.
 If a user belongs to at least one team in an organization, they are considered a member of that organization.
 Only one of the fields `ID` or `Name` is allowed.
 At least one of the fields `ID` or `Name` is mandatory.
@@ -567,7 +567,7 @@ _Appears in:_
 
 
 
-Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+HCP Terraform workspaces can only be accessed by users with the correct permissions.
 You can manage permissions for a workspace on a per-team basis.
 When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
 with full admin permissions. These teams' access can't be removed from a workspace.
@@ -699,7 +699,7 @@ Workspace is the Schema for the workspaces API
 
 
 
-AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
+AgentPool allows HCP Terraform to communicate with isolated, private, or on-premises infrastructure.
 Only one of the fields `ID` or `Name` is allowed.
 At least one of the fields `ID` or `Name` is mandatory.
 More information:
@@ -737,7 +737,7 @@ _Appears in:_
 
 
 
-Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
 Only one of the fields `ID` or `Name` is allowed.
 At least one of the fields `ID` or `Name` is mandatory.
 More information:
@@ -771,16 +771,16 @@ _Appears in:_
 | `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual).<br />Must be one of the following values: `auto`, `manual`.<br />Default: `manual`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
 | `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
 | `description` _string_ | Workspace description. |
-| `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/agents |
+| `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/agents |
 | `executionMode` _string_ | Define where the Terraform code will be executed.<br />Must be one of the following values: `agent`, `local`, `remote`.<br />Default: `remote`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
-| `runTasks` _[WorkspaceRunTask](#workspaceruntask) array_ | Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks |
+| `runTasks` _[WorkspaceRunTask](#workspaceruntask) array_ | Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks |
 | `tags` _[Tag](#tag) array_ | Workspace tags are used to help identify and group together workspaces.<br />Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number. |
-| `teamAccess` _[TeamAccess](#teamaccess) array_ | Terraform Cloud workspaces can only be accessed by users with the correct permissions.<br />You can manage permissions for a workspace on a per-team basis.<br />When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,<br />with full admin permissions. These teams' access can't be removed from a workspace.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
+| `teamAccess` _[TeamAccess](#teamaccess) array_ | HCP Terraform workspaces can only be accessed by users with the correct permissions.<br />You can manage permissions for a workspace on a per-team basis.<br />When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,<br />with full admin permissions. These teams' access can't be removed from a workspace.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
 | `terraformVersion` _string_ | The version of Terraform to use for this workspace.<br />If not specified, the latest available version will be used.<br />Must match pattern: `^\\d{1}\\.\\d{1,2}\\.\\d{1,2}$`<br />More information:<br />  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
 | `workingDirectory` _string_ | The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.<br />More information:<br />  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory |
 | `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all plans and applies in this workspace.<br />Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables |
 | `terraformVariables` _[Variable](#variable) array_ | Terraform variables for all plans and applies in this workspace.<br />Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables |
-| `remoteStateSharing` _[RemoteStateSharing](#remotestatesharing)_ | Remote state access between workspaces.<br />By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces |
+| `remoteStateSharing` _[RemoteStateSharing](#remotestatesharing)_ | Remote state access between workspaces.<br />By default, new workspaces in HCP Terraform do not allow other workspaces to access their state.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces |
 | `runTriggers` _[RunTrigger](#runtrigger) array_ | Run triggers allow you to connect this workspace to one or more source workspaces.<br />These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers |
 | `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.<br />Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.<br />More information:<br />  - https://www.terraform.io/cloud-docs/run/ui<br />  - https://www.terraform.io/cloud-docs/vcs |
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |

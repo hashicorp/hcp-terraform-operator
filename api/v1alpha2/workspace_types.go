@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// AgentPool allows Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
+// AgentPool allows HCP Terraform to communicate with isolated, private, or on-premises infrastructure.
 // Only one of the fields `ID` or `Name` is allowed.
 // At least one of the fields `ID` or `Name` is mandatory.
 // More information:
@@ -48,7 +48,7 @@ type ConsumerWorkspace struct {
 }
 
 // RemoteStateSharing allows remote state access between workspaces.
-// By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
+// By default, new workspaces in HCP Terraform do not allow other workspaces to access their state.
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 type RemoteStateSharing struct {
@@ -65,7 +65,7 @@ type RemoteStateSharing struct {
 	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
 }
 
-// Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+// Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
 // Only one of the fields `ID` or `Name` is allowed.
 // At least one of the fields `ID` or `Name` is mandatory.
 // More information:
@@ -120,7 +120,7 @@ type RunTrigger struct {
 	Name string `json:"name,omitempty"`
 }
 
-// Teams are groups of Terraform Cloud users within an organization.
+// Teams are groups of HCP Terraform users within an organization.
 // If a user belongs to at least one team in an organization, they are considered a member of that organization.
 // Only one of the fields `ID` or `Name` is allowed.
 // At least one of the fields `ID` or `Name` is mandatory.
@@ -190,7 +190,7 @@ type CustomPermissions struct {
 	WorkspaceLocking bool `json:"workspaceLocking,omitempty"`
 }
 
-// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+// HCP Terraform workspaces can only be accessed by users with the correct permissions.
 // You can manage permissions for a workspace on a per-team basis.
 // When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
 // with full admin permissions. These teams' access can't be removed from a workspace.
@@ -376,7 +376,7 @@ type Notification struct {
 	//+optional
 	URL string `json:"url,omitempty"`
 	// The list of email addresses that will receive notification emails.
-	// It is only available for Terraform Enterprise users. It is not available in Terraform Cloud.
+	// It is only available for Terraform Enterprise users. It is not available in HCP Terraform.
 	//
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
@@ -445,7 +445,7 @@ type WorkspaceSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Description string `json:"description,omitempty"`
-	// Terraform Cloud Agents allow Terraform Cloud to communicate with isolated, private, or on-premises infrastructure.
+	// HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 	//
@@ -461,7 +461,7 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=remote
 	//+optional
 	ExecutionMode string `json:"executionMode,omitempty"`
-	// Run tasks allow Terraform Cloud to interact with external systems at specific points in the Terraform Cloud run lifecycle.
+	// Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks
 	//
@@ -474,7 +474,7 @@ type WorkspaceSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Tags []Tag `json:"tags,omitempty"`
-	// Terraform Cloud workspaces can only be accessed by users with the correct permissions.
+	// HCP Terraform workspaces can only be accessed by users with the correct permissions.
 	// You can manage permissions for a workspace on a per-team basis.
 	// When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,
 	// with full admin permissions. These teams' access can't be removed from a workspace.
@@ -519,7 +519,7 @@ type WorkspaceSpec struct {
 	//+optional
 	TerraformVariables []Variable `json:"terraformVariables,omitempty"`
 	// Remote state access between workspaces.
-	// By default, new workspaces in Terraform Cloud do not allow other workspaces to access their state.
+	// By default, new workspaces in HCP Terraform do not allow other workspaces to access their state.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces
 	//
@@ -564,11 +564,11 @@ type WorkspaceSpec struct {
 }
 
 type PlanStatus struct {
-	// Latest plan-only/speculative plan Terraform Cloud run ID.
+	// Latest plan-only/speculative plan HCP Terraform run ID.
 	//
 	//+optional
 	ID string `json:"id,omitempty"`
-	// Latest plan-only/speculative plan Terraform Cloud run status.
+	// Latest plan-only/speculative plan HCP Terraform run status.
 	//
 	//+optional
 	Status string `json:"status,omitempty"`
@@ -580,11 +580,11 @@ type PlanStatus struct {
 }
 
 type RunStatus struct {
-	// Current(both active and finished) Terraform Cloud run ID.
+	// Current(both active and finished) HCP Terraform run ID.
 	//
 	//+optional
 	ID string `json:"id,omitempty"`
-	// Current(both active and finished) Terraform Cloud run status.
+	// Current(both active and finished) HCP Terraform run status.
 	//
 	//+optional
 	Status string `json:"status,omitempty"`

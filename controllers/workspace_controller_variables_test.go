@@ -120,7 +120,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -178,7 +178,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -216,7 +216,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -256,7 +256,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -314,7 +314,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)
@@ -352,7 +352,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			}
 			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			// Wait until the controller updates Terraform Cloud workspace correcly
+			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
 				return compareVars(variables, expectVariables)

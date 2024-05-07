@@ -39,7 +39,7 @@ type projectInstance struct {
 	instance appv1alpha2.Project
 
 	log      logr.Logger
-	tfClient TerraformCloudClient
+	tfClient HCPTerraformClient
 }
 
 //+kubebuilder:rbac:groups=app.terraforp.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -86,8 +86,8 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err = r.getTerraformClient(ctx, &p)
 	if err != nil {
-		p.log.Error(err, "Project Controller", "msg", "failed to get terraform cloud client")
-		r.Recorder.Event(&p.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get Terraform Client")
+		p.log.Error(err, "Project Controller", "msg", "failed to get HCP Terraform client")
+		r.Recorder.Event(&p.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
 	}
 
