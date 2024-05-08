@@ -8,5 +8,6 @@ import (
 )
 
 var (
+	WorkspaceCacheTTL   time.Duration
 	WorkspaceSyncPeriod time.Duration
 )

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
+	lru "github.com/hashicorp/golang-lru/v2/expirable"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -182,6 +183,7 @@ var _ = BeforeSuite(func() {
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("WorkspaceController"),
+			Cache:    lru.NewLRU[string, interface{}](5, nil, 30*time.Minute),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 

@@ -5,6 +5,7 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
+	lru "github.com/hashicorp/golang-lru/v2/expirable"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,6 +39,8 @@ type WorkspaceReconciler struct {
 	client.Client
 	Recorder record.EventRecorder
 	Scheme   *runtime.Scheme
+
+	Cache *lru.LRU[string, interface{}]
 }
 
 type workspaceInstance struct {
@@ -143,9 +147,21 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 		return err
 	}
 
-	httpClient := tfc.DefaultConfig().HTTPClient
-	insecure := false
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%s/%s", w.instance.Spec.Organization, token)))
+	hs := string(h.Sum(nil))
 
+	w.log.Info("Workspace Controller", "msg", fmt.Sprintf("items in the client cache: %d", r.Cache.Len()))
+
+	if k, ok := r.Cache.Get(hs); ok {
+		w.log.Info("Workspace Controller", "msg", "using HCP Terraform client from the cache")
+		w.tfClient.Client = k.(*tfc.Client)
+		return nil
+	}
+
+	w.log.Info("Workspace Controller", "msg", "HCP Terraform client was not found in the cache, build a new one")
+
+	insecure := false
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
 		insecure, err = strconv.ParseBool(v)
 		if err != nil {
@@ -157,6 +173,7 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 		w.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
 	}
 
+	httpClient := tfc.DefaultConfig().HTTPClient
 	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 
 	config := &tfc.Config{
@@ -166,9 +183,14 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 			"User-Agent": []string{version.UserAgent},
 		},
 	}
-	w.tfClient.Client, err = tfc.NewClient(config)
+	tc, err := tfc.NewClient(config)
+	if err != nil {
+		return err
+	}
+	r.Cache.Add(hs, tc)
+	w.tfClient.Client = tc
 
-	return err
+	return nil
 }
 
 func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Workspace) bool {

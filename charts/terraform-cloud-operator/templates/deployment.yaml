@@ -36,6 +36,8 @@ spec:
           - --project-workers={{ .Values.controllers.project.workers }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
           - --workspace-sync-period={{ .Values.controllers.workspace.syncPeriod }}
+          - --workspace-cache-ttl={{ .Values.controllers.workspace.cacheTTL }}
+          - --workspace-cache-size={{ .Values.controllers.workspace.cacheSize }}
           {{- range .Values.operator.watchedNamespaces }}
           - --namespace={{ . }}
           {{- end }}

@@ -77,6 +77,10 @@ controllers:
     workers: 1
     # -- The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc.
     syncPeriod: 5m
+    # -- XXX. Format: 5s, 1m, etc.
+    cacheTTL: 30m
+    # -- XXX.
+    cacheSize: 5
 
 # -- Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates.
 customCAcertificates: ""

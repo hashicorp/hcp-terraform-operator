@@ -18,6 +18,7 @@ import (
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	lru "github.com/hashicorp/golang-lru/v2/expirable"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -77,8 +78,14 @@ func main() {
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
 		"The number of the Workspace controller workers.")
-	flag.DurationVar(&controllers.WorkspaceSyncPeriod, "workspace-sync-period", 5*time.Minute,
+	flag.DurationVar(&controllers.WorkspaceSyncPeriod, "workspace-sync-period", 1*time.Minute,
 		"The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc.")
+
+	flag.DurationVar(&controllers.WorkspaceCacheTTL, "workspace-cache-ttl", 30*time.Minute,
+		"XXX. Format: 5s, 1m, etc.")
+	var workspaceCacheSize int
+	flag.IntVar(&workspaceCacheSize, "workspace-cache-size", 5,
+		"XXX.")
 
 	// TODO
 	// - Add validation that 'sync-period' has a higher value than '*-sync-period'
@@ -164,6 +171,8 @@ func main() {
 
 	setupLog.Info(fmt.Sprintf("Operator sync period: %s", syncPeriod))
 	setupLog.Info(fmt.Sprintf("Workspace sync period: %s", controllers.WorkspaceSyncPeriod))
+	setupLog.Info(fmt.Sprintf("Workspace HCP Terraform client cache size: %d", workspaceCacheSize))
+	setupLog.Info(fmt.Sprintf("Workspace HCP Terraform client cache TTL: %s", controllers.WorkspaceCacheTTL))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
@@ -199,6 +208,7 @@ func main() {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("WorkspaceController"),
+		Cache:    lru.NewLRU[string, interface{}](workspaceCacheSize, nil, controllers.WorkspaceCacheTTL),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
