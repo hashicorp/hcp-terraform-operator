@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: '`Module`: Fix an issue where the controller cannot create ConfigMap and Secret for outputs when a Module custom resource `metadata.name` is longer than 63 characters. This issue occurs because the controller uses the custom resource name as the value for the ModuleName label in ConfigMap and Secret. The `ModuleName` label has been removed."'
-time: 2024-06-06T17:38:09.448477231-05:00
-custom:
-    PR: "423"
