@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -102,7 +103,12 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	ap.log.Info("Agent Pool Controller", "msg", "successfully reconcilied agent pool")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully reconcilied agent pool ID %s", ap.instance.Status.AgentPoolID)
 
-	return requeueAfter(AgentPoolSyncPeriod)
+	requeueDuration := AgentPoolSyncPeriod
+	if t := ap.remainCoolDownSeconds(); t > 0 {
+		requeueDuration = time.Duration(t) * time.Second
+	}
+
+	return requeueAfter(requeueDuration)
 }
 
 // SetupWithManager sets up the controller with the Manager.
