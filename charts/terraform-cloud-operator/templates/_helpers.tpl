@@ -55,8 +55,8 @@ Create the name of the service account to use
 */}}
 {{- define "terraform-cloud-operator.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "terraform-cloud-operator.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
 {{- default "default" .Values.serviceAccount.name }}
+{{- else }}
+{{- default .Release.Name }}-controller-manager
 {{- end }}
 {{- end }}
