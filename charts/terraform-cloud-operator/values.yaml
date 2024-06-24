@@ -10,6 +10,10 @@ replicaCount: 2
 # -- Security Context to Deployment
 securityContext:
   runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
 
 # Operator-global options.
 operator:
@@ -34,7 +38,15 @@ operator:
 
   # -- Security Context to manager container
   securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
     allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   # -- The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc.
   syncPeriod: 5m
@@ -59,7 +71,15 @@ kubeRbacProxy:
 
   # -- Security Context to kube-rbac-proxy container
   securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
     allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
 
   resources:
     limits:
