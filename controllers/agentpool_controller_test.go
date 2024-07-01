@@ -166,7 +166,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			}).Should(BeTrue())
 		})
 
-		It("can recreate agent token", func() {
+		It("can delete agent tokens", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
 			// VALIDATE SPEC AGAINST STATUS
@@ -217,7 +217,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			validateAgentPoolTestTokens(ctx, instance)
 		})
 
-		It("can delete agent tokens", func() {
+		It("can recreate agent token", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
 			// VALIDATE SPEC AGAINST STATUS
@@ -225,16 +225,15 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			// VALIDATE AGENT TOKENS
 			validateAgentPoolTestTokens(ctx, instance)
 
-			// DELETE AGENT TOKENS AND WAIT FOR RECREATION
-			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			for _, t := range instance.Status.AgentTokens {
+			// DELETE HCP TERRAFORM AGENT TOKENS...
+			tokens, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
+			Expect(err).Should(Succeed())
+			Expect(tokens).ShouldNot(BeNil())
+			for _, t := range tokens.Items {
 				err := tfClient.AgentTokens.Delete(ctx, t.ID)
-				if err != nil {
-					if err == tfc.ErrResourceNotFound {
-						continue
-					}
-				}
+				Expect(err).Should(Succeed())
 			}
+			//... AND WAIT FOR RECREATION
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				t, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
