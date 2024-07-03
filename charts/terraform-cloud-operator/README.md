@@ -149,6 +149,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | kubeRbacProxy.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
+| kubeRbacProxy.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | operator.image.repository | string | `"hashicorp/terraform-cloud-operator"` | Image repository. |
 | operator.image.tag | string | `""` | Image tag. Defaults to `.Chart.AppVersion`. |
@@ -156,8 +157,10 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | operator.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
 | operator.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
+| operator.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.skipTLSVerify | bool | `false` | Whether or not to ignore TLS certification warnings. |
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | replicaCount | int | `2` | The number of Operator replicas. |
+| securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
