@@ -7,7 +7,7 @@ imagePullSecrets: []
 # -- The number of Operator replicas.
 replicaCount: 2
 
-# -- Security Context to Deployment
+# -- Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
 securityContext:
   runAsNonRoot: true
 
@@ -32,7 +32,7 @@ operator:
       # -- Guaranteed minimum amount of memory to be used by a container.
       memory: 64Mi
 
-  # -- Security Context to manager container
+  # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -62,7 +62,7 @@ kubeRbacProxy:
     # -- Image tag.
     tag: v0.18.0
 
-  # -- Security Context to kube-rbac-proxy container
+  # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
