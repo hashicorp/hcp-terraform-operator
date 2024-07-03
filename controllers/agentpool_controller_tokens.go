@@ -6,6 +6,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/terraform-cloud-operator/internal/pointer"
@@ -45,10 +46,12 @@ func (r *AgentPoolReconciler) createAgentToken(ctx context.Context, ap *agentPoo
 	ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new agent token %q %q", token, at.ID))
 
 	ap.updateTokenStatus(&appv1alpha2.AgentToken{
-		Name:       at.Description,
-		ID:         at.ID,
-		CreatedAt:  pointer.PointerOf(at.CreatedAt.Unix()),
-		LastUsedAt: pointer.PointerOf(at.LastUsedAt.Unix()),
+		Name: at.Description,
+		ID:   at.ID,
+		// CreatedAt:  pointer.PointerOf(at.CreatedAt.Unix()),
+		CreatedAt: pointer.PointerOf(int64(time.Now().Unix())),
+		// LastUsedAt: pointer.PointerOf(at.LastUsedAt.Unix()),
+		LastUsedAt: pointer.PointerOf(int64(0)),
 	})
 
 	labels := make(map[string]string)
@@ -91,7 +94,7 @@ func (ap *agentPoolInstance) updateTokenStatus(token *appv1alpha2.AgentToken) {
 	// TODO:
 	// - we can re-write this function with slices.IndexFunc.
 	for i, st := range ap.instance.Status.AgentTokens {
-		if st.Name == token.Name {
+		if st.ID == token.ID {
 			ap.instance.Status.AgentTokens[i] = token
 			return
 		}
@@ -200,6 +203,29 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 		return err
 	}
 
+	// ROTATION::START
+	if annotation, ok := ap.instance.Annotations[agentPoolAnnotationTokenRefreshDuration]; ok {
+		refresh, err := time.ParseDuration(annotation)
+		if err != nil {
+			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to parse annotation %v: %v", agentPoolAnnotationTokenRefreshDuration, annotation))
+		} else {
+			ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully parsed annotation %v: %v", agentPoolAnnotationTokenRefreshDuration, refresh))
+			for _, token := range ap.instance.Status.AgentTokens {
+				tokenDuration := time.Now().Unix() - *token.CreatedAt
+				ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("token %v(%v) duration: %v", token.Name, token.ID, time.Duration(tokenDuration)*time.Second))
+				if tokenDuration >= int64(refresh.Seconds()) && *token.LastUsedAt == 0 {
+					ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("refreshing token %v(%v)", token.Name, token.ID))
+					if err := r.createAgentToken(ctx, ap, token.Name, secret); err != nil {
+						ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to refresh token %v(%v)", token.Name, token.ID))
+						return err
+					}
+					token.LastUsedAt = pointer.PointerOf(time.Now().Unix())
+				}
+			}
+		}
+	}
+	// ROTATION::END
+
 	// Get HCP Terraform agent tokens.
 	agentTokens, err := getAgentTokens(ctx, ap)
 	if err != nil {
@@ -211,16 +237,21 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 		specTokens[t.Name] = struct{}{}
 	}
 	// Get instance status agent tokens.
-	statusTokens := make(map[string]string, len(ap.instance.Status.AgentTokens))
+	activeTokens := make(map[string]string)
+	retainedTokens := make(map[string]int64)
 	for _, t := range ap.instance.Status.AgentTokens {
-		statusTokens[t.Name] = t.ID
+		if *t.LastUsedAt == 0 {
+			activeTokens[t.Name] = t.ID
+		} else {
+			retainedTokens[t.ID] = *t.LastUsedAt
+		}
 	}
 
 	for tokenName := range specTokens {
-		if tokenID, ok := statusTokens[tokenName]; ok {
+		if tokenID, ok := activeTokens[tokenName]; ok {
 			if _, ok := agentTokens[tokenID]; ok {
 				delete(agentTokens, tokenID)
-				delete(statusTokens, tokenName)
+				delete(activeTokens, tokenName)
 				continue
 			}
 		}
@@ -230,15 +261,42 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	}
 
 	// Delete all tokens remained in HCP Terraform.
-	for t := range agentTokens {
-		if err := r.removeAgentToken(ctx, ap, t, secret); err != nil {
-			return err
+	for tokenID := range agentTokens {
+		if _, ok := retainedTokens[tokenID]; !ok {
+			if err := r.removeAgentToken(ctx, ap, tokenID, secret); err != nil {
+				return err
+			}
 		}
 	}
 
 	// Clean up staus.
-	for _, tokenID := range statusTokens {
+	for _, tokenID := range activeTokens {
 		ap.removeTokenFromStatus(tokenID)
+	}
+
+	// Clean up retained tokens.
+	retention := 0 * time.Second
+	if annotation, ok := ap.instance.Annotations[agentPoolAnnotationTokenRetentionDuration]; ok {
+		retention, err = time.ParseDuration(annotation)
+		if err != nil {
+			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to parse annotation %v", agentPoolAnnotationTokenRetentionDuration))
+		}
+		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully parsed annotation %v: %v", agentPoolAnnotationTokenRetentionDuration, retention))
+	}
+	timeNow := time.Now().Unix()
+	for tokenID, lastUsedAt := range retainedTokens {
+		if timeNow >= lastUsedAt+int64(retention.Seconds()) {
+			ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("removing retained token %v", tokenID))
+			// Remove retained token from HCP Terraform.
+			err := ap.tfClient.Client.AgentTokens.Delete(ctx, tokenID)
+			if err != nil && err != tfc.ErrResourceNotFound {
+				ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove retained token %v", tokenID))
+				return err
+			}
+			ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully removed retained token %v", tokenID))
+			// Remove retained token from status.
+			ap.removeTokenFromStatus(tokenID)
+		}
 	}
 
 	return nil
