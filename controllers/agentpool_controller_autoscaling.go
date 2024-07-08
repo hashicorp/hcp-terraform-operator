@@ -159,9 +159,9 @@ func (r *AgentPoolReconciler) scaleAgentDeployment(ctx context.Context, ap *agen
 	return r.Client.Update(ctx, &deployment)
 }
 
-// remainCoolDownSeconds returns the remaining seconds in the Cool Down stage.
+// coolDownSecondsRemaining returns the remaining seconds in the Cool Down stage.
 // A negative value indicates expired Cool Down.
-func (a *agentPoolInstance) remainCoolDownSeconds() int {
+func (a *agentPoolInstance) coolDownSecondsRemaining() int {
 	if s := a.instance.Status.AgentDeploymentAutoscalingStatus; s != nil && s.LastScalingEvent != nil {
 		lastScalingEventSeconds := int(time.Since(s.LastScalingEvent.Time).Seconds())
 		cooldownPeriodSeconds := int(*a.instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds)
@@ -178,7 +178,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", "new reconciliation event")
 
-	if ap.remainCoolDownSeconds() > 0 {
+	if ap.coolDownSecondsRemaining() > 0 {
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", "autoscaler is within the cooldown period, skipping")
 		return nil
 	}
