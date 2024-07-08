@@ -18,6 +18,39 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
+// matchWildcardName checks if a given string matches a specified wildcard pattern.
+// The wildcard pattern can contain '*' at the beginning and/or end to match any sequence of characters.
+// If the pattern contains '*' at both ends, the function checks if the substring exists within the string.
+// If the pattern contains '*' only at the beginning, the function checks if the string ends with the substring.
+// If the pattern contains '*' only at the end, the function checks if the string starts with the substring.
+// If there are no '*' characters, the function checks for an exact match.
+// For example:
+// (1) '*-terraform-workspace' -- the wildcard indicator '*' is at the beginning of the wildcard name (prefix),
+// therefore, we should search for a workspace name that ends with the suffix '-terraform-workspace'.
+// (2) 'hcp-terraform-workspace-*' -- the wildcard indicator '*' is at the end of the wildcard name (suffix),
+// therefore, we should search for a workspace name that starts with the prefix 'hcp-terraform-workspace-'.
+// (3) '*-terraform-workspace-*' -- the wildcard indicator '*' is at the beginning and the end of the wildcard name (prefix and suffix),
+// therefore, we should search for a workspace name containing the substring '-terraform-workspace-'.
+func matchWildcardName(wildcard string, str string) bool {
+	// Both 'prefix' and 'suffix' indicate whether a part of the name is in the prefix, suffix, or both.
+	// If the wildcard indicator '*' is in the PREFIX part, then search for a substring that is in the SUFFIX.
+	// If the wildcard indicator '*' is in the SUFFIX part, then search for a substring that is in the PREFIX.
+	// If the wildcard indicator '*' is in both the prefix and the suffix, then search for a substring that is in between '*'.
+	prefix := strings.HasSuffix(wildcard, "*")
+	suffix := strings.HasPrefix(wildcard, "*")
+	wn := strings.Trim(wildcard, "*")
+	switch {
+	case prefix && suffix:
+		return strings.Contains(str, wn)
+	case prefix:
+		return strings.HasPrefix(str, wn)
+	case suffix:
+		return strings.HasSuffix(str, wn)
+	default:
+		return wn == str
+	}
+}
+
 func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	required := 0
 	runStatuses := strings.Join([]string{
@@ -71,32 +104,8 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 				required++
 			}
 		case t.WildcardName != "":
-			// This is not a mistake here.
-			// Both 'prefix' and 'suffix' indicate whether a part of the name is in the prefix, suffix, or both.
-			// If the wildcard indicator '*' is in the suffix part, then search for a substring that is in the prefix.
-			// If the wildcard indicator '*' is in the prefix part, then search for a substring that is in the suffix.
-			// If the wildcard indicator '*' is in both the prefix and the suffix, then search for a substring that is in between '*'.
-			// For example:
-			// (1) 'hcp-terraform-workspace-*' -- the wildcard indicator '*' is at the end of the wildcard name (suffix),
-			// therefore, we should search for a workspace name that starts with the prefix 'hcp-terraform-workspace-'.
-			// (2) '*-terraform-workspace' -- the wildcard indicator '*' is at the beginning of the wildcard name (prefix),
-			// therefore, we should search for a workspace name that ends with the suffix '-terraform-workspace'.
-			// (3) '*-terraform-workspace-*' -- the wildcard indicator '*' is at the beginning and the end of the wildcard name (prefix and suffix),
-			// therefore, we should search for a workspace name containing the substring '-terraform-workspace-'.
-			prefix := strings.HasSuffix(t.WildcardName, "*")
-			suffix := strings.HasPrefix(t.WildcardName, "*")
-			wn := strings.Trim(t.WildcardName, "*")
 			for w := range workspaceNames {
-				match := false
-				switch {
-				case prefix && suffix:
-					match = strings.Contains(w, wn)
-				case prefix:
-					match = strings.HasPrefix(w, wn)
-				case suffix:
-					match = strings.HasSuffix(w, wn)
-				}
-				if match {
+				if ok := matchWildcardName(t.WildcardName, w); ok {
 					required++
 					delete(workspaceNames, w)
 				}
