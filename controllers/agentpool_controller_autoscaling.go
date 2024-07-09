@@ -77,7 +77,7 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 			return 0, err
 		}
 		for _, ws := range workspaceList.Items {
-			if ws.AgentPool.ID == ap.instance.Status.AgentPoolID {
+			if ws.AgentPool != nil && ws.AgentPool.ID == ap.instance.Status.AgentPoolID {
 				workspaceNames[ws.Name] = struct{}{}
 				workspaceIDs[ws.ID] = struct{}{}
 			}
