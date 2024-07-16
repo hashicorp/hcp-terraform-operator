@@ -112,7 +112,11 @@ func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *worksp
 
 	rl := make(map[string]string)
 	if hasRunTaskName(w) {
-		listOpts := &tfc.RunTaskListOptions{}
+		listOpts := &tfc.RunTaskListOptions{
+			ListOptions: tfc.ListOptions{
+				PageSize: maxPageSize,
+			},
+		}
 		for {
 			rt, err := w.tfClient.Client.RunTasks.List(ctx, w.instance.Spec.Organization, listOpts)
 			if err != nil {
@@ -146,7 +150,11 @@ func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *worksp
 func (r *WorkspaceReconciler) getWorkspaceRunTasks(ctx context.Context, w *workspaceInstance) (map[string]*tfc.WorkspaceRunTask, error) {
 	o := map[string]*tfc.WorkspaceRunTask{}
 
-	listOpts := &tfc.WorkspaceRunTaskListOptions{}
+	listOpts := &tfc.WorkspaceRunTaskListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
 	for {
 		wrt, err := w.tfClient.Client.WorkspaceRunTasks.List(ctx, w.instance.Status.WorkspaceID, listOpts)
 		if err != nil {

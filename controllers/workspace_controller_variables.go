@@ -140,7 +140,11 @@ func (r *WorkspaceReconciler) getWorkspaceVariables(ctx context.Context, w *work
 	var o []*tfc.Variable
 
 	w.log.Info("Reconcile Variables", "msg", "getting workspace variables")
-	listOpts := &tfc.VariableListOptions{}
+	listOpts := &tfc.VariableListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
 	for {
 		v, err := w.tfClient.Client.Variables.List(ctx, w.instance.Status.WorkspaceID, listOpts)
 		if err != nil {

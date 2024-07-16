@@ -13,7 +13,11 @@ import (
 func (r *WorkspaceReconciler) getSSHKeyIDByName(ctx context.Context, w *workspaceInstance) (string, error) {
 	SSHKeyName := w.instance.Spec.SSHKey.Name
 
-	listOpts := &tfc.SSHKeyListOptions{}
+	listOpts := &tfc.SSHKeyListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
 	for {
 		SSHKeys, err := w.tfClient.Client.SSHKeys.List(ctx, w.instance.Spec.Organization, listOpts)
 		if err != nil {

@@ -15,6 +15,9 @@ func (r *WorkspaceReconciler) getProjectIDByName(ctx context.Context, w *workspa
 
 	listOpts := &tfc.ProjectListOptions{
 		Name: projectName,
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
 	}
 	for {
 		projectIDs, err := w.tfClient.Client.Projects.List(ctx, w.instance.Spec.Organization, listOpts)

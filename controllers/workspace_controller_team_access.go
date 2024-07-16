@@ -76,7 +76,12 @@ func (r *WorkspaceReconciler) getInstanceTeamAccess(ctx context.Context, w *work
 func (r *WorkspaceReconciler) getWorkspaceTeamAccess(ctx context.Context, w *workspaceInstance) (map[string]*tfc.TeamAccess, error) {
 	o := map[string]*tfc.TeamAccess{}
 
-	listOpts := &tfc.TeamAccessListOptions{WorkspaceID: w.instance.Status.WorkspaceID}
+	listOpts := &tfc.TeamAccessListOptions{
+		WorkspaceID: w.instance.Status.WorkspaceID,
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
 	for {
 		t, err := w.tfClient.Client.TeamAccess.List(ctx, listOpts)
 		if err != nil {
@@ -105,6 +110,9 @@ func (r *WorkspaceReconciler) getTeams(ctx context.Context, w *workspaceInstance
 
 	listOpts := &tfc.TeamListOptions{
 		Names: fTeams,
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
 	}
 	for {
 		tl, err := w.tfClient.Client.Teams.List(ctx, w.instance.Spec.Organization, listOpts)

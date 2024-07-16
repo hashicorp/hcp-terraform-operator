@@ -15,7 +15,11 @@ import (
 func (r *WorkspaceReconciler) getWorkspaces(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
 	o := make(map[string]string)
 
-	listOpts := &tfc.WorkspaceListOptions{}
+	listOpts := &tfc.WorkspaceListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
 	for {
 		ws, err := w.tfClient.Client.Workspaces.List(ctx, w.instance.Spec.Organization, listOpts)
 		if err != nil {

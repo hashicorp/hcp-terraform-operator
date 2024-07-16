@@ -54,6 +54,9 @@ func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceIns
 	}
 	listOpts := &tfc.OrganizationMembershipListOptions{
 		Emails: e,
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
 	}
 	for {
 		members, err := w.tfClient.Client.OrganizationMemberships.List(ctx, w.instance.Spec.Organization, listOpts)
@@ -112,7 +115,11 @@ func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *w
 func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *workspaceInstance) ([]tfc.NotificationConfiguration, error) {
 	var o []tfc.NotificationConfiguration
 
-	listOpts := &tfc.NotificationConfigurationListOptions{}
+	listOpts := &tfc.NotificationConfigurationListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
 	for {
 		wn, err := w.tfClient.Client.NotificationConfigurations.List(ctx, w.instance.Status.WorkspaceID, listOpts)
 		if err != nil {

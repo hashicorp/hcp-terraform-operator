@@ -69,14 +69,27 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) er
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	outputs, err := m.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
-	if err != nil {
-		return err
+	opts := &tfc.StateVersionOutputsListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
+	var outputs []*tfc.StateVersionOutput
+	for {
+		resp, err := m.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, opts)
+		if err != nil {
+			return err
+		}
+		outputs = append(outputs, resp.Items...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.PageNumber = resp.NextPage
 	}
 
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
-	for _, o := range outputs.Items {
+	for _, o := range outputs {
 		out, err := formatOutput(o)
 		if err != nil {
 			m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))

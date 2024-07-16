@@ -42,6 +42,9 @@ func (r *WorkspaceReconciler) getRunTriggersWorkspace(ctx context.Context, w *wo
 	listOpts := &tfc.RunTriggerListOptions{
 		RunTriggerType: tfc.RunTriggerInbound,
 		Include:        []tfc.RunTriggerIncludeOpt{tfc.RunTriggerSourceable},
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
 	}
 	for {
 		runTriggers, err := w.tfClient.Client.RunTriggers.List(ctx, w.instance.Status.WorkspaceID, listOpts)
