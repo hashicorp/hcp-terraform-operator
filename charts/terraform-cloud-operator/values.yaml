@@ -104,3 +104,12 @@ controllers:
 
 # -- Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates.
 customCAcertificates: ""
+
+serviceAccount:
+  # -- Specifies whether a ServiceAccount should be created.
+  create: true
+  # -- Additional annotations for the ServiceAccount.
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""

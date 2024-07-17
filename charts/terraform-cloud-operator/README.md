@@ -165,3 +165,6 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | replicaCount | int | `2` | The number of Operator replicas. |
 | securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
+| serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |
+| serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created. |
+| serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template. |
