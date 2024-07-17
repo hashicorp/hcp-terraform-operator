@@ -32,6 +32,7 @@ spec:
           args:
           - --sync-period={{ .Values.operator.syncPeriod }}
           - --agent-pool-workers={{ .Values.controllers.agentPool.workers }}
+          - --agent-pool-sync-period={{ .Values.controllers.agentPool.syncPeriod }}
           - --module-workers={{ .Values.controllers.module.workers }}
           - --project-workers={{ .Values.controllers.project.workers }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
@@ -94,7 +95,7 @@ spec:
             {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
           securityContext:
             {{- toYaml .Values.kubeRbacProxy.securityContext | nindent 12 }}
-      serviceAccountName: {{ .Release.Name }}-controller-manager
+      serviceAccountName: {{ include "terraform-cloud-operator.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.securityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10

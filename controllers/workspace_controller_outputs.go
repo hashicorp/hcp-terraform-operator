@@ -82,15 +82,28 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	outputs, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, &tfc.StateVersionOutputsListOptions{})
-	if err != nil {
-		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", workspace.CurrentStateVersion.ID))
-		return err
+	opts := &tfc.StateVersionOutputsListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
+	var outputs []*tfc.StateVersionOutput
+	for {
+		resp, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, opts)
+		if err != nil {
+			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", workspace.CurrentStateVersion.ID))
+			return err
+		}
+		outputs = append(outputs, resp.Items...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.PageNumber = resp.NextPage
 	}
 
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
-	for _, o := range outputs.Items {
+	for _, o := range outputs {
 		out, err := formatOutput(o)
 		if err != nil {
 			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
@@ -109,7 +122,7 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		Namespace: w.instance.Namespace,
 	}
 	labels := map[string]string{
-		"workspaceID":   w.instance.Status.WorkspaceID,
+		"workspaceID": w.instance.Status.WorkspaceID,
 	}
 
 	// update ConfigMap output
