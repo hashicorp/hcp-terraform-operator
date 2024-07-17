@@ -15,7 +15,7 @@ securityContext:
 operator:
   image:
     # -- Image repository.
-    repository: hashicorp/terraform-cloud-operator
+    repository: hashicorp/hcp-terraform-operator
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Image tag. Defaults to `.Chart.AppVersion`.
