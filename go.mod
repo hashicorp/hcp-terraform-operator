@@ -6,7 +6,7 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
-	github.com/hashicorp/go-slug v0.15.0
+	github.com/hashicorp/go-slug v0.15.2
 	github.com/hashicorp/go-tfe v1.55.0
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
@@ -37,7 +37,7 @@ require (
 	github.com/google/pprof v0.0.0-20240424215950-a892ee059fd6 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/jsonapi v1.3.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
