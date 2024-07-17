@@ -94,7 +94,7 @@ spec:
             {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
-      serviceAccountName: {{ .Release.Name }}-controller-manager
+      serviceAccountName: {{ include "terraform-cloud-operator.serviceAccountName" . }}
       securityContext:
         runAsNonRoot: true
       terminationGracePeriodSeconds: 10
