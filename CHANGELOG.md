@@ -1,3 +1,24 @@
+## 2.5.0 (July 09, 2024)
+
+NOTES:
+
+* In upcoming releases, we shall proceed with renaming this project to HCP Terraform Operator for Kubernetes or simply HCP Terraform Operator. This measure is necessary in response to the recent announcement of [The Infrastructure Cloud](https://www.hashicorp.com/blog/introducing-the-infrastructure-cloud). The most noticeable change you can expect in version 2.6.0 is the renaming of this repository and related resources, such as the Helm chart and Docker Hub names. Please follow the changelogs for updates.
+
+FEATURES:
+
+* `Helm`: Add a new value called `controllers.agentPool.syncPeriod` to set the CLI option `--agent-pool-sync-period`. [[GH-421](https://github.com/hashicorp/terraform-cloud-operator/pull/421)]
+* `AgentPool`: Add a new CLI option called `--agent-pool-sync-period` to set the time interval for re-queuing Agent Pool resources once they are successfully reconciled. [[GH-421](https://github.com/hashicorp/terraform-cloud-operator/pull/421)]
+
+ENHANCEMENTS:
+
+* `AgentPool`: Update reconciliation logic to reduce the number of API calls. The controller now reconciles custom resources after the cooldown period if applicable; otherwise, the default timer is applied. [[GH-420](https://github.com/hashicorp/terraform-cloud-operator/pull/420)]
+* `AgentPool`: The agent auroscaling logic has been updated to decrease the frequency of API calls. The controller now utilizes the List Workspaces API call with filtering based on the current run status, thereby reducing the total number of API calls needed. [[GH-419](https://github.com/hashicorp/terraform-cloud-operator/pull/419)]
+* `Helm Chart`: Add the ability to configure the security context of the Deployment pod and containers. [[GH-432](https://github.com/hashicorp/terraform-cloud-operator/pull/432)]
+
+## Community Contributors :raised_hands:
+
+- @vadim-kubasov made their contribution in https://github.com/hashicorp/terraform-cloud-operator/pull/432
+
 ## 2.4.1 (June 07, 2024)
 
 NOTES:

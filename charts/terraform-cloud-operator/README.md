@@ -32,7 +32,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/terraform-cloud-operator \
-      --version 2.4.1 \
+      --version 2.5.0 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -43,7 +43,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
-  --version 2.4.1 \
+  --version 2.5.0 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -62,7 +62,7 @@ If targeting a Terraform Enterprise instance rather than HCP Terraform, set the 
 
 ```console
 $ helm install demo hashicorp/terraform-cloud-operator \
-  --version 2.4.1 \
+  --version 2.5.0 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -74,7 +74,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/terraform-cloud-operator \
-  --version 2.4.1 \
+  --version 2.5.0 \
   --namespace tfc-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
@@ -135,10 +135,11 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| controllers.agentPool.syncPeriod | string | `"30s"` | The minimum frequency at which watched Agent Pool resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.agentPool.workers | int | `1` | The number of the Agent Pool controller workers. |
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
-| controllers.workspace.syncPeriod | string | `"5m"` | The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc. |
+| controllers.workspace.syncPeriod | string | `"5m"` | The minimum frequency at which watched Workspace resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.workspace.workers | int | `1` | The number of the Workspace controller workers. |
 | customCAcertificates | string | `""` | Custom Certificate Authority bundle to validate API TLS certificates. Expects a path to a CRT file containing concatenated certificates. |
 | imagePullSecrets | list | `[]` | Reference to one or more secrets essential for pulling container images. |
@@ -149,6 +150,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | kubeRbacProxy.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
+| kubeRbacProxy.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | operator.image.repository | string | `"hashicorp/terraform-cloud-operator"` | Image repository. |
 | operator.image.tag | string | `""` | Image tag. Defaults to `.Chart.AppVersion`. |
@@ -156,11 +158,13 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | operator.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
 | operator.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
+| operator.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.skipTLSVerify | bool | `false` | Whether or not to ignore TLS certification warnings. |
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | replicaCount | int | `2` | The number of Operator replicas. |
+| securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created. |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template. |
