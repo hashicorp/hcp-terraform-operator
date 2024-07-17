@@ -82,10 +82,10 @@ controllers:
 customCAcertificates: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # -- Specifies whether a ServiceAccount should be created.
   create: true
-  # Annotations to add to the service account
+  # -- Additional annotations for the ServiceAccount.
   annotations: {}
-  # The name of the service account to use.
-  # If not set a name is generated using the a {{ .Release.Name }}-controller-manager pattern.
-  name:
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""
