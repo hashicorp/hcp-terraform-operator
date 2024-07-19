@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -102,11 +101,6 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	ap.log.Info("Agent Pool Controller", "msg", "successfully reconcilied agent pool")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully reconcilied agent pool ID %s", ap.instance.Status.AgentPoolID)
-
-	// Re-queue custom resource after the cool down period if applicable.
-	if t := ap.coolDownSecondsRemaining(); t > 0 {
-		return requeueAfter(time.Duration(t) * time.Second)
-	}
 
 	return requeueAfter(AgentPoolSyncPeriod)
 }

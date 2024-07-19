@@ -151,16 +151,33 @@ func (r *AgentPoolReconciler) scaleAgentDeployment(ctx context.Context, ap *agen
 	return r.Client.Update(ctx, &deployment)
 }
 
-// coolDownSecondsRemaining returns the remaining seconds in the Cool Down stage.
+// cooldownSecondsRemaining(currentReplica returns the remaining seconds in the Cool Down stage.
 // A negative value indicates expired Cool Down.
-func (a *agentPoolInstance) coolDownSecondsRemaining() int {
-	if s := a.instance.Status.AgentDeploymentAutoscalingStatus; s != nil && s.LastScalingEvent != nil {
-		lastScalingEventSeconds := int(time.Since(s.LastScalingEvent.Time).Seconds())
-		cooldownPeriodSeconds := int(*a.instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds)
-		return cooldownPeriodSeconds - lastScalingEventSeconds
+func (a *agentPoolInstance) cooldownSecondsRemaining(currentReplicas, desiredReplicas int32) int {
+	status := a.instance.Status.AgentDeploymentAutoscalingStatus
+	if status == nil || status.LastScalingEvent == nil {
+		return -1
 	}
 
-	return -1
+	cooldownPeriodSeconds := int(*a.instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds)
+
+	cooldownPeriod := a.instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod
+	if cooldownPeriod != nil {
+		if v := cooldownPeriod.ScaleDownSeconds; v != nil {
+			cooldownPeriodSeconds = int(*v)
+			a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling down, using configured scale down period: %v", cooldownPeriodSeconds))
+		}
+
+		if v := cooldownPeriod.ScaleUpSeconds; v != nil {
+			if desiredReplicas > currentReplicas {
+				cooldownPeriodSeconds = int(*v)
+				a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling up, using configured scale down period: %v", cooldownPeriodSeconds))
+			}
+		}
+	}
+
+	lastScalingEventSeconds := int(time.Since(status.LastScalingEvent.Time).Seconds())
+	return cooldownPeriodSeconds - lastScalingEventSeconds
 }
 
 func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap *agentPoolInstance) error {
@@ -169,11 +186,6 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	}
 
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", "new reconciliation event")
-
-	if ap.coolDownSecondsRemaining() > 0 {
-		ap.log.Info("Reconcile Agent Autoscaling", "msg", "autoscaler is within the cooldown period, skipping")
-		return nil
-	}
 
 	requiredAgents, err := computeRequiredAgents(ctx, ap)
 	if err != nil {
@@ -195,6 +207,11 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	maxReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
 	desiredReplicas := computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas)
 	if desiredReplicas != currentReplicas {
+		if ap.cooldownSecondsRemaining(currentReplicas, desiredReplicas) > 0 {
+			ap.log.Info("Reconcile Agent Autoscaling", "msg", "autoscaler is within the cooldown period, skipping")
+			return nil
+		}
+
 		scalingEvent := fmt.Sprintf("Scaling agent deployment from %v to %v replicas", currentReplicas, desiredReplicas)
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", strings.ToLower(scalingEvent))
 		r.Recorder.Event(&ap.instance, corev1.EventTypeNormal, "AutoscaleAgentPoolDeployment", scalingEvent)
