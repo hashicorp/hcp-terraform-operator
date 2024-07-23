@@ -165,7 +165,9 @@ func (a *agentPoolInstance) cooldownSecondsRemaining(currentReplicas, desiredRep
 	if cooldownPeriod != nil {
 		if v := cooldownPeriod.ScaleDownSeconds; v != nil {
 			cooldownPeriodSeconds = int(*v)
-			a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling down, using configured scale down period: %v", cooldownPeriodSeconds))
+			if currentReplicas > desiredReplicas {
+				a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling down, using configured scale down period: %v", cooldownPeriodSeconds))
+			}
 		}
 
 		if v := cooldownPeriod.ScaleUpSeconds; v != nil {
