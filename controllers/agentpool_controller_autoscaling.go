@@ -151,7 +151,7 @@ func (r *AgentPoolReconciler) scaleAgentDeployment(ctx context.Context, ap *agen
 	return r.Client.Update(ctx, &deployment)
 }
 
-// cooldownSecondsRemaining(currentReplica returns the remaining seconds in the Cool Down stage.
+// cooldownSecondsRemaining returns the remaining seconds in the Cool Down stage.
 // A negative value indicates expired Cool Down.
 func (a *agentPoolInstance) cooldownSecondsRemaining(currentReplicas, desiredReplicas int32) int {
 	status := a.instance.Status.AgentDeploymentAutoscalingStatus
