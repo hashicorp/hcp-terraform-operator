@@ -1,6 +1,6 @@
 # Main codeowners
-* @hashicorp/terraform-ecosystem-kubernetes
+* @hashicorp/tf-eco-hybrid-cloud
 
 # release configuration
-/.release/                      @hashicorp/release-engineering
-/.github/workflows/build.yml    @hashicorp/release-engineering
+/.release/                      @hashicorp/github-es-release-engineering
+/.github/workflows/build.yml    @hashicorp/github-es-release-engineering
