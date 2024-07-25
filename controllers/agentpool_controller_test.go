@@ -388,6 +388,35 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(pointer.PointerOf(int32(60))))
 		})
 
+		It("can autoscale agent deployments with seperate scale-up and scale-down periods", func() {
+			createTestAgentPool(instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{}
+			instance.Spec.AgentDeploymentAutoscaling = &appv1alpha2.AgentDeploymentAutoscaling{
+				MinReplicas: pointer.PointerOf(int32(3)),
+				MaxReplicas: pointer.PointerOf(int32(5)),
+				CooldownPeriod: &appv1alpha2.AgentDeploymentAutoscalingCooldownPeriod{
+					ScaleUpSeconds:   pointer.PointerOf(int32(30)),
+					ScaleDownSeconds: pointer.PointerOf(int32(600)),
+				},
+			}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeployment.Replicas).To(BeNil())
+			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
+			Expect(instance.Spec.AgentDeploymentAutoscaling).ToNot(BeNil())
+			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(BeNil())
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(pointer.PointerOf(int32(3))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod.ScaleUpSeconds).To(Equal(pointer.PointerOf(int32(30))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod.ScaleDownSeconds).To(Equal(pointer.PointerOf(int32(600))))
+		})
+
 		It("can autoscale agent deployments by targeting specific workspaces", func() {
 			createTestAgentPool(instance)
 
@@ -491,7 +520,6 @@ func validateAgentPoolTestTokens(ctx context.Context, instance *appv1alpha2.Agen
 
 		return compareAgentTokens(ct, kt)
 	}).Should(BeTrue())
-
 }
 
 func validateAgentPoolDeployment(ctx context.Context, instance *appv1alpha2.AgentPool) {
