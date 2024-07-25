@@ -102,6 +102,10 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	ap.log.Info("Agent Pool Controller", "msg", "successfully reconcilied agent pool")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully reconcilied agent pool ID %s", ap.instance.Status.AgentPoolID)
 
+	// TODO:
+	// - Add a `metadata` field to the `agentPoolInstance` structure. The `metadata` structure can be used to carry information
+	//   related to an agent pool instance, such as requeue after time.
+
 	return requeueAfter(AgentPoolSyncPeriod)
 }
 
