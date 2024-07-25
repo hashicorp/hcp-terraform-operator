@@ -73,6 +73,21 @@ type AgentDeploymentAutoscaling struct {
 	//+optional
 	//+kubebuilder:default:=300
 	CooldownPeriodSeconds *int32 `json:"cooldownPeriodSeconds,omitempty"`
+
+	// CoolDownPeriod configures the period to wait between scaling up and scaling down
+	//+optional
+	CooldownPeriod *AgentDeploymentAutoscalingCooldownPeriod `json:"cooldownPeriod,omitempty"`
+}
+
+// AgentDeploymentAutoscalingCooldownPeriod configures the period to wait between scaling up and scaling down
+type AgentDeploymentAutoscalingCooldownPeriod struct {
+	// ScaleUpSeconds is the time to wait before scaling up.
+	//+optional
+	ScaleUpSeconds *int32 `json:"scaleUpSeconds,omitempty"`
+
+	// ScaleDownSeconds is the time to wait before scaling down.
+	//+optional
+	ScaleDownSeconds *int32 `json:"scaleDownSeconds,omitempty"`
 }
 
 type AgentDeployment struct {
@@ -80,7 +95,7 @@ type AgentDeployment struct {
 	Spec     *v1.PodSpec `json:"spec,omitempty"`
 }
 
-// AgentPoolSpec defines the desired stak get ste of AgentPool.
+// AgentPoolSpec defines the desired state of AgentPool.
 type AgentPoolSpec struct {
 	// Agent Pool name.
 	// More information:
