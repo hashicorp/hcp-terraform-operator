@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 env:
-  PKG_NAME: 'terraform-cloud-operator'
-  PKG_PATH: 'github.com/hashicorp/terraform-cloud-operator'
-  DOCKER_HUB_REPO: 'hashicorp/terraform-cloud-operator'
-  DOCKER_HUB_DEV_REPO: 'hashicorppreview/terraform-cloud-operator'
+  PKG_NAME: 'hcp-terraform-operator'
+  PKG_PATH: 'github.com/hashicorp/hcp-terraform-operator'
+  DOCKER_HUB_REPO: 'hashicorp/hcp-terraform-operator'
+  DOCKER_HUB_DEV_REPO: 'hashicorppreview/hcp-terraform-operator'
 
 jobs:
   set-product-version:
