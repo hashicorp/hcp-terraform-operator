@@ -77,7 +77,7 @@ ARG TARGETARCH
 
 ENV BIN_NAME=$BIN_NAME
 
-LABEL maintainer="Terraform Ecosystem - Hybrid Cloud Team <tfc-operator@hashicorp.com>"
+LABEL maintainer="Terraform Ecosystem - Hybrid Cloud Team <hcp-tf-operator@hashicorp.com>"
 LABEL version=$PRODUCT_VERSION
 LABEL revision=$PRODUCT_REVISION
 
