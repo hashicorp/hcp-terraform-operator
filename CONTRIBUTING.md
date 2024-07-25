@@ -73,8 +73,8 @@ We value your desire to contribute by introducing new features or enhancing exis
 1. Clone this repo
 
     ```console
-    $ git clone https://github.com/hashicorp/terraform-cloud-operator.git
-    $ cd terraform-cloud-operator
+    $ git clone https://github.com/hashicorp/hcp-terraform-operator.git
+    $ cd hcp-terraform-operator
     ```
 
 1. Prepare a Kubernetes cluster

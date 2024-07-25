@@ -5,7 +5,7 @@ versionExt: md
 versionFormat: '## {{.Version}} ({{.Time.Format "January 02, 2006"}})'
 fragmentFileFormat: '{{.Kind}}-{{.Custom.PR}}-{{.Time.Format "20060102-150405"}}'
 kindFormat: '{{.Kind}}:'
-changeFormat: '* {{.Body}} [[GH-{{.Custom.PR}}](https://github.com/hashicorp/terraform-cloud-operator/pull/{{.Custom.PR}})]'
+changeFormat: '* {{.Body}} [[GH-{{.Custom.PR}}](https://github.com/hashicorp/hcp-terraform-operator/pull/{{.Custom.PR}})]'
 custom:
   - key: PR
     label: PR Number
