@@ -3,13 +3,6 @@
   Make changes _only_ in the README.md.gotmpl file and then run `make helm-docs` to generate the README.md file.
 -->
 
-> **Warning**
-> In upcoming releases, we shall proceed with renaming this project to HCP Terraform Operator for Kubernetes or simply HCP Terraform Operator. This measure is necessary in response to the recent announcement of [The Infrastructure Cloud](https://www.hashicorp.com/blog/introducing-the-infrastructure-cloud).
->
-> The most noticeable change you can expect in version 2.6.0 is the renaming of this repository and related resources, such as the Helm chart and Docker Hub names.
->
-> Please follow the changelogs for updates.
-
 # Installation
 
 Use the option `--version VERSION` with `helm install` and `helm upgrade` commands to specify the version you want to install.
@@ -31,7 +24,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 3. Install
 
     ```console
-    $ helm install demo hashicorp/terraform-cloud-operator \
+    $ helm install demo hashicorp/hcp-terraform-operator \
       --version 2.5.0 \
       --namespace tfc-operator-system \
       --create-namespace
@@ -42,7 +35,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 ### Install with options
 
 ```console
-$ helm install demo hashicorp/terraform-cloud-operator \
+$ helm install demo hashicorp/hcp-terraform-operator \
   --version 2.5.0 \
   --namespace tfc-operator-system \
   --create-namespace \
@@ -61,7 +54,7 @@ In the above example, the Operator will watch 3 namespaces in the Kubernetes clu
 If targeting a Terraform Enterprise instance rather than HCP Terraform, set the API endpoint URL using the `operator.tfeAddress` value:
 
 ```console
-$ helm install demo hashicorp/terraform-cloud-operator \
+$ helm install demo hashicorp/hcp-terraform-operator \
   --version 2.5.0 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
@@ -73,9 +66,9 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 ### Upgrade with options
 
 ```console
-$ helm upgrade demo hashicorp/terraform-cloud-operator \
+$ helm upgrade demo hashicorp/hcp-terraform-operator \
   --version 2.5.0 \
-  --namespace tfc-operator-system \
+  --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
   --set controllers.module.workers=10 \
@@ -96,7 +89,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
     - The `AgentPool` CRD has been changed:
 
       ```console
-      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.6.0/charts/terraform-cloud-operator/crds/app.terraform.io_agentpools.yaml
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.6.0/charts/hcp-terraform-operator/crds/app.terraform.io_agentpools.yaml
       ```
 
   - `2.3.0` to `2.4.0`
@@ -104,7 +97,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
     - The `Workspace` CRD has been changed:
 
       ```console
-      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.4.0/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.4.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
       ```
 
   - `2.2.0` to `2.3.0`
@@ -112,7 +105,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
     - The `Workspace` CRD has been changed:
 
       ```console
-      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.3.0/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.3.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
       ```
 
   - `2.1.0` to `2.2.0`
@@ -120,7 +113,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
     - A new controller `Project` has been added:
 
       ```console
-      $ kubectl apply -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.2.0/charts/terraform-cloud-operator/crds/app.terraform.io_projects.yaml
+      $ kubectl apply -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.2.0/charts/hcp-terraform-operator/crds/app.terraform.io_projects.yaml
       ```
 
   - `2.0.0` to `2.1.0`
@@ -128,7 +121,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
     - The `Workspace` CRD has been changed:
 
       ```console
-      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.1.0/charts/terraform-cloud-operator/crds/app.terraform.io_workspaces.yaml
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.1.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
       ```
 
   - `2.0.0-betaX` to `2.0.0`
@@ -136,7 +129,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
     - The `AgentPool` CRD has been changed:
 
       ```console
-      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/terraform-cloud-operator/v2.0.0/charts/terraform-cloud-operator/crds/app.terraform.io_agentpools.yaml
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.0.0/charts/hcp-terraform-operator/crds/app.terraform.io_agentpools.yaml
       ```
 
 # Values
@@ -160,7 +153,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | kubeRbacProxy.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
 | kubeRbacProxy.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
-| operator.image.repository | string | `"hashicorp/terraform-cloud-operator"` | Image repository. |
+| operator.image.repository | string | `"hashicorp/hcp-terraform-operator"` | Image repository. |
 | operator.image.tag | string | `""` | Image tag. Defaults to `.Chart.AppVersion`. |
 | operator.resources.limits.cpu | string | `"500m"` | Limits as a maximum amount of CPU to be used by a container. |
 | operator.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |

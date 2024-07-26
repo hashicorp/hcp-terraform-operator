@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 apiVersion: v2
-name: terraform-cloud-operator
+name: hcp-terraform-operator
 description: Official Helm chart for HCP Terraform Operator for Kubernetes.
 type: application
 version: "2.5.0"
