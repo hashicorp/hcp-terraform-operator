@@ -8,7 +8,7 @@ on:
       - main
     paths:
       - 'controllers/**'
-      - 'charts/terraform-cloud-operator/**'
+      - 'charts/hcp-terraform-operator/**'
   workflow_dispatch:
 
 env:
@@ -75,7 +75,7 @@ jobs:
 
       - name: Install Helm chart
         run: |
-          helm install --wait --timeout 1m this ./charts/terraform-cloud-operator \
+          helm install --wait --timeout 1m this ./charts/hcp-terraform-operator \
             --set operator.image.repository=${{ env.DOCKER_IMAGE }} \
             --set operator.image.tag=${{ env.DOCKER_METADATA_OUTPUT_VERSION }} \
             --set operator.skipTLSVerify=true \
