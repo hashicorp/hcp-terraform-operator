@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body:  '`AgentPool`: Add the ability to configure scale-up and scale-down autoscaling times separately via the `cooldown.scaleUpSeconds` and `cooldown.scaleDownSeconds` attributes, respectively.'
-time: 2024-07-24T13:01:09.985507-04:00
-custom:
-    PR: "441"
