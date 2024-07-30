@@ -1,6 +1,6 @@
 # Main codeowners
 * @hashicorp/tf-eco-hybrid-cloud
 
-# release configuration
-/.release/                      @hashicorp/github-es-release-engineering
-/.github/workflows/build.yml    @hashicorp/github-es-release-engineering
+# Release configuration
+/.release/                      @hashicorp/tf-eco-hybrid-cloud
+/.github/workflows/build.yml    @hashicorp/tf-eco-hybrid-cloud
