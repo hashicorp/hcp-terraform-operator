@@ -30,9 +30,9 @@ import (
 
 	"github.com/go-logr/zapr"
 
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
-	"github.com/hashicorp/terraform-cloud-operator/controllers"
-	"github.com/hashicorp/terraform-cloud-operator/version"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/controllers"
+	"github.com/hashicorp/hcp-terraform-operator/version"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -138,7 +138,7 @@ func main() {
 		HealthProbeBindAddress:        ":8081",
 		LeaderElection:                true,
 		LeaderElectionReleaseOnCancel: true,
-		LeaderElectionID:              "hashicorp-terraform-cloud-operator",
+		LeaderElectionID:              "hashicorp-hcp-terraform-operator",
 	}
 
 	// When the Operator not running in a Kubernetes environment,

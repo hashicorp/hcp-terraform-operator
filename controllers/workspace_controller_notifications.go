@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	tfc "github.com/hashicorp/go-tfe"
 
-	"github.com/hashicorp/terraform-cloud-operator/internal/slice"
+	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
 func hasNotificationItem(s []tfc.NotificationConfiguration, f tfc.NotificationConfiguration) (int, bool) {
