@@ -12,5 +12,5 @@ roleRef:
   name: {{ .Release.Name }}-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: {{ include "terraform-cloud-operator.serviceAccountName" . }}
+  name: {{ include "hcp-terraform-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}

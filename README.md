@@ -1,5 +1,5 @@
 <a href="https://cloud.hashicorp.com/products/terraform">
-    <img src=".github/tf_logo.png" alt="Terraform logo" title="HCP Terraform" align="left" height="50" />
+    <img src=".github/hcp-terraform-logo.png" alt="HCP Terraform" title="HCP Terraform" align="left" height="60" />
 </a>
 
 # HCP Terraform Operator for Kubernetes

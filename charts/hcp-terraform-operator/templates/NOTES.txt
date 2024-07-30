@@ -1,7 +1,7 @@
 Thank you for installing HashiCorp HCP Terraform Operator!
 
 Documentation:
- - https://github.com/hashicorp/terraform-cloud-operator
+ - https://github.com/hashicorp/hcp-terraform-operator
 
 Your release is named {{ .Release.Name }}.
 

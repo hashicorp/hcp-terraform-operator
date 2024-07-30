@@ -95,7 +95,7 @@ docs: crd-ref-docs ## Generate API reference documentation.
 
 .PHONY: helm-docs
 helm-docs: install-helm-docs ## Generate Helm chart documentation.
-	$(HELM_DOCS) --log-level=debug --chart-search-root=./charts/terraform-cloud-operator/
+	$(HELM_DOCS) --log-level=debug --chart-search-root=./charts/hcp-terraform-operator/
 
 ##@ Development
 
@@ -104,7 +104,7 @@ manifests: controller-gen docs ## Generate WebhookConfiguration, ClusterRole and
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
 	  output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
-	  output:crd:artifacts:config=charts/terraform-cloud-operator/crds
+	  output:crd:artifacts:config=charts/hcp-terraform-operator/crds
 	$(MAKE) copywrite
 
 .PHONY: generate
