@@ -3,14 +3,14 @@
 
 schema = "1"
 
-project "terraform-cloud-operator" {
+project "hcp-terraform-operator" {
   team = "terraform"
   slack {
     notification_channel = "C051FAAHL8M" # feed-terraform-ecosystem-kubernetes-releases
   }
   github {
     organization = "hashicorp"
-    repository   = "terraform-cloud-operator"
+    repository   = "hcp-terraform-operator"
     release_branches = [
       "main",
       "release/**",
@@ -27,7 +27,7 @@ event "build" {
   depends = ["merge"]
   action "build" {
     organization = "hashicorp"
-    repository   = "terraform-cloud-operator"
+    repository   = "hcp-terraform-operator"
     workflow     = "build"
   }
 
