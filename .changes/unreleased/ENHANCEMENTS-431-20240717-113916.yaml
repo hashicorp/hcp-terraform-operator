@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Helm Chart`: Add the ability to configure the service account.'
-time: 2024-07-17T11:39:16.256354+02:00
-custom:
-    PR: "431"

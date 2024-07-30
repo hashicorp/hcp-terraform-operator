@@ -1,3 +1,32 @@
+## 2.6.0 (July 30, 2024)
+
+NOTES:
+
+* The `AgentPool` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-441](https://github.com/hashicorp/hcp-terraform-operator/pull/441)]
+
+BUG FIXES:
+
+* `Project`: Fix an issue where calls to paginated API endpoints were only fetching the first page of results. [[GH-426](https://github.com/hashicorp/hcp-terraform-operator/pull/426)]
+* `AgentPool`: Fix an issue where calls to paginated API endpoints were only fetching the first page of results. [[GH-426](https://github.com/hashicorp/hcp-terraform-operator/pull/426)]
+* `Workspace`: Fix an issue where calls to paginated API endpoints were only fetching the first page of results. [[GH-426](https://github.com/hashicorp/hcp-terraform-operator/pull/426)]
+
+ENHANCEMENTS:
+
+* `Helm Chart`: Add the ability to configure the service account. [[GH-431](https://github.com/hashicorp/hcp-terraform-operator/pull/431)]
+* `AgentPool`: Add the ability to configure scale-up and scale-down autoscaling times separately via the `cooldown.scaleUpSeconds` and `cooldown.scaleDownSeconds` attributes, respectively. [[GH-441](https://github.com/hashicorp/hcp-terraform-operator/pull/441)]
+
+DEPENDENCIES:
+
+* Bump `github.com/hashicorp/go-slug` from 0.15.0 to 0.15.2. [[GH-435](https://github.com/hashicorp/hcp-terraform-operator/pull/435)]
+* Bump `github.com/onsi/ginkgo/v2` from 2.16.0 to 2.19.0. [[GH-415](https://github.com/hashicorp/hcp-terraform-operator/pull/415)]
+* Bump `github.com/onsi/gomega` from 1.31.1 to 1.33.1. [[GH-415](https://github.com/hashicorp/hcp-terraform-operator/pull/415)]
+
+## Community Contributors :raised_hands:
+
+- @frgray made their contribution in https://github.com/hashicorp/hcp-terraform-operator/pull/431
+- @jtdoepke made their contribution in https://github.com/hashicorp/hcp-terraform-operator/pull/426
+- @omelnyk1 for sharing his Helm expertise and valuable feedback 🚀
+
 ## 2.5.0 (July 09, 2024)
 
 NOTES:
