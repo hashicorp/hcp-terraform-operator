@@ -14,6 +14,7 @@ import (
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
@@ -21,12 +22,13 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
-		runTaskName    = fmt.Sprintf("kubernetes-operator-run-task-%v", randomNumber())
-		runTaskName2   = fmt.Sprintf("kubernetes-operator-run-task-2-%v", randomNumber())
-		runTaskID      = ""
-		runTaskID2     = ""
+		namespacedName types.NamespacedName
+		workspace      string
+
+		runTaskName  string
+		runTaskName2 string
+		runTaskID    string
+		runTaskID2   string
 	)
 
 	// KNOWN ISSUE
@@ -44,6 +46,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		runTaskName = fmt.Sprintf("kubernetes-operator-run-task-%v", randomNumber())
+		runTaskName2 = fmt.Sprintf("kubernetes-operator-run-task-2-%v", randomNumber())
+		runTaskID = createRunTaskForTest(runTaskName)
+		runTaskID2 = createRunTaskForTest(runTaskName2)
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -78,28 +86,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
-
-		runTaskID = createRunTaskForTest(runTaskName)
-		runTaskID2 = createRunTaskForTest(runTaskName2)
 	})
 
 	AfterEach(func() {
-		// Delete all Run Tasks from the Workspace before deleting the Workspace, otherwise, it won't be possible to delete the Run Tasks instantly.
-		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		instance.Spec.RunTasks = []appv1alpha2.WorkspaceRunTask{}
-		Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-		isRunTasksReconciled(instance)
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
-		// Delete Run Task 1
-		err := tfClient.RunTasks.Delete(ctx, runTaskID)
-		Expect(err).Should(Succeed())
-		// Delete Run Task 2
-		err = tfClient.RunTasks.Delete(ctx, runTaskID2)
-		Expect(err).Should(Succeed())
+		Expect(tfClient.RunTasks.Delete(ctx, runTaskID)).Should(Succeed())
+		Expect(tfClient.RunTasks.Delete(ctx, runTaskID2)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("Run Tasks", func() {
 		It("can create run task by ID", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation

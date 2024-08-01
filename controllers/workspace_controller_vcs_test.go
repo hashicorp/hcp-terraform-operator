@@ -19,18 +19,14 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Label("VCS"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance     *appv1alpha2.Workspace
-		workspace    = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
-		oAuthTokenID = os.Getenv("TFC_OAUTH_TOKEN")
-		repository   = os.Getenv("TFC_VCS_REPO")
+		instance       *appv1alpha2.Workspace
+		namespacedName types.NamespacedName
+		workspace      string
+		oAuthTokenID   = os.Getenv("TFC_OAUTH_TOKEN")
+		repository     = os.Getenv("TFC_VCS_REPO")
 	)
-
-	namespacedName := types.NamespacedName{
-		Name:      "this",
-		Namespace: "default",
-	}
 
 	BeforeAll(func() {
 		if oAuthTokenID == "" {
@@ -45,6 +41,8 @@ var _ = Describe("Workspace controller", Label("VCS"), Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -80,11 +78,10 @@ var _ = Describe("Workspace controller", Label("VCS"), Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
 	})
 
-	Context("Workspace controller", func() {
+	Context("VCS", func() {
 		It("can attach VCS to the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)

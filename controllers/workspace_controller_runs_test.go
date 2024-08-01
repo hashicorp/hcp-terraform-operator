@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
 		namespacedName types.NamespacedName
@@ -64,7 +64,6 @@ var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
 	})
 
