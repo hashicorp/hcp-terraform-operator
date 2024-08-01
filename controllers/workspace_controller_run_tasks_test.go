@@ -50,6 +50,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		runTaskName = fmt.Sprintf("kubernetes-operator-run-task-%v", randomNumber())
 		runTaskName2 = fmt.Sprintf("kubernetes-operator-run-task-2-%v", randomNumber())
+		runTaskID = createRunTaskForTest(runTaskName)
+		runTaskID2 = createRunTaskForTest(runTaskName2)
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -84,9 +86,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
-
-		runTaskID = createRunTaskForTest(runTaskName)
-		runTaskID2 = createRunTaskForTest(runTaskName2)
 	})
 
 	AfterEach(func() {
