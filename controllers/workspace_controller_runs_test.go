@@ -72,7 +72,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			namespacedName := getNamespacedName(instance)
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
-
 			createAndUploadConfigurationVersion(instance, "hoi")
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
