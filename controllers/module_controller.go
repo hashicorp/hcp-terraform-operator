@@ -134,7 +134,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *ModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appv1alpha2.Module{}).
-		WithEventFilter(predicate.Or(genericPredicates())).
+		WithEventFilter(predicate.Or(genericPredicates(), modulePredicates())).
 		Complete(r)
 }
 

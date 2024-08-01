@@ -113,7 +113,7 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *AgentPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appv1alpha2.AgentPool{}).
-		WithEventFilter(predicate.Or(genericPredicates())).
+		WithEventFilter(predicate.Or(genericPredicates(), agentpoolPredicates())).
 		Complete(r)
 }
 
