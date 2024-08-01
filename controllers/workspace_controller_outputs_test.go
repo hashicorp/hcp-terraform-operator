@@ -22,8 +22,8 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 	)
 
 	BeforeAll(func() {
@@ -36,6 +36,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		if cloudEndpoint != tfcDefaultAddress {
 			Skip("Does not run against TFC, skip this test")
 		}
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

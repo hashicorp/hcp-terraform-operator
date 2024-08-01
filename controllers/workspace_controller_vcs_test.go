@@ -21,16 +21,12 @@ import (
 
 var _ = Describe("Workspace controller", Label("VCS"), Ordered, func() {
 	var (
-		instance     *appv1alpha2.Workspace
-		workspace    = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
-		oAuthTokenID = os.Getenv("TFC_OAUTH_TOKEN")
-		repository   = os.Getenv("TFC_VCS_REPO")
+		instance       *appv1alpha2.Workspace
+		namespacedName types.NamespacedName
+		workspace      string
+		oAuthTokenID   = os.Getenv("TFC_OAUTH_TOKEN")
+		repository     = os.Getenv("TFC_VCS_REPO")
 	)
-
-	namespacedName := types.NamespacedName{
-		Name:      "this",
-		Namespace: "default",
-	}
 
 	BeforeAll(func() {
 		if oAuthTokenID == "" {
@@ -45,6 +41,8 @@ var _ = Describe("Workspace controller", Label("VCS"), Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

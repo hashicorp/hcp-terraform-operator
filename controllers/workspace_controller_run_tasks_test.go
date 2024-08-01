@@ -14,6 +14,7 @@ import (
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
@@ -21,12 +22,13 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
-		runTaskName    = fmt.Sprintf("kubernetes-operator-run-task-%v", randomNumber())
-		runTaskName2   = fmt.Sprintf("kubernetes-operator-run-task-2-%v", randomNumber())
-		runTaskID      = ""
-		runTaskID2     = ""
+		namespacedName types.NamespacedName
+		workspace      string
+
+		runTaskName  string
+		runTaskName2 string
+		runTaskID    string
+		runTaskID2   string
 	)
 
 	// KNOWN ISSUE
@@ -44,6 +46,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		runTaskName = fmt.Sprintf("kubernetes-operator-run-task-%v", randomNumber())
+		runTaskName2 = fmt.Sprintf("kubernetes-operator-run-task-2-%v", randomNumber())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

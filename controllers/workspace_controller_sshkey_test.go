@@ -16,6 +16,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
@@ -24,23 +25,19 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 
-		sshKeyName  = fmt.Sprintf("kubernetes-operator-sshkey-%v", randomNumber())
-		sshKeyName2 = fmt.Sprintf("%v-2", sshKeyName)
-		sshKeyID    = ""
-		sshKeyID2   = ""
+		sshKeyName  string
+		sshKeyName2 string
+		sshKeyID    string
+		sshKeyID2   string
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-
-		// Create an SSH keys
-		sshKeyID = createSSHKey(sshKeyName)
-		sshKeyID2 = createSSHKey(sshKeyName2)
 	})
 
 	AfterAll(func() {
@@ -53,6 +50,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		sshKeyName = fmt.Sprintf("kubernetes-operator-sshkey-%v", randomNumber())
+		sshKeyName2 = fmt.Sprintf("%v-2", sshKeyName)
+		sshKeyID = createSSHKey(sshKeyName)
+		sshKeyID2 = createSSHKey(sshKeyName2)
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

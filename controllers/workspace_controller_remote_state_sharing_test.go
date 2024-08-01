@@ -12,6 +12,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
@@ -20,26 +21,29 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 
-		wsName  = fmt.Sprintf("%s-share", workspace)
-		wsName2 = fmt.Sprintf("%s-share2", workspace)
-		wsID    = ""
-		wsID2   = ""
+		wsName  string
+		wsName2 string
+		wsID    string
+		wsID2   string
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-
-		// Create new workspaces for tests
-		wsID = createWorkspaceForTests(wsName)
-		wsID2 = createWorkspaceForTests(wsName2)
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		wsName = fmt.Sprintf("%v-share", workspace)
+		wsName2 = fmt.Sprintf("%v-2", wsName)
+		wsID = createWorkspaceForTests(wsName)
+		wsID2 = createWorkspaceForTests(wsName2)
+
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{

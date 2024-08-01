@@ -22,24 +22,29 @@ import (
 
 var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 	var (
-		instance       *appv1alpha2.Workspace
-		namespacedName = types.NamespacedName{
-			Name:      "this",
-			Namespace: "default",
-		}
+		instance        *appv1alpha2.Workspace
+		namespacedName  types.NamespacedName
+		workspace       string
 		secretVariables *corev1.Secret
-		workspace       = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
+	})
 
+	AfterAll(func() {
+		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
+	})
+
+	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a secret object that will be used by the controller to get variables
 		secretVariables = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "variables",
+				Name:      fmt.Sprintf("%s-variables", namespacedName.Name),
 				Namespace: namespacedName.Namespace,
 			},
 			Type: corev1.SecretTypeOpaque,
@@ -48,13 +53,6 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			},
 		}
 		Expect(k8sClient.Create(ctx, secretVariables)).Should(Succeed())
-	})
-
-	AfterAll(func() {
-		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
-	})
-
-	BeforeEach(func() {
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
