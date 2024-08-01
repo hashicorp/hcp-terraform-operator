@@ -89,10 +89,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		instance.Spec.RunTasks = []appv1alpha2.WorkspaceRunTask{}
-		Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-		isRunTasksReconciled(instance)
 		deleteWorkspace(instance)
 		Expect(tfClient.RunTasks.Delete(ctx, runTaskID)).Should(Succeed())
 		Expect(tfClient.RunTasks.Delete(ctx, runTaskID2)).Should(Succeed())
