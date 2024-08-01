@@ -62,42 +62,6 @@ func genericPredicates() predicate.Predicate {
 	}
 }
 
-// agentpoolPredicates returns predicates that are specific for the agentPool controller.
-func agentpoolPredicates() predicate.Predicate {
-	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return false
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return false
-		},
-	}
-}
-
-// modulePredicates returns predicates that are specific for the module controller.
-func modulePredicates() predicate.Predicate {
-	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return false
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return false
-		},
-	}
-}
-
-// projectPredicates returns predicates that are specific for the project controller.
-func projectPredicates() predicate.Predicate {
-	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return false
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return false
-		},
-	}
-}
-
 // workspacePredicates returns predicates that are specific for the workspace controller.
 func workspacePredicates() predicate.Predicate {
 	return predicate.Funcs{

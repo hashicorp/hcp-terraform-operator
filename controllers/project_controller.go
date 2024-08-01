@@ -151,7 +151,7 @@ func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectIn
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appv1alpha2.Project{}).
-		WithEventFilter(predicate.Or(genericPredicates(), projectPredicates())).
+		WithEventFilter(predicate.Or(genericPredicates())).
 		Complete(r)
 }
 
