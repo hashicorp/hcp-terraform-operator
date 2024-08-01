@@ -90,22 +90,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete all Run Tasks from the Workspace before deleting the Workspace, otherwise, it won't be possible to delete the Run Tasks instantly.
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		instance.Spec.RunTasks = []appv1alpha2.WorkspaceRunTask{}
 		Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 		isRunTasksReconciled(instance)
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
-		// Delete Run Task 1
-		err := tfClient.RunTasks.Delete(ctx, runTaskID)
-		Expect(err).Should(Succeed())
-		// Delete Run Task 2
-		err = tfClient.RunTasks.Delete(ctx, runTaskID2)
-		Expect(err).Should(Succeed())
+		Expect(tfClient.RunTasks.Delete(ctx, runTaskID)).Should(Succeed())
+		Expect(tfClient.RunTasks.Delete(ctx, runTaskID2)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("Run Tasks", func() {
 		It("can create run task by ID", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation

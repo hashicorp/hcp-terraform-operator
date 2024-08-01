@@ -32,11 +32,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
-	AfterAll(func() {
-		err := tfClient.Teams.Delete(ctx, team.ID)
-		Expect(err).Should(Succeed())
-	})
-
 	BeforeEach(func() {
 		namespacedName = newNamespacedName()
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
@@ -70,11 +65,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.Teams.Delete(ctx, team.ID)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("Team Access", func() {
 		It("can handle pre-set team access", func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.TeamAccess{
 				{

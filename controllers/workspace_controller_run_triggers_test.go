@@ -36,14 +36,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
-	AfterAll(func() {
-		err := tfClient.Workspaces.DeleteByID(ctx, wsID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.Workspaces.DeleteByID(ctx, wsID2)
-		Expect(err).Should(Succeed())
-	})
-
 	BeforeEach(func() {
 		namespacedName = newNamespacedName()
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
@@ -80,11 +72,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID)).Should(Succeed())
+		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID2)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("Run Triggers", func() {
 		It("can handle run triggers by name", func() {
 			instance.Spec.RunTriggers = []appv1alpha2.RunTrigger{
 				{Name: wsName},

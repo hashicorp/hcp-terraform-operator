@@ -73,21 +73,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID)).Should(Succeed())
+		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID2)).Should(Succeed())
 	})
 
-	AfterAll(func() {
-		// Clean up additional workspaces
-		err := tfClient.Workspaces.DeleteByID(ctx, wsID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.Workspaces.DeleteByID(ctx, wsID2)
-		Expect(err).Should(Succeed())
-
-	})
-
-	Context("Workspace controller", func() {
+	Context("Remote State Sharing", func() {
 		It("can enable remote state sharing for all workspaces", func() {
 			instance.Spec.RemoteStateSharing = &appv1alpha2.RemoteStateSharing{
 				AllWorkspaces: true,

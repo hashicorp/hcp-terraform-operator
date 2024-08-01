@@ -20,7 +20,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance        *appv1alpha2.Workspace
 		namespacedName  types.NamespacedName
@@ -32,10 +32,6 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-	})
-
-	AfterAll(func() {
-		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
 	})
 
 	BeforeEach(func() {
@@ -82,11 +78,11 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
 	})
 
-	Context("Reconcile terraform variables", func() {
+	Context("Terraform Variables", func() {
 		It("can handle workspace terraform variables", func() {
 			instance.Spec.TerraformVariables = []appv1alpha2.Variable{
 				{
@@ -222,7 +218,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 		})
 	})
 
-	Context("Reconcile environment variables", func() {
+	Context("Environment Variables", func() {
 		It("can handle workspace environment variables", func() {
 			instance.Spec.EnvironmentVariables = []appv1alpha2.Variable{
 				{

@@ -40,15 +40,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
-	AfterAll(func() {
-		// Delete SSH keys
-		err := tfClient.SSHKeys.Delete(ctx, sshKeyID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.SSHKeys.Delete(ctx, sshKeyID2)
-		Expect(err).Should(Succeed())
-	})
-
 	BeforeEach(func() {
 		namespacedName = newNamespacedName()
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
@@ -85,11 +76,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.SSHKeys.Delete(ctx, sshKeyID)).Should(Succeed())
+		Expect(tfClient.SSHKeys.Delete(ctx, sshKeyID2)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("SSH Key", func() {
 		It("can handle SSH Key by name", func() {
 			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
 				Name: sshKeyName,

@@ -36,15 +36,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
-	AfterAll(func() {
-		// Clean up the Project
-		err := tfClient.Projects.Delete(ctx, projectID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.Projects.Delete(ctx, projectID2)
-		Expect(err).Should(Succeed())
-	})
-
 	BeforeEach(func() {
 		namespacedName = newNamespacedName()
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
@@ -81,8 +72,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.Projects.Delete(ctx, projectID)).Should(Succeed())
+		Expect(tfClient.Projects.Delete(ctx, projectID2)).Should(Succeed())
 	})
 
 	Context("Project", func() {
