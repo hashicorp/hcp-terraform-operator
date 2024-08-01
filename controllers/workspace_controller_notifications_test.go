@@ -12,7 +12,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
@@ -21,18 +20,16 @@ import (
 var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName types.NamespacedName
-		workspace      string
+		namespacedName = newNamespacedName()
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 
-		memberEmail  string
-		memberEmail2 string
-		memberID     string
-		memberID2    string
+		memberEmail  = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", randomNumber())
+		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", randomNumber())
+		memberID     = ""
+		memberID2    = ""
 	)
 
 	BeforeAll(func() {
-		memberEmail = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", randomNumber())
-		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", randomNumber())
 		memberID = createOrgMember(memberEmail)
 		memberID2 = createOrgMember(memberEmail2)
 		// Set default Eventually timers
@@ -41,8 +38,6 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 	})
 
 	BeforeEach(func() {
-		namespacedName = newNamespacedName()
-		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
