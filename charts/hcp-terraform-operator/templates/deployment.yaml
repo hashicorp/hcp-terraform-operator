@@ -21,12 +21,12 @@ spec:
         {{- include "hcp-terraform-operator.selectorLabels" . | nindent 8 }}
         control-plane: {{ .Release.Name }}-controller-manager
     spec:
+    {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+    {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.priorityClassName }}
-        priorityClassName: {{ .Values.priorityClassName | quote }}
       {{- end }}
       containers:
         - name: manager
