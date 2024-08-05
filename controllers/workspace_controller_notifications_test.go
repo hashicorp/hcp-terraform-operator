@@ -95,7 +95,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can create multiple notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
@@ -115,7 +115,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can re-create notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
@@ -141,7 +141,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can update notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
@@ -162,7 +162,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can delete notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
@@ -183,7 +183,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can create Terraform Enterprise email address notifications", func() {
 			if cloudEndpoint == tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against HCP Terraform, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:           "email",
@@ -200,16 +200,27 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
-
 	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
-	m, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, &tfc.OrganizationMembershipListOptions{})
-	Expect(err).Should(Succeed())
-	Expect(m).ShouldNot(BeNil())
+	memberships := make(map[string]string)
+	listOpts := &tfc.OrganizationMembershipListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+		Status: tfc.OrganizationMembershipInvited,
+	}
+	for {
+		list, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, listOpts)
+		Expect(err).Should(Succeed())
+		Expect(list).ShouldNot(BeNil())
 
-	memberships := make(map[string]string, len(m.Items))
-	for _, ms := range m.Items {
-		memberships[ms.User.ID] = ms.Email
+		for _, ms := range list.Items {
+			memberships[ms.User.ID] = ms.Email
+		}
+		if list.NextPage == 0 {
+			break
+		}
+		listOpts.PageNumber = list.NextPage
 	}
 
 	Eventually(func() []appv1alpha2.Notification {
