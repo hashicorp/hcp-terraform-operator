@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 // matchWildcardName checks if a given string matches a specified wildcard pattern.

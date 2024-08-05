@@ -14,7 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 // variableValueID calculates a hash of a variable.
