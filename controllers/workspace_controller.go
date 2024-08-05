@@ -71,6 +71,13 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	// TODO:
+	// - Think about using the DeleteFunc predicate.
+	if w.instance.DeletionTimestamp != nil && !controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizer) {
+		w.log.Info("Workspace Controller", "msg", "object marked as deleted without finalizer, no further action is required")
+		return doNotRequeue()
+	}
+
 	// Migration Validation
 	if controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizerAlpha1) {
 		w.log.Error(err, "Migration", "msg", fmt.Sprintf("spec contains old finalizer %s", workspaceFinalizerAlpha1))
@@ -295,8 +302,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 
 	patch := client.MergeFrom(w.instance.DeepCopy())
 	w.instance.Status.WorkspaceID = workspace.ID
-	err = r.Status().Patch(ctx, &w.instance, patch)
-	if err != nil {
+	if err = r.Status().Patch(ctx, &w.instance, patch); err != nil {
 		w.log.Error(err, "Reconcile Workspace", "msg", "failed to update status with workspace ID")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
 		return nil, err
@@ -471,9 +477,10 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 			patch := client.MergeFrom(w.instance.DeepCopy())
 			w.instance.Status.WorkspaceID = workspace.ID
 			if err := r.Status().Patch(ctx, &w.instance, patch); err != nil {
-				w.log.Error(err, "Workspace Controller", "msg", "failed update status with workspace ID")
+				w.log.Error(err, "Workspace Controller", "msg", "failed to update status with workspace ID")
 				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
 			}
+			w.log.Info("Reconcile Workspace", "msg", "successfully updated status with workspace ID")
 		}
 	}()
 

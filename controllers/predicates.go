@@ -69,6 +69,11 @@ func workspacePredicates() predicate.Predicate {
 			return false
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
+			// TODO:
+			// - Think about how to avoid double deletion timestamp checking.
+			if e.ObjectNew.GetDeletionTimestamp() != nil {
+				return false
+			}
 			// Validate if a certain annotation persists in a new object and does not match the old one.
 			// In that case, it is a new or updated annotation and we need to trigger a reconciliation cycle.
 			if a, ok := e.ObjectNew.GetAnnotations()[workspaceAnnotationRunNew]; ok && a == annotationTrue {
