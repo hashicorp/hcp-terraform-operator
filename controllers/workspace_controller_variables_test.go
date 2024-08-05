@@ -20,26 +20,27 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
-		instance       *appv1alpha2.Workspace
-		namespacedName = types.NamespacedName{
-			Name:      "this",
-			Namespace: "default",
-		}
+		instance        *appv1alpha2.Workspace
+		namespacedName  types.NamespacedName
+		workspace       string
 		secretVariables *corev1.Secret
-		workspace       = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
+	})
 
+	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a secret object that will be used by the controller to get variables
 		secretVariables = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "variables",
+				Name:      fmt.Sprintf("%s-variables", namespacedName.Name),
 				Namespace: namespacedName.Namespace,
 			},
 			Type: corev1.SecretTypeOpaque,
@@ -48,13 +49,6 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 			},
 		}
 		Expect(k8sClient.Create(ctx, secretVariables)).Should(Succeed())
-	})
-
-	AfterAll(func() {
-		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
-	})
-
-	BeforeEach(func() {
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -84,11 +78,11 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(k8sClient.Delete(ctx, secretVariables)).Should(Succeed())
 	})
 
-	Context("Reconcile terraform variables", func() {
+	Context("Terraform Variables", func() {
 		It("can handle workspace terraform variables", func() {
 			instance.Spec.TerraformVariables = []appv1alpha2.Variable{
 				{
@@ -224,7 +218,7 @@ var _ = Describe("Workspace controller", Label("Variables"), Ordered, func() {
 		})
 	})
 
-	Context("Reconcile environment variables", func() {
+	Context("Environment Variables", func() {
 		It("can handle workspace environment variables", func() {
 			instance.Spec.EnvironmentVariables = []appv1alpha2.Variable{
 				{

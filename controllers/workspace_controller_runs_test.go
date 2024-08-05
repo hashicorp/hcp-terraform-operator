@@ -12,13 +12,14 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 	)
 
 	BeforeAll(func() {
@@ -31,6 +32,8 @@ var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 		if cloudEndpoint != tfcDefaultAddress {
 			Skip("Does not run against TFC, skip this test")
 		}
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -61,11 +64,10 @@ var _ = Describe("Workspace controller", Label("Runs"), Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
 	})
 
-	Context("Workspace controller", func() {
+	Context("Runs", func() {
 		It("can handle runs", func() {
 			namespacedName := getNamespacedName(instance)
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation

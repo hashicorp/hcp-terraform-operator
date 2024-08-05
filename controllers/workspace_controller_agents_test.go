@@ -12,6 +12,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
@@ -20,35 +21,28 @@ import (
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 
-		agentPoolName  = fmt.Sprintf("kubernetes-operator-agent-%v", randomNumber())
-		agentPoolName2 = fmt.Sprintf("%v-2", agentPoolName)
-		agentPoolID    = ""
-		agentPoolID2   = ""
+		agentPoolName  string
+		agentPoolName2 string
+		agentPoolID    string
+		agentPoolID2   string
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-
-		// Create an Agent Pools
-		agentPoolID = createAgentPool(agentPoolName)
-		agentPoolID2 = createAgentPool(agentPoolName2)
-	})
-
-	AfterAll(func() {
-		// Clean up the Agent Pools
-		err := tfClient.AgentPools.Delete(ctx, agentPoolID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.AgentPools.Delete(ctx, agentPoolID2)
-		Expect(err).Should(Succeed())
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		agentPoolName = fmt.Sprintf("kubernetes-operator-agent-%v", randomNumber())
+		agentPoolName2 = fmt.Sprintf("%v-2", agentPoolName)
+		agentPoolID = createAgentPool(agentPoolName)
+		agentPoolID2 = createAgentPool(agentPoolName2)
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -79,11 +73,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.AgentPools.Delete(ctx, agentPoolID)).Should(Succeed())
+		Expect(tfClient.AgentPools.Delete(ctx, agentPoolID2)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("Agent Execution Mode", func() {
 		It("can handle agent pool by name", func() {
 			instance.Spec.AgentPool = &appv1alpha2.WorkspaceAgentPool{Name: agentPoolName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
