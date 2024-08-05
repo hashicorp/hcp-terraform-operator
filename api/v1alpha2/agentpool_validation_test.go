@@ -6,7 +6,7 @@ package v1alpha2
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-cloud-operator/internal/pointer"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func TestValidateAgentPoolSpecAgentToken(t *testing.T) {

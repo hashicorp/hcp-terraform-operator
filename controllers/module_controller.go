@@ -27,8 +27,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-slug"
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
-	"github.com/hashicorp/terraform-cloud-operator/version"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
 // ModuleReconciler reconciles a Module object
