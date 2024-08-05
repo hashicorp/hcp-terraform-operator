@@ -9,8 +9,8 @@ import (
 	"net/url"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
-	"github.com/hashicorp/terraform-cloud-operator/internal/pointer"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -74,7 +74,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 		d.Spec.Replicas = a.MinReplicas
 	}
 	ap.log.Info("Reconcile Agent Deployment", "msg", fmt.Sprintf("creating a new Kubernetes Deployment %q", d.Name))
-	err = r.Client.Create(ctx, d, &client.CreateOptions{FieldManager: "terraform-cloud-operator"})
+	err = r.Client.Create(ctx, d, &client.CreateOptions{FieldManager: "hcp-terraform-operator"})
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 	if a := ap.instance.Status.AgentDeploymentAutoscalingStatus; a != nil {
 		nd.Spec.Replicas = a.DesiredReplicas
 	}
-	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "terraform-cloud-operator"})
+	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
 		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "Deployment update failed", uerr.Error())
