@@ -138,7 +138,9 @@ func main() {
 		HealthProbeBindAddress:        ":8081",
 		LeaderElection:                true,
 		LeaderElectionReleaseOnCancel: true,
-		LeaderElectionID:              "hashicorp-hcp-terraform-operator",
+		// TODO:
+		// - Make `LeaderElectionID` configurable and default to Helm release name.
+		LeaderElectionID: "hashicorp-hcp-terraform-operator",
 	}
 
 	// When the Operator not running in a Kubernetes environment,
