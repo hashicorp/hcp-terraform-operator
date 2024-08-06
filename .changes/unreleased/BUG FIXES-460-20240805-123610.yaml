@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`Workspace`: Fix an issue where, in some circumstances, the controller cannot properly handle the deletion event.'
+time: 2024-08-05T12:36:10.268919+02:00
+custom:
+    PR: "460"

@@ -71,6 +71,13 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
+	// TODO:
+	// - Think about using the DeleteFunc predicate.
+	if w.instance.DeletionTimestamp != nil && !controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizer) {
+		w.log.Info("Workspace Controller", "msg", "object marked as deleted without finalizer, no further action is required")
+		return doNotRequeue()
+	}
+
 	// Migration Validation
 	if controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizerAlpha1) {
 		w.log.Error(err, "Migration", "msg", fmt.Sprintf("spec contains old finalizer %s", workspaceFinalizerAlpha1))
