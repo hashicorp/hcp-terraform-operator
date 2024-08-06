@@ -12,32 +12,38 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 
-		memberEmail  = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", randomNumber())
-		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", randomNumber())
-		memberID     = ""
-		memberID2    = ""
+		memberEmail  string
+		memberEmail2 string
+		memberID     string
+		memberID2    string
 	)
 
 	BeforeAll(func() {
-		memberID = createOrgMember(memberEmail)
-		memberID2 = createOrgMember(memberEmail2)
+
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		memberEmail = fmt.Sprintf("kubernetes-operator-member-%v@hashicorp.com", randomNumber())
+		memberEmail2 = fmt.Sprintf("kubernetes-operator-member-2-%v@hashicorp.com", randomNumber())
+		memberID = createOrgMember(memberEmail)
+		memberID2 = createOrgMember(memberEmail2)
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -67,14 +73,11 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 		}
 	})
 
-	AfterAll(func() {
-		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID)).Should(Succeed())
-		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID2)).Should(Succeed())
-	})
-
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID)).Should(Succeed())
+		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID2)).Should(Succeed())
 	})
 
 	Context("Notifications", func() {
@@ -92,7 +95,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can create multiple notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
@@ -112,7 +115,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can re-create notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
@@ -138,7 +141,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can update notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
@@ -159,7 +162,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can delete notifications", func() {
 			if cloudEndpoint != tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against TFE, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
@@ -180,7 +183,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 		It("can create Terraform Enterprise email address notifications", func() {
 			if cloudEndpoint == tfcDefaultAddress {
-				Skip("Does not run against TFC, skip this test")
+				Skip("Does not run against HCP Terraform, skip this test")
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:           "email",
@@ -197,16 +200,27 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 
 func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
-
 	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
-	m, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, &tfc.OrganizationMembershipListOptions{})
-	Expect(err).Should(Succeed())
-	Expect(m).ShouldNot(BeNil())
+	memberships := make(map[string]string)
+	listOpts := &tfc.OrganizationMembershipListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+		Status: tfc.OrganizationMembershipInvited,
+	}
+	for {
+		list, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, listOpts)
+		Expect(err).Should(Succeed())
+		Expect(list).ShouldNot(BeNil())
 
-	memberships := make(map[string]string, len(m.Items))
-	for _, ms := range m.Items {
-		memberships[ms.User.ID] = ms.Email
+		for _, ms := range list.Items {
+			memberships[ms.User.ID] = ms.Email
+		}
+		if list.NextPage == 0 {
+			break
+		}
+		listOpts.PageNumber = list.NextPage
 	}
 
 	Eventually(func() []appv1alpha2.Notification {

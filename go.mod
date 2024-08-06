@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-cloud-operator
+module github.com/hashicorp/hcp-terraform-operator
 
 go 1.22
 

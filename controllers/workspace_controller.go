@@ -24,8 +24,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
-	"github.com/hashicorp/terraform-cloud-operator/version"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
 type HCPTerraformClient struct {
@@ -69,6 +69,13 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		w.log.Error(err, "Workspace Controller", "msg", "get instance object")
 		return requeueAfter(requeueInterval)
+	}
+
+	// TODO:
+	// - Think about using the DeleteFunc predicate.
+	if w.instance.DeletionTimestamp != nil && !controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizer) {
+		w.log.Info("Workspace Controller", "msg", "object marked as deleted without finalizer, no further action is required")
+		return doNotRequeue()
 	}
 
 	// Migration Validation
@@ -209,9 +216,10 @@ func applyMethodToBool(applyMethod string) bool {
 }
 
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
+	patch := client.MergeFrom(instance.DeepCopy())
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
 
-	return r.Update(ctx, instance)
+	return r.Patch(ctx, instance, patch)
 }
 
 func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, w *workspaceInstance) error {
@@ -232,7 +240,6 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, w *workspaceI
 func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	w.instance.Status.ObservedGeneration = w.instance.Generation
 	w.instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
-	w.instance.Status.WorkspaceID = workspace.ID
 	w.instance.Status.TerraformVersion = workspace.TerraformVersion
 
 	return r.Status().Update(ctx, &w.instance)
@@ -292,9 +299,14 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		return nil, err
 	}
 
-	w.instance.Status = appv1alpha2.WorkspaceStatus{
-		WorkspaceID: workspace.ID,
+	patch := client.MergeFrom(w.instance.DeepCopy())
+	w.instance.Status.WorkspaceID = workspace.ID
+	if err = r.Status().Patch(ctx, &w.instance, patch); err != nil {
+		w.log.Error(err, "Reconcile Workspace", "msg", "failed to update status with workspace ID")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
+		return nil, err
 	}
+	w.log.Info("Reconcile Workspace", "msg", "successfully updated status with workspace ID")
 
 	return workspace, nil
 }
@@ -461,12 +473,13 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		// - Let Objects update their own status conditions
 		// - Simplify updateStatus method in a way it could be called anytime
 		if workspace != nil && workspace.ID != "" {
+			patch := client.MergeFrom(w.instance.DeepCopy())
 			w.instance.Status.WorkspaceID = workspace.ID
-			err = r.Status().Update(ctx, &w.instance)
-			if err != nil {
-				w.log.Error(err, "Workspace Controller", "msg", "update status with workspace ID")
+			if err := r.Status().Patch(ctx, &w.instance, patch); err != nil {
+				w.log.Error(err, "Workspace Controller", "msg", "failed to update status with workspace ID")
 				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
 			}
+			w.log.Info("Reconcile Workspace", "msg", "successfully updated status with workspace ID")
 		}
 	}()
 

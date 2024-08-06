@@ -5,6 +5,7 @@ package controllers
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -16,6 +17,10 @@ import (
 func genericPredicates() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
+			if e.Object.GetDeletionTimestamp() != nil {
+				return deletionTimestampPredicate(e.Object)
+			}
+
 			return true
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
@@ -29,12 +34,8 @@ func genericPredicates() predicate.Predicate {
 				return false
 			}
 
-			// Do not trigger reconciliation if an object was deleted with the `foreground` option.
-			// Let Kubernetes first delete all dependent objects and only then the operator proceeds with the deletion of the parent object.
-			// This helps to avoid the situation when the operator triggers deletion twice.
-			// The second deletion get triggered when Kubernetes GC removes the `foregroundDeletion` finalizer.
 			if e.ObjectNew.GetDeletionTimestamp() != nil {
-				return !controllerutil.ContainsFinalizer(e.ObjectNew, metav1.FinalizerDeleteDependents)
+				return deletionTimestampPredicate(e.ObjectNew)
 			}
 
 			// Generation of an object changes when .spec has been updated.
@@ -61,10 +62,18 @@ func genericPredicates() predicate.Predicate {
 	}
 }
 
-// workspacePredicates return predicates that are specific for the workspace controllers.
+// workspacePredicates returns predicates that are specific for the workspace controller.
 func workspacePredicates() predicate.Predicate {
 	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
+			// TODO:
+			// - Think about how to avoid double deletion timestamp checking.
+			if e.ObjectNew.GetDeletionTimestamp() != nil {
+				return false
+			}
 			// Validate if a certain annotation persists in a new object and does not match the old one.
 			// In that case, it is a new or updated annotation and we need to trigger a reconciliation cycle.
 			if a, ok := e.ObjectNew.GetAnnotations()[workspaceAnnotationRunNew]; ok && a == annotationTrue {
@@ -75,4 +84,31 @@ func workspacePredicates() predicate.Predicate {
 			return false
 		},
 	}
+}
+
+func deletionTimestampPredicate(o client.Object) bool {
+	finalizers := []string{
+		agentPoolFinalizer,
+		moduleFinalizer,
+		projectFinalizer,
+		workspaceFinalizer,
+	}
+
+	// Do not trigger reconciliation if the object was deleted with the `foreground` option.
+	// Let Kubernetes first delete all dependent objects and only then the operator proceeds with the deletion of the parent object.
+	// This helps to avoid the situation when the operator triggers deletion twice.
+	// The second deletion get triggered when Kubernetes GC removes the `foregroundDeletion` finalizer.
+	if controllerutil.ContainsFinalizer(o, metav1.FinalizerDeleteDependents) {
+		return false
+	}
+
+	// Trigger reconciliation if the object was deleted and contains one of the operator finalizers.
+	for _, finalizer := range finalizers {
+		if controllerutil.ContainsFinalizer(o, finalizer) {
+			return true
+		}
+	}
+
+	// Do not trigger reconciliation if the object was deleted and does not contain any of the operator finalizers.
+	return false
 }

@@ -16,43 +16,37 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 
-		sshKeyName  = fmt.Sprintf("kubernetes-operator-sshkey-%v", randomNumber())
-		sshKeyName2 = fmt.Sprintf("%v-2", sshKeyName)
-		sshKeyID    = ""
-		sshKeyID2   = ""
+		sshKeyName  string
+		sshKeyName2 string
+		sshKeyID    string
+		sshKeyID2   string
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-
-		// Create an SSH keys
-		sshKeyID = createSSHKey(sshKeyName)
-		sshKeyID2 = createSSHKey(sshKeyName2)
-	})
-
-	AfterAll(func() {
-		// Delete SSH keys
-		err := tfClient.SSHKeys.Delete(ctx, sshKeyID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.SSHKeys.Delete(ctx, sshKeyID2)
-		Expect(err).Should(Succeed())
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		sshKeyName = fmt.Sprintf("kubernetes-operator-sshkey-%v", randomNumber())
+		sshKeyName2 = fmt.Sprintf("%v-2", sshKeyName)
+		sshKeyID = createSSHKey(sshKeyName)
+		sshKeyID2 = createSSHKey(sshKeyName2)
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -82,11 +76,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.SSHKeys.Delete(ctx, sshKeyID)).Should(Succeed())
+		Expect(tfClient.SSHKeys.Delete(ctx, sshKeyID2)).Should(Succeed())
 	})
 
-	Context("Workspace controller", func() {
+	Context("SSH Key", func() {
 		It("can handle SSH Key by name", func() {
 			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
 				Name: sshKeyName,

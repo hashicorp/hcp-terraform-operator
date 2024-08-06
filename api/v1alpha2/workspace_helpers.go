@@ -4,7 +4,7 @@
 package v1alpha2
 
 import (
-	"github.com/hashicorp/terraform-cloud-operator/internal/slice"
+	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
 func (w *Workspace) IsCreationCandidate() bool {

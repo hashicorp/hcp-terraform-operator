@@ -12,34 +12,38 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/terraform-cloud-operator/api/v1alpha2"
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
-		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		namespacedName types.NamespacedName
+		workspace      string
 
-		wsName  = fmt.Sprintf("%s-share", workspace)
-		wsName2 = fmt.Sprintf("%s-share2", workspace)
-		wsID    = ""
-		wsID2   = ""
+		wsName  string
+		wsName2 string
+		wsID    string
+		wsID2   string
 	)
 
 	BeforeAll(func() {
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
-
-		// Create new workspaces for tests
-		wsID = createWorkspaceForTests(wsName)
-		wsID2 = createWorkspaceForTests(wsName2)
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		wsName = fmt.Sprintf("%v-share", workspace)
+		wsName2 = fmt.Sprintf("%v-2", wsName)
+		wsID = createWorkspaceForTests(wsName)
+		wsID2 = createWorkspaceForTests(wsName2)
+
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -69,21 +73,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
+		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID)).Should(Succeed())
+		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID2)).Should(Succeed())
 	})
 
-	AfterAll(func() {
-		// Clean up additional workspaces
-		err := tfClient.Workspaces.DeleteByID(ctx, wsID)
-		Expect(err).Should(Succeed())
-
-		err = tfClient.Workspaces.DeleteByID(ctx, wsID2)
-		Expect(err).Should(Succeed())
-
-	})
-
-	Context("Workspace controller", func() {
+	Context("Remote State Sharing", func() {
 		It("can enable remote state sharing for all workspaces", func() {
 			instance.Spec.RemoteStateSharing = &appv1alpha2.RemoteStateSharing{
 				AllWorkspaces: true,
