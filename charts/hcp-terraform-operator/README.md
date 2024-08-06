@@ -92,6 +92,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
       $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.6.0/charts/hcp-terraform-operator/crds/app.terraform.io_agentpools.yaml
       ```
 
+
   - `2.3.0` to `2.4.0`
 
     - The `Workspace` CRD has been changed:
@@ -164,6 +165,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
+| priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
 | replicaCount | int | `2` | The number of Operator replicas. |
 | securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |
