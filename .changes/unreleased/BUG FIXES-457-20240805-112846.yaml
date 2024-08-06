@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`Workspace`: Fix an issue where the controller fails to update CR Status when CR gets modified during the reconciliation.'
+time: 2024-08-05T11:28:46.175567+02:00
+custom:
+    PR: "457"
