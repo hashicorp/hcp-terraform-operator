@@ -11,6 +11,9 @@ replicaCount: 2
 securityContext:
   runAsNonRoot: true
 
+# -- Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/).
+priorityClassName: ""
+
 # Operator-global options.
 operator:
   image:
