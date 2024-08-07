@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Helm Chart`: Add the ability to configure the Deployment priority class.'
-time: 2024-08-06T18:49:14.110920762+04:00
-custom:
-    PR: "451"
