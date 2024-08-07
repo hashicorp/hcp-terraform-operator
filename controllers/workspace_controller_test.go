@@ -261,7 +261,12 @@ func deleteWorkspace(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
 
 	// Delete the Kubernetes workspace object
-	Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+	Expect(k8sClient.Delete(ctx, instance)).To(
+		Or(
+			Succeed(),
+			WithTransform(errors.IsNotFound, BeTrue()),
+		),
+	)
 
 	// Wait until the controller finishes the reconciliation after the deletion of the object
 	Eventually(func() bool {

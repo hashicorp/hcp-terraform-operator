@@ -25,7 +25,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/hcp-terraform-operator \
-      --version 2.6.0 \
+      --version 2.6.1 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -36,7 +36,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.6.0 \
+  --version 2.6.1 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -55,7 +55,7 @@ If targeting a Terraform Enterprise instance rather than HCP Terraform, set the 
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.6.0 \
+  --version 2.6.1 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -67,7 +67,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/hcp-terraform-operator \
-  --version 2.6.0 \
+  --version 2.6.1 \
   --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
@@ -164,6 +164,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
+| priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
 | replicaCount | int | `2` | The number of Operator replicas. |
 | securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |
