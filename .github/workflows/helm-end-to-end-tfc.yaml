@@ -10,6 +10,7 @@ on:
       - 'controllers/**'
       - 'charts/hcp-terraform-operator/**'
   workflow_dispatch:
+  workflow_call:
 
 env:
   USE_EXISTING_CLUSTER: true
