@@ -4,13 +4,20 @@ on:
   push:
     branches:
       - dependabot/**
+    paths:
+      - 'go.mod'
+      - 'go.sum'
 
 jobs:
   hcp-terraform:
+    if: github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/end-to-end-tfc.yaml
   hcp-terraform-helm:
+    if: github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/helm-end-to-end-tfc.yaml
   terraform-enterprise:
+    if: github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/end-to-end-tfe.yaml
   terraform-enterprise-helm:
+    if: github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/helm-end-to-end-tfe.yaml
