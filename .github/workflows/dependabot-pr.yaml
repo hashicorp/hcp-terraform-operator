@@ -1,9 +1,10 @@
 name: Dependabot PR
 
 on:
-  push:
+  # https://github.com/dependabot/dependabot-core/issues/3253#issuecomment-852541544
+  pull_request_target:
     branches:
-      - dependabot/**
+      - 'dependabot/go_modules/**'
     paths:
       - 'go.mod'
       - 'go.sum'
