@@ -1,0 +1,16 @@
+name: Dependabot PR
+
+on:
+  push:
+    branches:
+      - dependabot/**
+
+jobs:
+  hcp-terraform:
+    uses: ./.github/workflows/end-to-end-tfc.yaml
+  hcp-terraform-helm:
+    uses: ./.github/workflows/helm-end-to-end-tfc.yaml
+  terraform-enterprise:
+    uses: ./.github/workflows/end-to-end-tfe.yaml
+  terraform-enterprise-helm:
+    uses: ./.github/workflows/helm-end-to-end-tfe.yaml

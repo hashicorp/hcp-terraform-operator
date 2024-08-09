@@ -9,6 +9,7 @@ on:
     paths:
       - 'controllers/**'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   tests:
