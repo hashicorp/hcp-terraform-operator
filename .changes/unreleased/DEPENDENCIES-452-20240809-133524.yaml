@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `k8s.io/api` from 0.29.4 to 0.30.1.
+time: 2024-08-09T13:35:24.458844+02:00
+custom:
+    PR: "452"
