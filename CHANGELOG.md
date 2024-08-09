@@ -1,3 +1,18 @@
+## 2.6.1 (August 07, 2024)
+
+BUG FIXES:
+
+* `Workspace`: Fix an issue where the controller fails to update CR Status when CR gets modified during the reconciliation. [[GH-457](https://github.com/hashicorp/hcp-terraform-operator/pull/457)]
+* `Workspace`: Fix an issue where, in some circumstances, the controller cannot properly handle the deletion event. [[GH-460](https://github.com/hashicorp/hcp-terraform-operator/pull/460)]
+
+ENHANCEMENTS:
+
+* `Helm Chart`: Add the ability to configure the Deployment priority class. [[GH-451](https://github.com/hashicorp/hcp-terraform-operator/pull/451)]
+
+## Community Contributors :raised_hands:
+
+- @vadim-kubasov made their contribution in https://github.com/hashicorp/hcp-terraform-operator/pull/451
+
 ## 2.6.0 (July 30, 2024)
 
 NOTES:
@@ -340,3 +355,4 @@ DOCS:
 * Update documentation.
 * Add FAQ.
 * Reorganize documentation structure.
+
