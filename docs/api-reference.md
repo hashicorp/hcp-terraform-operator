@@ -224,6 +224,17 @@ _Appears in:_
 | `variables` _[WorkspaceVariablesPermissionType](#workspacevariablespermissiontype)_ | Variable access.<br />Must be one of the following values: `none`, `read`, `write`.<br />Default: `none`. |
 
 
+#### DeletionPolicy
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+
+
 #### Module
 
 
@@ -802,6 +813,7 @@ _Appears in:_
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 | `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups.<br />Default: default organization project.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
+| `deletionPolicy` _[DeletionPolicy](#deletionpolicy)_ |  |
 
 
 

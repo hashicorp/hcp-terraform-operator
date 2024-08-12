@@ -428,30 +428,6 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
 }
 
-func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceInstance) error {
-	// if the Kubernetes object doesn't have workspace ID, it means it a workspace was never created
-	// in this case, remove the finalizer and let Kubernetes remove the object permanently
-	if w.instance.Status.WorkspaceID == "" {
-		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("status.WorkspaceID is empty, remove finazlier %s", workspaceFinalizer))
-		return r.removeFinalizer(ctx, w)
-	}
-	err := w.tfClient.Client.Workspaces.DeleteByID(ctx, w.instance.Status.WorkspaceID)
-	if err != nil {
-		// if workspace wasn't found, it means it was deleted from the TF Cloud bypass the operator
-		// in this case, remove the finalizer and let Kubernetes remove the object permanently
-		if err == tfc.ErrResourceNotFound {
-			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not found, remove finazlier", workspaceFinalizer))
-			return r.removeFinalizer(ctx, w)
-		}
-		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to delete Workspace ID %s, retry later", w.instance.Status.WorkspaceID)
-		return err
-	}
-
-	w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("workspace ID %s has been deleted, remove finazlier", w.instance.Status.WorkspaceID))
-	return r.removeFinalizer(ctx, w)
-}
-
 func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspaceInstance) error {
 	w.log.Info("Reconcile Workspace", "msg", "reconciling workspace")
 

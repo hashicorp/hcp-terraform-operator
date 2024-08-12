@@ -81,6 +81,14 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
                 pattern: ^(auto|manual)$
                 type: string
+              deletionPolicy:
+                default: preserve
+                enum:
+                - preserve
+                - soft
+                - destroy
+                - force
+                type: string
               description:
                 description: Workspace description.
                 minLength: 1

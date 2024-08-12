@@ -329,6 +329,15 @@ type SSHKey struct {
 // +kubebuilder:validation:Pattern:="^[A-Za-z0-9][A-Za-z0-9:_-]*$"
 type Tag string
 
+type DeletionPolicy string
+
+const (
+	DeletionPolicyPreserve DeletionPolicy = "preserve"
+	DeletionPolicySoft     DeletionPolicy = "soft"
+	DeletionPolicyDestroy  DeletionPolicy = "destroy"
+	DeletionPolicyForce    DeletionPolicy = "force"
+)
+
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 // This must be aligned with go-tfe type `NotificationTriggerType`.
 // Must be one of the following values: `run:applying`, `assessment:check_failure`, `run:completed`, `run:created`, `assessment:drifted`, `run:errored`, `assessment:failed`, `run:needs_attention`, `run:planning`.
@@ -561,6 +570,10 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	Project *WorkspaceProject `json:"project,omitempty"`
+	//+kubebuilder:validation:Enum:=preserve;soft;destroy;force
+	//+kubebuilder:default=preserve
+	//+optional
+	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 type PlanStatus struct {
