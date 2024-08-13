@@ -22,7 +22,7 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceI
 	}
 
 	switch w.instance.Spec.DeletionPolicy {
-	case appv1alpha2.DeletionPolicyPreserve:
+	case appv1alpha2.DeletionPolicyRetain:
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("remove finazlier %s", workspaceFinalizer))
 		return r.removeFinalizer(ctx, w)
 	case appv1alpha2.DeletionPolicySoft:

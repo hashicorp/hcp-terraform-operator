@@ -796,7 +796,7 @@ _Appears in:_
 | `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual).<br />Must be one of the following values: `auto`, `manual`.<br />Default: `manual`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
-| `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
+| `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied.<br />Default: `false`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
 | `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/agents |
 | `executionMode` _string_ | Define where the Terraform code will be executed.<br />Must be one of the following values: `agent`, `local`, `remote`.<br />Default: `remote`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#execution-mode |
@@ -813,7 +813,7 @@ _Appears in:_
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 | `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups.<br />Default: default organization project.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
-| `deletionPolicy` _[DeletionPolicy](#deletionpolicy)_ |  |
+| `deletionPolicy` _[DeletionPolicy](#deletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.<br />- `retain`: When the custom resource is deleted, the associated workspace is retained.<br />- `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.<br />- `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.<br />- `force`: Forcefully and immediately deletes the workspace and the custom resource.<br />Default: `retain`. |
 
 
 

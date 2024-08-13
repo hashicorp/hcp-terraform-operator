@@ -332,10 +332,10 @@ type Tag string
 type DeletionPolicy string
 
 const (
-	DeletionPolicyPreserve DeletionPolicy = "preserve"
-	DeletionPolicySoft     DeletionPolicy = "soft"
-	DeletionPolicyDestroy  DeletionPolicy = "destroy"
-	DeletionPolicyForce    DeletionPolicy = "force"
+	DeletionPolicyRetain  DeletionPolicy = "retain"
+	DeletionPolicySoft    DeletionPolicy = "soft"
+	DeletionPolicyDestroy DeletionPolicy = "destroy"
+	DeletionPolicyForce   DeletionPolicy = "force"
 )
 
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
@@ -442,11 +442,11 @@ type WorkspaceSpec struct {
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
 	// Allows a destroy plan to be created and applied.
-	// Default: `true`.
+	// Default: `false`.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
 	//
-	//+kubebuilder:default=true
+	//+kubebuilder:default=false
 	//+optional
 	AllowDestroyPlan bool `json:"allowDestroyPlan"`
 	// Workspace description.
@@ -570,8 +570,15 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	Project *WorkspaceProject `json:"project,omitempty"`
-	//+kubebuilder:validation:Enum:=preserve;soft;destroy;force
-	//+kubebuilder:default=preserve
+	// The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.
+	// - `retain`: When the custom resource is deleted, the associated workspace is retained.
+	// - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+	// - `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+	// - `force`: Forcefully and immediately deletes the workspace and the custom resource.
+	// Default: `retain`.
+	//
+	//+kubebuilder:validation:Enum:=retain;soft;destroy;force
+	//+kubebuilder:default=retain
 	//+optional
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 }

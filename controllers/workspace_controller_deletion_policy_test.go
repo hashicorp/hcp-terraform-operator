@@ -7,15 +7,14 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -73,8 +72,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.Token.SecretKeyRef.Key = dummySecretKey
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 		})
-		It("can preserve a workspace", func() {
-			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyPreserve
+		It("can retain a workspace", func() {
+			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyRetain
 			createWorkspace(instance)
 			workspaceID := instance.Status.WorkspaceID
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())

@@ -61,10 +61,10 @@ spec:
                     type: string
                 type: object
               allowDestroyPlan:
-                default: true
+                default: false
                 description: |-
                   Allows a destroy plan to be created and applied.
-                  Default: `true`.
+                  Default: `false`.
                   More information:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
                 type: boolean
@@ -79,9 +79,16 @@ spec:
                 pattern: ^(auto|manual)$
                 type: string
               deletionPolicy:
-                default: preserve
+                default: retain
+                description: |-
+                  The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.
+                  - `retain`: When the custom resource is deleted, the associated workspace is retained.
+                  - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+                  - `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+                  - `force`: Forcefully and immediately deletes the workspace and the custom resource.
+                  Default: `retain`.
                 enum:
-                - preserve
+                - retain
                 - soft
                 - destroy
                 - force
