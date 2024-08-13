@@ -147,13 +147,14 @@ func createAndUploadConfigurationVersion(instance *appv1alpha2.Workspace, output
 	defer os.Remove(f.Name())
 	// Terraform code to upload
 	tf := fmt.Sprintf(`
+				resource "random_uuid" "this" {}
 				output "sensitive" {
-					value = "%s"
+					value = %[1]q
 					sensitive = true
 				}
 				output "non_sensitive" {
-					value = "%s"
-				}`, outputValue, outputValue)
+					value = %[1]q
+				}`, outputValue)
 	// Save the Terraform code to the temporary file
 	_, err = f.WriteString(tf)
 	Expect(err).Should(Succeed())
