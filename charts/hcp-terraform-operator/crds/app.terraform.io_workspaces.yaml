@@ -64,10 +64,10 @@ spec:
                     type: string
                 type: object
               allowDestroyPlan:
-                default: true
+                default: false
                 description: |-
                   Allows a destroy plan to be created and applied.
-                  Default: `true`.
+                  Default: `false`.
                   More information:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
                 type: boolean
