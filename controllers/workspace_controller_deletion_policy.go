@@ -23,11 +23,7 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceI
 
 	switch w.instance.Spec.DeletionPolicy {
 	case appv1alpha2.DeletionPolicyRetain:
-<<<<<<< HEAD
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("remove finalizer %s", workspaceFinalizer))
-=======
-		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("remove finazlier %s", workspaceFinalizer))
->>>>>>> 62affc6 (Add deletion policy docs)
 		return r.removeFinalizer(ctx, w)
 	case appv1alpha2.DeletionPolicySoft:
 		err := w.tfClient.Client.Workspaces.SafeDeleteByID(ctx, w.instance.Status.WorkspaceID)
