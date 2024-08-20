@@ -168,8 +168,8 @@ func (r *ProjectReconciler) removeFinalizer(ctx context.Context, p *projectInsta
 
 	err := r.Update(ctx, &p.instance)
 	if err != nil {
-		p.log.Error(err, "Reconcile Project", "msg", fmt.Sprintf("failed to remove finazlier %s", projectFinalizer))
-		r.Recorder.Eventf(&p.instance, corev1.EventTypeWarning, "RemoveProject", "Failed to remove finazlier %s", projectFinalizer)
+		p.log.Error(err, "Reconcile Project", "msg", fmt.Sprintf("failed to remove finalizer %s", projectFinalizer))
+		r.Recorder.Eventf(&p.instance, corev1.EventTypeWarning, "RemoveProject", "Failed to remove finalizer %s", projectFinalizer)
 	}
 
 	return err
@@ -228,7 +228,7 @@ func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstanc
 	// if the Kubernetes object doesn't have project ID, it means it a project was never created
 	// in this case, remove the finalizer and let Kubernetes remove the object permanently
 	if p.instance.Status.ID == "" {
-		p.log.Info("Reconcile Project", "msg", fmt.Sprintf("status.ID is empty, remove finazlier %s", projectFinalizer))
+		p.log.Info("Reconcile Project", "msg", fmt.Sprintf("status.ID is empty, remove finalizer %s", projectFinalizer))
 		return r.removeFinalizer(ctx, p)
 	}
 	err := p.tfClient.Client.Projects.Delete(ctx, p.instance.Status.ID)
@@ -236,7 +236,7 @@ func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstanc
 		// if project wasn't found, it means it was deleted from the TF Cloud bypass the operator
 		// in this case, remove the finalizer and let Kubernetes remove the object permanently
 		if err == tfc.ErrResourceNotFound {
-			p.log.Info("Reconcile Project", "msg", fmt.Sprintf("Project ID %s not found, remove finazlier", p.instance.Status.ID))
+			p.log.Info("Reconcile Project", "msg", fmt.Sprintf("Project ID %s not found, remove finalizer", p.instance.Status.ID))
 			return r.removeFinalizer(ctx, p)
 		}
 		p.log.Error(err, "Reconcile Project", "msg", fmt.Sprintf("failed to delete Project ID %s, retry later", projectFinalizer))
@@ -244,7 +244,7 @@ func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstanc
 		return err
 	}
 
-	p.log.Info("Reconcile Project", "msg", fmt.Sprintf("project ID %s has been deleted, remove finazlier", p.instance.Status.ID))
+	p.log.Info("Reconcile Project", "msg", fmt.Sprintf("project ID %s has been deleted, remove finalizer", p.instance.Status.ID))
 	return r.removeFinalizer(ctx, p)
 }
 

@@ -250,3 +250,42 @@
   - If this involves migrating an existing workspace and the referred project doesn’t exist, the workspace will remain within the same project, and a corresponding error/event message will be provided.
 
   If the `spec.project` field is not specified, the workspace will be created or moved to the default project.
+
+- **How can I migrate workspace CR to a different cluster?**
+
+  Ensure that the `spec.deletionPolicy` of the workspace CR you are migrating is set to `retain`. This way, when you remove the workspace CR from the Kubernetes cluster, the operator will not delete the managed HCP Terraform workspace.
+
+  We do not recommend having two or more installations of the operator managing the same HCP Terraform workspace to avoid conflicts. Please ensure that you remove the workspace CR from the source cluster once the migration is complete.
+
+  You might consider "disabling" the operator on the source cluster during migration. To do this, set the number of replicas to `0`.
+
+  Here are steps to migrsate a workspace CR from one cluster to another:
+
+  - **Backup the existing workspace CR.** Export the workspace CR to a YAML file from the source cluster:
+
+    ```console
+    $ kubectl get workspace <NAME> -o yaml > backup.<NAME>.workspace.yaml
+    ```
+
+  - **Remove metadata fields.** You need to delete specific fields like `metadata.resourceVersion` and `metadata.uid` to avoid conflicts in the target cluster. These fields are specific to the Kubernetes resource lifecycle in a given cluster:
+
+    ```console
+    $ yq eval 'del(.metadata.resourceVersion)' -i backup.<NAME>.workspace.yaml
+    $ yq eval 'del(.metadata.uid)' -i backup.<NAME>.workspace.yaml
+    ```
+
+  - **Apply the backup file to the target cluster.** Ensure that the operator is up and running on the target cluster. Apply the backed-up Workspace YAML to the target cluster:
+
+    ```console
+    $ kubectl apply -f backup.<NAME>.workspace.yaml
+    ```
+
+    *At this point, you might observe a `Name has already been taken` error message in the logs. You can safely ignore this message.*
+
+  - **Patch the workspace CR's status in the target cluster.** Patch moved workspace CR status:
+
+    ```console
+    $ kubectl patch workspace <NAME> --subresource='status' --type='merge' --patch-file=backup.<NAME>.workspace.yaml
+    ```
+
+    *As a result, you will not see the `Name has already been taken` error in the logs because the operator will recognize the newly created resource as unique within the context of the new cluster.*

@@ -227,8 +227,8 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, w *workspaceI
 
 	err := r.Update(ctx, &w.instance)
 	if err != nil {
-		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finazlier %s", workspaceFinalizer))
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", workspaceFinalizer)
+		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finalizer %s", workspaceFinalizer))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finalizer %s", workspaceFinalizer)
 	}
 
 	return err

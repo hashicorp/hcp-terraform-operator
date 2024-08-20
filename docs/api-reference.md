@@ -228,7 +228,16 @@ _Appears in:_
 
 _Underlying type:_ _string_
 
+DeletionPolicy defines the strategies for resource deletion in the Kubernetes operator.
+It controls how the operator should handle the deletion of resources when triggered by
+a user action or system event.
 
+
+There are four possible values:
+- `retain`: When the custom resource is deleted, the associated workspace is retained.
+- `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+- `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+- `force`: Forcefully and immediately deletes the workspace and the custom resource.
 
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
