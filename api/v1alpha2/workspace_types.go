@@ -451,11 +451,11 @@ type WorkspaceSpec struct {
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
 	// Allows a destroy plan to be created and applied.
-	// Default: `false`.
+	// Default: `true`.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion
 	//
-	//+kubebuilder:default=false
+	//+kubebuilder:default=true
 	//+optional
 	AllowDestroyPlan bool `json:"allowDestroyPlan"`
 	// Workspace description.
