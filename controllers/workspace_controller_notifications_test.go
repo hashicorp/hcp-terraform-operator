@@ -67,6 +67,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					},
 				},
 				Name:          workspace,
+				Description:   "Notifications",
 				Notifications: []appv1alpha2.Notification{},
 			},
 			Status: appv1alpha2.WorkspaceStatus{},

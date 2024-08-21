@@ -151,8 +151,8 @@ func (w *workspaceInstance) createNotification(ctx context.Context, notificaion 
 }
 
 func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.NotificationConfiguration) error {
-	w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("updating notificaion %q", wn.ID))
 	if !cmp.Equal(sn, wn, cmpopts.IgnoreFields(tfc.NotificationConfiguration{}, "ID", "CreatedAt", "DeliveryResponses", "UpdatedAt", "Subscribable")) {
+		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("updating notificaion %q", wn.ID))
 		triggers := make([]tfc.NotificationTriggerType, len(sn.Triggers))
 		for i, t := range sn.Triggers {
 			triggers[i] = tfc.NotificationTriggerType(t)
