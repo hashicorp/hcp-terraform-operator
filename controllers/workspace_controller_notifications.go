@@ -29,6 +29,9 @@ func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceIns
 	for _, n := range w.instance.Spec.Notifications {
 		emails = append(emails, n.EmailUsers...)
 	}
+	if len(emails) == 0 {
+		return emailUsers, nil
+	}
 	listOpts := &tfc.OrganizationMembershipListOptions{
 		Emails: emails,
 		ListOptions: tfc.ListOptions{
@@ -66,10 +69,11 @@ func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *w
 	for i, notification := range w.instance.Spec.Notifications {
 		var emailUsers []*tfc.User
 		for _, emailUser := range notification.EmailUsers {
-			if v, ok := orgEmailUsers[emailUser]; ok && v != nil {
+			if v, ok := orgEmailUsers[emailUser]; ok {
 				emailUsers = append(emailUsers, v)
 			} else {
 				w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("user %s was not found", emailUser))
+				return []tfc.NotificationConfiguration{}, fmt.Errorf("user %s was not found", emailUser)
 			}
 		}
 		triggers := make([]string, len(notification.Triggers))
@@ -159,10 +163,10 @@ func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.N
 		}
 		_, err := w.tfClient.Client.NotificationConfigurations.Update(ctx, wn.ID, tfc.NotificationConfigurationUpdateOptions{
 			Name:           &sn.Name,
+			URL:            &sn.URL,
 			Enabled:        &sn.Enabled,
 			Token:          &sn.Token,
 			Triggers:       triggers,
-			URL:            &sn.URL,
 			EmailAddresses: sn.EmailAddresses,
 			EmailUsers:     sn.EmailUsers,
 		})
