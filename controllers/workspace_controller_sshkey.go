@@ -10,78 +10,73 @@ import (
 	tfc "github.com/hashicorp/go-tfe"
 )
 
-func (r *WorkspaceReconciler) getSSHKeyIDByName(ctx context.Context, w *workspaceInstance) (string, error) {
-	SSHKeyName := w.instance.Spec.SSHKey.Name
-
+func (w *workspaceInstance) getSSHKeyIDByName(ctx context.Context) (string, error) {
 	listOpts := &tfc.SSHKeyListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageNumber: 1,
+			PageSize:   maxPageSize,
 		},
 	}
 	for {
-		SSHKeys, err := w.tfClient.Client.SSHKeys.List(ctx, w.instance.Spec.Organization, listOpts)
+		sshKeyList, err := w.tfClient.Client.SSHKeys.List(ctx, w.instance.Spec.Organization, listOpts)
 		if err != nil {
 			return "", err
 		}
-		for _, s := range SSHKeys.Items {
-			if s.Name == SSHKeyName {
+
+		for _, s := range sshKeyList.Items {
+			if s.Name == w.instance.Spec.SSHKey.Name {
 				return s.ID, nil
 			}
 		}
-		if SSHKeys.NextPage == 0 {
+
+		if sshKeyList.NextPage == 0 {
 			break
 		}
-		listOpts.PageNumber = SSHKeys.NextPage
+		listOpts.PageNumber = sshKeyList.NextPage
 	}
 
-	return "", fmt.Errorf("ssh key ID was not found for ssh key name %q", SSHKeyName)
+	return "", fmt.Errorf("ssh key ID was not found for SSH key name %q", w.instance.Spec.SSHKey.Name)
 }
 
-func (r *WorkspaceReconciler) getSSHKeyID(ctx context.Context, w *workspaceInstance) (string, error) {
+func (w *workspaceInstance) getSSHKeyID(ctx context.Context) (string, error) {
 	specSSHKey := w.instance.Spec.SSHKey
 
 	if specSSHKey.Name != "" {
-		w.log.Info("Reconcile SSH Key", "msg", "getting ssh key ID by name")
-		return r.getSSHKeyIDByName(ctx, w)
+		w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID by name")
+		return w.getSSHKeyIDByName(ctx)
 	}
 
-	w.log.Info("Reconcile SSH Key", "msg", "getting ssh key ID from the spec.sshKey.ID")
+	w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID from the spec.sshKey.ID")
 	return specSSHKey.ID, nil
 }
 
-func (r *WorkspaceReconciler) reconcileSSHKey(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
-	if w.instance.Spec.SSHKey == nil {
-		// Verify whether a Workspace has an SSH key and unassign it if so
-		if workspace.SSHKey != nil {
-			w.log.Info("Reconcile SSH Key", "msg", "unassigning the ssh key")
-			_, err := w.tfClient.Client.Workspaces.UnassignSSHKey(ctx, workspace.ID)
+func (w *workspaceInstance) reconcileSSHKey(ctx context.Context, workspace *tfc.Workspace) error {
+	w.log.Info("Reconcile SSH Key", "msg", "new reconciliation event")
+
+	if w.instance.Spec.SSHKey == nil && workspace.SSHKey != nil {
+		w.log.Info("Reconcile SSH Key", "msg", "removing the SSH key")
+		if _, err := w.tfClient.Client.Workspaces.UnassignSSHKey(ctx, workspace.ID); err != nil {
 			return err
 		}
-
-		return nil
+		w.instance.Status.SSHKeyID = ""
 	}
 
-	SSHKeyID, err := r.getSSHKeyID(ctx, w)
-	if err != nil {
-		return err
-	}
-
-	// Assign an SSH key to a workspace if nothing is assigned
-	if workspace.SSHKey == nil {
-		w.log.Info("Reconcile SSH Key", "msg", "assigning the ssh key")
-		_, err := w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, tfc.WorkspaceAssignSSHKeyOptions{
-			SSHKeyID: tfc.String(SSHKeyID),
-		})
-		return err
-	}
-
-	// Assign an SSH key to a workspace if it is different from the one in spec
-	if workspace.SSHKey.ID != SSHKeyID {
-		w.log.Info("Reconcile SSH Key", "msg", "assigning the ssh key")
-		_, err := w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, tfc.WorkspaceAssignSSHKeyOptions{
-			SSHKeyID: tfc.String(SSHKeyID),
-		})
-		return err
+	if w.instance.Spec.SSHKey != nil {
+		if workspace.SSHKey == nil || workspace.SSHKey.ID != w.instance.Status.SSHKeyID {
+			sshKeyID, err := w.getSSHKeyID(ctx)
+			if err != nil {
+				return err
+			}
+			w.log.Info("Reconcile SSH Key", "msg", "assigning the SSH key")
+			opt := tfc.WorkspaceAssignSSHKeyOptions{
+				SSHKeyID: &sshKeyID,
+			}
+			workspace, err = w.tfClient.Client.Workspaces.AssignSSHKey(ctx, workspace.ID, opt)
+			if err != nil {
+				return err
+			}
+			w.instance.Status.SSHKeyID = workspace.SSHKey.ID
+		}
 	}
 
 	return nil
