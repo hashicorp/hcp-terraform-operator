@@ -39,15 +39,13 @@ func (w *workspaceInstance) getSSHKeyIDByName(ctx context.Context) (string, erro
 }
 
 func (w *workspaceInstance) getSSHKeyID(ctx context.Context) (string, error) {
-	specSSHKey := w.instance.Spec.SSHKey
-
-	if specSSHKey.Name != "" {
+	if w.instance.Spec.SSHKey.Name != "" {
 		w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID by name")
 		return w.getSSHKeyIDByName(ctx)
 	}
 
 	w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID from the spec.sshKey.ID")
-	return specSSHKey.ID, nil
+	return w.instance.Spec.SSHKey.ID, nil
 }
 
 func (w *workspaceInstance) reconcileSSHKey(ctx context.Context, workspace *tfc.Workspace) error {
