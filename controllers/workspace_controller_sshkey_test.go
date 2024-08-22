@@ -11,14 +11,13 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -69,7 +68,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name: workspace,
+				Name:        workspace,
+				Description: "SSH Key",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
@@ -82,57 +82,101 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	Context("SSH Key", func() {
-		It("can handle SSH Key by name", func() {
+		It("can be created by name", func() {
 			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
 				Name: sshKeyName,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
-			isReconciledSSHKeyByName(instance)
+			isReconciledSSHKey(instance)
+		})
+		It("can be created by ID", func() {
+			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
+				ID: sshKeyID,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledSSHKey(instance)
+		})
 
+		It("can be restored by name", func() {
+			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
+				Name: sshKeyName,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledSSHKey(instance)
 			// Delete the SSH key manually and wait until the controller revert this change
 			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
-			isReconciledSSHKeyByName(instance)
+			isReconciledSSHKey(instance)
+		})
+		It("can be restored by ID", func() {
+			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
+				ID: sshKeyID,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledSSHKey(instance)
+			// Delete the SSH key manually and wait until the controller revert this change
+			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
+			Expect(err).Should(Succeed())
+			Expect(ws).ShouldNot(BeNil())
+			isReconciledSSHKey(instance)
+		})
 
+		It("can be updated by name", func() {
+			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
+				Name: sshKeyName,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledSSHKey(instance)
 			// Update the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
 				Name: sshKeyName2,
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isReconciledSSHKeyByName(instance)
-
-			// Detach the SSH key
-			Expect(k8sClient.Get(ctx, namespacedName, instance))
-			instance.Spec.SSHKey = nil
-			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isSSHKeyEmpty(instance)
+			isReconciledSSHKey(instance)
 		})
-
-		It("can handle SSH Key by id", func() {
+		It("can be updated by ID", func() {
 			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
 				ID: sshKeyID,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
-			isReconciledSSHKeyByID(instance)
-
-			// Delete the SSH key manually and wait until the controller revert this change
-			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
-			isReconciledSSHKeyByID(instance)
-
+			isReconciledSSHKey(instance)
 			// Update the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance))
 			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
 				ID: sshKeyID2,
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isReconciledSSHKeyByID(instance)
+			isReconciledSSHKey(instance)
+		})
 
+		It("can be removed by name", func() {
+			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
+				Name: sshKeyName,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledSSHKey(instance)
+			// Detach the SSH key
+			Expect(k8sClient.Get(ctx, namespacedName, instance))
+			instance.Spec.SSHKey = nil
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isSSHKeyEmpty(instance)
+		})
+		It("can be removed by ID", func() {
+			instance.Spec.SSHKey = &appv1alpha2.SSHKey{
+				ID: sshKeyID,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledSSHKey(instance)
 			// Delete the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance))
 			instance.Spec.SSHKey = nil
@@ -142,38 +186,21 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func isReconciledSSHKeyByName(instance *appv1alpha2.Workspace) {
+func isReconciledSSHKey(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		if instance.Status.SSHKeyID == "" {
+			return false
+		}
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
 		if ws.SSHKey == nil {
 			return false
-		} else {
-			s, err := tfClient.SSHKeys.Read(ctx, ws.SSHKey.ID)
-			Expect(err).Should(Succeed())
-			Expect(s).ShouldNot(BeNil())
-			return s.Name == instance.Spec.SSHKey.Name
 		}
-	}).Should(BeTrue())
-}
-
-func isReconciledSSHKeyByID(instance *appv1alpha2.Workspace) {
-	namespacedName := getNamespacedName(instance)
-
-	Eventually(func() bool {
-		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
-		if ws.SSHKey == nil {
-			return false
-		} else {
-			return ws.SSHKey.ID == instance.Spec.SSHKey.ID
-		}
+		return ws.SSHKey.ID == instance.Status.SSHKeyID
 	}).Should(BeTrue())
 }
 
@@ -182,6 +209,9 @@ func isSSHKeyEmpty(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		if instance.Status.SSHKeyID != "" {
+			return false
+		}
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
@@ -191,8 +221,8 @@ func isSSHKeyEmpty(instance *appv1alpha2.Workspace) {
 
 func createSSHKey(sshKeyName string) string {
 	sk, err := rsa.GenerateKey(rand.Reader, 2048)
-	Expect(sk).ShouldNot(BeNil())
 	Expect(err).Should(Succeed())
+	Expect(sk).ShouldNot(BeNil())
 	var privateKeyBytes []byte = x509.MarshalPKCS1PrivateKey(sk)
 	privateKeyBlock := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
