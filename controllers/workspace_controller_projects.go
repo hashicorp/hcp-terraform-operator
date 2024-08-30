@@ -10,7 +10,7 @@ import (
 	tfc "github.com/hashicorp/go-tfe"
 )
 
-func (r *WorkspaceReconciler) getProjectIDByName(ctx context.Context, w *workspaceInstance) (string, error) {
+func (w *workspaceInstance) getProjectIDByName(ctx context.Context) (string, error) {
 	projectName := w.instance.Spec.Project.Name
 
 	listOpts := &tfc.ProjectListOptions{
@@ -38,7 +38,7 @@ func (r *WorkspaceReconciler) getProjectIDByName(ctx context.Context, w *workspa
 	return "", fmt.Errorf("project ID not found for project name %q", projectName)
 }
 
-func (r *WorkspaceReconciler) getProjectID(ctx context.Context, w *workspaceInstance) (string, error) {
+func (w *workspaceInstance) getProjectID(ctx context.Context) (string, error) {
 	specProject := w.instance.Spec.Project
 
 	if specProject == nil {
@@ -47,7 +47,7 @@ func (r *WorkspaceReconciler) getProjectID(ctx context.Context, w *workspaceInst
 
 	if specProject.Name != "" {
 		w.log.Info("Reconcile Project", "msg", "getting project ID by name")
-		return r.getProjectIDByName(ctx, w)
+		return w.getProjectIDByName(ctx)
 	}
 
 	w.log.Info("Reconcile Project", "msg", "getting project ID from the spec.Project.ID")
