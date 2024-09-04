@@ -99,6 +99,8 @@ controllers:
   project:
     # -- The number of the Project controller workers.
     workers: 1
+    # -- The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc.
+    syncPeriod: 5m
   workspace:
     # -- The number of the Workspace controller workers.
     workers: 1
