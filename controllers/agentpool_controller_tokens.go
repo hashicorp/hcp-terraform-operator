@@ -9,6 +9,7 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
+	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,18 +78,16 @@ func (r *AgentPoolReconciler) createAgentPoolToken(ctx context.Context, ap *agen
 	return nil
 }
 
-func removeTokenFromStatus(ap *agentPoolInstance, t string) {
-	var statusTokens []*appv1alpha2.AgentToken
-	for _, token := range ap.instance.Status.AgentTokens {
-		if token.ID != t {
-			statusTokens = append(statusTokens, token)
+func (ap *agentPoolInstance) removeTokenFromStatus(t string) {
+	for i, token := range ap.instance.Status.AgentTokens {
+		if token.ID == t {
+			ap.instance.Status.AgentTokens = slice.RemoveFromSlice(ap.instance.Status.AgentTokens, i)
+			return
 		}
 	}
-
-	ap.instance.Status.AgentTokens = statusTokens
 }
 
-func nameByTokenID(ap *agentPoolInstance, id string) string {
+func (ap *agentPoolInstance) nameByTokenID(id string) string {
 	for _, token := range ap.instance.Status.AgentTokens {
 		if token.ID == id {
 			return token.Name
@@ -106,8 +105,8 @@ func (r *AgentPoolReconciler) removeAgentPoolToken(ctx context.Context, ap *agen
 		ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token %q", token))
 		return err
 	}
-	n := nameByTokenID(ap, token)
-	removeTokenFromStatus(ap, token)
+	n := ap.nameByTokenID(token)
+	ap.removeTokenFromStatus(token)
 	// UPDATE SECRET
 	s := &corev1.Secret{}
 	ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("remove token %q from Kubernets Secret %q", token, nn.Name))
@@ -204,7 +203,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			if _, ok := agentTokens[tokenID]; ok {
 				delete(agentTokens, tokenID)
 			} else {
-				removeTokenFromStatus(ap, tokenID)
+				ap.removeTokenFromStatus(tokenID)
 				if err := r.createAgentPoolToken(ctx, ap, token.Name); err != nil {
 					return err
 				}
