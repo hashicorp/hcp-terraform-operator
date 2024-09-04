@@ -140,6 +140,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | controllers.agentPool.workers | int | `1` | The number of the Agent Pool controller workers. |
 | controllers.module.syncPeriod | string | `"5m"` | The minimum frequency at which watched Module resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
+| controllers.project.syncPeriod | string | `"5m"` | The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
 | controllers.workspace.syncPeriod | string | `"5m"` | The minimum frequency at which watched Workspace resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.workspace.workers | int | `1` | The number of the Workspace controller workers. |
