@@ -74,7 +74,9 @@ func main() {
 	// PROJECT CONTROLLER OPTIONS
 	var projectWorkers int
 	flag.IntVar(&projectWorkers, "project-workers", 1,
-		"The number of the Workspace controller workers.")
+		"The number of the Project controller workers.")
+	flag.DurationVar(&controllers.ProjectSyncPeriod, "project-sync-period", 5*time.Minute,
+		"The minimum frequency at which watched project resources are reconciled. Format: 5s, 1m, etc.")
 	// WORKSPACE CONTROLLER OPTIONS
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
@@ -168,6 +170,7 @@ func main() {
 
 	setupLog.Info(fmt.Sprintf("Operator sync period: %s", syncPeriod))
 	setupLog.Info(fmt.Sprintf("Agent Pool sync period: %s", controllers.AgentPoolSyncPeriod))
+	setupLog.Info(fmt.Sprintf("Project sync period: %s", controllers.ProjectSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Workspace sync period: %s", controllers.WorkspaceSyncPeriod))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
