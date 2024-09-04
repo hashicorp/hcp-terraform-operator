@@ -100,7 +100,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	p.log.Info("Project Controller", "msg", "successfully reconcilied project")
 	r.Recorder.Eventf(&p.instance, corev1.EventTypeNormal, "ReconcileProject", "Successfully reconcilied project ID %s", p.instance.Status.ID)
 
-	return doNotRequeue()
+	return requeueAfter(ProjectSyncPeriod)
 }
 
 func (r *ProjectReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Project) error {
