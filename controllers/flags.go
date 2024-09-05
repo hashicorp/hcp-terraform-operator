@@ -9,6 +9,7 @@ import (
 
 var (
 	AgentPoolSyncPeriod time.Duration
+	ModuleSyncPeriod    time.Duration
 	ProjectSyncPeriod   time.Duration
 	WorkspaceSyncPeriod time.Duration
 )

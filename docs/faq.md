@@ -76,6 +76,8 @@
 
   The `--agent-pool-sync-period` is a `AgentPool` controller option that specifies the time interval for requeuing AgentPool resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
+  The `--module-sync-period` is a `Module` controller option that specifies the time interval for requeuing Module resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
+
   The `--project-sync-period` is a `Project` controller option that specifies the time interval for requeuing Project resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
   The `--workspace-sync-period` is a `Workspace` controller option that specifies the time interval for requeuing Workspace resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
