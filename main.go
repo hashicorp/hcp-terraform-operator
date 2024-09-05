@@ -71,6 +71,8 @@ func main() {
 	var moduleWorkers int
 	flag.IntVar(&moduleWorkers, "module-workers", 1,
 		"The number of the Module controller workers.")
+	flag.DurationVar(&controllers.ModuleSyncPeriod, "module-sync-period", 5*time.Minute,
+		"The minimum frequency at which watched workspace resources are reconciled. Format: 5s, 1m, etc.")
 	// PROJECT CONTROLLER OPTIONS
 	var projectWorkers int
 	flag.IntVar(&projectWorkers, "project-workers", 1,
@@ -86,7 +88,6 @@ func main() {
 
 	// TODO
 	// - Add validation that 'sync-period' has a higher value than '*-sync-period'
-	// - Add '*-sync-period' option for all controllers.
 	// - Add a new CLI option named 'status' (or consider a different name) that will print out the operator settings passed via flags.
 
 	flag.Parse()
@@ -170,6 +171,7 @@ func main() {
 
 	setupLog.Info(fmt.Sprintf("Operator sync period: %s", syncPeriod))
 	setupLog.Info(fmt.Sprintf("Agent Pool sync period: %s", controllers.AgentPoolSyncPeriod))
+	setupLog.Info(fmt.Sprintf("Module sync period: %s", controllers.ModuleSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Project sync period: %s", controllers.ProjectSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Workspace sync period: %s", controllers.WorkspaceSyncPeriod))
 
