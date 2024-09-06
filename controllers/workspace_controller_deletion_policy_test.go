@@ -56,8 +56,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name:        workspace,
-				ApplyMethod: "auto",
+				Name:             workspace,
+				ApplyMethod:      "auto",
+				AllowDestroyPlan: false,
+				Description:      "Deletion Policy",
+				ExecutionMode:    "remote",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
@@ -86,6 +89,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Expect(workspace).NotTo(BeNil())
 		})
 		It("can soft delete a workspace", func() {
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
 			instance.Spec.AllowDestroyPlan = true
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicySoft
 			createWorkspace(instance)

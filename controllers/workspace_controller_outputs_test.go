@@ -167,7 +167,6 @@ func createAndUploadConfigurationVersion(instance *appv1alpha2.Workspace, output
 
 	Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
 
-	By("Validating configuration version successful upload")
 	Eventually(func() bool {
 		c, err := tfClient.ConfigurationVersions.Read(ctx, cv.ID)
 		if err != nil {
