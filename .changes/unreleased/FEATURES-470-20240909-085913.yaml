@@ -1,0 +1,5 @@
+kind: FEATURES
+body: '`Workspace`: Add a new field, `spec.deletionPolicy`, that specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.'
+time: 2024-09-09T08:59:13.827281+02:00
+custom:
+    PR: "470"
