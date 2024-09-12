@@ -5,16 +5,11 @@ package controllers
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
-	"os"
-	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +20,6 @@ import (
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
 // AgentPoolReconciler reconciles a AgentPool object
@@ -86,7 +80,12 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", agentPoolFinalizer)
 	}
 
-	err = r.getTerraformClient(ctx, &ap)
+	token, err := getHCPToken(ctx, r.Client, &ap.instance)
+	if err != nil {
+		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get HCP Terraform API token")
+		return requeueOnErr(err)
+	}
+	ap.tfClient.Client, err = getHCPTerraformClient(token)
 	if err != nil {
 		ap.log.Error(err, "Agent Pool Controller", "msg", "failed to get HCP Terraform client")
 		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
@@ -115,44 +114,6 @@ func (r *AgentPoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&appv1alpha2.AgentPool{}).
 		WithEventFilter(predicate.Or(genericPredicates())).
 		Complete(r)
-}
-
-func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentPoolInstance) error {
-	nn := types.NamespacedName{
-		Namespace: ap.instance.Namespace,
-		Name:      ap.instance.Spec.Token.SecretKeyRef.Name,
-	}
-	token, err := secretKeyRef(ctx, r.Client, nn, ap.instance.Spec.Token.SecretKeyRef.Key)
-	if err != nil {
-		return err
-	}
-
-	httpClient := tfc.DefaultConfig().HTTPClient
-	insecure := false
-
-	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
-		insecure, err = strconv.ParseBool(v)
-		if err != nil {
-			return err
-		}
-	}
-
-	if insecure {
-		ap.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
-	}
-
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
-
-	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
-		Headers: http.Header{
-			"User-Agent": []string{version.UserAgent},
-		},
-	}
-	ap.tfClient.Client, err = tfc.NewClient(config)
-
-	return err
 }
 
 func (r *AgentPoolReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.AgentPool) error {

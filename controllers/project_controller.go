@@ -5,18 +5,13 @@ package controllers
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
 // ProjectReconciler reconciles a Project object
@@ -84,7 +78,12 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		r.Recorder.Eventf(&p.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", projectFinalizer)
 	}
 
-	err = r.getTerraformClient(ctx, &p)
+	token, err := getHCPToken(ctx, r.Client, &p.instance)
+	if err != nil {
+		p.log.Error(err, "Project Controller", "msg", "failed to get HCP Terraform API token")
+		return requeueOnErr(err)
+	}
+	p.tfClient.Client, err = getHCPTerraformClient(token)
 	if err != nil {
 		p.log.Error(err, "Project Controller", "msg", "failed to get HCP Terraform client")
 		r.Recorder.Event(&p.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
@@ -107,44 +106,6 @@ func (r *ProjectReconciler) addFinalizer(ctx context.Context, instance *appv1alp
 	controllerutil.AddFinalizer(instance, projectFinalizer)
 
 	return r.Update(ctx, instance)
-}
-
-func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectInstance) error {
-	nn := types.NamespacedName{
-		Namespace: p.instance.Namespace,
-		Name:      p.instance.Spec.Token.SecretKeyRef.Name,
-	}
-	token, err := secretKeyRef(ctx, r.Client, nn, p.instance.Spec.Token.SecretKeyRef.Key)
-	if err != nil {
-		return err
-	}
-
-	httpClient := tfc.DefaultConfig().HTTPClient
-	insecure := false
-
-	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
-		insecure, err = strconv.ParseBool(v)
-		if err != nil {
-			return err
-		}
-	}
-
-	if insecure {
-		p.log.Info("Reconcile Project", "msg", "client configured to skip TLS certificate verifications")
-	}
-
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
-
-	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
-		Headers: http.Header{
-			"User-Agent": []string{version.UserAgent},
-		},
-	}
-	p.tfClient.Client, err = tfc.NewClient(config)
-
-	return err
 }
 
 // SetupWithManager sets up the controller with the Manager.

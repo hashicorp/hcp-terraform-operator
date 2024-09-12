@@ -6,17 +6,13 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"os"
-	"strconv"
 	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,7 +24,6 @@ import (
 	"github.com/hashicorp/go-slug"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
 // ModuleReconciler reconciles a Module object
@@ -96,7 +91,12 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		r.Recorder.Eventf(&m.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", moduleFinalizer)
 	}
 
-	err = r.getTerraformClient(ctx, &m)
+	token, err := getHCPToken(ctx, r.Client, &m.instance)
+	if err != nil {
+		m.log.Error(err, "Module Controller", "msg", "failed to get HCP Terraform API token")
+		return requeueOnErr(err)
+	}
+	m.tfClient.Client, err = getHCPTerraformClient(token)
 	if err != nil {
 		m.log.Error(err, "Module Controller", "msg", "failed to get HCP Terraform client")
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
@@ -182,44 +182,6 @@ func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *ap
 	}
 
 	return r.Status().Update(ctx, instance)
-}
-
-func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInstance) error {
-	nn := types.NamespacedName{
-		Namespace: m.instance.Namespace,
-		Name:      m.instance.Spec.Token.SecretKeyRef.Name,
-	}
-	token, err := secretKeyRef(ctx, r.Client, nn, m.instance.Spec.Token.SecretKeyRef.Key)
-	if err != nil {
-		return err
-	}
-
-	httpClient := tfc.DefaultConfig().HTTPClient
-	insecure := false
-
-	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
-		insecure, err = strconv.ParseBool(v)
-		if err != nil {
-			return err
-		}
-	}
-
-	if insecure {
-		m.log.Info("Reconcile Module", "msg", "client configured to skip TLS certificate verifications")
-	}
-
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
-
-	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
-		Headers: http.Header{
-			"User-Agent": []string{version.UserAgent},
-		},
-	}
-	m.tfClient.Client, err = tfc.NewClient(config)
-
-	return err
 }
 
 func (r *ModuleReconciler) removeFinalizer(ctx context.Context, m *moduleInstance) error {

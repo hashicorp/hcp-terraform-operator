@@ -5,18 +5,13 @@ package controllers
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
 type HCPTerraformClient struct {
@@ -103,7 +97,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", workspaceFinalizer)
 	}
 
-	err = r.getTerraformClient(ctx, &w)
+	token, err := getHCPToken(ctx, r.Client, &w.instance)
+	if err != nil {
+		w.log.Error(err, "Workspace Controller", "msg", "failed to get HCP Terraform API token")
+		return requeueOnErr(err)
+	}
+	w.tfClient.Client, err = getHCPTerraformClient(token)
 	if err != nil {
 		w.log.Error(err, "Workspace Controller", "msg", "failed to get HCP Terraform client")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
@@ -138,44 +137,6 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&appv1alpha2.Workspace{}).
 		WithEventFilter(predicate.Or(genericPredicates(), workspacePredicates())).
 		Complete(r)
-}
-
-func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspaceInstance) error {
-	nn := types.NamespacedName{
-		Namespace: w.instance.Namespace,
-		Name:      w.instance.Spec.Token.SecretKeyRef.Name,
-	}
-	token, err := secretKeyRef(ctx, r.Client, nn, w.instance.Spec.Token.SecretKeyRef.Key)
-	if err != nil {
-		return err
-	}
-
-	httpClient := tfc.DefaultConfig().HTTPClient
-	insecure := false
-
-	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
-		insecure, err = strconv.ParseBool(v)
-		if err != nil {
-			return err
-		}
-	}
-
-	if insecure {
-		w.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
-	}
-
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
-
-	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
-		Headers: http.Header{
-			"User-Agent": []string{version.UserAgent},
-		},
-	}
-	w.tfClient.Client, err = tfc.NewClient(config)
-
-	return err
 }
 
 func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Workspace) bool {

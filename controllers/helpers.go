@@ -5,13 +5,17 @@ package controllers
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/hcp-terraform-operator/version"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -97,4 +101,39 @@ func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName,
 	}
 
 	return "", fmt.Errorf("unable to find key=%q in secret=%q namespace=%q", key, nn.Name, nn.Namespace)
+}
+
+func getHCPTerraformClient(token string) (*tfc.Client, error) {
+	var (
+		insecure bool
+		err      error
+	)
+	httpClient := tfc.DefaultConfig().HTTPClient
+
+	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
+		insecure, err = strconv.ParseBool(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+
+	config := &tfc.Config{
+		Token:      token,
+		HTTPClient: httpClient,
+		Headers: http.Header{
+			"User-Agent": []string{version.UserAgent},
+		},
+	}
+
+	return tfc.NewClient(config)
+}
+
+func getHCPToken(ctx context.Context, c client.Client, instance Instance) (string, error) {
+	nn := types.NamespacedName{
+		Namespace: instance.GetNamespace(),
+		Name:      instance.GetToken().Name,
+	}
+	return secretKeyRef(ctx, c, nn, instance.GetToken().Key)
 }

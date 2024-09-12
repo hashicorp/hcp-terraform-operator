@@ -5,7 +5,16 @@ package v1alpha2
 
 import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
+	corev1 "k8s.io/api/core/v1"
 )
+
+func (w *Workspace) GetNamespace() string {
+	return w.ObjectMeta.Namespace
+}
+
+func (w *Workspace) GetToken() corev1.SecretKeySelector {
+	return *w.Spec.Token.SecretKeyRef
+}
 
 func (w *Workspace) IsCreationCandidate() bool {
 	return w.Status.WorkspaceID == ""
