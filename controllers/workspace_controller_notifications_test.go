@@ -85,7 +85,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
-				URL:  "https://example.com",
+				URL:  "https://www.hashicorp.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
@@ -100,7 +100,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
-				URL:  "https://example.com",
+				URL:  "https://www.hashicorp.com",
 			})
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
@@ -120,7 +120,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
-				URL:  "https://example.com",
+				URL:  "https://www.hashicorp.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
