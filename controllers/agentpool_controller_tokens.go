@@ -177,6 +177,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 
 	for _, token := range ap.instance.Spec.AgentTokens {
 		if tokenID, ok := statusTokens[token.Name]; ok {
+			delete(statusTokens, token.Name)
 			if _, ok := agentTokens[tokenID]; ok {
 				delete(agentTokens, tokenID)
 			} else {
@@ -191,6 +192,13 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			if err := r.createToken(ctx, ap, token.Name); err != nil {
 				return err
 			}
+		}
+	}
+
+	// Clean up.
+	for _, tokenID := range statusTokens {
+		if err := r.removeToken(ctx, ap, tokenID); err != nil {
+			return err
 		}
 	}
 
