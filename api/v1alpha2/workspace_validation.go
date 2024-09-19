@@ -25,6 +25,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecProject()...)
 	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
 	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
+	allErrs = append(allErrs, w.validateSpecDeletionPolicy()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -566,6 +567,21 @@ func (w *Workspace) validateSpecEnvironmentVariables() field.ErrorList {
 	}
 
 	return validateSpecVariables(field.NewPath("spec").Child("environmentVariables"), spec)
+}
+
+func (w *Workspace) validateSpecDeletionPolicy() field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	f := field.NewPath("spec").Child("deletionPolicy")
+
+	if w.Spec.DeletionPolicy == DeletionPolicyDestroy && !w.Spec.AllowDestroyPlan {
+		allErrs = append(allErrs, field.Required(
+			f,
+			fmt.Sprintf("'spec.allowDestroyPlan' must be set to 'true' when 'spec.deletionPolicy' is set to %q", DeletionPolicyDestroy)),
+		)
+	}
+
+	return allErrs
 }
 
 // TODO:Validation
