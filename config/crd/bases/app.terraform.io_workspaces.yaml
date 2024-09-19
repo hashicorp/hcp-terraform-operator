@@ -750,6 +750,8 @@ spec:
             properties:
               defaultProjectID:
                 description: Default organization project ID.
+              destroyRunID:
+                description: Workspace Destroy Run ID.
                 type: string
               observedGeneration:
                 description: Real world state generation.
