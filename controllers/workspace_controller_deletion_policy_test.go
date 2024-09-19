@@ -136,8 +136,64 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 		})
 		It("can destroy delete a workspace", func() {
-			// Not yet implemented
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
+			instance.Spec.AllowDestroyPlan = true
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyDestroy
+			createWorkspace(instance)
+			workspaceID := instance.Status.WorkspaceID
+
+			cv := createAndUploadConfigurationVersion(instance, "hoi")
+			Eventually(func() bool {
+				listOpts := tfc.ListOptions{
+					PageNumber: 1,
+					PageSize:   maxPageSize,
+				}
+				for listOpts.PageNumber != 0 {
+					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
+						ListOptions: listOpts,
+					})
+					Expect(err).To(Succeed())
+					for _, r := range runs.Items {
+						if r.ConfigurationVersion.ID == cv.ID {
+							return r.Status == tfc.RunApplied
+						}
+					}
+					listOpts.PageNumber = runs.NextPage
+				}
+				return false
+			}).Should(BeTrue())
+
+			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+
+			var destroyRunID string
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				Expect(err).To(Succeed())
+				Expect(ws).ToNot(BeNil())
+				Expect(ws.CurrentRun).ToNot(BeNil())
+				run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+				Expect(err).To(Succeed())
+				Expect(run).ToNot(BeNil())
+				destroyRunID = run.ID
+
+				return run.IsDestroy
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				run, err := tfClient.Runs.Read(ctx, destroyRunID)
+				if err == tfc.ErrResourceNotFound || run.Status == tfc.RunApplied {
+					return true
+				}
+
+				return false
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				_, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				return err == tfc.ErrResourceNotFound
+			}).Should(BeTrue())
 		})
 		It("can force delete a workspace", func() {
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyForce
