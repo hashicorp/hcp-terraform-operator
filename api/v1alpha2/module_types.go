@@ -141,7 +141,7 @@ type ModuleStatus struct {
 	Run *RunStatus `json:"run,omitempty"`
 	// Module Outputs status.
 	Output *OutputStatus `json:"output,omitempty"`
-	// Workspace Destroy Run status.
+	// Workspace Destroy Run ID.
 	//
 	//+optional
 	DestroyRunID string `json:"destroyRunID,omitempty"`

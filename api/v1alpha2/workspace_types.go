@@ -670,6 +670,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	Variables []VariableStatus `json:"variables,omitempty"`
+	// Workspace Destroy Run ID.
+	//
+	//+optional
+	DestroyRunID string `json:"destroyRunID,omitempty"`
 }
 
 //+kubebuilder:object:root=true
