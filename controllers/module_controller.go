@@ -46,9 +46,15 @@ type moduleInstance struct {
 }
 
 var (
-	runCompleteStatus = map[tfc.RunStatus]struct{}{
+	runStatusComplete = map[tfc.RunStatus]struct{}{
 		tfc.RunApplied:            {},
 		tfc.RunPlannedAndFinished: {},
+	}
+
+	runStatusUnsuccessful = map[tfc.RunStatus]struct{}{
+		tfc.RunCanceled:  {},
+		tfc.RunDiscarded: {},
+		tfc.RunErrored:   {},
 	}
 )
 
@@ -227,8 +233,8 @@ func (r *ModuleReconciler) removeFinalizer(ctx context.Context, m *moduleInstanc
 
 	err := r.Update(ctx, &m.instance)
 	if err != nil {
-		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finazlier %s", moduleFinalizer))
-		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", moduleFinalizer)
+		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finalizer %s", moduleFinalizer))
+		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finalizer %s", moduleFinalizer)
 	}
 
 	return err
@@ -268,7 +274,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 			}
 			if cr.IsDestroy {
 				m.log.Info("Delete Module", "msg", fmt.Sprintf("current run %s is destroy", cr.ID))
-				if _, ok := runCompleteStatus[cr.Status]; ok {
+				if _, ok := runStatusComplete[cr.Status]; ok {
 					m.log.Info("Delete Module", "msg", "current destroy run finished")
 					return r.removeFinalizer(ctx, m)
 				}
@@ -302,7 +308,7 @@ func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) 
 		}
 		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
 
-		if _, ok := runCompleteStatus[run.Status]; ok {
+		if _, ok := runStatusComplete[run.Status]; ok {
 			m.log.Info("Delete Module", "msg", "destroy run finished")
 			return r.removeFinalizer(ctx, m)
 		}

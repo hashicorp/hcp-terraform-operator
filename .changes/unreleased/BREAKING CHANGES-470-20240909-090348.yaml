@@ -1,0 +1,5 @@
+kind: BREAKING CHANGES
+body: '`Workspace`: The new field, `spec.deletionPolicy`, is set to `retain` by default, which changes the previous default controller behavior when resources are deleted. The previous behavior corresponded to the `force` deletion policy value. This change is considered safer in cases of accidental resource deletion, planned migration, or other scenarios involving the deletion of a custom resource.'
+time: 2024-09-09T09:03:48.837008+02:00
+custom:
+    PR: "470"

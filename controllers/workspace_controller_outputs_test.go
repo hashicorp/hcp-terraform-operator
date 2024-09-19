@@ -8,14 +8,13 @@ import (
 	"os"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -147,13 +146,14 @@ func createAndUploadConfigurationVersion(instance *appv1alpha2.Workspace, output
 	defer os.Remove(f.Name())
 	// Terraform code to upload
 	tf := fmt.Sprintf(`
+				resource "random_uuid" "this" {}
 				output "sensitive" {
-					value = "%s"
+					value = %[1]q
 					sensitive = true
 				}
 				output "non_sensitive" {
-					value = "%s"
-				}`, outputValue, outputValue)
+					value = %[1]q
+				}`, outputValue)
 	// Save the Terraform code to the temporary file
 	_, err = f.WriteString(tf)
 	Expect(err).Should(Succeed())
@@ -167,7 +167,6 @@ func createAndUploadConfigurationVersion(instance *appv1alpha2.Workspace, output
 
 	Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
 
-	By("Validating configuration version successful upload")
 	Eventually(func() bool {
 		c, err := tfClient.ConfigurationVersions.Read(ctx, cv.ID)
 		if err != nil {
