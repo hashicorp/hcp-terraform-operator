@@ -641,6 +641,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	Variables []VariableStatus `json:"variables,omitempty"`
+	// SSH Key ID.
+	//
+	//+optional
+	SSHKeyID string `json:"sshKeyID,omitempty"`
 }
 
 //+kubebuilder:object:root=true
