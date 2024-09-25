@@ -115,7 +115,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 	t.Parallel()
 
 	token := "token"
-	url := "https://example.com"
+	url := "https://www.hashicorp.com"
 	successCases := map[string]Workspace{
 		"OnlyEmailAddresses": {
 			Spec: WorkspaceSpec{
