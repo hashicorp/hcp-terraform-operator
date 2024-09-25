@@ -127,7 +127,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	m.log.Info("Module Controller", "msg", "successfully reconcilied module")
 
-	return doNotRequeue()
+	return requeueAfter(ModuleSyncPeriod)
 }
 
 // SetupWithManager sets up the controller with the Manager.
