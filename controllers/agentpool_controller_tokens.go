@@ -180,18 +180,14 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			delete(statusTokens, token.Name)
 			if _, ok := agentTokens[tokenID]; ok {
 				delete(agentTokens, tokenID)
-			} else {
-				if err := r.removeToken(ctx, ap, tokenID); err != nil {
-					return err
-				}
-				if err := r.createToken(ctx, ap, token.Name); err != nil {
-					return err
-				}
+				continue
 			}
-		} else {
-			if err := r.createToken(ctx, ap, token.Name); err != nil {
+			if err := r.removeToken(ctx, ap, tokenID); err != nil {
 				return err
 			}
+		}
+		if err := r.createToken(ctx, ap, token.Name); err != nil {
+			return err
 		}
 	}
 
