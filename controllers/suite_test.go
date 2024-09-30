@@ -55,6 +55,7 @@ var cloudEndpoint = tfcDefaultAddress
 var syncPeriod = 30 * time.Second
 
 var secretKey = "token"
+var dummySecretKey = "dummy"
 var secretNamespacedName = types.NamespacedName{
 	Name:      "this",
 	Namespace: metav1.NamespaceDefault,
@@ -200,7 +201,8 @@ var _ = BeforeSuite(func() {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			secretKey: []byte(terraformToken),
+			secretKey:      []byte(terraformToken),
+			dummySecretKey: []byte(dummySecretKey),
 		},
 	})
 	Expect(err).ToNot(HaveOccurred(), "failed to create a token secret")

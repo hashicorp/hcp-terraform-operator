@@ -227,8 +227,8 @@ func (r *ModuleReconciler) removeFinalizer(ctx context.Context, m *moduleInstanc
 
 	err := r.Update(ctx, &m.instance)
 	if err != nil {
-		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finazlier %s", moduleFinalizer))
-		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", moduleFinalizer)
+		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finalizer %s", moduleFinalizer))
+		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finalizer %s", moduleFinalizer)
 	}
 
 	return err
