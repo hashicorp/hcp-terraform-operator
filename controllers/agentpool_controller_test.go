@@ -485,17 +485,17 @@ func validateAgentPoolTestStatus(ctx context.Context, instance *appv1alpha2.Agen
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		spt := make([]string, len(instance.Spec.AgentTokens))
+		specTokens := make([]string, len(instance.Spec.AgentTokens))
 		for i, t := range instance.Spec.AgentTokens {
-			spt[i] = t.Name
+			specTokens[i] = t.Name
 		}
 
-		st := make([]string, len(instance.Status.AgentTokens))
+		statusToken := make([]string, len(instance.Status.AgentTokens))
 		for i, t := range instance.Status.AgentTokens {
-			st[i] = t.Name
+			statusToken[i] = t.Name
 		}
 
-		return compareAgentTokens(spt, st)
+		return compareAgentTokens(specTokens, statusToken)
 	}).Should(BeTrue())
 }
 
