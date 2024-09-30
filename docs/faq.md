@@ -263,7 +263,7 @@
 
   You might consider "disabling" the operator on the source cluster during migration. To do this, set the number of replicas to `0`.
 
-  Here are steps to migrsate a workspace CR from one cluster to another:
+  Here are steps to migrate a workspace CR from one cluster to another:
 
   - **Backup the existing workspace CR.** Export the workspace CR to a YAML file from the source cluster:
 
