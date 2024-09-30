@@ -257,7 +257,7 @@
 
 - **How can I migrate workspace CR to a different cluster?**
 
-  Ensure that the `spec.deletionPolicy` of the workspace CR you are migrating is set to `retain`. This way, when you remove the workspace CR from the Kubernetes cluster, the operator will not delete the managed HCP Terraform workspace.
+  Ensure that the `spec.deletionPolicy` of the workspace CR you are migrating is set to `retain`. This way, when you remove the workspace CR from the Kubernetes cluster, the operator will not delete the managed HCP Terraform workspace. Note that `spec.deletionPolicy` has been available since version 2.7.0 and onward.
 
   We do not recommend having two or more installations of the operator managing the same HCP Terraform workspace to avoid conflicts. Please ensure that you remove the workspace CR from the source cluster once the migration is complete.
 
