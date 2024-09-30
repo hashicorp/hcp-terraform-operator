@@ -263,7 +263,7 @@
 
   You might consider "disabling" the operator on the source cluster during migration. To do this, set the number of replicas to `0`.
 
-  Here are steps to migrate a workspace CR from one cluster to another:
+  This is an example of a workspace CR migration procedure from one cluster to another. *We highly recommend testing it in a non-production environment first and adjusting the steps according to your organization's policies and procedures before applying them in production.*
 
   - **Backup the existing workspace CR.** Export the workspace CR to a YAML file from the source cluster:
 
@@ -274,8 +274,7 @@
   - **Remove metadata fields.** You need to delete specific fields like `metadata.resourceVersion` and `metadata.uid` to avoid conflicts in the target cluster. These fields are specific to the Kubernetes resource lifecycle in a given cluster:
 
     ```console
-    $ yq eval 'del(.metadata.resourceVersion)' -i backup.<NAME>.workspace.yaml
-    $ yq eval 'del(.metadata.uid)' -i backup.<NAME>.workspace.yaml
+    $ yq -i 'del(.metadata.creationTimestamp, .metadata.finalizers, .metadata.generation, .metadata.resourceVersion, .metadata.uid)' backup.<NAME>.workspace.yaml
     ```
 
   - **Apply the backup file to the target cluster.** Ensure that the operator is up and running on the target cluster. Apply the backed-up Workspace YAML to the target cluster:
