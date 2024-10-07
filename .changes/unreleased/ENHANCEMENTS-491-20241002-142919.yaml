@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '`Helm Chart`: Add the ability to configure the creation of the RBAC role and role binding.'
+time: 2024-10-02T14:29:19.427979944Z
+custom:
+    PR: "491"
