@@ -100,6 +100,14 @@ spec:
             {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
           securityContext:
             {{- toYaml .Values.kubeRbacProxy.securityContext | nindent 12 }}
+      {{- with .Values.operator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ include "hcp-terraform-operator.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.securityContext | nindent 8 }}
