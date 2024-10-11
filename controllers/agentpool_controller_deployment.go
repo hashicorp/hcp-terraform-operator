@@ -26,6 +26,7 @@ const (
 	poolIDLabel               = "agentpool.app.terraform.io/pool-id"
 	defaultAgentImage         = "hashicorp/tfc-agent"
 	defaultAgentContainerName = "tfc-agent"
+	DeploymentAnnotations     = "agentpool.app.terraform.io/deployment-name"
 )
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
@@ -171,7 +172,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: agentPoolPodLabels(&ap.instance),
+					Labels:      agentPoolPodLabels(&ap.instance),
+					Annotations: agentDeploymentAnnotations(&ap.instance),
 				},
 				Spec: s,
 			},
@@ -224,7 +226,22 @@ func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
 }
 
 func agentPoolPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
-	return map[string]string{
+	label := map[string]string{
 		poolNameLabel: ap.Name,
+	}
+
+	//Attempting to merge
+	if ap.Spec.AgentDeployment != nil && ap.Spec.AgentDeployment.Labels != nil {
+		for key, value := range ap.Spec.AgentDeployment.Labels {
+			label[key] = value
+		}
+	}
+
+	return label
+}
+
+func agentDeploymentAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
+	return map[string]string{
+		DeploymentAnnotations: ap.Name, //the format, key:value pair
 	}
 }

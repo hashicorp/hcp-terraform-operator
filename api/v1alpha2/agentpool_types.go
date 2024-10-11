@@ -91,8 +91,10 @@ type AgentDeploymentAutoscalingCooldownPeriod struct {
 }
 
 type AgentDeployment struct {
-	Replicas *int32      `json:"replicas,omitempty"`
-	Spec     *v1.PodSpec `json:"spec,omitempty"`
+	Replicas    *int32            `json:"replicas,omitempty"`
+	Spec        *v1.PodSpec       `json:"spec,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // AgentPoolSpec defines the desired state of AgentPool.
