@@ -153,25 +153,16 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) er
 func needToUpdateOutput(instance *appv1alpha2.Module) bool {
 	status := instance.Status
 
-	if status.Run == nil {
+	if status.Run == nil || !status.Run.RunApplied() {
 		return false
 	}
-	if status.Output == nil {
-		return true
-	}
-	if status.Run.RunApplied() && status.Run.ID != status.Output.RunID {
-		return true
-	}
 
-	return false
+	return status.Output == nil || status.Output.RunID != status.Run.ID
 }
 
 func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) error {
-	m.log.Info("Reconcile Module Outputs", "mgs", "new reconciliation event")
-
 	if workspace.CurrentRun != nil {
 		if needToUpdateOutput(&m.instance) {
-			m.log.Info("Reconcile Module Outputs", "mgs", "run successfully applied")
 			m.log.Info("Reconcile Module Outputs", "mgs", "creating or updating outputs")
 			err := r.setOutputs(ctx, m)
 			if err != nil {

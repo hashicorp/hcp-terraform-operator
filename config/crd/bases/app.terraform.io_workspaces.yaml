@@ -733,6 +733,9 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace.
             properties:
+              defaultProjectID:
+                description: Default organization project ID.
+                type: string
               observedGeneration:
                 description: Real world state generation.
                 format: int64

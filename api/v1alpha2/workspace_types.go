@@ -641,6 +641,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	Variables []VariableStatus `json:"variables,omitempty"`
+	// Default organization project ID.
+	//
+	//+optional
+	DefaultProjectID string `json:"defaultProjectID,omitempty"`
 	// SSH Key ID.
 	//
 	//+optional
