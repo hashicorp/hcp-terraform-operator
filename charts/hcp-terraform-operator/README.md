@@ -138,6 +138,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 |-----|------|---------|-------------|
 | controllers.agentPool.syncPeriod | string | `"30s"` | The minimum frequency at which watched Agent Pool resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.agentPool.workers | int | `1` | The number of the Agent Pool controller workers. |
+| controllers.module.syncPeriod | string | `"5m"` | The minimum frequency at which watched Module resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
 | controllers.project.syncPeriod | string | `"5m"` | The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
@@ -166,6 +167,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
+| rbac.create | bool | `true` | Specifies whether a Role-Based Access Control (RBAC) resources should be created |
 | replicaCount | int | `2` | The number of Operator replicas. |
 | securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |

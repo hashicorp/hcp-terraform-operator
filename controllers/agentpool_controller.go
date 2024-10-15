@@ -247,22 +247,34 @@ func needToUpdateAgentPool(instance *appv1alpha2.AgentPool) bool {
 }
 
 func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentPoolInstance) error {
-	defer func() {
-		agentPool, rerr := r.readAgentPool(ctx, ap) // check if it has been deleted
-		if rerr != nil {
-			return
-		}
-		serr := r.updateStatus(ctx, ap, agentPool)
-		if serr != nil {
-			r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "Update Status", fmt.Sprintf("Failed to update agent pool status: %s", serr))
-			ap.log.Error(serr, "Failed to update agent pool status")
-		}
-	}()
-
 	ap.log.Info("Reconcile Agent Pool", "msg", "reconciling agent pool")
 
 	var agentPool *tfc.AgentPool
 	var err error
+
+	defer func() {
+		// Update the status with the Agent Pool ID. This is useful if the reconciliation failed.
+		// An example here would be the case when the agent pool has been created successfully,
+		// but further reconciliation steps failed.
+		//
+		// If an Agent Pool creation operation failed, we don't have an agent pool object
+		// and thus don't update the status. An example here would be the case when the agent pool name has already been taken.
+		//
+		// Cannot call updateStatus method since it updated multiple fields and can break reconciliation logic.
+		//
+		// TODO:
+		// - Use conditions(https://maelvls.dev/kubernetes-conditions/)
+		// - Let Objects update their own status conditions
+		// - Simplify updateStatus method in a way it could be called anytime
+		if agentPool != nil && agentPool.ID != "" {
+			ap.instance.Status.AgentPoolID = agentPool.ID
+			err = r.Status().Update(ctx, &ap.instance)
+			if err != nil {
+				ap.log.Error(err, "Agent Pool Controller", "msg", "update status with agent pool ID")
+				r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "ReconcileProject", "Failed to update status with agent pool ID")
+			}
+		}
+	}()
 
 	if isDeletionCandidate(&ap.instance, agentPoolFinalizer) {
 		ap.log.Info("Reconcile Agent Pool", "msg", "object marked as deleted, need to delete agent pool first")
@@ -339,10 +351,10 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "reconcile agent autoscaling")
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentAutoscaling", "Failed to reconcile agent autoscaling in agent Pool ID%s", ap.instance.Status.AgentPoolID)
-		return nil
+		return err
 	}
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", "successfully reconcilied agent autoscaling")
 	r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentAutoscaling", "Reconcilied agent autoscaling in agent pool ID %s", ap.instance.Status.AgentPoolID)
 
-	return nil
+	return r.updateStatus(ctx, ap, agentPool)
 }

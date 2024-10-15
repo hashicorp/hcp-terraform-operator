@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
-var _ = Describe("Module controller", Ordered, func() {
+var _ = Describe("Module Controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Module
 		namespacedName = newNamespacedName()
@@ -97,8 +97,8 @@ var _ = Describe("Module controller", Ordered, func() {
 		}).Should(BeTrue())
 	})
 
-	Context("Module controller", func() {
-		It("can create, run and destroy module, ref to Workspace by Name", func() {
+	Context("Can Handle", func() {
+		It("Reference to Workspace by Name", func() {
 			// Create a new TFC Workspace
 			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
 				Name:      &workspace,
@@ -146,7 +146,7 @@ var _ = Describe("Module controller", Ordered, func() {
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
 		})
-		It("can create, run and destroy module, ref to Workspace by ID", func() {
+		It("Reference to Workspace by ID", func() {
 			// Create a new TFC Workspace
 			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
 				Name:      &workspace,
@@ -195,7 +195,7 @@ var _ = Describe("Module controller", Ordered, func() {
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
 		})
-		It("can handle external deletion", func() {
+		It("External Deletion", func() {
 			// Create a new TFC Workspace
 			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
 				Name:      &workspace,
