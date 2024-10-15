@@ -29,8 +29,8 @@ _Appears in:_
 | --- | --- |
 | `replicas` _integer_ |  |
 | `spec` _[PodSpec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podspec-v1-core)_ |  |
-| `labels` _object (keys:string, values:string)_ |  |
-| `annotations` _object (keys:string, values:string)_ |  |
+| `labels` _object (keys:string, values:string)_ | Labels are intended to specify identifying attributes of objects<br />that are meaningful and relevant to users.These are applied to the<br />pod template within the AgentDeployment, helping to organize and select<br />pods. |
+| `annotations` _object (keys:string, values:string)_ | Annotations are used to provide metadata. They are applied to the pod<br />template within the AgentDeployment. |
 
 
 #### AgentDeploymentAutoscaling

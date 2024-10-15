@@ -125,6 +125,7 @@ var agentTerminationGracePeriod int64 = 900 // 15 minutes
 
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var r *int32 = pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
+	var agentPodLabels = agentPodLabels(&ap.instance)
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
 		r = ap.instance.Spec.AgentDeployment.Replicas
 	}
@@ -159,7 +160,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: agentPoolPodLabels(&ap.instance),
+				MatchLabels: agentPodLabels,
 			},
 			Replicas: r,
 			Strategy: appsv1.DeploymentStrategy{
@@ -172,8 +173,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      agentPoolPodLabels(&ap.instance),
-					Annotations: agentDeploymentAnnotations(&ap.instance),
+					Labels:      agentPodLabels,
+					Annotations: agentPodAnnotations(&ap.instance),
 				},
 				Spec: s,
 			},
@@ -225,7 +226,7 @@ func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
 	return fmt.Sprintf("agents-of-%s", ap.Name)
 }
 
-func agentPoolPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
+func agentPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
 
 	label := map[string]string{}
 
@@ -242,7 +243,7 @@ func agentPoolPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
 	return label
 }
 
-func agentDeploymentAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
+func agentPodAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
 
 	annotations := map[string]string{}
 

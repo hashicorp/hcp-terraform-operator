@@ -16,6 +16,12 @@ func (ap *AgentPool) ValidateSpec() error {
 
 	allErrs = append(allErrs, ap.validateSpecAgentToken()...)
 
+	// Validate labels
+	allErrs = append(allErrs, validateLabels(ap.Spec.AgentDeployment.Labels, field.NewPath("spec").Child("agentDeployment").Child("labels"))...)
+
+	// Validate annotations
+	allErrs = append(allErrs, validateAnnotations(ap.Spec.AgentDeployment.Annotations, field.NewPath("spec").Child("agentDeployment").Child("annotations"))...)
+
 	if len(allErrs) == 0 {
 		return nil
 	}
@@ -63,7 +69,7 @@ func (ap *AgentPool) validateSpecAgentToken() field.ErrorList {
 }
 
 // Validating labels to ensure key value pairs are not empty
-func ValidateLabels(labels map[string]string, fldPath *field.Path) field.ErrorList {
+func validateLabels(labels map[string]string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for k, v := range labels {
 		if k == "" {
@@ -77,7 +83,7 @@ func ValidateLabels(labels map[string]string, fldPath *field.Path) field.ErrorLi
 }
 
 // Validate annotations to ensure key value pairs are not empty
-func ValidateAnnotations(annotations map[string]string, fldPath *field.Path) field.ErrorList {
+func validateAnnotations(annotations map[string]string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for k, v := range annotations {
 		if k == "" {
