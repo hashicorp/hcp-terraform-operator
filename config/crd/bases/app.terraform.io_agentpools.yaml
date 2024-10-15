@@ -42,6 +42,14 @@ spec:
               agentDeployment:
                 description: Agent deployment settings
                 properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    type: object
                   replicas:
                     format: int32
                     type: integer

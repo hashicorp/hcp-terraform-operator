@@ -75,16 +75,6 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	ap.log.Info("Spec Validation", "msg", "spec is valid")
 
-	// if ap.instance.Spec.AgentDeployment != nil {
-	// 	if ap.instance.Spec.AgentDeployment.Labels != nil {
-	// 		ap.log.Info("Labels available: ", "labels", ap.instance.Spec.AgentDeployment.Labels)
-	// 	} else {
-	// 		ap.log.Info("Labels available: ", "labels", "There are no labels")
-	// 	}
-	// } else {
-	// 	ap.log.Info("There are no labels")
-	// }
-
 	if needToAddFinalizer(&ap.instance, agentPoolFinalizer) {
 		err := r.addFinalizer(ctx, &ap.instance)
 		if err != nil {

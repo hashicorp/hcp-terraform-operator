@@ -26,7 +26,7 @@ const (
 	poolIDLabel               = "agentpool.app.terraform.io/pool-id"
 	defaultAgentImage         = "hashicorp/tfc-agent"
 	defaultAgentContainerName = "tfc-agent"
-	DeploymentAnnotations     = "agentpool.app.terraform.io/deployment-name"
+	deploymentAnnotations     = "agentpool.app.terraform.io/deployment-name"
 )
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
@@ -226,22 +226,33 @@ func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
 }
 
 func agentPoolPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
-	label := map[string]string{
-		poolNameLabel: ap.Name,
-	}
+
+	label := map[string]string{}
 
 	//Attempting to merge
-	if ap.Spec.AgentDeployment != nil && ap.Spec.AgentDeployment.Labels != nil {
+	if len(ap.Spec.AgentDeployment.Labels) > 0 {
 		for key, value := range ap.Spec.AgentDeployment.Labels {
 			label[key] = value
 		}
 	}
 
+	//built in assignment
+	label[poolNameLabel] = ap.Name
+
 	return label
 }
 
 func agentDeploymentAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
-	return map[string]string{
-		DeploymentAnnotations: ap.Name, //the format, key:value pair
+
+	annotations := map[string]string{}
+
+	if len(ap.Spec.AgentDeployment.Annotations) > 0 {
+		for key, value := range ap.Spec.AgentDeployment.Annotations {
+			annotations[key] = value
+		}
 	}
+
+	annotations[deploymentAnnotations] = ap.Name
+
+	return annotations
 }

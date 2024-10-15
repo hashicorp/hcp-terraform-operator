@@ -29,6 +29,8 @@ _Appears in:_
 | --- | --- |
 | `replicas` _integer_ |  |
 | `spec` _[PodSpec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podspec-v1-core)_ |  |
+| `labels` _object (keys:string, values:string)_ |  |
+| `annotations` _object (keys:string, values:string)_ |  |
 
 
 #### AgentDeploymentAutoscaling
