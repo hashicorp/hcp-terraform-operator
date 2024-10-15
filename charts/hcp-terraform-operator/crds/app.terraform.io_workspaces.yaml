@@ -753,6 +753,7 @@ spec:
             properties:
               defaultProjectID:
                 description: Default organization project ID.
+                type: string
               destroyRunID:
                 description: Workspace Destroy Run ID.
                 type: string
