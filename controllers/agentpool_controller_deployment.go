@@ -26,7 +26,6 @@ const (
 	poolIDLabel               = "agentpool.app.terraform.io/pool-id"
 	defaultAgentImage         = "hashicorp/tfc-agent"
 	defaultAgentContainerName = "tfc-agent"
-	deploymentAnnotations     = "agentpool.app.terraform.io/deployment-name"
 )
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
@@ -252,8 +251,6 @@ func agentPodAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
 			annotations[key] = value
 		}
 	}
-
-	annotations[deploymentAnnotations] = ap.Name
 
 	return annotations
 }
