@@ -89,6 +89,36 @@ USER 65532:65532
 
 ENTRYPOINT ["/bin/sh", "-c", "/$BIN_NAME"]
 
+# Red Hat UBI release image
+# -----------------------------------
+FROM registry.access.redhat.com/ubi9/ubi-micro:9.4-15 AS release-ubi
+
+ARG BIN_NAME
+ARG PRODUCT_VERSION
+ARG PRODUCT_REVISION
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV BIN_NAME=$BIN_NAME
+
+LABEL name="HCP Terraform Operator"
+LABEL vendor="HashiCorp"
+LABEL release=$PRODUCT_REVISION
+LABEL summary="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources"
+LABEL description="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources"
+
+LABEL maintainer="Terraform Ecosystem - Hybrid Cloud Team <hcp-tf-operator@hashicorp.com>"
+LABEL version=$PRODUCT_VERSION
+LABEL revision=$PRODUCT_REVISION
+
+WORKDIR /
+COPY LICENSE /licenses/copyright.txt
+COPY dist/$TARGETOS/$TARGETARCH/$BIN_NAME .
+
+USER 65532:65532
+
+ENTRYPOINT ["/bin/sh", "-c", "/$BIN_NAME"]
+
 # ===================================
 #
 #   Set default target to 'dev'.
