@@ -78,7 +78,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	Context("Project", func() {
-		It("can handle project by name", func() {
+		It("can be handled by name", func() {
 			instance.Spec.Project = &appv1alpha2.WorkspaceProject{Name: projectName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
@@ -103,7 +103,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledDefaultProject(instance)
 		})
 
-		It("can handle project by id", func() {
+		It("can be handled by ID", func() {
 			instance.Spec.Project = &appv1alpha2.WorkspaceProject{ID: projectID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
@@ -145,8 +145,8 @@ func isReconciledProjectByID(instance *appv1alpha2.Workspace) {
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		Expect(ws).ShouldNot(BeNil())
 		Expect(err).Should(Succeed())
+		Expect(ws).ShouldNot(BeNil())
 		return ws.Project.ID == instance.Spec.Project.ID
 	}).Should(BeTrue())
 }
@@ -157,11 +157,11 @@ func isReconciledProjectByName(instance *appv1alpha2.Workspace) {
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		Expect(err).Should(Succeed())
 		prj, err := tfClient.Projects.Read(ctx, ws.Project.ID)
-		Expect(prj).ShouldNot(BeNil())
 		Expect(err).Should(Succeed())
+		Expect(prj).ShouldNot(BeNil())
 		return prj.Name == instance.Spec.Project.Name
 	}).Should(BeTrue())
 }
@@ -172,11 +172,12 @@ func isReconciledDefaultProject(instance *appv1alpha2.Workspace) {
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		Expect(err).Should(Succeed())
 		org, err := tfClient.Organizations.Read(ctx, instance.Spec.Organization)
-		Expect(org).ShouldNot(BeNil())
 		Expect(err).Should(Succeed())
-		return ws.Project.ID == org.DefaultProject.ID
+		Expect(org).ShouldNot(BeNil())
+		Expect(org.DefaultProject).ShouldNot(BeNil())
+		return org.DefaultProject.ID == ws.Project.ID && org.DefaultProject.ID == instance.Status.DefaultProjectID
 	}).Should(BeTrue())
 }

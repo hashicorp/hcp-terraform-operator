@@ -329,6 +329,24 @@ type SSHKey struct {
 // +kubebuilder:validation:Pattern:="^[A-Za-z0-9][A-Za-z0-9:_-]*$"
 type Tag string
 
+// DeletionPolicy defines the strategies for resource deletion in the Kubernetes operator.
+// It controls how the operator should handle the deletion of resources when triggered by
+// a user action or system event.
+//
+// There are four possible values:
+// - `retain`: When the custom resource is deleted, the associated workspace is retained.
+// - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+// - `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+// - `force`: Forcefully and immediately deletes the workspace and the custom resource.
+type DeletionPolicy string
+
+const (
+	DeletionPolicyRetain  DeletionPolicy = "retain"
+	DeletionPolicySoft    DeletionPolicy = "soft"
+	DeletionPolicyDestroy DeletionPolicy = "destroy"
+	DeletionPolicyForce   DeletionPolicy = "force"
+)
+
 // NotificationTrigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.
 // This must be aligned with go-tfe type `NotificationTriggerType`.
 // Must be one of the following values: `run:applying`, `assessment:check_failure`, `run:completed`, `run:created`, `assessment:drifted`, `run:errored`, `assessment:failed`, `run:needs_attention`, `run:planning`.
@@ -561,6 +579,17 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	Project *WorkspaceProject `json:"project,omitempty"`
+	// The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.
+	// - `retain`: When the custom resource is deleted, the associated workspace is retained.
+	// - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+	// - `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+	// - `force`: Forcefully and immediately deletes the workspace and the custom resource.
+	// Default: `retain`.
+	//
+	//+kubebuilder:validation:Enum:=retain;soft;destroy;force
+	//+kubebuilder:default=retain
+	//+optional
+	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 type PlanStatus struct {
@@ -641,6 +670,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	Variables []VariableStatus `json:"variables,omitempty"`
+	// Default organization project ID.
+	//
+	//+optional
+	DefaultProjectID string `json:"defaultProjectID,omitempty"`
 }
 
 //+kubebuilder:object:root=true

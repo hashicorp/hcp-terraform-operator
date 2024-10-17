@@ -227,8 +227,8 @@ func (r *ModuleReconciler) removeFinalizer(ctx context.Context, m *moduleInstanc
 
 	err := r.Update(ctx, &m.instance)
 	if err != nil {
-		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finazlier %s", moduleFinalizer))
-		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", moduleFinalizer)
+		m.log.Error(err, "Reconcile Module", "msg", fmt.Sprintf("failed to remove finalizer %s", moduleFinalizer))
+		r.Recorder.Eventf(&m.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finalizer %s", moduleFinalizer)
 	}
 
 	return err
@@ -462,7 +462,9 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 			return err
 		}
 		m.log.Info("Reconcile Configuration Version", "msg", fmt.Sprintf("successfully got the upload status: %s", cv.Status))
-		return r.updateStatusCV(ctx, &m.instance, workspace, cv)
+		if err := r.updateStatusCV(ctx, &m.instance, workspace, cv); err != nil {
+			return err
+		}
 	}
 
 	// checks if a new Run needs to be initialized
@@ -493,7 +495,9 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 			return err
 		}
 		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", run.Status))
-		return r.updateStatusRun(ctx, &m.instance, workspace, run)
+		if err := r.updateStatusRun(ctx, &m.instance, workspace, run); err != nil {
+			return err
+		}
 	}
 
 	// Reconcile Outputs
