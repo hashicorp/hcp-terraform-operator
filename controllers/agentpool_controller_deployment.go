@@ -86,6 +86,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
 	nd := agentPoolDeployment(ap)
+
 	err := controllerutil.SetControllerReference(&ap.instance, nd, r.Scheme)
 	if err != nil {
 		return err
@@ -94,6 +95,7 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 	if a := ap.instance.Status.AgentDeploymentAutoscalingStatus; a != nil {
 		nd.Spec.Replicas = a.DesiredReplicas
 	}
+
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
@@ -125,6 +127,13 @@ var agentTerminationGracePeriod int64 = 900 // 15 minutes
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var r *int32 = pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
 	var agentPodLabels = agentPodLabels(&ap.instance)
+	additionalLabels := map[string]string{} //map for additional labels
+
+	//merge required labels with additional labels
+	for key, value := range additionalLabels {
+		agentPodLabels[key] = value
+	}
+
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
 		r = ap.instance.Spec.AgentDeployment.Replicas
 	}
@@ -172,7 +181,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      agentPodLabels,
+					Labels:      additionalLabels, //both required labels & extra labels
 					Annotations: agentPodAnnotations(&ap.instance),
 				},
 				Spec: s,
