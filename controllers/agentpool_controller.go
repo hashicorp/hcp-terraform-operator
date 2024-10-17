@@ -166,8 +166,8 @@ func (r *AgentPoolReconciler) removeFinalizer(ctx context.Context, ap *agentPool
 
 	err := r.Update(ctx, &ap.instance)
 	if err != nil {
-		ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove finazlier %s", agentPoolFinalizer))
-		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", agentPoolFinalizer)
+		ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove finalizer %s", agentPoolFinalizer))
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finalizer %s", agentPoolFinalizer)
 	}
 
 	return err
@@ -214,7 +214,7 @@ func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPool
 
 func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPoolInstance) error {
 	if ap.instance.Status.AgentPoolID == "" {
-		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("status.agentPoolID is empty, remove finazlier %s", agentPoolFinalizer))
+		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("status.agentPoolID is empty, remove finalizer %s", agentPoolFinalizer))
 		return r.removeFinalizer(ctx, ap)
 	}
 	err := ap.tfClient.Client.AgentPools.Delete(ctx, ap.instance.Status.AgentPoolID)
@@ -230,7 +230,7 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 		return err
 	}
 
-	ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finazlier", ap.instance.Status.AgentPoolID))
+	ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finalizer", ap.instance.Status.AgentPoolID))
 	return r.removeFinalizer(ctx, ap)
 }
 
