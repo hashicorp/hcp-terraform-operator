@@ -141,7 +141,9 @@ test-api: fmt vet copywrite ## Run API tests.
 
 .PHONY: test-internal
 test-internal: fmt vet copywrite ## Run internal/* tests.
-	go test -timeout 5m -count 1 -v ./internal/*
+	go test -timeout 5m -count 1 -v \
+		./internal/pointer \
+		./internal/slice
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint
