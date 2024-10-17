@@ -244,7 +244,7 @@ ENVTEST_VERSION ?= release-0.17
 CRD_REF_DOCS_VERSION ?= v0.0.12
 HELM_DOCS_VERSION ?= v1.12.0
 HASHICORP_COPYWRITE_VERSION ?= v0.19.0
-GOLANGCI_LINT_VERSION ?= v1.57.2
+GOLANGCI_LINT_VERSION ?= v1.61.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
