@@ -674,6 +674,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	DefaultProjectID string `json:"defaultProjectID,omitempty"`
+	// SSH Key ID.
+	//
+	//+optional
+	SSHKeyID string `json:"sshKeyID,omitempty"`
 	// Workspace Destroy Run ID.
 	//
 	//+optional

@@ -527,7 +527,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 
 	// reconcile SSH key
-	err = r.reconcileSSHKey(ctx, w, workspace)
+	err = w.reconcileSSHKey(ctx, workspace)
 	if err != nil {
 		w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")

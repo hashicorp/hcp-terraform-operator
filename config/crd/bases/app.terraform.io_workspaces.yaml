@@ -793,6 +793,9 @@ spec:
                       status.
                     type: string
                 type: object
+              sshKeyID:
+                description: SSH Key ID.
+                type: string
               terraformVersion:
                 description: Workspace Terraform version.
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
