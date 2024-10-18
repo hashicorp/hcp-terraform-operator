@@ -93,7 +93,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Docker build
-        uses: hashicorp/actions-docker-build@2771d60f540373a86cf21177de69624b4de7de69 # v1.5.0
+        uses: hashicorp/actions-docker-build@11d43ef520c65f58683d048ce9b47d6617893c9a # v2
         env:
           VERSION: ${{ needs.set-product-version.outputs.product-version }}
           GO_VERSION: ${{ needs.build.outputs.go-version }}
@@ -107,3 +107,28 @@ jobs:
           dev_tags: |
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-${{ github.sha }}
+
+  build-docker-ubi:
+    name: Docker build UBI
+    needs: [build, set-product-version]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - name: Docker build
+        uses: hashicorp/actions-docker-build@11d43ef520c65f58683d048ce9b47d6617893c9a # v2
+        env:
+          VERSION: ${{ needs.set-product-version.outputs.product-version }}
+          GO_VERSION: ${{ needs.build.outputs.go-version }}
+        with:
+          version: ${{ env.VERSION }}
+          bin_name: ${{ vars.BIN_NAME }}
+          target: release-ubi
+          arch: amd64
+          tags: |
+            docker.io/${{ env.DOCKER_HUB_REPO }}:${{ env.VERSION }}-ubi
+          dev_tags: |
+            docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-ubi
+            docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-ubi-${{ github.sha }}
+          #redhat_tag: quay.io/XXX/YYY:${{ env.VERSION }}-ubi
