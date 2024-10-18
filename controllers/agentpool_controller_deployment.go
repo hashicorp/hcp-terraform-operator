@@ -86,6 +86,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
 	nd := agentPoolDeployment(ap)
+
 	err := controllerutil.SetControllerReference(&ap.instance, nd, r.Scheme)
 	if err != nil {
 		return err
@@ -94,6 +95,7 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 	if a := ap.instance.Status.AgentDeploymentAutoscalingStatus; a != nil {
 		nd.Spec.Replicas = a.DesiredReplicas
 	}
+
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
@@ -124,6 +126,14 @@ var agentTerminationGracePeriod int64 = 900 // 15 minutes
 
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var r *int32 = pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
+	var agentPodLabels = agentPodLabels(&ap.instance)
+	additionalLabels := map[string]string{} //map for additional labels
+
+	//merge required labels with additional labels
+	for key, value := range additionalLabels {
+		agentPodLabels[key] = value
+	}
+
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
 		r = ap.instance.Spec.AgentDeployment.Replicas
 	}
@@ -158,7 +168,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: agentPoolPodLabels(&ap.instance),
+				MatchLabels: agentPodLabels,
 			},
 			Replicas: r,
 			Strategy: appsv1.DeploymentStrategy{
@@ -171,7 +181,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: agentPoolPodLabels(&ap.instance),
+					Labels:      additionalLabels, //both required labels & extra labels
+					Annotations: agentPodAnnotations(&ap.instance),
 				},
 				Spec: s,
 			},
@@ -223,8 +234,32 @@ func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
 	return fmt.Sprintf("agents-of-%s", ap.Name)
 }
 
-func agentPoolPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
-	return map[string]string{
-		poolNameLabel: ap.Name,
+func agentPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
+
+	label := map[string]string{}
+
+	//Attempting to merge
+	if len(ap.Spec.AgentDeployment.Labels) > 0 {
+		for key, value := range ap.Spec.AgentDeployment.Labels {
+			label[key] = value
+		}
 	}
+
+	//built in assignment
+	label[poolNameLabel] = ap.Name
+
+	return label
+}
+
+func agentPodAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
+
+	annotations := map[string]string{}
+
+	if len(ap.Spec.AgentDeployment.Annotations) > 0 {
+		for key, value := range ap.Spec.AgentDeployment.Annotations {
+			annotations[key] = value
+		}
+	}
+
+	return annotations
 }

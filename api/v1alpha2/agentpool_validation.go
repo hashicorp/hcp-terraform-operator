@@ -16,6 +16,16 @@ func (ap *AgentPool) ValidateSpec() error {
 
 	allErrs = append(allErrs, ap.validateSpecAgentToken()...)
 
+	// Validate labels
+	if ap.Spec.AgentDeployment != nil && ap.Spec.AgentDeployment.Labels != nil {
+		allErrs = append(allErrs, validateLabels(ap.Spec.AgentDeployment.Labels, field.NewPath("spec").Child("agentDeployment").Child("labels"))...)
+	}
+
+	// Validate annotations
+	if ap.Spec.AgentDeployment != nil && ap.Spec.AgentDeployment.Annotations != nil {
+		allErrs = append(allErrs, validateAnnotations(ap.Spec.AgentDeployment.Annotations, field.NewPath("spec").Child("agentDeployment").Child("annotations"))...)
+	}
+
 	if len(allErrs) == 0 {
 		return nil
 	}
