@@ -678,6 +678,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	SSHKeyID string `json:"sshKeyID,omitempty"`
+	// Workspace Destroy Run ID.
+	//
+	//+optional
+	DestroyRunID string `json:"destroyRunID,omitempty"`
 }
 
 //+kubebuilder:object:root=true
