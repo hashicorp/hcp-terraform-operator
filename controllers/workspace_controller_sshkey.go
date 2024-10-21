@@ -5,43 +5,43 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	tfc "github.com/hashicorp/go-tfe"
 )
 
-func (w *workspaceInstance) getSSHKeyIDByName(ctx context.Context) (string, error) {
-	listOpts := &tfc.SSHKeyListOptions{
-		ListOptions: tfc.ListOptions{
-			PageNumber: 1,
-			PageSize:   maxPageSize,
-		},
-	}
-	for {
-		sshKeyList, err := w.tfClient.Client.SSHKeys.List(ctx, w.instance.Spec.Organization, listOpts)
-		if err != nil {
-			return "", err
-		}
-
-		for _, s := range sshKeyList.Items {
-			if s.Name == w.instance.Spec.SSHKey.Name {
-				return s.ID, nil
-			}
-		}
-
-		if sshKeyList.NextPage == 0 {
-			break
-		}
-		listOpts.PageNumber = sshKeyList.NextPage
-	}
-
-	return "", fmt.Errorf("ssh key ID was not found for SSH key name %q", w.instance.Spec.SSHKey.Name)
-}
-
 func (w *workspaceInstance) getSSHKeyID(ctx context.Context) (string, error) {
+	if w.instance.Spec.SSHKey == nil {
+		return "", errors.New("instance spec.SSHKey is nil")
+	}
+
 	if w.instance.Spec.SSHKey.Name != "" {
 		w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID by name")
-		return w.getSSHKeyIDByName(ctx)
+		listOpts := &tfc.SSHKeyListOptions{
+			ListOptions: tfc.ListOptions{
+				PageNumber: 1,
+				PageSize:   maxPageSize,
+			},
+		}
+		for {
+			sshKeyList, err := w.tfClient.Client.SSHKeys.List(ctx, w.instance.Spec.Organization, listOpts)
+			if err != nil {
+				return "", err
+			}
+
+			for _, s := range sshKeyList.Items {
+				if s.Name == w.instance.Spec.SSHKey.Name {
+					return s.ID, nil
+				}
+			}
+
+			if sshKeyList.NextPage == 0 {
+				break
+			}
+			listOpts.PageNumber = sshKeyList.NextPage
+		}
+		return "", fmt.Errorf("ssh key ID was not found for SSH key name %q", w.instance.Spec.SSHKey.Name)
 	}
 
 	w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID from the spec.sshKey.ID")
