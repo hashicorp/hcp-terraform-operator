@@ -6,6 +6,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/url"
 
 	tfc "github.com/hashicorp/go-tfe"
@@ -126,13 +127,7 @@ var agentTerminationGracePeriod int64 = 900 // 15 minutes
 
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var r *int32 = pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
-	var agentPodLabels = agentPodLabels(&ap.instance)
-	additionalLabels := map[string]string{} //map for additional labels
-
-	//merge required labels with additional labels
-	for key, value := range additionalLabels {
-		agentPodLabels[key] = value
-	}
+	matchPodLabels := agentPodMatchLabels(&ap.instance)
 
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
 		r = ap.instance.Spec.AgentDeployment.Replicas
@@ -168,7 +163,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: agentPodLabels,
+				MatchLabels: matchPodLabels,
 			},
 			Replicas: r,
 			Strategy: appsv1.DeploymentStrategy{
@@ -181,8 +176,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      additionalLabels, //both required labels & extra labels
-					Annotations: agentPodAnnotations(&ap.instance),
+					Labels:      agentPodTemplateLabels(&ap.instance, matchPodLabels), //both required labels & extra labels
+					Annotations: agentPodTemplateAnnotations(&ap.instance),
 				},
 				Spec: s,
 			},
@@ -234,24 +229,29 @@ func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
 	return fmt.Sprintf("agents-of-%s", ap.Name)
 }
 
-func agentPodLabels(ap *appv1alpha2.AgentPool) map[string]string {
+func agentPodTemplateLabels(ap *appv1alpha2.AgentPool, matchLabels map[string]string) map[string]string {
 
-	label := map[string]string{}
+	labels := map[string]string{}
 
-	//Attempting to merge
 	if len(ap.Spec.AgentDeployment.Labels) > 0 {
-		for key, value := range ap.Spec.AgentDeployment.Labels {
-			label[key] = value
-		}
+		maps.Copy(labels, ap.Spec.AgentDeployment.Labels)
 	}
 
 	//built in assignment
-	label[poolNameLabel] = ap.Name
+	maps.Copy(labels, matchLabels)
 
-	return label
+	return labels
 }
 
-func agentPodAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
+func agentPodMatchLabels(ap *appv1alpha2.AgentPool) map[string]string {
+
+	return map[string]string{
+		//built in assignment
+		poolNameLabel: ap.Name,
+	}
+}
+
+func agentPodTemplateAnnotations(ap *appv1alpha2.AgentPool) map[string]string {
 
 	annotations := map[string]string{}
 
