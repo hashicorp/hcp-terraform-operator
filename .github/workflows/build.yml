@@ -131,4 +131,4 @@ jobs:
           dev_tags: |
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-ubi
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-ubi-${{ github.sha }}
-          #redhat_tag: quay.io/XXX/YYY:${{ env.VERSION }}-ubi
+          redhat_tag: quay.io/redhat-isv-containers/671273c6fbc31c69e20237c0:${{ env.VERSION }}-ubi
