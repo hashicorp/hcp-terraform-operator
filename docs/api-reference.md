@@ -226,6 +226,26 @@ _Appears in:_
 | `variables` _[WorkspaceVariablesPermissionType](#workspacevariablespermissiontype)_ | Variable access.<br />Must be one of the following values: `none`, `read`, `write`.<br />Default: `none`. |
 
 
+#### DeletionPolicy
+
+_Underlying type:_ _string_
+
+DeletionPolicy defines the strategies for resource deletion in the Kubernetes operator.
+It controls how the operator should handle the deletion of resources when triggered by
+a user action or system event.
+
+
+There are four possible values:
+- `retain`: When the custom resource is deleted, the associated workspace is retained.
+- `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+- `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+- `force`: Forcefully and immediately deletes the workspace and the custom resource.
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+
+
 #### Module
 
 
@@ -804,6 +824,7 @@ _Appears in:_
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 | `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups.<br />Default: default organization project.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
+| `deletionPolicy` _[DeletionPolicy](#deletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.<br />- `retain`: When the custom resource is deleted, the associated workspace is retained.<br />- `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.<br />- `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.<br />- `force`: Forcefully and immediately deletes the workspace and the custom resource.<br />Default: `retain`. |
 
 
 

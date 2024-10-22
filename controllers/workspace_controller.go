@@ -227,8 +227,8 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, w *workspaceI
 
 	err := r.Update(ctx, &w.instance)
 	if err != nil {
-		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finazlier %s", workspaceFinalizer))
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finazlier %s", workspaceFinalizer)
+		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to remove finalizer %s", workspaceFinalizer))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "RemoveFinalizer", "Failed to remove finalizer %s", workspaceFinalizer)
 	}
 
 	return err
@@ -283,8 +283,15 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		options.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
 	}
 
+	org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
+	if err != nil {
+		w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
+		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
+		return nil, err
+	}
+
 	if spec.Project != nil {
-		prjID, err := r.getProjectID(ctx, w)
+		prjID, err := w.getProjectID(ctx)
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get project ID")
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get project ID")
@@ -300,6 +307,9 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 	}
 
 	patch := client.MergeFrom(w.instance.DeepCopy())
+	if org != nil && org.DefaultProject != nil {
+		w.instance.Status.DefaultProjectID = org.DefaultProject.ID
+	}
 	w.instance.Status.WorkspaceID = workspace.ID
 	if err = r.Status().Patch(ctx, &w.instance, patch); err != nil {
 		w.log.Error(err, "Reconcile Workspace", "msg", "failed to update status with workspace ID")
@@ -397,7 +407,7 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 	}
 
 	if spec.Project != nil {
-		prjID, err := r.getProjectID(ctx, w)
+		prjID, err := w.getProjectID(ctx)
 		if err != nil {
 			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get project ID")
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get project ID")
@@ -406,50 +416,24 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("project ID %s will be used", prjID))
 		updateOptions.Project = &tfc.Project{ID: prjID}
 	} else {
-		// Setting up `Project` to nil(tfc.WorkspaceUpdateOptions{Project: nil}) won't move the workspace to the default project after the update.
-		// TODO:
-		// - The default project can be renamed, but cannot be deleted.
-		//   We should do this API call once on a workspace creation and keep the default project ID in the status for future reference.
-		//   We could validate whether or not the default project ID in the status is empty or not during the update stage.
-		//   If the default project ID in the status is empty, then we make an API call to fill in this gap.
-		//   Ideally, it will never happen but can during the TFE upgrade.
-		org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
-		if err != nil {
-			w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
-			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
-			return nil, err
-		}
-		if org.DefaultProject != nil {
-			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
-			updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+		if w.instance.Status.DefaultProjectID != "" {
+			updateOptions.Project = &tfc.Project{ID: w.instance.Status.DefaultProjectID}
+			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", w.instance.Status.DefaultProjectID))
+		} else {
+			org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
+			if err != nil {
+				w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
+				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
+				return nil, err
+			}
+			if org != nil && org.DefaultProject != nil {
+				w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
+				updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+			}
 		}
 	}
 
 	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
-}
-
-func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceInstance) error {
-	// if the Kubernetes object doesn't have workspace ID, it means it a workspace was never created
-	// in this case, remove the finalizer and let Kubernetes remove the object permanently
-	if w.instance.Status.WorkspaceID == "" {
-		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("status.WorkspaceID is empty, remove finazlier %s", workspaceFinalizer))
-		return r.removeFinalizer(ctx, w)
-	}
-	err := w.tfClient.Client.Workspaces.DeleteByID(ctx, w.instance.Status.WorkspaceID)
-	if err != nil {
-		// if workspace wasn't found, it means it was deleted from the TF Cloud bypass the operator
-		// in this case, remove the finalizer and let Kubernetes remove the object permanently
-		if err == tfc.ErrResourceNotFound {
-			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("Workspace ID %s not found, remove finazlier", workspaceFinalizer))
-			return r.removeFinalizer(ctx, w)
-		}
-		w.log.Error(err, "Reconcile Workspace", "msg", fmt.Sprintf("failed to delete Workspace ID %s, retry later", workspaceFinalizer))
-		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to delete Workspace ID %s, retry later", w.instance.Status.WorkspaceID)
-		return err
-	}
-
-	w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("workspace ID %s has been deleted, remove finazlier", w.instance.Status.WorkspaceID))
-	return r.removeFinalizer(ctx, w)
 }
 
 func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspaceInstance) error {
@@ -543,7 +527,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 
 	// reconcile SSH key
-	err = r.reconcileSSHKey(ctx, w, workspace)
+	err = w.reconcileSSHKey(ctx, workspace)
 	if err != nil {
 		w.log.Error(err, "Reconcile SSH Key", "msg", "failed to assign ssh key ID")
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileSSHKey", "Failed to assign SSH Key ID")

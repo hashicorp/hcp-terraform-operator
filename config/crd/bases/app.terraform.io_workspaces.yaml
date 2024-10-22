@@ -78,6 +78,21 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
                 pattern: ^(auto|manual)$
                 type: string
+              deletionPolicy:
+                default: retain
+                description: |-
+                  The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.
+                  - `retain`: When the custom resource is deleted, the associated workspace is retained.
+                  - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
+                  - `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the workspace itself is deleted, followed by the removal of the custom resource.
+                  - `force`: Forcefully and immediately deletes the workspace and the custom resource.
+                  Default: `retain`.
+                enum:
+                - retain
+                - soft
+                - destroy
+                - force
+                type: string
               description:
                 description: Workspace description.
                 minLength: 1
@@ -733,6 +748,12 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace.
             properties:
+              defaultProjectID:
+                description: Default organization project ID.
+                type: string
+              destroyRunID:
+                description: Workspace Destroy Run ID.
+                type: string
               observedGeneration:
                 description: Real world state generation.
                 format: int64
@@ -772,6 +793,9 @@ spec:
                       status.
                     type: string
                 type: object
+              sshKeyID:
+                description: SSH Key ID.
+                type: string
               terraformVersion:
                 description: Workspace Terraform version.
                 pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$

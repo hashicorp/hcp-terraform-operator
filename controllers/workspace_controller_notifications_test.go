@@ -18,7 +18,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func() {
+var _ = Describe("Workspace controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Workspace
 		namespacedName types.NamespacedName
@@ -67,6 +67,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 					},
 				},
 				Name:          workspace,
+				Description:   "Notifications",
 				Notifications: []appv1alpha2.Notification{},
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
@@ -85,7 +86,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
-				URL:  "https://example.com",
+				URL:  "https://www.hashicorp.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
@@ -100,7 +101,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
-				URL:  "https://example.com",
+				URL:  "https://www.hashicorp.com",
 			})
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
@@ -120,7 +121,7 @@ var _ = Describe("Workspace controller", Label("Notifications"), Ordered, func()
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
 				Type: tfc.NotificationDestinationTypeSlack,
-				URL:  "https://example.com",
+				URL:  "https://www.hashicorp.com",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)

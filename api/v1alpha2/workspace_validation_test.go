@@ -115,7 +115,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 	t.Parallel()
 
 	token := "token"
-	url := "https://example.com"
+	url := "https://www.hashicorp.com"
 	successCases := map[string]Workspace{
 		"OnlyEmailAddresses": {
 			Spec: WorkspaceSpec{
@@ -1033,6 +1033,44 @@ func TestValidateWorkspaceSpecVariables(t *testing.T) {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 			if errs := validateSpecVariables(f.Child("environmentVariables"), c); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateSpecDeletionPolicy(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"DeletionPolicyDestroyAllowDestroyPlanTrue": {
+			Spec: WorkspaceSpec{
+				AllowDestroyPlan: true,
+				DeletionPolicy:   DeletionPolicyDestroy,
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecDeletionPolicy(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"DeletionPolicyDestroyAllowDestroyPlanFalse": {
+			Spec: WorkspaceSpec{
+				AllowDestroyPlan: false,
+				DeletionPolicy:   DeletionPolicyDestroy,
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecDeletionPolicy(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})
