@@ -92,6 +92,12 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
       $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.7.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
       ```
 
+    - The `AgentPool` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.7.0/charts/hcp-terraform-operator/crds/app.terraform.io_agentpools.yaml
+      ```
+
   - `2.5.0` to `2.6.0`
 
     - The `AgentPool` CRD has been changed:
