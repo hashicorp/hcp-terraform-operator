@@ -93,18 +93,13 @@ type AgentDeploymentAutoscalingCooldownPeriod struct {
 type AgentDeployment struct {
 	Replicas *int32      `json:"replicas,omitempty"`
 	Spec     *v1.PodSpec `json:"spec,omitempty"`
-
-	//Labels are intended to specify identifying attributes of objects
-	//that are meaningful and relevant to users.These are applied to the
-	//pod template within the AgentDeployment, helping to organize and select
-	//pods.
-	//+optional
-	Labels map[string]string `json:"labels,omitempty"`
-
-	//Annotations are used to provide metadata. They are applied to the pod
-	//template within the AgentDeployment.
+	// Annotations that will be applied to the pod template in the deployment.
+	//
 	//+optional
 	Annotations map[string]string `json:"annotations,omitempty"`
+	// Labels that will be applied to the pod template in the deployment.
+	//+optional
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // AgentPoolSpec defines the desired state of AgentPool.
