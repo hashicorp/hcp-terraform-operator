@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`AgentPool`: Add the ability to configure labels and annotations for agent deployments.'
-time: 2024-10-16T11:32:44.901754-04:00
-custom:
-    PR: "494"

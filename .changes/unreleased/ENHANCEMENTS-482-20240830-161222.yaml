@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Module`: Update reconciliation logic to proceed to the next step immediately after the configuration version is uploaded successfully and reduce delays in output fetching.'
-time: 2024-08-30T16:12:22.551945+02:00
-custom:
-    PR: "482"

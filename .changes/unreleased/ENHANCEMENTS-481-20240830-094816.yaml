@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: Update the default project ID reconciliation logic to avoid making an API call each time a workspace object is updated.'
-time: 2024-08-30T09:48:16.140808+02:00
-custom:
-    PR: "481"

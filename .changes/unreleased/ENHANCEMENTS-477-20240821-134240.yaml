@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: Update Notifications reconciliation logic to reduce the number of API calls.'
-time: 2024-08-21T13:42:40.942036+02:00
-custom:
-    PR: "477"

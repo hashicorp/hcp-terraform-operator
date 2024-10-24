@@ -1,5 +1,0 @@
-kind: NOTES
-body: The `AgentPool` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it.
-time: 2024-10-22T08:17:58.516344+02:00
-custom:
-    PR: "494"
