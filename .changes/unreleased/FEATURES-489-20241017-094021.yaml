@@ -1,5 +1,0 @@
-kind: FEATURES
-body: '`Workspace`: Add the `destroy` deletion policy. The `spec.allowDestroyPlan` must be set to `true` for the controller to execute a destroy run.'
-time: 2024-10-17T09:40:21.262822+02:00
-custom:
-    PR: "489"

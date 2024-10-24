@@ -1,5 +1,0 @@
-kind: FEATURES
-body: '`Helm`: Add a new value called `controllers.module.syncPeriod` to set the CLI option `--module-sync-period`.'
-time: 2024-08-30T09:14:12.597913+02:00
-custom:
-    PR: "480"

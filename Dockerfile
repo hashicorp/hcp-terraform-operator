@@ -7,7 +7,7 @@
 # Every target has a BIN_NAME argument that must be provided via --build-arg=BIN_NAME=<name>
 # when building.
 
-ARG GO_VERSION=1.22
+ARG GO_VERSION=1.23.2
 
 # ===================================
 #
