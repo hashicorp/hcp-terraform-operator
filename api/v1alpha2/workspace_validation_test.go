@@ -20,6 +20,7 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 				AgentPool: &WorkspaceAgentPool{
 					ID: "this",
 				},
+				ExecutionMode: "agent",
 			},
 		},
 		"HasOnlyName": {
@@ -27,6 +28,7 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 				AgentPool: &WorkspaceAgentPool{
 					Name: "this",
 				},
+				ExecutionMode: "agent",
 			},
 		},
 	}
@@ -46,11 +48,22 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 					ID:   "this",
 					Name: "this",
 				},
+				ExecutionMode: "agent",
 			},
 		},
 		"HasEmptyIDandName": {
 			Spec: WorkspaceSpec{
-				AgentPool: &WorkspaceAgentPool{},
+				AgentPool:     &WorkspaceAgentPool{},
+				ExecutionMode: "agent",
+			},
+		},
+		"HasInvalidExecutionMode": {
+			Spec: WorkspaceSpec{
+				AgentPool: &WorkspaceAgentPool{
+					ID:   "this",
+					Name: "this",
+				},
+				ExecutionMode: "remote",
 			},
 		},
 	}
