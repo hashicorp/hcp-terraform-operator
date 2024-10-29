@@ -63,6 +63,9 @@ var secretNamespacedName = types.NamespacedName{
 
 var rndm = rand.New(rand.NewSource(GinkgoRandomSeed()))
 
+// TODO:
+//   - Find a different way to create an ephemeral webhook URL as a more reliable solution.
+//     Perhaps, use smee client to create a new channel per test run.
 var webhookURL = "https://smee.io/PZeBPogfii2vPl6s"
 
 func TestControllersAPIs(t *testing.T) {

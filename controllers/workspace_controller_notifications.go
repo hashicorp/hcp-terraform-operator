@@ -146,6 +146,9 @@ func (w *workspaceInstance) createNotification(ctx context.Context, notificaion 
 		EmailUsers:      notificaion.EmailUsers,
 		EmailAddresses:  notificaion.EmailAddresses,
 	})
+	// TODO:
+	// - Need to validate if a notification is created when a return error is only about 'invalid' URL.
+	//   In this case, we can print an info message and move one.
 	if err != nil {
 		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to create a new notification %q", notificaion.ID))
 		return err
