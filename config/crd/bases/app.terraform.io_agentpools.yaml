@@ -45,14 +45,14 @@ spec:
                   annotations:
                     additionalProperties:
                       type: string
-                    description: Annotations that will be applied to the pod template
-                      in the deployment.
+                    description: The annotations that the operator will apply to the
+                      pod template in the deployment.
                     type: object
                   labels:
                     additionalProperties:
                       type: string
-                    description: Labels that will be applied to the pod template in
-                      the deployment.
+                    description: The labels that the operator will apply to the pod
+                      template in the deployment.
                     type: object
                   replicas:
                     format: int32
