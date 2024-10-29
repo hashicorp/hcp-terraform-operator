@@ -704,6 +704,20 @@ type WorkspaceList struct {
 	Items           []Workspace `json:"items"`
 }
 
+type WorkspaceVarSet struct {
+
+	//A Variable Set allows users to reuse the same variables
+	//across multiple workspaces and projects.
+	//
+	//+optional
+	VarSetID string `json:"varSetID,omitempty"`
+
+	//Variable Set Name
+	//
+	//+optional
+	VarSetName string `json:"varSetName,omitempty"`
+}
+
 func init() {
 	SchemeBuilder.Register(&Workspace{}, &WorkspaceList{})
 }
