@@ -63,6 +63,8 @@ var secretNamespacedName = types.NamespacedName{
 
 var rndm = rand.New(rand.NewSource(GinkgoRandomSeed()))
 
+var webhookURL = "https://smee.io/PZeBPogfii2vPl6s"
+
 func TestControllersAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
