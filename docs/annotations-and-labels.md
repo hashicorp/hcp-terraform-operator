@@ -12,5 +12,5 @@
 
 | Label key | Target resources | Possible values | Description |
 | --- | --- | --- | --- |
-| `agentpool.app.terraform.io/pool-name` | Pod[Agent] | Any valid AgentPool name |This label is used to associate the resource with a specific agent pool, by specifying the name of the agent pool. |
-| `agentpool.app.terraform.io/pool-id` | Pod[Agent] | Any valid AgentPool ID | This label is used to associate the resource with a specific agent pool, by specifying the ID of the agent pool. |
+| `agentpool.app.terraform.io/pool-name` | Pod[Agent] | Any valid AgentPool name | Associate the resource with a specific agent pool by specifying the name of the agent pool. |
+| `agentpool.app.terraform.io/pool-id` | Pod[Agent] | Any valid AgentPool ID | Associate the resource with a specific agent pool by specifying the ID of the agent pool. |
