@@ -709,15 +709,11 @@ type WorkspaceVarSet struct {
 	//A Variable Set allows users to reuse the same variables
 	//across multiple workspaces and projects.
 	//
-	//Must match pattern: ^var-[a-zA-Z0-9]+$
-	//
-	//+kubebuilder:validation:Pattern:=
 	//+optional
 	VarSetID string `json:"varSetID,omitempty"`
 
 	//Variable Set Name
 	//
-	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	VarSetName string `json:"varSetName,omitempty"`
 }
