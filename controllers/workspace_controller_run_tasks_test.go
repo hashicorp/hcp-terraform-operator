@@ -238,7 +238,7 @@ func isRunTasksReconciled(instance *appv1alpha2.Workspace) {
 func createRunTaskForTest(name string) string {
 	rt, err := tfClient.RunTasks.Create(ctx, organization, tfc.RunTaskCreateOptions{
 		Name:     name,
-		URL:      "https://www.hashicorp.com",
+		URL:      webhookURL,
 		Category: "task", // MUST BE "task"
 		Enabled:  tfc.Bool(true),
 	})
