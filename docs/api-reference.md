@@ -802,9 +802,24 @@ _Appears in:_
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 | `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups.<br />Default: default organization project.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
+| `varset` _[WorkspaceVarSet](#workspacevarset) array_ | Variable sets will be a list of maps.<br />Each map entry will have keys for VarSetID and VarSetName.<br />Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}] |
 
 
 
 
+#### WorkspaceVarSet
+
+
+
+
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+| Field | Description |
+| --- | --- |
+| `varSetID` _string_ | A Variable Set allows users to reuse the same variables<br />across multiple workspaces and projects.<br />Must match pattern: `varset-[a-zA-Z0-9]+$` |
+| `varSetName` _string_ | Variable Set Name. |
+| `scope` _string_ | Scope defines where the variable set applies.<br />Must be one of the following values: `global`, `project`. |
 
 
