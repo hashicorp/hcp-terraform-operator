@@ -577,6 +577,7 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	Project *WorkspaceProject `json:"project,omitempty"`
+<<<<<<< HEAD
 	// The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.
 	// - `retain`: When you delete the custom resource, the operator does not delete the workspace.
 	// - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
@@ -588,6 +589,13 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=retain
 	//+optional
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+=======
+	// Variable sets will be a list of maps.
+	// Each map entry will have keys for VarSetID and VarSetName.
+	// Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
+	// +optional
+	VarSet []WorkspaceVarSet `json:"varset,omitempty"`
+>>>>>>> 95fbb15 (Edit CRD + Add validation)
 }
 
 type PlanStatus struct {
@@ -705,17 +713,24 @@ type WorkspaceList struct {
 }
 
 type WorkspaceVarSet struct {
-
 	//A Variable Set allows users to reuse the same variables
 	//across multiple workspaces and projects.
+	//Must match pattern: `varset-[a-zA-Z0-9]+$`
 	//
+	//+kubebuilder:validation:Pattern:="varset-[a-zA-Z0-9]+$"
 	//+optional
 	VarSetID string `json:"varSetID,omitempty"`
-
-	//Variable Set Name
+	//Variable Set Name.
 	//
+	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	VarSetName string `json:"varSetName,omitempty"`
+	// Scope defines where the variable set applies.
+	// Must be one of the following values: `global`, `project`.
+	//
+	// +kubebuilder:validation:Pattern:="^(global|project)$"
+	// +optional
+	Scope string `json:"scope,omitempty"`
 }
 
 func init() {

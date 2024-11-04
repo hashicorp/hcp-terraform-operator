@@ -688,6 +688,32 @@ spec:
                 required:
                 - secretKeyRef
                 type: object
+              varset:
+                description: |-
+                  Variable sets will be a list of maps.
+                  Each map entry will have keys for VarSetID and VarSetName.
+                  Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
+                items:
+                  properties:
+                    scope:
+                      description: |-
+                        Scope defines where the variable set applies.
+                        Must be one of the following values: `global`, `project`.
+                      pattern: ^(global|project)$
+                      type: string
+                    varSetID:
+                      description: |-
+                        A Variable Set allows users to reuse the same variables
+                        across multiple workspaces and projects.
+                        Must match pattern: `varset-[a-zA-Z0-9]+$`
+                      pattern: varset-[a-zA-Z0-9]+$
+                      type: string
+                    varSetName:
+                      description: Variable Set Name.
+                      minLength: 1
+                      type: string
+                  type: object
+                type: array
               versionControl:
                 description: |-
                   Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
