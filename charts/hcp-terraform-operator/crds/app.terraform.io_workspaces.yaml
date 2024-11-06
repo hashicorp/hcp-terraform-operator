@@ -693,17 +693,10 @@ spec:
                 type: object
               varset:
                 description: |-
-                  Variable sets will be a list of maps.
-                  Each map entry will have keys for VarSetID and VarSetName.
-                  Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
+                  Variable set allows a group of variables to be applied to a workspace.
+                  Each entry includes a name and an ID.
                 items:
                   properties:
-                    scope:
-                      description: |-
-                        Scope defines where the variable set applies.
-                        Must be one of the following values: `global`, `project`.
-                      pattern: ^(global|project)$
-                      type: string
                     varSetID:
                       description: |-
                         A Variable Set allows users to reuse the same variables

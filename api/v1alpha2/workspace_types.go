@@ -577,7 +577,6 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	Project *WorkspaceProject `json:"project,omitempty"`
-<<<<<<< HEAD
 	// The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.
 	// - `retain`: When you delete the custom resource, the operator does not delete the workspace.
 	// - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
@@ -589,13 +588,11 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=retain
 	//+optional
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
-=======
 	// Variable sets will be a list of maps.
 	// Each map entry will have keys for VarSetID and VarSetName.
 	// Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
 	// +optional
 	VarSet []WorkspaceVarSet `json:"varset,omitempty"`
->>>>>>> 95fbb15 (Edit CRD + Add validation)
 }
 
 type PlanStatus struct {

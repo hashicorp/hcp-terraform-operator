@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package v1alpha2
 
 import (
@@ -16,20 +19,15 @@ func (vs *WorkspaceVarSet) ValidateSpec() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("varSetID"), vs.VarSetID, err.Error()))
 	}
 
-	// Validate VarSetName using the validateSpecVarSetName function
+	// Validate VarSetName
 	if err := validateSpecVarSetName(vs.VarSetName); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("varSetName"), vs.VarSetName, err.Error()))
-	}
-
-	// Validate Scope using the validateSpecScope function
-	if err := validateSpecScope(vs.Scope); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("scope"), vs.Scope, err.Error()))
 	}
 
 	return allErrs
 }
 
-// validateVarSetID checks if the VarSetID matches the required pattern.
+// validateSpecVarSetID checks if the VarSetID matches the required pattern.
 func validateSpecVarSetID(id string) error {
 	varSetIDPattern := `^varset-[a-zA-Z0-9]+$`
 	matched, err := regexp.MatchString(varSetIDPattern, id)
@@ -48,17 +46,5 @@ func validateSpecVarSetName(varSetName string) error {
 		return fmt.Errorf("varSetName must be at least 1 character long")
 	}
 
-	return nil
-}
-
-func validateSpecScope(id string) error {
-	ScopePattern := "^(global|project)$"
-	matched, err := regexp.MatchString(ScopePattern, id)
-	if err != nil {
-		return fmt.Errorf("failed to validate scope: %v", err)
-	}
-	if !matched {
-		return fmt.Errorf("scope for varset must match the pattern: %s", ScopePattern)
-	}
 	return nil
 }
