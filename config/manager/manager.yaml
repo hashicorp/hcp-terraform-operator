@@ -4,7 +4,6 @@ metadata:
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
   name: system
 ---
 apiVersion: apps/v1
@@ -15,7 +14,6 @@ metadata:
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
 spec:
   selector:
     matchLabels:
@@ -61,14 +59,24 @@ spec:
       - command:
         - /manager
         args:
-        - --leader-elect
+        - --sync-period=5m
+        - --agent-pool-workers=1
+        - --agent-pool-sync-period=30s
+        - --module-workers=1
+        - --module-sync-period=5m
+        - --project-workers=1
+        - --project-sync-period=5m
+        - --workspace-workers=1
+        - --workspace-sync-period=5m
         image: controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-            - "ALL"
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
         livenessProbe:
           httpGet:
             path: /healthz
@@ -88,7 +96,7 @@ spec:
             cpu: 500m
             memory: 128Mi
           requests:
-            cpu: 10m
+            cpu: 50m
             memory: 64Mi
-      serviceAccountName: controller-manager
+      serviceAccountName: hcp-terraform-operator-manager
       terminationGracePeriodSeconds: 10

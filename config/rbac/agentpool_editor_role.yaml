@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: hcp-terraform-operator
     app.kubernetes.io/part-of: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
   name: agentpool-editor-role
 rules:
 - apiGroups:

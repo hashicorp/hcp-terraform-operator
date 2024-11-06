@@ -3,13 +3,12 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
-  name: leader-election-rolebinding
+  name: leader-election
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: leader-election-role
+  name: hcp-terraform-operator-leader-election
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
+  name: hcp-terraform-operator-manager
   namespace: system

@@ -5,7 +5,6 @@ metadata:
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
   name: controller-manager-metrics-monitor
   namespace: system
 spec:

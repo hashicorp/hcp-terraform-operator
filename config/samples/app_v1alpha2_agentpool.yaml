@@ -1,12 +1,13 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: AgentPool
 metadata:
-  labels:
-    app.kubernetes.io/name: agentpool
-    app.kubernetes.io/instance: agentpool-sample
-    app.kubernetes.io/part-of: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: hcp-terraform-operator
-  name: agentpool-sample
+  name: this
 spec:
-  # TODO(user): Add fields here
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: hcp-terraform-operator
+      key: token
+  name: this
+  agentTokens:
+    - name: token

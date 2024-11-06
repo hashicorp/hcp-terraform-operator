@@ -25,8 +25,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          Module is the Schema for the modules API
-          Module implements the API-driven Run Workflow
+          Module implements API-driven Run Workflows.
           More information:
             - https://developer.hashicorp.com/terraform/cloud-docs/run/api
         properties:

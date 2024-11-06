@@ -2,7 +2,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  labels:
+    app.kubernetes.io/name: hcp-terraform-operator
+  name: manager
 rules:
 - apiGroups:
   - ""
@@ -108,7 +110,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - app.terraforp.io
+  - app.terraform.io
   resources:
   - projects
   verbs:
@@ -120,13 +122,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - app.terraforp.io
+  - app.terraform.io
   resources:
   - projects/finalizers
   verbs:
   - update
 - apiGroups:
-  - app.terraforp.io
+  - app.terraform.io
   resources:
   - projects/status
   verbs:
