@@ -152,8 +152,7 @@ type ModuleStatus struct {
 //+kubebuilder:printcolumn:name="CV Status",type=string,JSONPath=`.status.configurationVersion.status`
 //+kubebuilder:printcolumn:name="Run Status",type=string,JSONPath=`.status.run.status`
 
-// Module is the Schema for the modules API
-// Module implements the API-driven Run Workflow
+// Module implements API-driven Run Workflows.
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/run/api
 type Module struct {
