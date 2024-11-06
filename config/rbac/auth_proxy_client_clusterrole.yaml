@@ -3,7 +3,6 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
   name: metrics-reader
 rules:
 - nonResourceURLs:

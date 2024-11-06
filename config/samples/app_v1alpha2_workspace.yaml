@@ -1,6 +1,11 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: Workspace
 metadata:
-  name: workspace-sample
+  name: this
 spec:
-  # TODO(user): Add fields here
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  name: this

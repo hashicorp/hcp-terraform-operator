@@ -1,6 +1,15 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: Module
 metadata:
-  name: module-sample
+  name: this
 spec:
-  # TODO(user): Add fields here
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: hcp-terraform-operator
+      key: token
+  module:
+    source: redeux/terraform-cloud-agent/kubernetes
+    version: 1.0.1
+  workspace:
+    id: ws-NUVHA9feCXzAmPHx
