@@ -561,9 +561,9 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	Project *WorkspaceProject `json:"project,omitempty"`
-	// Variable sets will be a list of maps.
-	// Each map entry will have keys for VarSetID and VarSetName.
-	// Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
+	// Variable set allows a group of variables to be applied to a workspace.
+	// Each entry includes a name and an ID.
+	//
 	// +optional
 	VarSet []WorkspaceVarSet `json:"varset,omitempty"`
 }
@@ -687,12 +687,6 @@ type WorkspaceVarSet struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	VarSetName string `json:"varSetName,omitempty"`
-	// Scope defines where the variable set applies.
-	// Must be one of the following values: `global`, `project`.
-	//
-	// +kubebuilder:validation:Pattern:="^(global|project)$"
-	// +optional
-	Scope string `json:"scope,omitempty"`
 }
 
 func init() {
