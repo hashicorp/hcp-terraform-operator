@@ -41,7 +41,7 @@ BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 # USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
 # You can enable this value if you would like to use SHA Based Digests
 # To enable set flag to true
-USE_IMAGE_DIGESTS ?= false
+USE_IMAGE_DIGESTS ?= true
 ifeq ($(USE_IMAGE_DIGESTS), true)
 	BUNDLE_GEN_FLAGS += --use-image-digests
 endif
@@ -112,9 +112,9 @@ helm-test: test-helm ## Run Helm chart tests. This is an alias for the test-helm
 
 .PHONY: manifests
 manifests: controller-gen docs ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
+	$(CONTROLLER_GEN) crd paths="./..." \
 	  output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." \
+	$(CONTROLLER_GEN) crd paths="./..." \
 	  output:crd:artifacts:config=charts/hcp-terraform-operator/crds
 	$(MAKE) copywrite
 
@@ -243,6 +243,7 @@ CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
 HELM_DOCS ?= $(LOCALBIN)/helm-docs-$(HELM_DOCS_VERSION)
 HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite-$(HASHICORP_COPYWRITE_VERSION)
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
+YQ = $(LOCALBIN)/yq-$(YQ_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
@@ -252,6 +253,7 @@ CRD_REF_DOCS_VERSION ?= v0.1.0
 HELM_DOCS_VERSION ?= v1.14.2
 HASHICORP_COPYWRITE_VERSION ?= v0.19.0
 GOLANGCI_LINT_VERSION ?= v1.61.0
+YQ_VERSION ?= v4.44.3
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -271,7 +273,7 @@ $(ENVTEST): $(LOCALBIN)
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCI_LINT): $(LOCALBIN)
-	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
+	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
 
 .PHONY: crd-ref-docs
 crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
@@ -287,6 +289,12 @@ $(HELM_DOCS): $(LOCALBIN)
 install-copywrite: $(HASHICORP_COPYWRITE) ## Download HashiCorp copywrite locally if necessary.
 $(HASHICORP_COPYWRITE): $(LOCALBIN)
 	$(call go-install-tool,$(HASHICORP_COPYWRITE),github.com/hashicorp/copywrite,$(HASHICORP_COPYWRITE_VERSION))
+
+.PHONY: yq
+yq: $(YQ) ## Download yq locally if necessary.
+$(YQ): $(LOCALBIN)
+	$(call go-install-tool,$(YQ),github.com/mikefarah/yq/v4,$(YQ_VERSION))
+	ln -s $(YQ) $(LOCALBIN)/yq
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
@@ -320,10 +328,11 @@ endif
 endif
 
 .PHONY: bundle
-bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+bundle: kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	./hack/add-bundle-annotations.sh
 	$(OPERATOR_SDK) bundle validate ./bundle
 
 .PHONY: bundle-build
