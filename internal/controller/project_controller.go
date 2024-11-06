@@ -42,9 +42,9 @@ type projectInstance struct {
 	tfClient HCPTerraformClient
 }
 
-//+kubebuilder:rbac:groups=app.terraforp.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=app.terraforp.io,resources=projects/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=app.terraforp.io,resources=projects/finalizers,verbs=update
+//+kubebuilder:rbac:groups=app.terraform.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=app.terraform.io,resources=projects/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=app.terraform.io,resources=projects/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
