@@ -5,12 +5,12 @@
 componentConfig: true
 domain: terraform.io
 layout:
-- go.kubebuilder.io/v3
+- go.kubebuilder.io/v4
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: terraform-cloud-operator
-repo: github.com/hashicorp/terraform-cloud-operator
+projectName: hcp-terraform-operator
+repo: github.com/hashicorp/hcp-terraform-operator
 resources:
 - api:
     crdVersion: v1
@@ -19,7 +19,7 @@ resources:
   domain: terraform.io
   group: app
   kind: Workspace
-  path: github.com/hashicorp/terraform-cloud-operator/api/v1alpha2
+  path: github.com/hashicorp/hcp-terraform-operator/api/v1alpha2
   version: v1alpha2
 - api:
     crdVersion: v1
@@ -28,7 +28,7 @@ resources:
   domain: terraform.io
   group: app
   kind: Module
-  path: github.com/hashicorp/terraform-cloud-operator/api/v1alpha2
+  path: github.com/hashicorp/hcp-terraform-operator/api/v1alpha2
   version: v1alpha2
 - api:
     crdVersion: v1
@@ -37,7 +37,7 @@ resources:
   domain: terraform.io
   group: app
   kind: AgentPool
-  path: github.com/hashicorp/terraform-cloud-operator/api/v1alpha2
+  path: github.com/hashicorp/hcp-terraform-operator/api/v1alpha2
   version: v1alpha2
 - api:
     crdVersion: v1
@@ -46,6 +46,6 @@ resources:
   domain: terraform.io
   group: app
   kind: Project
-  path: github.com/hashicorp/terraform-cloud-operator/api/v1alpha2
+  path: github.com/hashicorp/hcp-terraform-operator/api/v1alpha2
   version: v1alpha2
 version: "3"
