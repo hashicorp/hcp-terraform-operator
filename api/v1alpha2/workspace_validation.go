@@ -41,12 +41,12 @@ func (w *Workspace) ValidateSpec() error {
 func (w *Workspace) validateSpecAgentPool() field.ErrorList {
 	allErrs := field.ErrorList{}
 	spec := w.Spec.AgentPool
-	f := field.NewPath("spec").Child("agentPool")
 
 	if spec == nil {
 		return allErrs
 	}
 
+	f := field.NewPath("spec").Child("agentPool")
 	if w.Spec.ExecutionMode != "agent" {
 		allErrs = append(allErrs, field.Required(
 			f,
