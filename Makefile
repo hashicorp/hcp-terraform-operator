@@ -343,6 +343,11 @@ bundle-build: ## Build the bundle image.
 bundle-push: ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
 
+.PHONY: bundle-clean
+bundle-clean: ## Clean the bundle artifacts.
+	@rm -fr bundle/
+	@rm -f bundle.Dockerfile
+
 .PHONY: opm
 OPM = $(LOCALBIN)/opm
 opm: ## Download opm locally if necessary.
