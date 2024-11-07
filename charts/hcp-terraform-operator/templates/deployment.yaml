@@ -108,8 +108,8 @@ spec:
       - configMap:
           name: {{ .Release.Name }}-manager-config
         name: manager-config
-{{- if .Values.customCAcertificates }}
+      {{- if .Values.customCAcertificates }}
       - configMap:
           name: {{ .Release.Name }}-ca-certificates
         name: ca-certificates
-{{- end }}
+      {{- end }}
