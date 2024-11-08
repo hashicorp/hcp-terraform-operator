@@ -96,9 +96,13 @@ controllers:
   module:
     # -- The number of the Module controller workers.
     workers: 1
+    # -- The minimum frequency at which watched Module resources are reconciled. Format: 5s, 1m, etc.
+    syncPeriod: 5m
   project:
     # -- The number of the Project controller workers.
     workers: 1
+    # -- The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc.
+    syncPeriod: 5m
   workspace:
     # -- The number of the Workspace controller workers.
     workers: 1
@@ -116,3 +120,7 @@ serviceAccount:
   # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
   name: ""
+
+rbac:
+  # -- Specifies whether a Role-Based Access Control (RBAC) resources should be created
+  create: true

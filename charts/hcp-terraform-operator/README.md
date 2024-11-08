@@ -25,7 +25,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/hcp-terraform-operator \
-      --version 2.6.1 \
+      --version 2.7.0 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -36,7 +36,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.6.1 \
+  --version 2.7.0 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -55,7 +55,7 @@ If targeting a Terraform Enterprise instance rather than HCP Terraform, set the 
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.6.1 \
+  --version 2.7.0 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -67,7 +67,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/hcp-terraform-operator \
-  --version 2.6.1 \
+  --version 2.7.0 \
   --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
@@ -83,6 +83,20 @@ In some cases, such as when a new version of the Operator adds a new controller 
 For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#general-questions).
 
 #### Upgrade recommendations
+
+  - `2.6.0` to `2.7.0`
+
+    - The `Workspace` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.7.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
+      ```
+
+    - The `AgentPool` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.7.0/charts/hcp-terraform-operator/crds/app.terraform.io_agentpools.yaml
+      ```
 
   - `2.5.0` to `2.6.0`
 
@@ -138,7 +152,9 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 |-----|------|---------|-------------|
 | controllers.agentPool.syncPeriod | string | `"30s"` | The minimum frequency at which watched Agent Pool resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.agentPool.workers | int | `1` | The number of the Agent Pool controller workers. |
+| controllers.module.syncPeriod | string | `"5m"` | The minimum frequency at which watched Module resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
+| controllers.project.syncPeriod | string | `"5m"` | The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
 | controllers.workspace.syncPeriod | string | `"5m"` | The minimum frequency at which watched Workspace resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.workspace.workers | int | `1` | The number of the Workspace controller workers. |
@@ -165,6 +181,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
+| rbac.create | bool | `true` | Specifies whether a Role-Based Access Control (RBAC) resources should be created |
 | replicaCount | int | `2` | The number of Operator replicas. |
 | securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |

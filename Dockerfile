@@ -7,7 +7,7 @@
 # Every target has a BIN_NAME argument that must be provided via --build-arg=BIN_NAME=<name>
 # when building.
 
-ARG GO_VERSION=1.22
+ARG GO_VERSION=1.23.2
 
 # ===================================
 #
@@ -33,13 +33,12 @@ COPY go.sum go.sum
 
 RUN go mod download
 
-COPY main.go main.go
 COPY api/ api/
-COPY controllers/ controllers/
+COPY cmd/main.go cmd/main.go
 COPY internal/ internal/
 COPY version/ version/
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -trimpath -o $BIN_NAME main.go
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -trimpath -o $BIN_NAME cmd/main.go
 
 # dev runs the binary from devbuild
 # -----------------------------------
@@ -76,6 +75,36 @@ ARG TARGETOS
 ARG TARGETARCH
 
 ENV BIN_NAME=$BIN_NAME
+
+LABEL maintainer="Terraform Ecosystem - Hybrid Cloud Team <hcp-tf-operator@hashicorp.com>"
+LABEL version=$PRODUCT_VERSION
+LABEL revision=$PRODUCT_REVISION
+
+WORKDIR /
+COPY LICENSE /licenses/copyright.txt
+COPY dist/$TARGETOS/$TARGETARCH/$BIN_NAME .
+
+USER 65532:65532
+
+ENTRYPOINT ["/bin/sh", "-c", "/$BIN_NAME"]
+
+# Red Hat UBI release image
+# -----------------------------------
+FROM registry.access.redhat.com/ubi9/ubi-micro:9.4-15 AS release-ubi
+
+ARG BIN_NAME
+ARG PRODUCT_VERSION
+ARG PRODUCT_REVISION
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV BIN_NAME=$BIN_NAME
+
+LABEL name="HCP Terraform Operator"
+LABEL vendor="HashiCorp"
+LABEL release=$PRODUCT_REVISION
+LABEL summary="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources"
+LABEL description="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources"
 
 LABEL maintainer="Terraform Ecosystem - Hybrid Cloud Team <hcp-tf-operator@hashicorp.com>"
 LABEL version=$PRODUCT_VERSION

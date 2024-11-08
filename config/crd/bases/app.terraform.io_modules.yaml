@@ -203,7 +203,7 @@ spec:
                 - status
                 type: object
               destroyRunID:
-                description: Workspace Destroy Run status.
+                description: Workspace Destroy Run ID.
                 type: string
               observedGeneration:
                 description: Real world state generation.

@@ -1,3 +1,44 @@
+## 2.7.0 (October 24, 2024)
+
+BREAKING CHANGES:
+
+* `Workspace`: The new field, `spec.deletionPolicy`, is set to `retain` by default, which changes the previous default controller behavior when resources are deleted. The previous behavior corresponded to the `force` deletion policy value. This change is considered safer in cases of accidental resource deletion, planned migration, or other scenarios involving the deletion of a custom resource. [[GH-470](https://github.com/hashicorp/hcp-terraform-operator/pull/470)]
+
+NOTES:
+
+* The `AgentPool` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-494](https://github.com/hashicorp/hcp-terraform-operator/pull/494)]
+* The `Workspace` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-470](https://github.com/hashicorp/hcp-terraform-operator/pull/470)] [[GH-478](https://github.com/hashicorp/hcp-terraform-operator/pull/478)] [[GH-481](https://github.com/hashicorp/hcp-terraform-operator/pull/481)]
+
+FEATURES:
+
+* `Helm Chart`: Add a new value called `controllers.project.syncPeriod` to set the CLI option `--project-sync-period`. [[GH-479](https://github.com/hashicorp/hcp-terraform-operator/pull/479)]
+* `Helm Chart`: Add a new value called `controllers.module.syncPeriod` to set the CLI option `--module-sync-period`. [[GH-480](https://github.com/hashicorp/hcp-terraform-operator/pull/480)]
+* `Module`: Add a new CLI option called `--module-sync-period` to set the time interval for re-queuing Module resources once they are successfully reconciled. [[GH-480](https://github.com/hashicorp/hcp-terraform-operator/pull/480)]
+* `Project`: Add a new CLI option called `--project-sync-period` to set the time interval for re-queuing Project resources once they are successfully reconciled. [[GH-479](https://github.com/hashicorp/hcp-terraform-operator/pull/479)]
+* `Workspace`: Add a new field, `spec.deletionPolicy`, that specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted. [[GH-470](https://github.com/hashicorp/hcp-terraform-operator/pull/470)]
+* `Workspace`: Add the `destroy` deletion policy. The `spec.allowDestroyPlan` must be set to `true` for the controller to execute a destroy run. [[GH-489](https://github.com/hashicorp/hcp-terraform-operator/pull/489)]
+
+ENHANCEMENTS:
+
+* `Helm Chart`: Add the ability to configure the creation of the RBAC role and role binding. [[GH-491](https://github.com/hashicorp/hcp-terraform-operator/pull/491)]
+* `AgentPool`: Update agent token reconciliation logic to reduce the number of API calls. [[GH-487](https://github.com/hashicorp/hcp-terraform-operator/pull/487)]
+* `AgentPool`: Add the ability to configure labels and annotations for agent deployments. [[GH-494](https://github.com/hashicorp/hcp-terraform-operator/pull/494)]
+* `Module`: Update reconciliation logic to proceed to the next step immediately after the configuration version is uploaded successfully and reduce delays in output fetching. [[GH-482](https://github.com/hashicorp/hcp-terraform-operator/pull/482)]
+* `Workspace`: Update Notifications reconciliation logic to reduce the number of API calls. [[GH-477](https://github.com/hashicorp/hcp-terraform-operator/pull/477)]
+* `Workspace`: Update SSH key reconciliation logic to reduce the number of API calls. [[GH-478](https://github.com/hashicorp/hcp-terraform-operator/pull/478)]
+* `Workspace`: Update the default project ID reconciliation logic to avoid making an API call each time a workspace object is updated. [[GH-481](https://github.com/hashicorp/hcp-terraform-operator/pull/481)]
+
+DEPENDENCIES:
+
+* Bump `k8s.io/api` from 0.29.4 to 0.30.3. [[GH-452](https://github.com/hashicorp/hcp-terraform-operator/pull/452)] [[GH-466](https://github.com/hashicorp/hcp-terraform-operator/pull/466)]
+* Bump `k8s.io/apimachinery` from 0.29.4 to 0.30.3. [[GH-452](https://github.com/hashicorp/hcp-terraform-operator/pull/452)] [[GH-456](https://github.com/hashicorp/hcp-terraform-operator/pull/456)]
+* Bump `k8s.io/client-go` from 0.29.4 to 0.30.3. [[GH-452](https://github.com/hashicorp/hcp-terraform-operator/pull/452)] [[GH-466](https://github.com/hashicorp/hcp-terraform-operator/pull/466)]
+* Bump `sigs.k8s.io/controller-runtime` from 0.17.3 to 0.18.4. [[GH-452](https://github.com/hashicorp/hcp-terraform-operator/pull/452)]
+
+## Community Contributors :raised_hands:
+
+- @domino-sbr1 made their contribution in https://github.com/hashicorp/hcp-terraform-operator/pull/491
+
 ## 2.6.1 (August 07, 2024)
 
 BUG FIXES:

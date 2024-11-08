@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Set product version
         id: set-product-version
-        uses: hashicorp/actions-set-product-version@06bddb8ee70f0dda2e21c39b5f0913d36cc9d657 # v1
+        uses: hashicorp/actions-set-product-version@d9b52fb778068099ca4c5e28e1ca0fee2544e114 # v2
 
   generate-metadata-file:
     needs: set-product-version
@@ -43,7 +43,7 @@ jobs:
           product: ${{ env.PKG_NAME }}
           repositoryOwner: 'hashicorp'
           metadataFileName: ${{ env.METADATA_FILE_NAME }}
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: metadata.json
           path: ${{ env.METADATA_FILE_NAME }}
@@ -62,11 +62,11 @@ jobs:
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Setup Go
         id: set-up-go
-        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version-file: 'go.mod'
       - name: Go build
-        uses: hashicorp/actions-go-build@e20c6be7bf010e40e930dab20e6da63176725ec1 # v0.1.9
+        uses: hashicorp/actions-go-build@37358f6098ef21b09542d84a9814ebb843aa4e3e # v1
         env:
           CGO_ENABLED: 0
           LD_FLAGS: "-X '${{ env.PKG_PATH }}/version.Version=${{ needs.set-product-version.outputs.product-version }}'"
@@ -79,7 +79,7 @@ jobs:
           arch: ${{ matrix.arch }}
           reproducible: report
           instructions: |
-            go build -a -ldflags="${{ env.LD_FLAGS }}" -trimpath -o $BIN_PATH main.go
+            go build -a -ldflags="${{ env.LD_FLAGS }}" -trimpath -o $BIN_PATH cmd/main.go
 
   build-docker:
     name: Docker ${{ matrix.arch }} build
@@ -93,7 +93,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Docker build
-        uses: hashicorp/actions-docker-build@2771d60f540373a86cf21177de69624b4de7de69 # v1.5.0
+        uses: hashicorp/actions-docker-build@11d43ef520c65f58683d048ce9b47d6617893c9a # v2
         env:
           VERSION: ${{ needs.set-product-version.outputs.product-version }}
           GO_VERSION: ${{ needs.build.outputs.go-version }}
@@ -107,3 +107,28 @@ jobs:
           dev_tags: |
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-${{ github.sha }}
+
+  build-docker-ubi:
+    name: Docker build UBI
+    needs: [build, set-product-version]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - name: Docker build
+        uses: hashicorp/actions-docker-build@11d43ef520c65f58683d048ce9b47d6617893c9a # v2
+        env:
+          VERSION: ${{ needs.set-product-version.outputs.product-version }}
+          GO_VERSION: ${{ needs.build.outputs.go-version }}
+        with:
+          version: ${{ env.VERSION }}
+          bin_name: ${{ vars.BIN_NAME }}
+          target: release-ubi
+          arch: amd64
+          tags: |
+            docker.io/${{ env.DOCKER_HUB_REPO }}:${{ env.VERSION }}-ubi
+          dev_tags: |
+            docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-ubi
+            docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-ubi-${{ github.sha }}
+          redhat_tag: quay.io/redhat-isv-containers/671273c6fbc31c69e20237c0:${{ env.VERSION }}
