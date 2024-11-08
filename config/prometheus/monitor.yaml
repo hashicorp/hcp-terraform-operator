@@ -1,10 +1,10 @@
-
 # Prometheus Monitor Service (Metrics)
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
     control-plane: controller-manager
+    app.kubernetes.io/name: hcp-terraform-operator
   name: controller-manager-metrics-monitor
   namespace: system
 spec:

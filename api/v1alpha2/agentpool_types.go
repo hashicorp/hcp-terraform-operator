@@ -168,7 +168,11 @@ type AgentPoolStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// AgentPool is the Schema for the agentpools API.
+// AgentPool manages HCP Terraform Agent Pools, HCP Terraform Agent Tokens and can perform HCP Terraform Agent scaling.
+// More infromation:
+//   - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools
+//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens
+//   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 type AgentPool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

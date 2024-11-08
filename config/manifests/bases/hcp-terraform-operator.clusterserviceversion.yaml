@@ -1,0 +1,97 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    categories: Integration & Delivery
+    containerImage: registry.connect.redhat.com/hashicorp/hcp-terraform-operator
+    description: HCP Terraform Operator for Kubernetes allows managing HCP Terraform
+      / Terraform Enterprise resources via Kubernetes Custom Resources
+    features.operators.openshift.io/cnf: "false"
+    features.operators.openshift.io/cni: "false"
+    features.operators.openshift.io/csi: "false"
+    features.operators.openshift.io/disconnected: "true"
+    features.operators.openshift.io/fips-compliant: "false"
+    features.operators.openshift.io/proxy-aware: "false"
+    features.operators.openshift.io/tls-profiles: "false"
+    features.operators.openshift.io/token-auth-aws: "false"
+    features.operators.openshift.io/token-auth-azure: "false"
+    features.operators.openshift.io/token-auth-gcp: "false"
+    operators.openshift.io/valid-subscription: Valid HCP Terraform / Terraform Enterprise
+      subscription is required
+    repository: https://github.com/hashicorp/hcp-terraform-operator
+    support: HashiCorp
+  name: hcp-terraform-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: |-
+        AgentPool manages HCP Terraform Agent Pools, HCP Terraform Agent Tokens and can perform HCP Terraform Agent scaling.
+        More infromation:
+          - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools
+          - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens
+          - https://developer.hashicorp.com/terraform/cloud-docs/agents
+      displayName: Agent Pool
+      kind: AgentPool
+      name: agentpools.app.terraform.io
+      version: v1alpha2
+    - description: |-
+        Module implements API-driven Run Workflows.
+        More information:
+          - https://developer.hashicorp.com/terraform/cloud-docs/run/api
+      displayName: Module
+      kind: Module
+      name: modules.app.terraform.io
+      version: v1alpha2
+    - description: |-
+        Project manages HCP Terraform Projects.
+        More information:
+          - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+      displayName: Project
+      kind: Project
+      name: projects.app.terraform.io
+      version: v1alpha2
+    - description: |-
+        Workspace manages HCP Terraform Workspaces.
+        More information:
+          - https://developer.hashicorp.com/terraform/cloud-docs/workspaces
+      displayName: Workspace
+      kind: Workspace
+      name: workspaces.app.terraform.io
+      version: v1alpha2
+  description: HCP Terraform Operator for Kubernetes allows managing HCP Terraform
+    / Terraform Enterprise resources via Kubernetes Custom Resources
+  displayName: HCP Terraform Operator
+  icon:
+  - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTG9nb3MiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDY1Ljk3IDY1Ljk3Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xLCAuY2xzLTIgewogICAgICAgIGZpbGw6ICM3YjQyYmM7CiAgICAgICAgc3Ryb2tlLXdpZHRoOiAwcHg7CiAgICAgIH0KCiAgICAgIC5jbHMtMiB7CiAgICAgICAgZmlsbC1ydWxlOiBldmVub2RkOwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yNy42MSwxOS45MWwxMC43LDYuMnYxMi40bC0xMC43LTYuMnYtMTIuNFoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0zOS41MSwyNi4xMXYxMi40bDEwLjctNi4ydi0xMi40bC0xMC43LDYuMloiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNS44MSwxMy4wMXYxMi40bDEwLjcsNi4ydi0xMi40bC0xMC43LTYuMloiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yNy42MSw0Ni4wMWwxMC43LDYuMnYtMTIuNGwtMTAuNy02LjJ2MTIuNFoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik01Ny4xNyw2NS45N0g4LjhjLTEuNTYsMC0yLjcsMC0zLjYxLS4wNy0uOTYtLjA4LTEuNjItLjI0LTIuMTgtLjUyLTEuMDQtLjUzLTEuODctMS4zNi0yLjQtMi40LS4yOS0uNTctLjQ1LTEuMjItLjUyLTIuMTgtLjA3LS45Mi0uMDctMi4wNS0uMDctMy42MVY4LjhjMC0xLjU2LDAtMi42OS4wNy0zLjYxLjA4LS45Ni4yNC0xLjYyLjUyLTIuMThDMS4xMywxLjk2LDEuOTYsMS4xMywzLC42Yy41Ny0uMjksMS4yMi0uNDUsMi4xOC0uNTIuOTItLjA3LDIuMDUtLjA3LDMuNjEtLjA3aDQ4LjM4YzEuNTYsMCwyLjY5LDAsMy42MS4wNy45Ni4wOCwxLjYyLjI0LDIuMTguNTIsMS4wNC41MywxLjg3LDEuMzYsMi40LDIuNC4yOS41Ny40NSwxLjIyLjUyLDIuMTguMDcuOTIuMDcsMi4wNS4wNywzLjYxdjQ4LjM4YzAsMS41NiwwLDIuNy0uMDcsMy42MS0uMDguOTctLjI0LDEuNjItLjUyLDIuMTgtLjUzLDEuMDQtMS4zNiwxLjg3LTIuNCwyLjQtLjU3LjI5LTEuMjIuNDUtMi4xOC41Mi0uOTIuMDctMi4wNS4wNy0zLjYxLjA3Wk04LjgsMi43NWMtMS41LDAtMi41OCwwLTMuMzkuMDctLjU2LjA1LS45NC4xMi0xLjE2LjIzLS41Mi4yNy0uOTQuNjgtMS4yLDEuMi0uMTEuMjItLjE5LjYtLjIzLDEuMTYtLjA3LjgxLS4wNywxLjg5LS4wNywzLjM5djQ4LjM4YzAsMS40NCwwLDIuNTguMDcsMy4zOS4wNS41Ni4xMi45NC4yMywxLjE2LjI3LjUyLjY4Ljk0LDEuMiwxLjIuMjIuMTEuNi4xOSwxLjE2LjIzLjguMDcsMS44OS4wNywzLjM5LjA3aDQ4LjM4YzEuNSwwLDIuNTgsMCwzLjM5LS4wNy41Ni0uMDUuOTQtLjEyLDEuMTYtLjIzLjUyLS4yNy45NC0uNjgsMS4yLTEuMi4xMS0uMjIuMTktLjYuMjMtMS4xNi4wNy0uOC4wNy0xLjg5LjA3LTMuMzlWOC44YzAtMS41LDAtMi41OC0uMDctMy4zOS0uMDUtLjU2LS4xMi0uOTQtLjIzLTEuMTYtLjI3LS41Mi0uNjgtLjk0LTEuMi0xLjItLjIyLS4xMS0uNi0uMTktMS4xNi0uMjMtLjgxLS4wNy0xLjk0LS4wNy0zLjM5LS4wN0g4LjhaIi8+Cjwvc3ZnPg==
+    mediatype: image/svg+xml
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - terraform
+  links:
+  - name: HCP Terraform Operator
+    url: https://github.com/hashicorp/hcp-terraform-operator
+  maintainers:
+  - email: hcp-tf-operator@hashicorp.com
+    name: Terraform Ecosystem - Hybrid Cloud Team
+  maturity: alpha
+  minKubeVersion: 1.24.0
+  provider:
+    name: HashiCorp
+    url: https://www.hashicorp.com/
+  version: 0.0.0
