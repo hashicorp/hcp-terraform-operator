@@ -8,6 +8,7 @@ rules:
   - ""
   resources:
   - configmaps
+  - secrets
   verbs:
   - create
   - list
@@ -21,69 +22,10 @@ rules:
   - create
   - patch
 - apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - list
-  - update
-  - watch
-- apiGroups:
   - app.terraform.io
   resources:
   - agentpools
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - app.terraform.io
-  resources:
-  - agentpools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - app.terraform.io
-  resources:
-  - agentpools/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - app.terraform.io
-  resources:
   - modules
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - app.terraform.io
-  resources:
-  - modules/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - app.terraform.io
-  resources:
-  - modules/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - app.terraform.io
-  resources:
   - workspaces
   verbs:
   - create
@@ -96,12 +38,16 @@ rules:
 - apiGroups:
   - app.terraform.io
   resources:
+  - agentpools/finalizers
+  - modules/finalizers
   - workspaces/finalizers
   verbs:
   - update
 - apiGroups:
   - app.terraform.io
   resources:
+  - agentpools/status
+  - modules/status
   - workspaces/status
   verbs:
   - get
