@@ -52,7 +52,7 @@ OPERATOR_SDK_VERSION ?= v1.37.0
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.29.0
+ENVTEST_K8S_VERSION = 1.30.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -239,10 +239,10 @@ GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
-ENVTEST_VERSION ?= release-0.17
-CRD_REF_DOCS_VERSION ?= v0.0.12
-HELM_DOCS_VERSION ?= v1.12.0
+CONTROLLER_TOOLS_VERSION ?= v0.16.5
+ENVTEST_VERSION ?= release-0.19
+CRD_REF_DOCS_VERSION ?= v0.1.0
+HELM_DOCS_VERSION ?= v1.14.2
 HASHICORP_COPYWRITE_VERSION ?= v0.19.0
 GOLANGCI_LINT_VERSION ?= v1.61.0
 
