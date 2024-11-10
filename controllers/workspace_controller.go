@@ -24,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/version"
@@ -124,7 +123,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	//varSetID := w.instance.Spec.VarSet.VarSetID
 	workspaceID := w.instance.Status.WorkspaceID
 	if workspaceID == "" {
-		return reconcile.Result{}, fmt.Errorf("workspace ID is not set")
+		w.log.Error(fmt.Errorf("workspace ID is not set"), "Cannot reconcile without workspace ID")
+		return requeueOnErr(fmt.Errorf("workspace ID is not set"))
 	}
 
 	// List existing variable sets for the workspace
@@ -132,7 +132,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	existingVarSets, err := r.tfClient.VariableSets.ListForWorkspace(ctx, workspaceID, options)
 	if err != nil {
 		w.log.Error(err, "Failed to list variable sets")
-		return reconcile.Result{}, err
+		return requeueOnErr(err)
 	}
 
 	// Iterate over each variable set in Spec.VarSet to apply if not already applied
@@ -140,7 +140,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		varSetApplied, err := isVarSetApplied(existingVarSets, vs.VarSetID)
 		if err != nil {
 			w.log.Error(err, "Error checking if variable set is applied", "VarSetID", vs.VarSetID)
-			return reconcile.Result{}, err
+			return requeueOnErr(err)
 		}
 
 		if !varSetApplied {
@@ -154,7 +154,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			err = r.tfClient.VariableSets.ApplyToWorkspaces(ctx, vs.VarSetID, applyOptions)
 			if err != nil {
 				w.log.Error(err, "Failed to apply variable set", "VarSetID", vs.VarSetID)
-				return reconcile.Result{}, err
+				return requeueOnErr(err)
 			}
 			w.log.Info("Variable set successfully applied", "VarSetID", vs.VarSetID)
 		} else {
