@@ -9,30 +9,6 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-)
-
-const (
-	helmChartName    = "hcp-terraform-operator"
-	helmChartVersion = "2.7.0"
-	helmChartPath    = "../hcp-terraform-operator"
-	helmReleaseName  = "this"
-
-	defaultNamespace = "default"
-
-	serviceAccountTeamplate = "templates/serviceaccount.yaml"
-)
-
-var (
-	defaultServiceAccountLabels = map[string]string{
-		"helm.sh/chart":                fmt.Sprintf("%s-%s", helmChartName, helmChartVersion),
-		"app.kubernetes.io/name":       helmChartName,
-		"app.kubernetes.io/instance":   helmReleaseName,
-		"app.kubernetes.io/version":    helmChartVersion,
-		"app.kubernetes.io/managed-by": "Helm",
-	}
-
-	defaultServiceAccountName = fmt.Sprintf("%s-%s", helmReleaseName, helmChartName)
 )
 
 func TestControllerServiceAccountCreateTrue(t *testing.T) {
@@ -42,12 +18,7 @@ func TestControllerServiceAccountCreateTrue(t *testing.T) {
 		},
 		Version: helmChartVersion,
 	}
-
-	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTeamplate})
-	assert.NoError(t, err)
-
-	var sa corev1.ServiceAccount
-	helm.UnmarshalK8SYaml(t, output, &sa)
+	sa := renderServiceAccountManifest(t, options)
 
 	assert.Equal(t, defaultServiceAccountName, sa.Name)
 	assert.Equal(t, defaultServiceAccountLabels, sa.Labels)
@@ -65,10 +36,13 @@ func TestControllerServiceAccountCreateFalse(t *testing.T) {
 
 	_, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{"templates/serviceaccount.yaml"})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("could not find template %s in chart", serviceAccountTeamplate))
+	assert.Contains(t, err.Error(), fmt.Sprintf("could not find template %s in chart", serviceAccountTemplate))
 }
 
 func TestControllerServiceAccountAnnotations(t *testing.T) {
+	expectedAnnotations := map[string]string{
+		"app.kubernetes.io/name": "hcp-terraform-operator",
+	}
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"serviceAccount.create": "true",
@@ -78,16 +52,7 @@ func TestControllerServiceAccountAnnotations(t *testing.T) {
 		},
 		Version: helmChartVersion,
 	}
-
-	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTeamplate})
-	assert.NoError(t, err)
-
-	var sa corev1.ServiceAccount
-	helm.UnmarshalK8SYaml(t, output, &sa)
-
-	expectedAnnotations := map[string]string{
-		"app.kubernetes.io/name": "hcp-terraform-operator",
-	}
+	sa := renderServiceAccountManifest(t, options)
 
 	assert.Equal(t, defaultServiceAccountName, sa.Name)
 	assert.Equal(t, defaultServiceAccountLabels, sa.Labels)
@@ -95,44 +60,38 @@ func TestControllerServiceAccountAnnotations(t *testing.T) {
 	assert.Equal(t, defaultNamespace, sa.Namespace)
 }
 
+// FINISH
 func TestControllerServiceAccountNamespace(t *testing.T) {
+	ns := "this"
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"serviceAccount.create": "true",
 		},
+		EnvVars: map[string]string{
+			"HELM_NAMESPACE": ns,
+		},
 		Version: helmChartVersion,
 	}
-
-	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTeamplate})
-	assert.NoError(t, err)
-
-	var sa corev1.ServiceAccount
-	helm.UnmarshalK8SYaml(t, output, &sa)
+	sa := renderServiceAccountManifest(t, options)
 
 	assert.Equal(t, defaultServiceAccountName, sa.Name)
 	assert.Equal(t, defaultServiceAccountLabels, sa.Labels)
 	assert.Empty(t, sa.Annotations)
-	assert.Equal(t, defaultNamespace, sa.Namespace)
+	assert.Equal(t, ns, sa.Namespace)
 }
 
 func TestControllerServiceAccountName(t *testing.T) {
+	name := "this"
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"serviceAccount.create": "true",
-			"serviceAccount.name":   "this",
+			"serviceAccount.name":   name,
 		},
 		Version: helmChartVersion,
 	}
+	sa := renderServiceAccountManifest(t, options)
 
-	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTeamplate})
-	assert.NoError(t, err)
-
-	var sa corev1.ServiceAccount
-	helm.UnmarshalK8SYaml(t, output, &sa)
-
-	expectedName := "this"
-
-	assert.Equal(t, expectedName, sa.Name)
+	assert.Equal(t, name, sa.Name)
 	assert.Equal(t, defaultServiceAccountLabels, sa.Labels)
 	assert.Empty(t, sa.Annotations)
 	assert.Equal(t, defaultNamespace, sa.Namespace)
