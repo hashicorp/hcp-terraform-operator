@@ -34,7 +34,7 @@ func TestControllerServiceAccountCreateFalse(t *testing.T) {
 		Version: helmChartVersion,
 	}
 
-	_, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{"templates/serviceaccount.yaml"})
+	_, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTemplate})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("could not find template %s in chart", serviceAccountTemplate))
 }
@@ -60,7 +60,6 @@ func TestControllerServiceAccountAnnotations(t *testing.T) {
 	assert.Equal(t, defaultNamespace, sa.Namespace)
 }
 
-// FINISH
 func TestControllerServiceAccountNamespace(t *testing.T) {
 	ns := "this"
 	options := &helm.Options{
