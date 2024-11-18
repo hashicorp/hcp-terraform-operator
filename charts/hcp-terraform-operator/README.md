@@ -184,7 +184,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | podLabels | object | `{}` | Additional labels to add to the Operator pods. |
 | priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
-| rbac.create | bool | `true` | Specifies whether a Role-Based Access Control (RBAC) resources should be created |
+| rbac.create | bool | `true` | Specifies whether a Role-Based Access Control (RBAC) resources should be created. |
 | replicaCount | int | `2` | The number of Operator replicas. |
 | securityContext | object | `{"runAsNonRoot":true}` | Deployment pod security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | serviceAccount.annotations | object | `{}` | Additional annotations for the ServiceAccount. |

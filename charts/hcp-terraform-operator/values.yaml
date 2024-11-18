@@ -149,5 +149,5 @@ serviceAccount:
   name: ""
 
 rbac:
-  # -- Specifies whether a Role-Based Access Control (RBAC) resources should be created
+  # -- Specifies whether a Role-Based Access Control (RBAC) resources should be created.
   create: true

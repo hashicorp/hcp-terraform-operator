@@ -105,6 +105,10 @@ docs: crd-ref-docs ## Generate API reference documentation.
 helm-docs: install-helm-docs ## Generate Helm chart documentation.
 	$(HELM_DOCS) --log-level=debug --chart-search-root=./charts/hcp-terraform-operator/
 
+.PHONY: helm-test
+helm-test: ## Run Helm chart tests.
+	docker run -ti --rm -v ${PWD}:/apps helmunittest/helm-unittest ./charts/hcp-terraform-operator/
+
 ##@ Development
 
 .PHONY: manifests
