@@ -10,17 +10,26 @@ import (
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 const (
+	// Helm chart.
 	helmChartName    = "hcp-terraform-operator"
 	helmChartVersion = "2.7.0"
 	helmChartPath    = "../hcp-terraform-operator"
 	helmReleaseName  = "this"
 
+	// Defaults.
 	defaultNamespace = "default"
 
-	serviceAccountTemplate = "templates/serviceaccount.yaml"
+	// Templates.
+	deploymentTemplate             = "templates/deployment.yaml"
+	rbacRoleTemplate               = "templates/role.yaml"
+	rbacRoleBindingTemplate        = "templates/rolebinding.yaml"
+	rbacClusterRoleTemplate        = "templates/clusterrole.yaml"
+	rbacClusterRoleBindingTemplate = "templates/clusterrolebinding.yaml"
+	serviceAccountTemplate         = "templates/serviceaccount.yaml"
 )
 
 var (
@@ -32,6 +41,8 @@ var (
 		"app.kubernetes.io/version":    helmChartVersion,
 		"app.kubernetes.io/managed-by": "Helm",
 	}
+
+	defaultRBACRoleName = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
 )
 
 func renderServiceAccountManifest(t *testing.T, options *helm.Options) corev1.ServiceAccount {
@@ -40,5 +51,16 @@ func renderServiceAccountManifest(t *testing.T, options *helm.Options) corev1.Se
 
 	sa := corev1.ServiceAccount{}
 	helm.UnmarshalK8SYaml(t, output, &sa)
+
 	return sa
+}
+
+func renderRBACRoleManifest(t *testing.T, options *helm.Options) rbacv1.Role {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacRoleTemplate})
+	assert.NoError(t, err)
+
+	rbac := rbacv1.Role{}
+	helm.UnmarshalK8SYaml(t, output, &rbac)
+
+	return rbac
 }

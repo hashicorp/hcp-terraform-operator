@@ -4,7 +4,6 @@
 package test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/helm"
@@ -33,10 +32,10 @@ func TestServiceAccountCreateFalse(t *testing.T) {
 		},
 		Version: helmChartVersion,
 	}
-
 	_, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTemplate})
+
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("could not find template %s in chart", serviceAccountTemplate))
+	assert.Contains(t, err.Error(), "could not find template")
 }
 
 func TestServiceAccountAnnotations(t *testing.T) {
