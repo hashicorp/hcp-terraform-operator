@@ -38,7 +38,7 @@ func renderServiceAccountManifest(t *testing.T, options *helm.Options) corev1.Se
 	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTemplate})
 	assert.NoError(t, err)
 
-	var sa corev1.ServiceAccount
+	sa := corev1.ServiceAccount{}
 	helm.UnmarshalK8SYaml(t, output, &sa)
 	return sa
 }
