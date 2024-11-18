@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestControllerServiceAccountCreateTrue(t *testing.T) {
+func TestServiceAccountCreateTrue(t *testing.T) {
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"serviceAccount.create": "true",
@@ -26,7 +26,7 @@ func TestControllerServiceAccountCreateTrue(t *testing.T) {
 	assert.Equal(t, defaultNamespace, sa.Namespace)
 }
 
-func TestControllerServiceAccountCreateFalse(t *testing.T) {
+func TestServiceAccountCreateFalse(t *testing.T) {
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"serviceAccount.create": "false",
@@ -39,7 +39,7 @@ func TestControllerServiceAccountCreateFalse(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("could not find template %s in chart", serviceAccountTemplate))
 }
 
-func TestControllerServiceAccountAnnotations(t *testing.T) {
+func TestServiceAccountAnnotations(t *testing.T) {
 	expectedAnnotations := map[string]string{
 		"app.kubernetes.io/name": "hcp-terraform-operator",
 	}
@@ -60,7 +60,7 @@ func TestControllerServiceAccountAnnotations(t *testing.T) {
 	assert.Equal(t, defaultNamespace, sa.Namespace)
 }
 
-func TestControllerServiceAccountNamespace(t *testing.T) {
+func TestServiceAccountNamespace(t *testing.T) {
 	ns := "this"
 	options := &helm.Options{
 		SetValues: map[string]string{
@@ -79,7 +79,7 @@ func TestControllerServiceAccountNamespace(t *testing.T) {
 	assert.Equal(t, ns, sa.Namespace)
 }
 
-func TestControllerServiceAccountName(t *testing.T) {
+func TestServiceAccountName(t *testing.T) {
 	name := "this"
 	options := &helm.Options{
 		SetValues: map[string]string{
