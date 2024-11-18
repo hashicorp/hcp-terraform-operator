@@ -149,6 +149,9 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 		./internal/pointer \
 		./internal/slice
 
+.PHONY: test-helm
+test-helm: helm-test ## Run Helm chart tests.
+
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint
 	$(GOLANGCI_LINT) run
