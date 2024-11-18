@@ -106,12 +106,7 @@ helm-docs: install-helm-docs ## Generate Helm chart documentation.
 	$(HELM_DOCS) --log-level=debug --chart-search-root=./charts/hcp-terraform-operator/
 
 .PHONY: helm-test
-helm-test: ## Run Helm chart tests.
-	docker run -ti --rm -v ${PWD}:/apps helmunittest/helm-unittest ./charts/hcp-terraform-operator/
-
-.PHONY: helm-go-test
-helm-go-test: ## Run Helm chart tests.
-	go test -timeout 5m -count=1 -v ./charts/unit/...
+helm-test: test-helm ## Run Helm chart tests. This is an alias for the test-helm target.
 
 ##@ Development
 
@@ -154,7 +149,8 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 		./internal/slice
 
 .PHONY: test-helm
-test-helm: helm-test ## Run Helm chart tests.
+test-helm: ## Run Helm chart tests.
+	go test -timeout 5m -count=1 -v ./charts/unit/...
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint
