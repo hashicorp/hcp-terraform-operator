@@ -109,6 +109,10 @@ helm-docs: install-helm-docs ## Generate Helm chart documentation.
 helm-test: ## Run Helm chart tests.
 	docker run -ti --rm -v ${PWD}:/apps helmunittest/helm-unittest ./charts/hcp-terraform-operator/
 
+.PHONY: helm-go-test
+helm-go-test: ## Run Helm chart tests.
+	go test -timeout 5m -count=1 -v ./charts/unit/...
+
 ##@ Development
 
 .PHONY: manifests
