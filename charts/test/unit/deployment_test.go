@@ -99,6 +99,43 @@ func TestDeploymentDefault(t *testing.T) {
 			},
 		},
 	}, spec.Containers[0])
+	assert.Equal(t, corev1.Container{
+		Name:  "kube-rbac-proxy",
+		Image: "quay.io/brancz/kube-rbac-proxy:v0.18.0",
+		Args: []string{
+			"--secure-listen-address=0.0.0.0:8443",
+			"--upstream=http://127.0.0.1:8080/",
+			"--logtostderr=true",
+			"--v=0",
+		},
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("500m"),
+				corev1.ResourceMemory: resource.MustParse("128Mi"),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("50m"),
+				corev1.ResourceMemory: resource.MustParse("64Mi"),
+			},
+		},
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "https",
+				ContainerPort: 8443,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		SecurityContext: &corev1.SecurityContext{
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{"ALL"},
+			},
+			AllowPrivilegeEscalation: ptr.To(false),
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		},
+	}, spec.Containers[1])
 
 	assert.Equal(t, defaultServiceAccountName, deployment.Spec.Template.Spec.ServiceAccountName)
 	assert.Equal(t, &corev1.PodSecurityContext{RunAsNonRoot: ptr.To(true)}, deployment.Spec.Template.Spec.SecurityContext)
