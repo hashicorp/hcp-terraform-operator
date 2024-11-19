@@ -24,15 +24,23 @@ const (
 	defaultNamespace = "default"
 
 	// Templates.
-	deploymentTemplate             = "templates/deployment.yaml"
-	rbacRoleTemplate               = "templates/role.yaml"
-	rbacRoleBindingTemplate        = "templates/rolebinding.yaml"
-	rbacClusterRoleTemplate        = "templates/clusterrole.yaml"
-	rbacClusterRoleBindingTemplate = "templates/clusterrolebinding.yaml"
-	serviceAccountTemplate         = "templates/serviceaccount.yaml"
+	deploymentTemplate                   = "templates/deployment.yaml"
+	rbacRoleTemplate                     = "templates/role.yaml"
+	rbacRoleBindingTemplate              = "templates/rolebinding.yaml"
+	rbacClusterRoleManagerTemplate       = "templates/clusterrole_manager.yaml"
+	rbacClusterRoleMetricsReaderTemplate = "templates/clusterrole_metrics_reader.yaml"
+	rbacClusterRoleProxyTemplate         = "templates/clusterrole_proxy.yaml"
+	rbacClusterRoleBindingTemplate       = "templates/clusterrolebinding.yaml"
+	serviceAccountTemplate               = "templates/serviceaccount.yaml"
 )
 
 var (
+	defaultRBACRoleName                     = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
+	defaultRBACRoleBindingName              = fmt.Sprintf("%s-leader-election-rolebinding", helmReleaseName)
+	defaultRBACClusterRoleManagerName       = fmt.Sprintf("%s-manager-role", helmReleaseName)
+	defaultRBACClusterRoleMetricsReaderName = fmt.Sprintf("%s-metrics-reader", helmReleaseName)
+	defaultRBACClusterRoleProxyName         = fmt.Sprintf("%s-proxy-role", helmReleaseName)
+
 	defaultServiceAccountName   = fmt.Sprintf("%s-%s", helmReleaseName, helmChartName)
 	defaultServiceAccountLabels = map[string]string{
 		"helm.sh/chart":                fmt.Sprintf("%s-%s", helmChartName, helmChartVersion),
@@ -41,9 +49,6 @@ var (
 		"app.kubernetes.io/version":    helmChartVersion,
 		"app.kubernetes.io/managed-by": "Helm",
 	}
-
-	defaultRBACRoleName        = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
-	defaultRBACRoleBindingName = fmt.Sprintf("%s-leader-election-rolebinding", helmReleaseName)
 )
 
 func renderRBACRoleManifest(t *testing.T, options *helm.Options) rbacv1.Role {
@@ -61,6 +66,36 @@ func renderRBACRoleBindingManifest(t *testing.T, options *helm.Options) rbacv1.R
 	assert.NoError(t, err)
 
 	rbac := rbacv1.RoleBinding{}
+	helm.UnmarshalK8SYaml(t, output, &rbac)
+
+	return rbac
+}
+
+func renderRBACClusterRoleManagerManifest(t *testing.T, options *helm.Options) rbacv1.ClusterRole {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacClusterRoleManagerTemplate})
+	assert.NoError(t, err)
+
+	rbac := rbacv1.ClusterRole{}
+	helm.UnmarshalK8SYaml(t, output, &rbac)
+
+	return rbac
+}
+
+func renderRBACClusterRoleMetricsReaderManifest(t *testing.T, options *helm.Options) rbacv1.ClusterRole {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacClusterRoleMetricsReaderTemplate})
+	assert.NoError(t, err)
+
+	rbac := rbacv1.ClusterRole{}
+	helm.UnmarshalK8SYaml(t, output, &rbac)
+
+	return rbac
+}
+
+func renderRBACClusterRoleProxyManifest(t *testing.T, options *helm.Options) rbacv1.ClusterRole {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacClusterRoleProxyTemplate})
+	assert.NoError(t, err)
+
+	rbac := rbacv1.ClusterRole{}
 	helm.UnmarshalK8SYaml(t, output, &rbac)
 
 	return rbac
