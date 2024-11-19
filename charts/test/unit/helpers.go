@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package test
+package unit
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ const (
 	// Helm chart.
 	helmChartName    = "hcp-terraform-operator"
 	helmChartVersion = "2.7.0"
-	helmChartPath    = "../hcp-terraform-operator"
+	helmChartPath    = "../../hcp-terraform-operator"
 	helmReleaseName  = "this"
 
 	// Defaults.
