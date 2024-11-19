@@ -11,7 +11,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
-func TestRBACCreateTrue(t *testing.T) {
+func TestRBACRoleCreateTrue(t *testing.T) {
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"rbac.create": "true",
@@ -25,10 +25,10 @@ func TestRBACCreateTrue(t *testing.T) {
 	assert.Empty(t, rbac.Annotations)
 	assert.Equal(t, defaultNamespace, rbac.Namespace)
 
-	testRBACRules(t, rbac)
+	testRBACRoleRules(t, rbac)
 }
 
-func TestRBACCreateFalse(t *testing.T) {
+func TestRBACRoleCreateFalse(t *testing.T) {
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"rbac.create": "false",
@@ -41,7 +41,7 @@ func TestRBACCreateFalse(t *testing.T) {
 	assert.Contains(t, err.Error(), "could not find template")
 }
 
-func TestRBACNamespace(t *testing.T) {
+func TestRBACRoleNamespace(t *testing.T) {
 	ns := "this"
 	options := &helm.Options{
 		SetValues: map[string]string{
@@ -59,10 +59,10 @@ func TestRBACNamespace(t *testing.T) {
 	assert.Empty(t, rbac.Annotations)
 	assert.Equal(t, ns, rbac.Namespace)
 
-	testRBACRules(t, rbac)
+	testRBACRoleRules(t, rbac)
 }
 
-func testRBACRules(t *testing.T, rbac rbacv1.Role) {
+func testRBACRoleRules(t *testing.T, rbac rbacv1.Role) {
 	rules := []rbacv1.PolicyRule{
 		{
 			Verbs: []string{

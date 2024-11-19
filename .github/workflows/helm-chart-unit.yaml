@@ -32,14 +32,6 @@ jobs:
         with:
           version: v3.11.2
 
-      - name: Set up Helm Plugin
-        run: |
-          helm plugin install https://github.com/helm-unittest/helm-unittest.git
-
-      - name: Run unit tests suite
-        run: |
-          helm unittest ${{ env.HELM_CHART_PATH }}
-
       - name: Run unit tests suite [Go]
         run: |
-          make helm-go-test
+          make helm-test

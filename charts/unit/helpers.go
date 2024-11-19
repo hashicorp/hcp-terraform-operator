@@ -42,18 +42,9 @@ var (
 		"app.kubernetes.io/managed-by": "Helm",
 	}
 
-	defaultRBACRoleName = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
+	defaultRBACRoleName        = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
+	defaultRBACRoleBindingName = fmt.Sprintf("%s-leader-election-rolebinding", helmReleaseName)
 )
-
-func renderServiceAccountManifest(t *testing.T, options *helm.Options) corev1.ServiceAccount {
-	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTemplate})
-	assert.NoError(t, err)
-
-	sa := corev1.ServiceAccount{}
-	helm.UnmarshalK8SYaml(t, output, &sa)
-
-	return sa
-}
 
 func renderRBACRoleManifest(t *testing.T, options *helm.Options) rbacv1.Role {
 	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacRoleTemplate})
@@ -63,4 +54,24 @@ func renderRBACRoleManifest(t *testing.T, options *helm.Options) rbacv1.Role {
 	helm.UnmarshalK8SYaml(t, output, &rbac)
 
 	return rbac
+}
+
+func renderRBACRoleBindingManifest(t *testing.T, options *helm.Options) rbacv1.RoleBinding {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacRoleBindingTemplate})
+	assert.NoError(t, err)
+
+	rbac := rbacv1.RoleBinding{}
+	helm.UnmarshalK8SYaml(t, output, &rbac)
+
+	return rbac
+}
+
+func renderServiceAccountManifest(t *testing.T, options *helm.Options) corev1.ServiceAccount {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{serviceAccountTemplate})
+	assert.NoError(t, err)
+
+	sa := corev1.ServiceAccount{}
+	helm.UnmarshalK8SYaml(t, output, &sa)
+
+	return sa
 }
