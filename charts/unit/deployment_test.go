@@ -10,8 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func TestDeploymentDefault(t *testing.T) {
@@ -34,7 +33,7 @@ func TestDeploymentDefault(t *testing.T) {
 	// Template.Spec
 
 	assert.Equal(t, defaultServiceAccountName, deployment.Spec.Template.Spec.ServiceAccountName)
-	assert.Equal(t, &corev1.PodSecurityContext{RunAsNonRoot: pointer.PointerOf(true)}, deployment.Spec.Template.Spec.SecurityContext)
+	assert.Equal(t, &corev1.PodSecurityContext{RunAsNonRoot: ptr.To(true)}, deployment.Spec.Template.Spec.SecurityContext)
 	assert.Equal(t, &defaultDeploymentTerminationGracePeriodSeconds, deployment.Spec.Template.Spec.TerminationGracePeriodSeconds)
 	assert.Equal(t, []corev1.Volume{
 		{
