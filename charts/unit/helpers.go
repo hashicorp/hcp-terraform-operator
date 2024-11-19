@@ -9,6 +9,7 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 )
@@ -36,6 +37,25 @@ const (
 )
 
 var (
+	defaultDeploymentName   = fmt.Sprintf("%s-%s", helmReleaseName, helmChartName)
+	defaultDeploymentLabels = map[string]string{
+		"helm.sh/chart":                fmt.Sprintf("%s-%s", helmChartName, helmChartVersion),
+		"app.kubernetes.io/name":       helmChartName,
+		"app.kubernetes.io/instance":   helmReleaseName,
+		"app.kubernetes.io/version":    helmChartVersion,
+		"control-plane":                fmt.Sprintf("%s-controller-manager", helmReleaseName),
+		"app.kubernetes.io/managed-by": "Helm",
+	}
+	defaultDeploymentReplicas       = int32(2)
+	defaultDeploymentSelectorLabels = map[string]string{
+		"app.kubernetes.io/instance": helmReleaseName,
+		"app.kubernetes.io/name":     helmChartName,
+		"control-plane":              fmt.Sprintf("%s-controller-manager", helmReleaseName),
+	}
+	defaultDeploymentTerminationGracePeriodSeconds = int64(10)
+	defaultDeploymentTemplateVolumeName            = "manager-config"
+	defaultDeploymentTemplateVolumeConfigMapName   = fmt.Sprintf("%s-manager-config", helmReleaseName)
+
 	defaultRBACRoleName        = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
 	defaultRBACRoleBindingName = fmt.Sprintf("%s-leader-election-rolebinding", helmReleaseName)
 
@@ -54,6 +74,16 @@ var (
 		"app.kubernetes.io/managed-by": "Helm",
 	}
 )
+
+func renderDeploymentManifest(t *testing.T, options *helm.Options) appsv1.Deployment {
+	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{deploymentTemplate})
+	assert.NoError(t, err)
+
+	deployment := appsv1.Deployment{}
+	helm.UnmarshalK8SYaml(t, output, &deployment)
+
+	return deployment
+}
 
 func renderRBACRoleManifest(t *testing.T, options *helm.Options) rbacv1.Role {
 	output, err := helm.RenderTemplateE(t, options, helmChartPath, helmReleaseName, []string{rbacRoleTemplate})
