@@ -12,7 +12,6 @@ import (
 	"strconv"
 
 	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-tfe"
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,7 +37,6 @@ type WorkspaceReconciler struct {
 	client.Client
 	Recorder record.EventRecorder
 	Scheme   *runtime.Scheme
-	tfClient *tfc.Client
 }
 
 type workspaceInstance struct {
@@ -107,7 +105,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if err != nil {
 			w.log.Error(err, "Workspace Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", workspaceFinalizer))
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", workspaceFinalizer)
-			return requeueOnErr(err)
+			return doNotRequeue()
 		}
 		w.log.Info("Workspace Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", workspaceFinalizer))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", workspaceFinalizer)
@@ -118,48 +116,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		w.log.Error(err, "Workspace Controller", "msg", "failed to get HCP Terraform client")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "TerraformClient", "Failed to get HCP Terraform Client")
 		return requeueAfter(requeueInterval)
-	}
-
-	//varSetID := w.instance.Spec.VarSet.VarSetID
-	workspaceID := w.instance.Status.WorkspaceID
-	if workspaceID == "" {
-		w.log.Error(fmt.Errorf("workspace ID is not set"), "Cannot reconcile without workspace ID")
-		return requeueOnErr(fmt.Errorf("workspace ID is not set"))
-	}
-
-	// List existing variable sets for the workspace
-	options := &tfe.VariableSetListOptions{}
-	existingVarSets, err := r.tfClient.VariableSets.ListForWorkspace(ctx, workspaceID, options)
-	if err != nil {
-		w.log.Error(err, "Failed to list variable sets")
-		return requeueOnErr(err)
-	}
-
-	// Iterate over each variable set in Spec.VarSet to apply if not already applied
-	for _, vs := range w.instance.Spec.VarSet {
-		varSetApplied, err := isVarSetApplied(existingVarSets, vs.VarSetID)
-		if err != nil {
-			w.log.Error(err, "Error checking if variable set is applied", "VarSetID", vs.VarSetID)
-			return requeueOnErr(err)
-		}
-
-		if !varSetApplied {
-			applyOptions := &tfe.VariableSetApplyToWorkspacesOptions{
-				Workspaces: []*tfe.Workspace{
-					{
-						ID: workspaceID, // Only the ID is needed here
-					},
-				},
-			}
-			err = r.tfClient.VariableSets.ApplyToWorkspaces(ctx, vs.VarSetID, applyOptions)
-			if err != nil {
-				w.log.Error(err, "Failed to apply variable set", "VarSetID", vs.VarSetID)
-				return requeueOnErr(err)
-			}
-			w.log.Info("Variable set successfully applied", "VarSetID", vs.VarSetID)
-		} else {
-			w.log.Info("Variable set already applied", "VarSetID", vs.VarSetID)
-		}
 	}
 
 	err = r.reconcileWorkspace(ctx, &w)
@@ -684,13 +640,4 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileOutputs", "Successfully reconcilied outputs in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	return r.updateStatus(ctx, w, workspace)
-}
-
-func isVarSetApplied(existingVarSets *tfe.VariableSetList, varSetID string) (bool, error) {
-	for _, varSet := range existingVarSets.Items {
-		if varSet.ID == varSetID {
-			return true, nil
-		}
-	}
-	return false, nil
 }

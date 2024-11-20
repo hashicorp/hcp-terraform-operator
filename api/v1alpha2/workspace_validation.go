@@ -5,6 +5,7 @@ package v1alpha2
 
 import (
 	"fmt"
+	"regexp"
 
 	tfc "github.com/hashicorp/go-tfe"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,6 +27,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
 	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 	allErrs = append(allErrs, w.validateSpecDeletionPolicy()...)
+	allErrs = append(allErrs, w.validateSpecVariableSets()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -585,6 +587,24 @@ func (w *Workspace) validateSpecDeletionPolicy() field.ErrorList {
 			f,
 			fmt.Sprintf("'spec.allowDestroyPlan' must be set to 'true' when 'spec.deletionPolicy' is set to %q", DeletionPolicyDestroy)),
 		)
+func (w *Workspace) validateSpecVariableSets() field.ErrorList {
+	allErrs := field.ErrorList{}
+	idPattern := regexp.MustCompile(`^varset-[a-zA-Z0-9]+$`)
+	spec := w.Spec.VariableSets
+
+	for i, variableSet := range spec {
+		// Path to the current VariableSet for detailed error context
+		fldPath := field.NewPath("spec").Child("variableSets").Index(i)
+
+		// Validate ID
+		if variableSet.ID != "" && !idPattern.MatchString(variableSet.ID) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("id"), variableSet.ID, "must match pattern 'varset-[a-zA-Z0-9]+'"))
+		}
+
+		// Validate Name
+		if len(variableSet.Name) < 1 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("name"), variableSet.Name, "must have a minimum length of 1"))
+		}
 	}
 
 	return allErrs

@@ -591,8 +591,10 @@ type WorkspaceSpec struct {
 	// Variable sets will be a list of maps.
 	// Each map entry will have keys for VarSetID and VarSetName.
 	// Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
+	//More information
+	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
 	// +optional
-	VarSet []WorkspaceVarSet `json:"varset,omitempty"`
+	VariableSets []WorkspaceVariableSet `json:"variableSets,omitempty"`
 }
 
 type PlanStatus struct {
@@ -709,25 +711,22 @@ type WorkspaceList struct {
 	Items           []Workspace `json:"items"`
 }
 
-type WorkspaceVarSet struct {
-	// A Variable Set allows users to reuse the same variables
-	// across multiple workspaces and projects.
+type WorkspaceVariableSet struct {
+	// Variable Set ID
 	// Must match pattern: `varset-[a-zA-Z0-9]+$`
+	//More information:
+	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
 	//
 	//+kubebuilder:validation:Pattern:="varset-[a-zA-Z0-9]+$"
 	//+optional
-	VarSetID string `json:"varSetID,omitempty"`
+	ID string `json:"id,omitempty"`
 	// Variable Set Name.
+	//More information:
+	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
 	//
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
-	VarSetName string `json:"varSetName,omitempty"`
-	// Scope defines where the variable set applies.
-	// Must be one of the following values: `global`, `project`.
-	//
-	// +kubebuilder:validation:Pattern:="^(global|project)$"
-	// +optional
-	Scope string `json:"scope,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 func init() {
