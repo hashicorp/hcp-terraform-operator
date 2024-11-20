@@ -856,64 +856,6 @@ func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
 	}
 }
 
-func TestValidateWorkspaceSpecProject(t *testing.T) {
-	t.Parallel()
-
-	successCases := map[string]Workspace{
-		"HasOnlyID": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					ID: "this",
-				},
-			},
-		},
-		"HasOnlyName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					Name: "this",
-				},
-			},
-		},
-		"HasEmptyProject": {
-			Spec: WorkspaceSpec{
-				Project: nil,
-			},
-		},
-	}
-
-	for n, c := range successCases {
-		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecProject(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
-		})
-	}
-
-	errorCases := map[string]Workspace{
-		"HasIDandName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					ID:   "this",
-					Name: "this",
-				},
-			},
-		},
-		"HasEmptyIDandName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{},
-			},
-		},
-	}
-
-	for n, c := range errorCases {
-		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecProject(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
-		})
-	}
-}
-
 func TestValidateWorkspaceSpecVariables(t *testing.T) {
 	t.Parallel()
 
@@ -1033,6 +975,143 @@ func TestValidateWorkspaceSpecVariables(t *testing.T) {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 			if errs := validateSpecVariables(f.Child("environmentVariables"), c); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateWorkspaceSpec(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"HasOnlyID": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					ID: "this",
+				},
+			},
+		},
+		"HasOnlyName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					Name: "this",
+				},
+			},
+		},
+		"HasEmptyProject": {
+			Spec: WorkspaceSpec{
+				Project: nil,
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecProject(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"HasIDandName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					ID:   "this",
+					Name: "this",
+				},
+			},
+		},
+		"HasEmptyIDandName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecProject(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"HasIDandName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "this",
+						Name: "this",
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecVariableSets(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"HasEmptyIDandEmptyName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "",
+						Name: "",
+					},
+				},
+			},
+		},
+
+		"HasInvalidID": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "invalidID",
+						Name: "validName",
+					},
+				},
+			},
+		},
+
+		"HasInvalidName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "validID",
+						Name: "invalidName",
+					},
+				},
+			},
+		},
+
+		"HasInvalidIDandName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "invalidID",
+						Name: "invalidName",
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecVariableSets(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})

@@ -254,3 +254,15 @@
   - If this involves migrating an existing workspace and the referred project doesn’t exist, the workspace will remain within the same project, and a corresponding error/event message will be provided.
 
   If the `spec.project` field is not specified, the workspace will be created or moved to the default project.
+
+- **How can I apply a variable set to a workspace?**
+
+  You can provide either the variable set ID and variable set name.
+
+- **Can I create and apply a variable set to a workspace?**
+
+  No, currently the only support is to apply existing variable sets to a workspace.
+
+- **Can I use variable sets across multiple workspaces?**
+
+  Yes, you can apply a variable set to either a specific workspace or globally. 
