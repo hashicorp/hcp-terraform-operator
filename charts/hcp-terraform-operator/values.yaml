@@ -4,6 +4,9 @@
 # -- Reference to one or more secrets essential for pulling container images.
 imagePullSecrets: []
 
+# -- Additional labels to add to the Operator pods.
+podLabels: {}
+
 # -- The number of Operator replicas.
 replicaCount: 2
 
