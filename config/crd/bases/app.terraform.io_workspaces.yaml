@@ -688,21 +688,29 @@ spec:
                 required:
                 - secretKeyRef
                 type: object
-              varset:
+              variableSets:
                 description: |-
                   Variable set allows a group of variables to be applied to a workspace.
                   Each entry includes a name and an ID.
+
+
+                  More information
+                  -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
                 items:
                   properties:
-                    varSetID:
+                    id:
                       description: |-
-                        A Variable Set allows users to reuse the same variables
-                        across multiple workspaces and projects.
+                        Variable Set ID
                         Must match pattern: `varset-[a-zA-Z0-9]+$`
+                        More information:
+                        -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
                       pattern: varset-[a-zA-Z0-9]+$
                       type: string
-                    varSetName:
-                      description: Variable Set Name.
+                    name:
+                      description: |-
+                        Variable Set Name.
+                        More information:
+                        -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
                       minLength: 1
                       type: string
                   type: object

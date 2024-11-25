@@ -825,11 +825,12 @@ _Appears in:_
 | `deletionPolicy` _[DeletionPolicy](#deletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.<br />- `retain`: When you delete the custom resource, the operator does not delete the workspace.<br />- `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.<br />- `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the operator deletes the workspace, and then deletes the custom resource.<br />- `force`: Forcefully and immediately deletes the workspace and the custom resource.<br />Default: `retain`. |
 | `varset` _[WorkspaceVarSet](#workspacevarset) array_ | Variable sets will be a list of maps.<br />Each map entry will have keys for VarSetID and VarSetName.<br />Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}] |
 | `varset` _[WorkspaceVarSet](#workspacevarset) array_ | Variable set allows a group of variables to be applied to a workspace.<br />Each entry includes a name and an ID. |
+| `variableSets` _[WorkspaceVariableSet](#workspacevariableset) array_ | Variable set allows a group of variables to be applied to a workspace.<br />Each entry includes a name and an ID.<br /><br />More information<br />-https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces |
 
 
 
 
-#### WorkspaceVarSet
+#### WorkspaceVariableSet
 
 
 
@@ -840,7 +841,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `varSetID` _string_ | A Variable Set allows users to reuse the same variables<br />across multiple workspaces and projects.<br />Must match pattern: `varset-[a-zA-Z0-9]+$` |
-| `varSetName` _string_ | Variable Set Name. |
+| `id` _string_ | Variable Set ID<br />Must match pattern: `varset-[a-zA-Z0-9]+$`<br />More information:<br />-https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces |
+| `name` _string_ | Variable Set Name.<br />More information:<br />-https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces |
 
 

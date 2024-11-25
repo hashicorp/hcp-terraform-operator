@@ -46,14 +46,6 @@ type workspaceInstance struct {
 	tfClient HCPTerraformClient
 }
 
-// type WorkspaceVarSet struct {
-// 	v1alpha2.WorkspaceVarSet
-
-// 	VarSetID       string
-// 	VarSetName     string
-// 	AppliedVarSets string
-// }
-
 // +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/finalizers,verbs=update
 // +kubebuilder:rbac:groups=app.terraform.io,resources=workspaces/status,verbs=get;update;patch
@@ -105,7 +97,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if err != nil {
 			w.log.Error(err, "Workspace Controller", "msg", fmt.Sprintf("failed to add finalizer %s to the object", workspaceFinalizer))
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "AddFinalizer", "Failed to add finalizer %s to the object", workspaceFinalizer)
-			return doNotRequeue()
+			return requeueOnErr(err)
 		}
 		w.log.Info("Workspace Controller", "msg", fmt.Sprintf("successfully added finalizer %s to the object", workspaceFinalizer))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "AddFinalizer", "Successfully added finalizer %s to the object", workspaceFinalizer)
@@ -564,6 +556,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	}
 	w.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", w.instance.Status.WorkspaceID)
+
+	// Reconcile Variable Sets
+	err = r.reconcileVariableSets(ctx, w, workspace)
+	if err != nil {
+		w.log.Error(err, "Reconcile Variable Sets", "msg", fmt.Sprintf("failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariableSets", "Failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Variable Sets", "msg", "successfully reconciled variable sets")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileVariableSets", "Successfully reconciled variable sets in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Run Triggers
 	err = r.reconcileRunTriggers(ctx, w)

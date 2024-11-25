@@ -869,6 +869,64 @@ func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
 	}
 }
 
+func TestValidateWorkspaceSpecProject(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"HasOnlyID": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					ID: "this",
+				},
+			},
+		},
+		"HasOnlyName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					Name: "this",
+				},
+			},
+		},
+		"HasEmptyProject": {
+			Spec: WorkspaceSpec{
+				Project: nil,
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecProject(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"HasIDandName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					ID:   "this",
+					Name: "this",
+				},
+			},
+		},
+		"HasEmptyIDandName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecProject(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
 func TestValidateWorkspaceSpecVariables(t *testing.T) {
 	t.Parallel()
 
@@ -994,7 +1052,6 @@ func TestValidateWorkspaceSpecVariables(t *testing.T) {
 	}
 }
 
-<<<<<<< HEAD
 func TestValidateSpecDeletionPolicy(t *testing.T) {
 	t.Parallel()
 
@@ -1003,74 +1060,30 @@ func TestValidateSpecDeletionPolicy(t *testing.T) {
 			Spec: WorkspaceSpec{
 				AllowDestroyPlan: true,
 				DeletionPolicy:   DeletionPolicyDestroy,
-=======
-func TestValidateWorkspaceSpec(t *testing.T) {
-	t.Parallel()
-
-	successCases := map[string]Workspace{
-		"HasOnlyID": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					ID: "this",
-				},
-			},
-		},
-		"HasOnlyName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					Name: "this",
-				},
-			},
-		},
-		"HasEmptyProject": {
-			Spec: WorkspaceSpec{
-				Project: nil,
->>>>>>> 9c30b95 (WIP)
 			},
 		},
 	}
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-<<<<<<< HEAD
 			if errs := c.validateSpecDeletionPolicy(); len(errs) != 0 {
-=======
-			if errs := c.validateSpecProject(); len(errs) != 0 {
->>>>>>> 9c30b95 (WIP)
 				t.Errorf("Unexpected validation errors: %v", errs)
 			}
 		})
 	}
 
 	errorCases := map[string]Workspace{
-<<<<<<< HEAD
 		"DeletionPolicyDestroyAllowDestroyPlanFalse": {
 			Spec: WorkspaceSpec{
 				AllowDestroyPlan: false,
 				DeletionPolicy:   DeletionPolicyDestroy,
-=======
-		"HasIDandName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					ID:   "this",
-					Name: "this",
-				},
-			},
-		},
-		"HasEmptyIDandName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{},
->>>>>>> 9c30b95 (WIP)
 			},
 		},
 	}
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-<<<<<<< HEAD
 			if errs := c.validateSpecDeletionPolicy(); len(errs) == 0 {
-=======
-			if errs := c.validateSpecProject(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})
@@ -1085,14 +1098,14 @@ func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 			Spec: WorkspaceSpec{
 				VariableSets: []WorkspaceVariableSet{
 					{
-						ID:   "this",
-						Name: "this",
+						Name: "this", // Only Name is set
 					},
 				},
 			},
 		},
 	}
 
+	// Run Success Test Cases
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecVariableSets(); len(errs) != 0 {
@@ -1101,46 +1114,25 @@ func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 		})
 	}
 
+	// Error Cases: Invalid combinations of ID and Name
 	errorCases := map[string]Workspace{
 		"HasEmptyIDandEmptyName": {
 			Spec: WorkspaceSpec{
 				VariableSets: []WorkspaceVariableSet{
 					{
 						ID:   "",
-						Name: "",
+						Name: "", // Neither ID nor Name is set (invalid)
 					},
 				},
 			},
 		},
 
-		"HasInvalidID": {
+		"HasBothIDandName": {
 			Spec: WorkspaceSpec{
 				VariableSets: []WorkspaceVariableSet{
 					{
-						ID:   "invalidID",
-						Name: "validName",
-					},
-				},
-			},
-		},
-
-		"HasInvalidName": {
-			Spec: WorkspaceSpec{
-				VariableSets: []WorkspaceVariableSet{
-					{
-						ID:   "validID",
-						Name: "invalidName",
-					},
-				},
-			},
-		},
-
-		"HasInvalidIDandName": {
-			Spec: WorkspaceSpec{
-				VariableSets: []WorkspaceVariableSet{
-					{
-						ID:   "invalidID",
-						Name: "invalidName",
+						ID:   "thisID", // Both ID and Name are set (invalid)
+						Name: "thisName",
 					},
 				},
 			},
@@ -1150,7 +1142,6 @@ func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecVariableSets(); len(errs) == 0 {
->>>>>>> 9c30b95 (WIP)
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})

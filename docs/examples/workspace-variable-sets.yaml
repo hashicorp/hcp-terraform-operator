@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 ---
 apiVersion: app.terraform.io/v1alpha2
 kind: Workspace
@@ -10,8 +13,8 @@ spec:
       name: tfc-operator
       key: token
   name: kubernetes-operator-demo
-  variablesets: 
-    - varSetName: "testing"
+  variableSets: 
+    - name: "testing"
     #Alternatively, you can use the Variable Set ID
     #
-    #varSetID: "varset-hLdht7LL9mdV4MYD"
+    #id: "varset-hLdht7LL9mdV4MYD"
