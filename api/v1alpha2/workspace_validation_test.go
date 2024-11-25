@@ -856,6 +856,64 @@ func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
 	}
 }
 
+func TestValidateWorkspaceSpecProject(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"HasOnlyID": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					ID: "this",
+				},
+			},
+		},
+		"HasOnlyName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					Name: "this",
+				},
+			},
+		},
+		"HasEmptyProject": {
+			Spec: WorkspaceSpec{
+				Project: nil,
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecProject(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"HasIDandName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{
+					ID:   "this",
+					Name: "this",
+				},
+			},
+		},
+		"HasEmptyIDandName": {
+			Spec: WorkspaceSpec{
+				Project: &WorkspaceProject{},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecProject(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
 func TestValidateWorkspaceSpecVariables(t *testing.T) {
 	t.Parallel()
 
@@ -981,80 +1039,32 @@ func TestValidateWorkspaceSpecVariables(t *testing.T) {
 	}
 }
 
-func TestValidateWorkspaceSpec(t *testing.T) {
-	t.Parallel()
-
-	successCases := map[string]Workspace{
-		"HasOnlyID": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					ID: "this",
-				},
-			},
-		},
-		"HasOnlyName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					Name: "this",
-				},
-			},
-		},
-		"HasEmptyProject": {
-			Spec: WorkspaceSpec{
-				Project: nil,
-			},
-		},
-	}
-
-	for n, c := range successCases {
-		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecProject(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
-		})
-	}
-
-	errorCases := map[string]Workspace{
-		"HasIDandName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{
-					ID:   "this",
-					Name: "this",
-				},
-			},
-		},
-		"HasEmptyIDandName": {
-			Spec: WorkspaceSpec{
-				Project: &WorkspaceProject{},
-			},
-		},
-	}
-
-	for n, c := range errorCases {
-		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecProject(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
-		})
-	}
-}
-
 func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 	t.Parallel()
 
+	// Success Cases: Valid combinations of ID and Name
 	successCases := map[string]Workspace{
-		"HasIDandName": {
+		"HasID": {
 			Spec: WorkspaceSpec{
 				VariableSets: []WorkspaceVariableSet{
 					{
-						ID:   "this",
-						Name: "this",
+						ID: "this", // Only ID is set
+					},
+				},
+			},
+		},
+		"HasName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						Name: "this", // Only Name is set
 					},
 				},
 			},
 		},
 	}
 
+	// Run Success Test Cases
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecVariableSets(); len(errs) != 0 {
@@ -1063,46 +1073,25 @@ func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 		})
 	}
 
+	// Error Cases: Invalid combinations of ID and Name
 	errorCases := map[string]Workspace{
 		"HasEmptyIDandEmptyName": {
 			Spec: WorkspaceSpec{
 				VariableSets: []WorkspaceVariableSet{
 					{
 						ID:   "",
-						Name: "",
+						Name: "", // Neither ID nor Name is set (invalid)
 					},
 				},
 			},
 		},
 
-		"HasInvalidID": {
+		"HasBothIDandName": {
 			Spec: WorkspaceSpec{
 				VariableSets: []WorkspaceVariableSet{
 					{
-						ID:   "invalidID",
-						Name: "validName",
-					},
-				},
-			},
-		},
-
-		"HasInvalidName": {
-			Spec: WorkspaceSpec{
-				VariableSets: []WorkspaceVariableSet{
-					{
-						ID:   "validID",
-						Name: "invalidName",
-					},
-				},
-			},
-		},
-
-		"HasInvalidIDandName": {
-			Spec: WorkspaceSpec{
-				VariableSets: []WorkspaceVariableSet{
-					{
-						ID:   "invalidID",
-						Name: "invalidName",
+						ID:   "thisID", // Both ID and Name are set (invalid)
+						Name: "thisName",
 					},
 				},
 			},

@@ -77,3 +77,52 @@ func (w *workspaceInstance) getVariableSetID(ctx context.Context) (string, error
 	return "", fmt.Errorf("no valid Variable Set found in 'spec.VariableSets'")
 
 }
+
+func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+	// Get the ID for the variable sets specified in the spec
+	variableSetID, err := w.getVariableSetID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Get the variable set using its ID
+	variableSet, err := w.tfClient.Client.VariableSets.Read(ctx, variableSetID, nil)
+	if err != nil {
+		return fmt.Errorf("failed to read variable set with ID %s: %w", variableSetID, err)
+	}
+
+	// If the variable set is global, we assume it is already applied to all workspaces
+	if variableSet.Global {
+		w.log.Info("Reconcile Variable Set", "msg", "variable set is global, no need to apply again")
+		return nil
+	}
+
+	// List the variable sets already applied to the workspace
+	variableSetsForWorkspace, err := w.tfClient.Client.VariableSets.ListForWorkspace(ctx, workspace.ID, nil)
+	if err != nil {
+		return fmt.Errorf("failed to list variable sets for workspace %s: %w", workspace.ID, err)
+	}
+
+	// Check if the variable set is already applied to the workspace
+	isApplied := false
+	for _, vs := range variableSetsForWorkspace.Items {
+		if vs.ID == variableSetID {
+			isApplied = true
+			break
+		}
+	}
+
+	// If the variable set is not applied, apply it to the workspace
+	if !isApplied {
+		w.log.Info("Reconcile Variable Set", "msg", fmt.Sprintf("applying variable set %s to workspace %s", variableSetID, workspace.ID))
+		err = w.tfClient.Client.VariableSets.ApplyToWorkspaces(ctx, variableSetID, &tfc.VariableSetApplyToWorkspacesOptions{
+			Workspaces: []*tfc.Workspace{workspace},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to apply variable set %s to workspace %s: %w", variableSetID, workspace.ID, err)
+		}
+		w.log.Info("Reconcile Variable Set", "msg", fmt.Sprintf("successfully applied variable set %s to workspace %s", variableSetID, workspace.ID))
+	}
+
+	return nil
+}

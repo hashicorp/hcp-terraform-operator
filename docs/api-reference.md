@@ -802,12 +802,12 @@ _Appears in:_
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 | `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups.<br />Default: default organization project.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
-| `varset` _[WorkspaceVarSet](#workspacevarset) array_ | Variable set allows a group of variables to be applied to a workspace.<br />Each entry includes a name and an ID. |
+| `variableSets` _[WorkspaceVariableSet](#workspacevariableset) array_ | Variable set allows a group of variables to be applied to a workspace.<br />Each entry includes a name and an ID.<br /><br />More information<br />-https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces |
 
 
 
 
-#### WorkspaceVarSet
+#### WorkspaceVariableSet
 
 
 
@@ -818,7 +818,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `varSetID` _string_ | A Variable Set allows users to reuse the same variables<br />across multiple workspaces and projects.<br />Must match pattern: `varset-[a-zA-Z0-9]+$` |
-| `varSetName` _string_ | Variable Set Name. |
+| `id` _string_ | Variable Set ID<br />Must match pattern: `varset-[a-zA-Z0-9]+$`<br />More information:<br />-https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces |
+| `name` _string_ | Variable Set Name.<br />More information:<br />-https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces |
 
 
