@@ -26,6 +26,7 @@ rules:
   resources:
   - agentpools
   - modules
+  - projects
   - workspaces
   verbs:
   - create
@@ -40,6 +41,7 @@ rules:
   resources:
   - agentpools/finalizers
   - modules/finalizers
+  - projects/finalizers
   - workspaces/finalizers
   verbs:
   - update
@@ -48,33 +50,8 @@ rules:
   resources:
   - agentpools/status
   - modules/status
-  - workspaces/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - app.terraforp.io
-  resources:
-  - projects
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - app.terraforp.io
-  resources:
-  - projects/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - app.terraforp.io
-  resources:
   - projects/status
+  - workspaces/status
   verbs:
   - get
   - patch
