@@ -55,8 +55,7 @@ operator:
   #           values:
   #         - amd64
   #
-  # -- Kubernetes Affinity.
-  # More information: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Kubernetes Affinity. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
 
   # Usage example:
@@ -66,9 +65,8 @@ operator:
   #   value: "spot"
   #   effect: "NoSchedule"
   #
-  # -- Kubernetes Tolerations.
-  # More information: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: {}
+  # -- Kubernetes Tolerations. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
 
   # -- The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc.
   syncPeriod: 1h
