@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-slug v0.16.1
 	github.com/hashicorp/go-tfe v1.70.0
-	github.com/onsi/ginkgo/v2 v2.21.0
+	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.35.1
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.31.3
