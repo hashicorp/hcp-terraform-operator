@@ -55,7 +55,7 @@ func init() {
 func main() {
 	// GLOBAL OPTIONS
 	var syncPeriod time.Duration
-	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
+	flag.DurationVar(&syncPeriod, "sync-period", 1*time.Hour,
 		"The minimum frequency at which watched resources are reconciled. Format: 5s, 1m, etc.")
 	var watchNamespaces cliNamespaces
 	flag.Var(&watchNamespaces, "namespace", "Namespace to watch")

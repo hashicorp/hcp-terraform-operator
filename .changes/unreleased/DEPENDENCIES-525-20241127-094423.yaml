@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `k8s.io/client-go` from 0.30.3 to 0.31.0.
+time: 2024-11-27T09:44:23.563345+01:00
+custom:
+    PR: "525"
