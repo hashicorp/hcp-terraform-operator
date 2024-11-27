@@ -162,7 +162,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | imagePullSecrets | list | `[]` | Reference to one or more secrets essential for pulling container images. |
 | kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | kubeRbacProxy.image.repository | string | `"quay.io/brancz/kube-rbac-proxy"` | Image repository. |
-| kubeRbacProxy.image.tag | string | `"v0.18.0"` | Image tag. |
+| kubeRbacProxy.image.tag | string | `"v0.18.1"` | Image tag. |
 | kubeRbacProxy.resources.limits.cpu | string | `"500m"` | Limits as a maximum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
@@ -177,7 +177,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
 | operator.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.skipTLSVerify | bool | `false` | Whether or not to ignore TLS certification warnings. |
-| operator.syncPeriod | string | `"5m"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
+| operator.syncPeriod | string | `"1h"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
