@@ -239,6 +239,44 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				return compareTags(wsTags, expectTags)
 			}).Should(BeTrue())
 		})
+
+		It("can handle auto apply run trigger", func() {
+			instance.Spec.Tags = []appv1alpha2.Tag{"auto-apply-run-trigger"}
+			// Set AutoApplyRunTrigger to true
+			instance.Spec.AutoApplyRunTrigger = true
+			createWorkspace(instance)
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				return ws.AutoApplyRunTrigger == instance.Spec.AutoApplyRunTrigger
+			}).Should(BeTrue())
+
+			// Manually change AutoApplyRunTrigger to false and wait for the operator to change it back to true
+			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
+				AutoApplyRunTrigger: tfc.Bool(false),
+			})
+			Expect(err).Should(Succeed())
+			Expect(ws).ShouldNot(BeNil())
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				return ws.AutoApplyRunTrigger == instance.Spec.AutoApplyRunTrigger
+			}).Should(BeTrue())
+
+			// Set AutoApplyRunTrigger to false
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.AutoApplyRunTrigger = false
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				return ws.AutoApplyRunTrigger == instance.Spec.AutoApplyRunTrigger
+			}).Should(BeTrue())
+		})
 	})
 })
 

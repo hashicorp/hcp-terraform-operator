@@ -81,6 +81,13 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
                 pattern: ^(auto|manual)$
                 type: string
+              autoApplyRunTrigger:
+                default: false
+                description: |-
+                  Configures this workspace to automatically apply changes for successful runs.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers#run-triggers-auto-apply-setting
+                type: boolean
               deletionPolicy:
                 default: retain
                 description: |-

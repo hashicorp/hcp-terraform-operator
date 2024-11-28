@@ -448,6 +448,13 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=manual
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
+	// Configures this workspace to automatically apply changes for successful runs.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers#run-triggers-auto-apply-setting
+	//
+	//+kubebuilder:default=false
+	//+optional
+	AutoApplyRunTrigger bool `json:"autoApplyRunTrigger,omitempty"`
 	// Allows a destroy plan to be created and applied.
 	// Default: `true`.
 	// More information:
