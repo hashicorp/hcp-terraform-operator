@@ -63,7 +63,7 @@ kubeRbacProxy:
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Image tag.
-    tag: v0.18.1
+    tag: v0.18.2
 
   # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:
