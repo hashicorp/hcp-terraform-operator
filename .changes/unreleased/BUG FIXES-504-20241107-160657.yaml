@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`Workspace`: Fix an issue where `spec.agentPool` can be set even when `spec.executionMode` is not set to `agent`.'
+time: 2024-11-07T16:06:57.85398+01:00
+custom:
+    PR: "504"

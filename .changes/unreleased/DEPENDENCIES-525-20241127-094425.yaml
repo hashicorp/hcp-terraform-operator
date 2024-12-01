@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `sigs.k8s.io/controller-runtime` from 0.18.4 to 0.19.2.
+time: 2024-11-27T09:44:25.810399+01:00
+custom:
+    PR: "525"

@@ -48,7 +48,7 @@ operator:
       type: RuntimeDefault
 
   # -- The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc.
-  syncPeriod: 5m
+  syncPeriod: 1h
 
   # -- List of namespaces the controllers should watch.
   watchedNamespaces: []
@@ -66,7 +66,7 @@ kubeRbacProxy:
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Image tag.
-    tag: v0.18.0
+    tag: v0.18.1
 
   # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:

@@ -108,9 +108,6 @@ spec:
         {{- toYaml .Values.securityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10
       volumes:
-      - configMap:
-          name: {{ .Release.Name }}-manager-config
-        name: manager-config
 {{- if .Values.customCAcertificates }}
       - configMap:
           name: {{ .Release.Name }}-ca-certificates
