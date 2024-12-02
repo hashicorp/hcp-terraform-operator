@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`Helm Chart`: Fix an issue that prevented `customCAcertificates` from being attached to the pod volume.'
+time: 2024-12-02T09:09:02.149814+01:00
+custom:
+    PR: "516"
