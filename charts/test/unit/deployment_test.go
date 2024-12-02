@@ -183,3 +183,18 @@ func TestDeploymentReplicas(t *testing.T) {
 
 	assert.Equal(t, d, deployment)
 }
+
+func TestDeploymentPriorityClassName(t *testing.T) {
+	priorityClassName := "high-priority"
+	options := &helm.Options{
+		SetValues: map[string]string{
+			"priorityClassName": priorityClassName,
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+	d.Spec.Template.Spec.PriorityClassName = priorityClassName
+
+	assert.Equal(t, d, deployment)
+}
