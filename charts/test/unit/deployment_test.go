@@ -8,6 +8,7 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,129 +16,170 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+func defaultDeployment() appsv1.Deployment {
+	return appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaultDeploymentName,
+			Namespace: defaultNamespace,
+			Labels:    defaultDeploymentLabels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: ptr.To(defaultDeploymentReplicas),
+			Selector: &metav1.LabelSelector{MatchLabels: defaultDeploymentSelectorLabels},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: defaultDeploymentSelectorLabels,
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName:            defaultServiceAccountName,
+					SecurityContext:               &corev1.PodSecurityContext{RunAsNonRoot: ptr.To(true)},
+					TerminationGracePeriodSeconds: &defaultDeploymentTerminationGracePeriodSeconds,
+					Containers: []corev1.Container{
+						{
+							Name:    "manager",
+							Image:   "hashicorp/hcp-terraform-operator:2.7.0",
+							Command: []string{"/manager"},
+							Args: []string{
+								"--sync-period=1h",
+								"--agent-pool-workers=1",
+								"--agent-pool-sync-period=30s",
+								"--module-workers=1",
+								"--module-sync-period=5m",
+								"--project-workers=1",
+								"--project-sync-period=5m",
+								"--workspace-workers=1",
+								"--workspace-sync-period=5m",
+							},
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("128Mi"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("50m"),
+									corev1.ResourceMemory: resource.MustParse("64Mi"),
+								},
+							},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.IntOrString{
+											Type:   intstr.Int,
+											IntVal: 8081,
+										},
+									},
+								},
+								InitialDelaySeconds: 15,
+								PeriodSeconds:       20,
+							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/readyz",
+										Port: intstr.IntOrString{
+											Type:   intstr.Int,
+											IntVal: 8081,
+										},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       10,
+							},
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							SecurityContext: &corev1.SecurityContext{
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{"ALL"},
+								},
+								AllowPrivilegeEscalation: ptr.To(false),
+								SeccompProfile: &corev1.SeccompProfile{
+									Type: corev1.SeccompProfileTypeRuntimeDefault,
+								},
+							},
+						},
+						{
+							Name:  "kube-rbac-proxy",
+							Image: "quay.io/brancz/kube-rbac-proxy:v0.18.2",
+							Args: []string{
+								"--secure-listen-address=0.0.0.0:8443",
+								"--upstream=http://127.0.0.1:8080/",
+								"--logtostderr=true",
+								"--v=0",
+							},
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("128Mi"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("50m"),
+									corev1.ResourceMemory: resource.MustParse("64Mi"),
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "https",
+									ContainerPort: 8443,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							SecurityContext: &corev1.SecurityContext{
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{"ALL"},
+								},
+								AllowPrivilegeEscalation: ptr.To(false),
+								SeccompProfile: &corev1.SeccompProfile{
+									Type: corev1.SeccompProfileTypeRuntimeDefault,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func TestDeploymentDefault(t *testing.T) {
 	options := &helm.Options{
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
 
-	assert.Equal(t, defaultDeploymentName, deployment.Name)
-	assert.Equal(t, defaultDeploymentLabels, deployment.Labels)
-	assert.Empty(t, deployment.Annotations)
-	assert.Equal(t, defaultNamespace, deployment.Namespace)
+	assert.Equal(t, d, deployment)
+}
 
-	assert.Equal(t, &defaultDeploymentReplicas, deployment.Spec.Replicas)
-	assert.Equal(t, &metav1.LabelSelector{MatchLabels: defaultDeploymentSelectorLabels}, deployment.Spec.Selector)
+func TestDeploymentNamespace(t *testing.T) {
+	ns := "this"
+	options := &helm.Options{
+		EnvVars: map[string]string{
+			"HELM_NAMESPACE": ns,
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+	d.Namespace = ns
 
-	assert.Empty(t, deployment.Spec.Template.Annotations)
-	assert.Equal(t, defaultDeploymentSelectorLabels, deployment.Spec.Template.Labels)
+	assert.Equal(t, d, deployment)
+}
 
-	spec := deployment.Spec.Template.Spec
-	// Template.Spec
-	assert.Empty(t, spec.PriorityClassName)
-	assert.Empty(t, spec.ImagePullSecrets)
-	assert.Len(t, spec.Containers, 2)
-	assert.Equal(t, corev1.Container{
-		Name:    "manager",
-		Image:   "hashicorp/hcp-terraform-operator:2.7.0",
-		Command: []string{"/manager"},
-		Args: []string{
-			"--sync-period=1h",
-			"--agent-pool-workers=1",
-			"--agent-pool-sync-period=30s",
-			"--module-workers=1",
-			"--module-sync-period=5m",
-			"--project-workers=1",
-			"--project-sync-period=5m",
-			"--workspace-workers=1",
-			"--workspace-sync-period=5m",
+func TestDeploymentReplicas(t *testing.T) {
+	options := &helm.Options{
+		SetValues: map[string]string{
+			"replicaCount": "5",
 		},
-		Resources: corev1.ResourceRequirements{
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("500m"),
-				corev1.ResourceMemory: resource.MustParse("128Mi"),
-			},
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("50m"),
-				corev1.ResourceMemory: resource.MustParse("64Mi"),
-			},
-		},
-		LivenessProbe: &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path: "/healthz",
-					Port: intstr.IntOrString{
-						Type:   intstr.Int,
-						IntVal: 8081,
-					},
-				},
-			},
-			InitialDelaySeconds: 15,
-			PeriodSeconds:       20,
-		},
-		ReadinessProbe: &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path: "/readyz",
-					Port: intstr.IntOrString{
-						Type:   intstr.Int,
-						IntVal: 8081,
-					},
-				},
-			},
-			InitialDelaySeconds: 5,
-			PeriodSeconds:       10,
-		},
-		ImagePullPolicy: corev1.PullIfNotPresent,
-		SecurityContext: &corev1.SecurityContext{
-			Capabilities: &corev1.Capabilities{
-				Drop: []corev1.Capability{"ALL"},
-			},
-			AllowPrivilegeEscalation: ptr.To(false),
-			SeccompProfile: &corev1.SeccompProfile{
-				Type: corev1.SeccompProfileTypeRuntimeDefault,
-			},
-		},
-	}, spec.Containers[0])
-	assert.Equal(t, corev1.Container{
-		Name:  "kube-rbac-proxy",
-		Image: "quay.io/brancz/kube-rbac-proxy:v0.18.2",
-		Args: []string{
-			"--secure-listen-address=0.0.0.0:8443",
-			"--upstream=http://127.0.0.1:8080/",
-			"--logtostderr=true",
-			"--v=0",
-		},
-		Resources: corev1.ResourceRequirements{
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("500m"),
-				corev1.ResourceMemory: resource.MustParse("128Mi"),
-			},
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("50m"),
-				corev1.ResourceMemory: resource.MustParse("64Mi"),
-			},
-		},
-		Ports: []corev1.ContainerPort{
-			{
-				Name:          "https",
-				ContainerPort: 8443,
-				Protocol:      corev1.ProtocolTCP,
-			},
-		},
-		ImagePullPolicy: corev1.PullIfNotPresent,
-		SecurityContext: &corev1.SecurityContext{
-			Capabilities: &corev1.Capabilities{
-				Drop: []corev1.Capability{"ALL"},
-			},
-			AllowPrivilegeEscalation: ptr.To(false),
-			SeccompProfile: &corev1.SeccompProfile{
-				Type: corev1.SeccompProfileTypeRuntimeDefault,
-			},
-		},
-	}, spec.Containers[1])
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+	d.Spec.Replicas = ptr.To(int32(5))
 
-	assert.Equal(t, defaultServiceAccountName, spec.ServiceAccountName)
-	assert.Equal(t, &corev1.PodSecurityContext{RunAsNonRoot: ptr.To(true)}, spec.SecurityContext)
-	assert.Equal(t, &defaultDeploymentTerminationGracePeriodSeconds, spec.TerminationGracePeriodSeconds)
+	assert.Equal(t, d, deployment)
 }

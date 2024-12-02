@@ -52,6 +52,9 @@ var (
 		"app.kubernetes.io/name":     helmChartName,
 		"control-plane":              fmt.Sprintf("%s-controller-manager", helmReleaseName),
 	}
+	defaultDeploymentTemplateSpecLabels = map[string]string{
+		"control-plane": fmt.Sprintf("%s-controller-manager", helmReleaseName),
+	}
 	defaultDeploymentTerminationGracePeriodSeconds = int64(10)
 	defaultDeploymentTemplateVolumeName            = "manager-config"
 	defaultDeploymentTemplateVolumeConfigMapName   = fmt.Sprintf("%s-manager-config", helmReleaseName)
