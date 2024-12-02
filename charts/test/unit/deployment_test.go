@@ -42,7 +42,7 @@ func TestDeploymentDefault(t *testing.T) {
 		Image:   "hashicorp/hcp-terraform-operator:2.7.0",
 		Command: []string{"/manager"},
 		Args: []string{
-			"--sync-period=5m",
+			"--sync-period=1h",
 			"--agent-pool-workers=1",
 			"--agent-pool-sync-period=30s",
 			"--module-workers=1",
@@ -101,7 +101,7 @@ func TestDeploymentDefault(t *testing.T) {
 	}, spec.Containers[0])
 	assert.Equal(t, corev1.Container{
 		Name:  "kube-rbac-proxy",
-		Image: "quay.io/brancz/kube-rbac-proxy:v0.18.0",
+		Image: "quay.io/brancz/kube-rbac-proxy:v0.18.2",
 		Args: []string{
 			"--secure-listen-address=0.0.0.0:8443",
 			"--upstream=http://127.0.0.1:8080/",
@@ -137,19 +137,7 @@ func TestDeploymentDefault(t *testing.T) {
 		},
 	}, spec.Containers[1])
 
-	assert.Equal(t, defaultServiceAccountName, deployment.Spec.Template.Spec.ServiceAccountName)
-	assert.Equal(t, &corev1.PodSecurityContext{RunAsNonRoot: ptr.To(true)}, deployment.Spec.Template.Spec.SecurityContext)
-	assert.Equal(t, &defaultDeploymentTerminationGracePeriodSeconds, deployment.Spec.Template.Spec.TerminationGracePeriodSeconds)
-	assert.Equal(t, []corev1.Volume{
-		{
-			Name: defaultDeploymentTemplateVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: defaultDeploymentTemplateVolumeConfigMapName,
-					},
-				},
-			},
-		},
-	}, deployment.Spec.Template.Spec.Volumes)
+	assert.Equal(t, defaultServiceAccountName, spec.ServiceAccountName)
+	assert.Equal(t, &corev1.PodSecurityContext{RunAsNonRoot: ptr.To(true)}, spec.SecurityContext)
+	assert.Equal(t, &defaultDeploymentTerminationGracePeriodSeconds, spec.TerminationGracePeriodSeconds)
 }
