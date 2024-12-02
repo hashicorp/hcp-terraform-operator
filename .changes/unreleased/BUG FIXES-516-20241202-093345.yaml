@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`Helm Chart`: Fix an issue that prevented custom CA certificates from being attached to the pod volume. The `customCAcertificates` value now refers to a base64-encoded CRT bundle instead of a file path.'
+time: 2024-12-02T09:33:45.945306+01:00
+custom:
+    PR: "516"

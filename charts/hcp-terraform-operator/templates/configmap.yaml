@@ -7,8 +7,6 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-ca-certificates
   namespace: {{ .Release.Namespace }}
-data:
-  ca-certificates: |-
-{{ .Files.Get .Values.customCAcertificates | indent 4 }}
-
+binaryData:
+  ca-certificates: {{ .Values.customCAcertificates }}
 {{- end }}
