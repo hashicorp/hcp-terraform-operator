@@ -182,6 +182,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
 | operator.tolerations | list | `[]` | Kubernetes Tolerations. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
+| podLabels | object | `{}` | Additional labels to add to the Operator pods. |
 | priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
 | rbac.create | bool | `true` | Specifies whether a Role-Based Access Control (RBAC) resources should be created |
 | replicaCount | int | `2` | The number of Operator replicas. |
