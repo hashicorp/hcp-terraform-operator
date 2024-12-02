@@ -4,6 +4,9 @@
 # -- Reference to one or more secrets essential for pulling container images.
 imagePullSecrets: []
 
+# -- Additional labels to add to the Operator pods.
+podLabels: {}
+
 # -- The number of Operator replicas.
 replicaCount: 2
 
@@ -44,8 +47,32 @@ operator:
     seccompProfile:
       type: RuntimeDefault
 
+  # Usage example:
+  # affinity:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #       - matchExpressions:
+  #         - key: kubernetes.io/arch
+  #           operator: In
+  #           values:
+  #         - amd64
+  #
+  # -- Kubernetes Affinity. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  affinity: {}
+
+  # Usage example:
+  # tolerations:
+  # - key: "kubernetes.azure.com/scalesetpriority"
+  #   operator: "Equal"
+  #   value: "spot"
+  #   effect: "NoSchedule"
+  #
+  # -- Kubernetes Tolerations. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+
   # -- The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc.
-  syncPeriod: 5m
+  syncPeriod: 1h
 
   # -- List of namespaces the controllers should watch.
   watchedNamespaces: []
@@ -63,7 +90,7 @@ kubeRbacProxy:
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Image tag.
-    tag: v0.18.0
+    tag: v0.18.1
 
   # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:
