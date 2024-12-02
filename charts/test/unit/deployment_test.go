@@ -198,3 +198,28 @@ func TestDeploymentPriorityClassName(t *testing.T) {
 
 	assert.Equal(t, d, deployment)
 }
+
+func TestDeploymentServiceAccountName(t *testing.T) {
+	serviceAccountName := "this"
+	options := &helm.Options{
+		SetValues: map[string]string{
+			"serviceAccount.create": "true",
+			"serviceAccount.name":   serviceAccountName,
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+	d.Spec.Template.Spec.ServiceAccountName = serviceAccountName
+
+	assert.Equal(t, d, deployment)
+}
+
+// TODO:
+// - customCAcertificates
+// - securityContext
+// - imagePullSecrets
+// - podLabels
+// - kubeRbacProxy.*
+// - operator.*
+// - controllers.*
