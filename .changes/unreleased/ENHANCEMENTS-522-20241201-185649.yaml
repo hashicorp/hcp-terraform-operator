@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '`Helm Chart`: Add the ability to configure additional labels for the Operator pod.'
+time: 2024-12-01T18:56:49.558093+01:00
+custom:
+    PR: "522"
