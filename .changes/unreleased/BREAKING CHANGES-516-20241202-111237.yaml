@@ -1,0 +1,5 @@
+kind: BREAKING CHANGES
+body: '`Helm Chart`: The `customCAcertificates` value has been replaced to accept a base64-encoded CA bundle instead of a file path. This change aims to simplify the installation/upgrade workflow.'
+time: 2024-12-02T11:12:37.978396+01:00
+custom:
+    PR: "516"
