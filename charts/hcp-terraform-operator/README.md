@@ -168,6 +168,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
 | kubeRbacProxy.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
+| operator.affinity | object | `{}` | Kubernetes Affinity. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | operator.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | operator.image.repository | string | `"hashicorp/hcp-terraform-operator"` | Image repository. |
 | operator.image.tag | string | `""` | Image tag. Defaults to `.Chart.AppVersion`. |
@@ -179,6 +180,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | operator.skipTLSVerify | bool | `false` | Whether or not to ignore TLS certification warnings. |
 | operator.syncPeriod | string | `"1h"` | The minimum frequency at which watched resources are reconciled. Format: `5s`, `1m`, etc. |
 | operator.tfeAddress | string | `""` | The API URL of a Terraform Enterprise instance. |
+| operator.tolerations | list | `[]` | Kubernetes Tolerations. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | operator.watchedNamespaces | list | `[]` | List of namespaces the controllers should watch. |
 | priorityClassName | string | `""` | Deployment priorityClassName. More information in [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/). |
 | rbac.create | bool | `true` | Specifies whether a Role-Based Access Control (RBAC) resources should be created |
