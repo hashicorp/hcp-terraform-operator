@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '`Helm Chart`: Add the ability to configure `affinity` and `tolerations` for the Deployment of the operator.'
+time: 2024-11-27T09:03:49.589507226+01:00
+custom:
+    PR: "495"
