@@ -215,11 +215,44 @@ func TestDeploymentServiceAccountName(t *testing.T) {
 	assert.Equal(t, d, deployment)
 }
 
+func TestDeploymentImagePullSecrets(t *testing.T) {
+	options := &helm.Options{
+		SetJsonValues: map[string]string{
+			"imagePullSecrets": `[{"name": "this"}]`,
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+	d.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: "this",
+		},
+	}
+
+	assert.Equal(t, d, deployment)
+}
+
+func TestDeploymentPodLabels(t *testing.T) {
+	options := &helm.Options{
+		SetValues: map[string]string{
+			"podLabels.this": "this",
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+
+	labels := d.Spec.Template.DeepCopy().Labels
+	labels["this"] = "this"
+	d.Spec.Template.Labels = labels
+
+	assert.Equal(t, d, deployment)
+}
+
 // TODO:
 // - customCAcertificates
 // - securityContext
-// - imagePullSecrets
-// - podLabels
 // - kubeRbacProxy.*
 // - operator.*
 // - controllers.*
