@@ -1,5 +1,0 @@
-kind: NOTES
-body: '`Helm Chart`: The default value of `operator.syncPeriod` has changed from 5 minutes to 1 hour to reduce unnecessary reconciliation.'
-time: 2024-11-07T16:19:25.222031+01:00
-custom:
-    PR: "512"
