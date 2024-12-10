@@ -288,8 +288,7 @@ func TestDeploymentCustomCAcertificates(t *testing.T) {
 			},
 		},
 	}
-	manager := d.Spec.Template.Spec.DeepCopy().Containers[0]
-	manager.VolumeMounts = []corev1.VolumeMount{
+	d.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      "ca-certificates",
 			ReadOnly:  true,
@@ -297,7 +296,38 @@ func TestDeploymentCustomCAcertificates(t *testing.T) {
 			SubPath:   "ca-certificates",
 		},
 	}
-	d.Spec.Template.Spec.Containers[0] = manager
+
+	assert.Equal(t, d, deployment)
+}
+
+func TestDeploymentControllers(t *testing.T) {
+	options := &helm.Options{
+		Version: helmChartVersion,
+		SetValues: map[string]string{
+			"controllers.agentPool.workers":    "5",
+			"controllers.agentPool.syncPeriod": "15m",
+			"controllers.module.workers":       "5",
+			"controllers.module.syncPeriod":    "15m",
+			"controllers.project.workers":      "5",
+			"controllers.project.syncPeriod":   "15m",
+			"controllers.workspace.workers":    "5",
+			"controllers.workspace.syncPeriod": "15m",
+		},
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+
+	d.Spec.Template.Spec.Containers[0].Args = []string{
+		"--sync-period=1h",
+		"--agent-pool-workers=5",
+		"--agent-pool-sync-period=15m",
+		"--module-workers=5",
+		"--module-sync-period=15m",
+		"--project-workers=5",
+		"--project-sync-period=15m",
+		"--workspace-workers=5",
+		"--workspace-sync-period=15m",
+	}
 
 	assert.Equal(t, d, deployment)
 }
@@ -305,4 +335,3 @@ func TestDeploymentCustomCAcertificates(t *testing.T) {
 // TODO:
 // - kubeRbacProxy.*
 // - operator.*
-// - controllers.*
