@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: {{ .Release.Name }}-leader-election-rolebinding
-  namespace: {{ .Release.Namespace }}
+  name: {{ .Release.Name }}-proxy-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: {{ .Release.Name }}-leader-election-role
+  kind: ClusterRole
+  name: {{ .Release.Name }}-proxy-role
 subjects:
 - kind: ServiceAccount
   name: {{ include "hcp-terraform-operator.serviceAccountName" . }}

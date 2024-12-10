@@ -105,6 +105,9 @@ docs: crd-ref-docs ## Generate API reference documentation.
 helm-docs: install-helm-docs ## Generate Helm chart documentation.
 	$(HELM_DOCS) --log-level=debug --chart-search-root=./charts/hcp-terraform-operator/
 
+.PHONY: helm-test
+helm-test: test-helm ## Run Helm chart tests. This is an alias for the test-helm target.
+
 ##@ Development
 
 .PHONY: manifests
@@ -144,6 +147,10 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 	go test -timeout 5m -count 1 -v \
 		./internal/pointer \
 		./internal/slice
+
+.PHONY: test-helm
+test-helm: ## Run Helm chart tests.
+	cd charts/test; go test -timeout 5m -count=1 -v ./...
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint
