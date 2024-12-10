@@ -4,6 +4,7 @@
 package unit
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/helm"
@@ -265,9 +266,43 @@ func TestDeploymentSecurityContext(t *testing.T) {
 	assert.Equal(t, d, deployment)
 }
 
+func TestDeploymentCustomCAcertificates(t *testing.T) {
+	options := &helm.Options{
+		Version: helmChartVersion,
+		SetValues: map[string]string{
+			"customCAcertificates": "SGVsbG8gV29ybGQ=",
+		},
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+
+	d.Spec.Template.Spec.Volumes = []corev1.Volume{
+		{
+			Name: "ca-certificates",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: fmt.Sprintf("%s-ca-certificates", helmReleaseName),
+					},
+				},
+			},
+		},
+	}
+	manager := d.Spec.Template.Spec.DeepCopy().Containers[0]
+	manager.VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      "ca-certificates",
+			ReadOnly:  true,
+			MountPath: "/etc/ssl/certs/custom-ca-certificates.crt",
+			SubPath:   "ca-certificates",
+		},
+	}
+	d.Spec.Template.Spec.Containers[0] = manager
+
+	assert.Equal(t, d, deployment)
+}
+
 // TODO:
-// - customCAcertificates
-// - securityContext
 // - kubeRbacProxy.*
 // - operator.*
 // - controllers.*
