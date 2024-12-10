@@ -250,6 +250,21 @@ func TestDeploymentPodLabels(t *testing.T) {
 	assert.Equal(t, d, deployment)
 }
 
+func TestDeploymentSecurityContext(t *testing.T) {
+	options := &helm.Options{
+		Version: helmChartVersion,
+		SetValues: map[string]string{
+			"securityContext.runAsNonRoot": "false",
+		},
+	}
+	deployment := renderDeploymentManifest(t, options)
+	d := defaultDeployment()
+
+	d.Spec.Template.Spec.SecurityContext.RunAsNonRoot = ptr.To(false)
+
+	assert.Equal(t, d, deployment)
+}
+
 // TODO:
 // - customCAcertificates
 // - securityContext
