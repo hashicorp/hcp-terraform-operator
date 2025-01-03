@@ -1,12 +1,15 @@
 name: Helm Chart Unit Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
-      - 'charts/hcp-terraform-operator/**'
+      - 'charts/**'
       - 'version/VERSION'
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 env:
