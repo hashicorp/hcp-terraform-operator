@@ -150,7 +150,7 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 
 .PHONY: test-helm
 test-helm: ## Run Helm chart tests.
-	go test -timeout 5m -count=1 -v ./charts/unit/...
+	cd charts/test; go test -timeout 5m -count=1 -v ./...
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint

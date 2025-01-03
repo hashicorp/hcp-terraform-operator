@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package test
+package unit
 
 import (
 	"testing"
@@ -50,7 +50,10 @@ func testRBACClusterRoleManagerRules(t *testing.T, rbac rbacv1.ClusterRole) {
 				"watch",
 			},
 			APIGroups: []string{""},
-			Resources: []string{"configmaps"},
+			Resources: []string{
+				"configmaps",
+				"secrets",
+			},
 		},
 		{
 			Verbs: []string{
@@ -63,12 +66,46 @@ func testRBACClusterRoleManagerRules(t *testing.T, rbac rbacv1.ClusterRole) {
 		{
 			Verbs: []string{
 				"create",
+				"delete",
+				"get",
 				"list",
+				"patch",
 				"update",
 				"watch",
 			},
-			APIGroups: []string{""},
-			Resources: []string{"secrets"},
+			APIGroups: []string{"app.terraform.io"},
+			Resources: []string{
+				"agentpools",
+				"modules",
+				"projects",
+				"workspaces",
+			},
+		},
+		{
+			Verbs: []string{
+				"update",
+			},
+			APIGroups: []string{"app.terraform.io"},
+			Resources: []string{
+				"agentpools/finalizers",
+				"modules/finalizers",
+				"projects/finalizers",
+				"workspaces/finalizers",
+			},
+		},
+		{
+			Verbs: []string{
+				"get",
+				"patch",
+				"update",
+			},
+			APIGroups: []string{"app.terraform.io"},
+			Resources: []string{
+				"agentpools/status",
+				"modules/status",
+				"projects/status",
+				"workspaces/status",
+			},
 		},
 		{
 			Verbs: []string{
@@ -82,122 +119,6 @@ func testRBACClusterRoleManagerRules(t *testing.T, rbac rbacv1.ClusterRole) {
 			},
 			APIGroups: []string{"apps"},
 			Resources: []string{"deployments"},
-		},
-		{
-			Verbs: []string{
-				"create",
-				"delete",
-				"get",
-				"list",
-				"patch",
-				"update",
-				"watch",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"agentpools"},
-		},
-		{
-			Verbs: []string{
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"agentpools/finalizers"},
-		},
-		{
-			Verbs: []string{
-				"get",
-				"patch",
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"agentpools/status"},
-		},
-		{
-			Verbs: []string{
-				"create",
-				"delete",
-				"get",
-				"list",
-				"patch",
-				"update",
-				"watch",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"modules"},
-		},
-		{
-			Verbs: []string{
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"modules/finalizers"},
-		},
-		{
-			Verbs: []string{
-				"get",
-				"patch",
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"modules/status"},
-		},
-		{
-			Verbs: []string{
-				"create",
-				"delete",
-				"get",
-				"list",
-				"patch",
-				"update",
-				"watch",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"projects"},
-		},
-		{
-			Verbs: []string{
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"projects/finalizers"},
-		},
-		{
-			Verbs: []string{
-				"get",
-				"patch",
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"projects/status"},
-		},
-		{
-			Verbs: []string{
-				"create",
-				"delete",
-				"get",
-				"list",
-				"patch",
-				"update",
-				"watch",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"workspaces"},
-		},
-		{
-			Verbs: []string{
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"workspaces/finalizers"},
-		},
-		{
-			Verbs: []string{
-				"get",
-				"patch",
-				"update",
-			},
-			APIGroups: []string{"app.terraform.io"},
-			Resources: []string{"workspaces/status"},
 		},
 	}
 	assert.Equal(t, rules, rbac.Rules)
