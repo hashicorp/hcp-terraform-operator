@@ -151,9 +151,9 @@ func TestDeploymentDefault(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
+	dd := defaultDeployment()
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentNamespace(t *testing.T) {
@@ -165,10 +165,10 @@ func TestDeploymentNamespace(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-	d.Namespace = ns
+	dd := defaultDeployment()
+	dd.Namespace = ns
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentImagePullSecrets(t *testing.T) {
@@ -179,14 +179,14 @@ func TestDeploymentImagePullSecrets(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-	d.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 		{
 			Name: "this",
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentPodLabels(t *testing.T) {
@@ -197,13 +197,12 @@ func TestDeploymentPodLabels(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	labels := d.Spec.Template.DeepCopy().Labels
+	dd := defaultDeployment()
+	labels := dd.Spec.Template.DeepCopy().Labels
 	labels["this"] = "this"
-	d.Spec.Template.Labels = labels
+	dd.Spec.Template.Labels = labels
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentReplicaCount(t *testing.T) {
@@ -214,25 +213,24 @@ func TestDeploymentReplicaCount(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-	d.Spec.Replicas = ptr.To(int32(5))
+	dd := defaultDeployment()
+	dd.Spec.Replicas = ptr.To(int32(5))
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentSecurityContext(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"securityContext.runAsNonRoot": "false",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.SecurityContext.RunAsNonRoot = ptr.To(false)
 
-	d.Spec.Template.Spec.SecurityContext.RunAsNonRoot = ptr.To(false)
-
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentPriorityClassName(t *testing.T) {
@@ -244,10 +242,10 @@ func TestDeploymentPriorityClassName(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-	d.Spec.Template.Spec.PriorityClassName = priorityClassName
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.PriorityClassName = priorityClassName
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorImage(t *testing.T) {
@@ -260,12 +258,11 @@ func TestDeploymentOperatorImage(t *testing.T) {
 		},
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Image = "this:0.0.1"
+	dd.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
 
-	d.Spec.Template.Spec.Containers[0].Image = "this:0.0.1"
-	d.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
-
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorResources(t *testing.T) {
@@ -283,9 +280,8 @@ func TestDeploymentOperatorResources(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:    resource.MustParse("2"),
 			corev1.ResourceMemory: resource.MustParse("512Mi"),
@@ -296,7 +292,7 @@ func TestDeploymentOperatorResources(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorSecurityContext(t *testing.T) {
@@ -310,9 +306,8 @@ func TestDeploymentOperatorSecurityContext(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
 		AllowPrivilegeEscalation: ptr.To(true),
 		RunAsNonRoot:             ptr.To(true),
 		Capabilities: &corev1.Capabilities{
@@ -328,7 +323,7 @@ func TestDeploymentOperatorSecurityContext(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorAffinity(t *testing.T) {
@@ -351,9 +346,8 @@ func TestDeploymentOperatorAffinity(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Affinity = &corev1.Affinity{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Affinity = &corev1.Affinity{
 		NodeAffinity: &corev1.NodeAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 				NodeSelectorTerms: []corev1.NodeSelectorTerm{
@@ -371,7 +365,7 @@ func TestDeploymentOperatorAffinity(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorTolerations(t *testing.T) {
@@ -387,9 +381,8 @@ func TestDeploymentOperatorTolerations(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Tolerations = []corev1.Toleration{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Tolerations = []corev1.Toleration{
 		{
 			Key:      "cloud.hashicorp.com/terraform",
 			Operator: corev1.TolerationOpEqual,
@@ -398,20 +391,19 @@ func TestDeploymentOperatorTolerations(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorSyncPeriod(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"operator.syncPeriod": "4h",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].Args = []string{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Args = []string{
 		"--sync-period=4h",
 		"--agent-pool-workers=1",
 		"--agent-pool-sync-period=30s",
@@ -423,7 +415,7 @@ func TestDeploymentOperatorSyncPeriod(t *testing.T) {
 		"--workspace-sync-period=5m",
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorWatchedNamespaces(t *testing.T) {
@@ -434,73 +426,69 @@ func TestDeploymentOperatorWatchedNamespaces(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].Args = append(d.Spec.Template.Spec.Containers[0].Args, []string{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Args = append(dd.Spec.Template.Spec.Containers[0].Args, []string{
 		"--namespace=white",
 		"--namespace=blue",
 		"--namespace=red",
 	}...)
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorTFEAddress(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"operator.tfeAddress": "https://tfe.hashi.co",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
 		{
 			Name:  "TFE_ADDRESS",
 			Value: "https://tfe.hashi.co",
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentOperatorSkipTLSVerify(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"operator.skipTLSVerify": "true",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
 		{
 			Name:  "TFC_TLS_SKIP_VERIFY",
 			Value: "true",
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentKubeRbacProxyImage(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"kubeRbacProxy.image.repository": "this",
 			"kubeRbacProxy.image.pullPolicy": string(corev1.PullAlways),
 			"kubeRbacProxy.image.tag":        "0.0.1",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[1].Image = "this:0.0.1"
+	dd.Spec.Template.Spec.Containers[1].ImagePullPolicy = corev1.PullAlways
 
-	d.Spec.Template.Spec.Containers[1].Image = "this:0.0.1"
-	d.Spec.Template.Spec.Containers[1].ImagePullPolicy = corev1.PullAlways
-
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentKubeRbacProxySecurityContext(t *testing.T) {
@@ -514,9 +502,8 @@ func TestDeploymentKubeRbacProxySecurityContext(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[1].SecurityContext = &corev1.SecurityContext{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[1].SecurityContext = &corev1.SecurityContext{
 		AllowPrivilegeEscalation: ptr.To(true),
 		RunAsNonRoot:             ptr.To(true),
 		Capabilities: &corev1.Capabilities{
@@ -532,7 +519,7 @@ func TestDeploymentKubeRbacProxySecurityContext(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentKubeRbacProxyResources(t *testing.T) {
@@ -550,9 +537,8 @@ func TestDeploymentKubeRbacProxyResources(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[1].Resources = corev1.ResourceRequirements{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[1].Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:    resource.MustParse("2"),
 			corev1.ResourceMemory: resource.MustParse("512Mi"),
@@ -563,12 +549,11 @@ func TestDeploymentKubeRbacProxyResources(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentControllers(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"controllers.agentPool.workers":    "5",
 			"controllers.agentPool.syncPeriod": "15m",
@@ -579,11 +564,11 @@ func TestDeploymentControllers(t *testing.T) {
 			"controllers.workspace.workers":    "5",
 			"controllers.workspace.syncPeriod": "15m",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Containers[0].Args = []string{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Args = []string{
 		"--sync-period=1h",
 		"--agent-pool-workers=5",
 		"--agent-pool-sync-period=15m",
@@ -595,20 +580,19 @@ func TestDeploymentControllers(t *testing.T) {
 		"--workspace-sync-period=15m",
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentCustomCAcertificates(t *testing.T) {
 	options := &helm.Options{
-		Version: helmChartVersion,
 		SetValues: map[string]string{
 			"customCAcertificates": "SGVsbG8gV29ybGQ=",
 		},
+		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-
-	d.Spec.Template.Spec.Volumes = []corev1.Volume{
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Volumes = []corev1.Volume{
 		{
 			Name: "ca-certificates",
 			VolumeSource: corev1.VolumeSource{
@@ -620,7 +604,7 @@ func TestDeploymentCustomCAcertificates(t *testing.T) {
 			},
 		},
 	}
-	d.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
+	dd.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      "ca-certificates",
 			ReadOnly:  true,
@@ -629,7 +613,7 @@ func TestDeploymentCustomCAcertificates(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
 
 func TestDeploymentServiceAccountName(t *testing.T) {
@@ -642,8 +626,8 @@ func TestDeploymentServiceAccountName(t *testing.T) {
 		Version: helmChartVersion,
 	}
 	deployment := renderDeploymentManifest(t, options)
-	d := defaultDeployment()
-	d.Spec.Template.Spec.ServiceAccountName = serviceAccountName
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.ServiceAccountName = serviceAccountName
 
-	assert.Equal(t, d, deployment)
+	assert.Equal(t, dd, deployment)
 }
