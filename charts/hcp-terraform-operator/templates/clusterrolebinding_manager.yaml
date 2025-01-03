@@ -1,7 +1,7 @@
+{{- if .Values.rbac.create -}}
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
----
-{{- if .Values.rbac.create -}}
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -10,19 +10,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: {{ .Release.Name }}-manager-role
-subjects:
-- kind: ServiceAccount
-  name: {{ include "hcp-terraform-operator.serviceAccountName" . }}
-  namespace: {{ .Release.Namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: {{ .Release.Name }}-proxy-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ .Release.Name }}-proxy-role
 subjects:
 - kind: ServiceAccount
   name: {{ include "hcp-terraform-operator.serviceAccountName" . }}

@@ -56,7 +56,7 @@ operator:
   #         - key: kubernetes.io/arch
   #           operator: In
   #           values:
-  #         - amd64
+  #           - amd64
   #
   # -- Kubernetes Affinity. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
@@ -149,5 +149,5 @@ serviceAccount:
   name: ""
 
 rbac:
-  # -- Specifies whether a Role-Based Access Control (RBAC) resources should be created
+  # -- Specifies whether a Role-Based Access Control (RBAC) resources should be created.
   create: true
