@@ -655,7 +655,8 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		)
 	}
 
-
+	return allErrs
+}
 
 // TODO:Validation
 //

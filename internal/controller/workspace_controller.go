@@ -415,7 +415,6 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
-		updateOptions.FileTriggersEnabled = tfc.Bool(false)
 
 		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
 			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
