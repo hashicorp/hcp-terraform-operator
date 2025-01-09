@@ -699,6 +699,20 @@ spec:
                 required:
                 - secretKeyRef
                 type: object
+              triggerPatterns:
+                description: The list of pattern triggers that will queue runs in
+                  Terraform Cloud when files in your VCS repository change.
+                items:
+                  type: string
+                minItems: 1
+                type: array
+              triggerPrefixes:
+                description: The list of pattern prefixes that will queue runs in
+                  Terraform Cloud when files in your VCS repository change.
+                items:
+                  type: string
+                minItems: 1
+                type: array
               variableSets:
                 description: |-
                   HCP Terraform variable sets let you reuse variables in an efficient and centralized way.
