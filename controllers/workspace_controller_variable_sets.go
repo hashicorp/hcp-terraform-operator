@@ -5,6 +5,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	tfc "github.com/hashicorp/go-tfe"
 )
@@ -14,7 +15,7 @@ func (r *workspaceInstance) getVariableSets(ctx context.Context, w *workspaceIns
 
 	//No variable sets
 	// if workspace.VariableSet == nil {
-	// 	return nil, nil
+	//  return nil, nil
 	// }
 
 	//empty map
@@ -56,21 +57,78 @@ func (r *workspaceInstance) getVariableSets(ctx context.Context, w *workspaceIns
 
 }
 
-func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
-	w.log.Info("Reconcile Variable Sets", "msg", "new reconciliation event")
+func (r *WorkspaceReconciler) removeVariableSetFromWorkspace(ctx context.Context, w *workspaceInstance, vs *tfc.VariableSet) error {
+	// Check if the variable set ID is valid (not empty)
+	if vs.ID == "" {
+		w.log.Info("Reconcile Variable Sets", "msg", "variable set ID is empty, cannot remove variable set from workspace")
+		return fmt.Errorf("invalid variable set ID")
+	}
 
-	variableSets, err := w.getVariableSets(ctx, w, workspace)
+	w.log.Info("Reconcile Variable Sets", "msg", vs.ID)
+
+	workspace := &tfc.Workspace{
+		ID: w.instance.Status.WorkspaceID,
+	}
+
+	options := &tfc.VariableSetRemoveFromWorkspacesOptions{
+		Workspaces: []*tfc.Workspace{workspace},
+	}
+
+	err := w.tfClient.Client.VariableSets.RemoveFromWorkspaces(ctx, vs.ID, options)
 	if err != nil {
-		w.log.Error(err, "Reconcile Variable Sets", "msg", "failed to get workspace variable sets")
 		return err
 	}
 
-	//Reconciling varsets now
-	//Global = no need to apply
-	//Not global = apply, if that is the varset specified
+	w.log.Info("Reconcile Variable Sets", "msg", vs.ID)
+	return nil
+}
+
+func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+	w.log.Info("Reconcile Variable Sets", "msg", "new reconciliation event")
+
+	// Get the current variable sets applied to the workspace
+	variableSets, err := w.getVariableSets(ctx, w, workspace)
+	if err != nil {
+		w.log.Info("Reconcile Variable Sets", "msg", "failed to get workspace variable sets")
+		return err
+	}
+
+	// Retrieve the variable sets declared in the spec
+	specVariableSets := w.instance.Spec.VariableSets
+
+	// Log all spec variable sets to ensure they are populated with valid IDs
+	for _, vs := range specVariableSets {
+		w.log.Info("Spec Variable Set", "msg", vs.ID)
+	}
+
+	// Remove variable sets that are in the workspace but not in the spec (un-apply them)
 	for _, vs := range variableSets {
-		//If the variable set is not global, we might need to apply it to the workspace
-		if !vs.Global {
+		if vs.ID == "" {
+			w.log.Info("Reconcile Variable Sets", "msg", vs)
+			continue // Skip invalid variable sets
+		}
+
+		// Check if the variable set is in the spec (iterate through the spec variable sets)
+		found := false
+		for _, specVS := range specVariableSets {
+			if specVS.ID == vs.ID {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			// If the variable set is not in the spec anymore, un-apply it from the workspace
+			if err := r.removeVariableSetFromWorkspace(ctx, w, vs); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Apply variable sets that are in the spec but not applied yet
+	for _, vs := range specVariableSets {
+		if _, ok := variableSets[vs.ID]; !ok {
+			// If the variable set is in the spec but not in the workspace, apply it
 			options := &tfc.VariableSetApplyToWorkspacesOptions{
 				Workspaces: []*tfc.Workspace{workspace},
 			}
@@ -80,8 +138,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 				return err
 			}
 			w.log.Info("Applied variable set", "id", vs.ID)
-		} else {
-			w.log.Info("Skipping global variable set", "id", vs.ID)
 		}
 	}
 
