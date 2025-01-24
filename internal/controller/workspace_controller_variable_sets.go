@@ -58,13 +58,20 @@ func (r *workspaceInstance) getVariableSets(ctx context.Context, w *workspaceIns
 }
 
 func (r *WorkspaceReconciler) removeVariableSetFromWorkspace(ctx context.Context, w *workspaceInstance, vs *tfc.VariableSet) error {
-	// Check if the variable set ID is valid (not empty)
+	//Check if the variable set ID is valid (not empty)
 	if vs.ID == "" {
 		w.log.Info("Reconcile Variable Sets", "msg", "variable set ID is empty, cannot remove variable set from workspace")
 		return fmt.Errorf("invalid variable set ID")
 	}
 
-	w.log.Info("Reconcile Variable Sets", "msg", vs.ID)
+	//Handle global variable sets
+	//If a variable set is global it will not be removed
+	if vs.Global {
+		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("variable set %s is global and will not be removed", vs.ID))
+		return nil
+	}
+
+	w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("removing variable set %s from workspace", vs.ID))
 
 	workspace := &tfc.Workspace{
 		ID: w.instance.Status.WorkspaceID,
@@ -74,61 +81,59 @@ func (r *WorkspaceReconciler) removeVariableSetFromWorkspace(ctx context.Context
 		Workspaces: []*tfc.Workspace{workspace},
 	}
 
+	//Remove the variable set from the workspace
 	err := w.tfClient.Client.VariableSets.RemoveFromWorkspaces(ctx, vs.ID, options)
 	if err != nil {
+		w.log.Error(err, "Reconcile Variable Sets", "msg", fmt.Sprintf("failed to remove variable set %s from workspace", vs.ID))
 		return err
 	}
 
-	w.log.Info("Reconcile Variable Sets", "msg", vs.ID)
+	w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("successfully removed variable set %s from workspace", vs.ID))
 	return nil
 }
 
 func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	w.log.Info("Reconcile Variable Sets", "msg", "new reconciliation event")
 
-	// Get the current variable sets applied to the workspace
-	variableSets, err := w.getVariableSets(ctx, w, workspace)
+	//Fetch the variable sets that are currently applied to the workspace
+	currentVariableSets, err := w.getVariableSets(ctx, w, workspace)
 	if err != nil {
-		w.log.Info("Reconcile Variable Sets", "msg", "failed to get workspace variable sets")
+		w.log.Error(err, "Reconcile Variable Sets", "msg", "failed to get workspace variable sets")
 		return err
 	}
 
-	// Retrieve the variable sets declared in the spec
+	//Retrieve variable sets that are in the spec i.e. operator-managed variable sets
+	//This handles variable sets that were manually created in HCP, for eg
+	//a variable set that is applied to a project
 	specVariableSets := w.instance.Spec.VariableSets
-
-	// Log all spec variable sets to ensure they are populated with valid IDs
+	specVariableSetIDs := make(map[string]struct{})
 	for _, vs := range specVariableSets {
-		w.log.Info("Spec Variable Set", "msg", vs.ID)
+		specVariableSetIDs[vs.ID] = struct{}{}
 	}
 
-	// Remove variable sets that are in the workspace but not in the spec (un-apply them)
-	for _, vs := range variableSets {
-		if vs.ID == "" {
-			w.log.Info("Reconcile Variable Sets", "msg", vs)
-			continue // Skip invalid variable sets
+	//Remove variable sets that are not in the spec
+	//If the variable set is no longer in the spec,
+	//it is safe to assume the user would like to remove it from the ws
+	for id, vs := range currentVariableSets {
+		//Skip global variable sets
+		if vs.Global {
+			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("variable set %s is global and cannot be removed", id))
+			continue
 		}
 
-		// Check if the variable set is in the spec (iterate through the spec variable sets)
-		found := false
-		for _, specVS := range specVariableSets {
-			if specVS.ID == vs.ID {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			// If the variable set is not in the spec anymore, un-apply it from the workspace
+		//Remove variable sets that are not in the spec
+		if _, inSpec := specVariableSetIDs[id]; !inSpec {
+			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("variable set %s is not defined in the spec...removing", id))
 			if err := r.removeVariableSetFromWorkspace(ctx, w, vs); err != nil {
-				return err
+				return fmt.Errorf("failed to remove variable set %s: %w", id, err)
 			}
 		}
 	}
 
-	// Apply variable sets that are in the spec but not applied yet
+	//Apply variable sets that are in the spec but not yet applied to the workspace
+	//If a variable set is in the spec and has not yet been applied it will now be applied
 	for _, vs := range specVariableSets {
-		if _, ok := variableSets[vs.ID]; !ok {
-			// If the variable set is in the spec but not in the workspace, apply it
+		if _, exists := currentVariableSets[vs.ID]; !exists {
 			options := &tfc.VariableSetApplyToWorkspacesOptions{
 				Workspaces: []*tfc.Workspace{workspace},
 			}
@@ -137,11 +142,10 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 				w.log.Error(err, "Reconcile Variable Sets", "msg", "failed to apply variable set", "id", vs.ID)
 				return err
 			}
-			w.log.Info("Applied variable set", "id", vs.ID)
+			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("applied variable set %s to workspace", vs.ID))
 		}
 	}
 
 	w.log.Info("Reconcile Variable Sets", "msg", "successfully reconciled variable sets for workspace")
-
 	return nil
 }
