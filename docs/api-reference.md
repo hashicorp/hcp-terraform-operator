@@ -674,6 +674,22 @@ _Appears in:_
 | `valueFrom` _[ValueFrom](#valuefrom)_ | Source for the variable's value. Cannot be used if value is not empty. |
 
 
+#### VariableSetStatus
+
+
+
+
+
+_Appears in:_
+- [WorkspaceStatus](#workspacestatus)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ |  |
+| `applied` _boolean_ |  |
+| `source` _string_ |  |
+
+
 #### VariableStatus
 
 

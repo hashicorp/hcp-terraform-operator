@@ -687,6 +687,8 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	DestroyRunID string `json:"destroyRunID,omitempty"`
+	// Variable Sets status
+	VariableSets map[string]VariableSetStatus `json:"VariableSetStatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -727,6 +729,12 @@ type WorkspaceVariableSet struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	Name string `json:"name,omitempty"`
+}
+
+type VariableSetStatus struct {
+	ID      string `json:"id,omitempty"`
+	Applied bool   `json:"applied,omitempty"`
+	Source  string `json:"source,omitempty"`
 }
 
 func init() {
