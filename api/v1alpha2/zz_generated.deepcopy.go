@@ -1168,10 +1168,8 @@ func (in *WorkspaceStatus) DeepCopyInto(out *WorkspaceStatus) {
 	}
 	if in.VariableSets != nil {
 		in, out := &in.VariableSets, &out.VariableSets
-		*out = make(map[string]VariableSetStatus, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
+		*out = make([]VariableSetStatus, len(*in))
+		copy(*out, *in)
 	}
 }
 

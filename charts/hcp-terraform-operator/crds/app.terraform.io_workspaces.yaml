@@ -768,18 +768,6 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace.
             properties:
-              VariableSetStatus:
-                additionalProperties:
-                  properties:
-                    applied:
-                      type: boolean
-                    id:
-                      type: string
-                    source:
-                      type: string
-                  type: object
-                description: Variable Sets status
-                type: object
               defaultProjectID:
                 description: Default organization project ID.
                 type: string
@@ -836,6 +824,14 @@ spec:
                 description: Workspace last update timestamp.
                 format: int64
                 type: integer
+              variableSet:
+                description: Variable Sets status
+                items:
+                  properties:
+                    id:
+                      type: string
+                  type: object
+                type: array
               variables:
                 description: Workspace variables.
                 items:

@@ -686,8 +686,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `id` _string_ |  |
-| `applied` _boolean_ |  |
-| `source` _string_ |  |
 
 
 #### VariableStatus

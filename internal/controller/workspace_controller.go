@@ -560,7 +560,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	// Reconcile Variable Sets
 	err = r.reconcileVariableSets(ctx, w, workspace)
 	if err != nil {
-		w.log.Error(err, "Reconcile Variable Sets", "msg", fmt.Sprintf("failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID))
+		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariableSets", "Failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID)
 		return err
 	}
