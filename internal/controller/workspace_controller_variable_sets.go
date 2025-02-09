@@ -95,7 +95,7 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 	// 1 | 0
 	if len(specVariableSets) > 0 && len(statusVariableSets) == 0 {
 		for id, specVS := range specVariableSets {
-			if workspaceVS, ok := workspaceVariableSets[id]; ok { //use func
+			if workspaceVS, ok := workspaceVariableSets[id]; ok {
 				if !workspaceVS.Global {
 					w.log.Info("Reconcile Variable Sets", "msg", "applying variable sets to workspace")
 					options := &tfc.VariableSetApplyToWorkspacesOptions{
@@ -122,13 +122,15 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 	if len(specVariableSets) == 0 && len(statusVariableSets) > 0 {
 		for id := range statusVariableSets {
 			if vs, ok := workspaceVariableSets[id]; ok {
-				w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Removing variable set %s from workspace", id))
+				if !vs.Global {
+					w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Removing variable set %s from workspace", id))
 
-				err := r.removeVariableSetFromWorkspace(ctx, w, vs)
-				if err != nil {
-					return err
+					err := r.removeVariableSetFromWorkspace(ctx, w, vs)
+					if err != nil {
+						return err
+					}
+					w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Successfully removed variable set %s from workspace", id))
 				}
-				w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Successfully removed variable set %s from workspace", id))
 			}
 
 			for v, DeleteVS := range w.instance.Status.VariableSets {
@@ -148,6 +150,10 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 
 	for id, specVS := range specVariableSets {
 		if workspaceVS, ok := workspaceVariableSets[id]; ok {
+
+			if _, exists := statusVariableSets[id]; !exists {
+				w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
+			}
 
 			if _, exists := statusVariableSets[id]; !exists {
 				if !workspaceVS.Global {
@@ -183,7 +189,7 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 				}
 			}
 			//w.instance.Status.VariableSets[id] = specVS
-			w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
+			//w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
 		} else {
 			return fmt.Errorf("variable set %s does not exist ", id)
 		}
