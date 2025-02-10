@@ -84,7 +84,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 
 #### Upgrade recommendations
 
-  - `2.7.0` to `2.8.0
+  - `2.7.0` to `2.8.0`
 
     - The `Workspace` CRD has been changed:
 
