@@ -690,27 +690,24 @@ spec:
                 type: object
               variableSets:
                 description: |-
-                  Variable set allows a group of variables to be applied to a workspace.
-                  Each entry includes a name and an ID.
-
-
+                  HCP Terraform variable sets let you reuse variables in an efficient and centralized way.
                   More information
-                  -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+                    - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
                 items:
                   properties:
                     id:
                       description: |-
-                        Variable Set ID
+                        ID of the variable set.
                         Must match pattern: `varset-[a-zA-Z0-9]+$`
                         More information:
-                        -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+                          - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
                       pattern: varset-[a-zA-Z0-9]+$
                       type: string
                     name:
                       description: |-
-                        Variable Set Name.
+                        Name of the variable set.
                         More information:
-                        -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+                          - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
                       minLength: 1
                       type: string
                   type: object
@@ -823,7 +820,7 @@ spec:
                 format: int64
                 type: integer
               variableSet:
-                description: Variable Sets status
+                description: Variable Sets.
                 items:
                   properties:
                     id:

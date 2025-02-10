@@ -588,13 +588,12 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=retain
 	//+optional
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
-	// Variable sets will be a list of maps.
-	// Each map entry will have keys for VarSetID and VarSetName.
-	// Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
-	//More information
-	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+	// HCP Terraform variable sets let you reuse variables in an efficient and centralized way.
+	// More information
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+	//
 	//+kubebuilder:validation:MinItems:=1
-	// +optional
+	//+optional
 	VariableSets []WorkspaceVariableSet `json:"variableSets,omitempty"`
 }
 
@@ -688,7 +687,9 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	DestroyRunID string `json:"destroyRunID,omitempty"`
-	// Variable Sets status
+	// Variable Sets.
+	//
+	//+optional
 	VariableSets []VariableSetStatus `json:"variableSet,omitempty"`
 }
 
@@ -715,17 +716,17 @@ type WorkspaceList struct {
 }
 
 type WorkspaceVariableSet struct {
-	// Variable Set ID
+	// ID of the variable set.
 	// Must match pattern: `varset-[a-zA-Z0-9]+$`
-	//More information:
-	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
 	//
 	//+kubebuilder:validation:Pattern:="varset-[a-zA-Z0-9]+$"
 	//+optional
 	ID string `json:"id,omitempty"`
-	// Variable Set Name.
-	//More information:
-	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+	// Name of the variable set.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
 	//
 	//+kubebuilder:validation:MinLength:=1
 	//+optional

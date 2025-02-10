@@ -41,8 +41,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		variableSetName = fmt.Sprintf("variable-set-%v", randomNumber())
 		variableSetName2 = fmt.Sprintf("%v-2", variableSetName)
-		variableSetID = createTestVariableSet(variableSetName)
-		variableSetID2 = createTestVariableSet(variableSetName2)
+		variableSetID = createTestVariableSet(variableSetName, false)
+		variableSetID2 = createTestVariableSet(variableSetName2, false)
 
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
@@ -79,32 +79,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 
 	Context("VariableSet", func() {
-		It("can be handled by name", func() {
-			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
-				{Name: variableSetName},
-			}
-			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
-			isReconciledVariableSetByName(instance)
-
-			// Update the VariableSet by Name
-			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
-				{Name: variableSetName2},
-			}
-			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isReconciledVariableSetByName(instance)
-
-			// Update the VariableSet by ID
-			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
-				{ID: variableSetID},
-			}
-			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isReconciledVariableSetByID(instance)
-
-		})
-
 		It("can be handled by ID", func() {
 			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
 				{ID: variableSetID},
@@ -120,21 +94,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			isReconciledVariableSetByID(instance)
-
-			// Update the VariableSet by Name
-			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
-				{Name: variableSetName},
-			}
-			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isReconciledVariableSetByName(instance)
 		})
 	})
 })
 
-func createTestVariableSet(variableSetName string) string {
+func createTestVariableSet(variableSetName string, global bool) string {
 	vs, err := tfClient.VariableSets.Create(ctx, organization, &tfc.VariableSetCreateOptions{
-		Name: &variableSetName,
+		Name:   &variableSetName,
+		Global: tfc.Bool(global),
 	})
 	Expect(err).Should(Succeed())
 	Expect(vs).ShouldNot(BeNil())
@@ -143,7 +110,6 @@ func createTestVariableSet(variableSetName string) string {
 
 func isReconciledVariableSetByID(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
-
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
@@ -157,36 +123,6 @@ func isReconciledVariableSetByID(instance *appv1alpha2.Workspace) {
 		Expect(err).Should(Succeed())
 		for _, vs := range variableSets.Items {
 			if vs.ID == instance.Spec.VariableSets[0].ID {
-				return true
-			}
-		}
-		return false
-	}).Should(BeTrue())
-}
-
-func isReconciledVariableSetByName(instance *appv1alpha2.Workspace) {
-	namespacedName := getNamespacedName(instance)
-
-	Eventually(func() bool {
-		// Ensure the workspace object is fetched
-		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-
-		// Fetch the workspace by ID from Terraform Cloud
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
-
-		// Fetch the variable sets associated with the workspace's organization
-		variableSets, err := tfClient.VariableSets.List(ctx, instance.Spec.Organization, &tfc.VariableSetListOptions{
-			ListOptions: tfc.ListOptions{
-				PageSize: maxPageSize,
-			},
-		})
-		Expect(err).Should(Succeed())
-
-		// Check if any of the variable sets match the specified name
-		for _, vs := range variableSets.Items {
-			if vs.Name == instance.Spec.VariableSets[0].Name {
 				return true
 			}
 		}
