@@ -588,6 +588,13 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=retain
 	//+optional
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+	// HCP Terraform variable sets let you reuse variables in an efficient and centralized way.
+	// More information
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+	//
+	//+kubebuilder:validation:MinItems:=1
+	//+optional
+	VariableSets []WorkspaceVariableSet `json:"variableSets,omitempty"`
 }
 
 type PlanStatus struct {
@@ -680,6 +687,10 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	DestroyRunID string `json:"destroyRunID,omitempty"`
+	// Variable Sets.
+	//
+	//+optional
+	VariableSets []VariableSetStatus `json:"variableSet,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -702,6 +713,29 @@ type WorkspaceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Workspace `json:"items"`
+}
+
+type WorkspaceVariableSet struct {
+	// ID of the variable set.
+	// Must match pattern: `varset-[a-zA-Z0-9]+$`
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+	//
+	//+kubebuilder:validation:Pattern:="varset-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Name of the variable set.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+	//
+	//+kubebuilder:validation:MinLength:=1
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
+type VariableSetStatus struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 func init() {

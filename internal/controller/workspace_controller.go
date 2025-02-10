@@ -557,6 +557,16 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Variables", "msg", "successfully reconcilied variables")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", w.instance.Status.WorkspaceID)
 
+	// Reconcile Variable Sets
+	err = r.reconcileVariableSets(ctx, w, workspace)
+	if err != nil {
+		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID))
+		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariableSets", "Failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID)
+		return err
+	}
+	w.log.Info("Reconcile Variable Sets", "msg", "successfully reconciled variable sets")
+	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileVariableSets", "Successfully reconciled variable sets in workspace ID %s", w.instance.Status.WorkspaceID)
+
 	// Reconcile Run Triggers
 	err = r.reconcileRunTriggers(ctx, w)
 	if err != nil {
@@ -607,7 +617,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	w.log.Info("Reconcile Notifications", "msg", "successfully reconcilied notifications")
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileNotifications", "Reconcilied notifications in workspace ID %s", w.instance.Status.WorkspaceID)
 
-	// Reconsile Runs (Status)
+	// Reconcile Runs (Status)
 	// This reconciliation should always happen before `reconcileOutputs`
 	err = r.reconcileRuns(ctx, w, workspace)
 	if err != nil {

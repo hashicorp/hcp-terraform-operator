@@ -26,6 +26,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
 	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 	allErrs = append(allErrs, w.validateSpecDeletionPolicy()...)
+	allErrs = append(allErrs, w.validateSpecVariableSets()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -590,8 +591,29 @@ func (w *Workspace) validateSpecDeletionPolicy() field.ErrorList {
 	return allErrs
 }
 
+func (w *Workspace) validateSpecVariableSets() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.VariableSets
+
+	for _, varSet := range spec {
+
+		f := field.NewPath("spec").Child("variableSets")
+
+		// Check if both ID and Name are set
+		if varSet.ID != "" && varSet.Name != "" {
+			// Both ID and Name cannot be set
+			allErrs = append(allErrs, field.Required(f, "Only one of ID or Name should be set."))
+		} else if varSet.ID == "" && varSet.Name == "" {
+			// At least one, either ID or Name must be set
+			allErrs = append(allErrs, field.Required(f, "At least one must be set."))
+		}
+	}
+
+	return allErrs
+}
+
 // TODO:Validation
 //
 // + Tags duplicate: spec.tags[]
-//
+// + VariableSets duplicate: spec.variableSets[]
 // + Invalid CR cannot be deleted until it is fixed -- need to discuss if we want to do something about it

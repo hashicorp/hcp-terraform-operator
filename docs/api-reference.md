@@ -674,6 +674,21 @@ _Appears in:_
 | `valueFrom` _[ValueFrom](#valuefrom)_ | Source for the variable's value. Cannot be used if value is not empty. |
 
 
+#### VariableSetStatus
+
+
+
+
+
+_Appears in:_
+- [WorkspaceStatus](#workspacestatus)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ |  |
+| `name` _string_ |  |
+
+
 #### VariableStatus
 
 
@@ -823,7 +838,23 @@ _Appears in:_
 | `notifications` _[Notification](#notification) array_ | Notifications allow you to send messages to other applications based on run and workspace events.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications |
 | `project` _[WorkspaceProject](#workspaceproject)_ | Projects let you organize your workspaces into groups.<br />Default: default organization project.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/projects |
 | `deletionPolicy` _[DeletionPolicy](#deletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated workspace when the custom resource is deleted.<br />- `retain`: When you delete the custom resource, the operator does not delete the workspace.<br />- `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.<br />- `destroy`: Executes a destroy operation to remove all resources managed by the associated workspace. Once the destruction of these resources is successful, the operator deletes the workspace, and then deletes the custom resource.<br />- `force`: Forcefully and immediately deletes the workspace and the custom resource.<br />Default: `retain`. |
+| `variableSets` _[WorkspaceVariableSet](#workspacevariableset) array_ | HCP Terraform variable sets let you reuse variables in an efficient and centralized way.<br />More information<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets |
 
 
+
+
+#### WorkspaceVariableSet
+
+
+
+
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | ID of the variable set.<br />Must match pattern: `varset-[a-zA-Z0-9]+$`<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets |
+| `name` _string_ | Name of the variable set.<br />More information:<br />  - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets |
 
 

@@ -1089,3 +1089,61 @@ func TestValidateSpecDeletionPolicy(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"HasIDandName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						Name: "this", // Only Name is set
+					},
+				},
+			},
+		},
+	}
+
+	// Run Success Test Cases
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecVariableSets(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	// Error Cases: Invalid combinations of ID and Name
+	errorCases := map[string]Workspace{
+		"HasEmptyIDandEmptyName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "",
+						Name: "", // Neither ID nor Name is set (invalid)
+					},
+				},
+			},
+		},
+
+		"HasBothIDandName": {
+			Spec: WorkspaceSpec{
+				VariableSets: []WorkspaceVariableSet{
+					{
+						ID:   "thisID", // Both ID and Name are set (invalid)
+						Name: "thisName",
+					},
+				},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecVariableSets(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}

@@ -688,6 +688,31 @@ spec:
                 required:
                 - secretKeyRef
                 type: object
+              variableSets:
+                description: |-
+                  HCP Terraform variable sets let you reuse variables in an efficient and centralized way.
+                  More information
+                    - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+                items:
+                  properties:
+                    id:
+                      description: |-
+                        ID of the variable set.
+                        Must match pattern: `varset-[a-zA-Z0-9]+$`
+                        More information:
+                          - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+                      pattern: varset-[a-zA-Z0-9]+$
+                      type: string
+                    name:
+                      description: |-
+                        Name of the variable set.
+                        More information:
+                          - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+                      minLength: 1
+                      type: string
+                  type: object
+                minItems: 1
+                type: array
               versionControl:
                 description: |-
                   Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
@@ -794,6 +819,16 @@ spec:
                 description: Workspace last update timestamp.
                 format: int64
                 type: integer
+              variableSet:
+                description: Variable Sets.
+                items:
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                  type: object
+                type: array
               variables:
                 description: Workspace variables.
                 items:

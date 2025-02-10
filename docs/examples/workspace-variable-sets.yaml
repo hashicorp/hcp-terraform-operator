@@ -1,0 +1,18 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+---
+apiVersion: app.terraform.io/v1alpha2
+kind: Workspace
+metadata:
+  name: this
+spec:
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  name: kubernetes-operator-demo
+  variableSets: 
+    - id: "varset-hLdht7LL9mdV4MYD"
+    
