@@ -1,3 +1,17 @@
+## 2.8.0 (February 10, 2025)
+
+NOTES:
+
+* The `Workspace` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-497](https://github.com/hashicorp/hcp-terraform-operator/pull/497)]
+
+ENHANCEMENTS:
+
+* `Workspace`: Add the ability to attach variable sets to a workspace via a new optional field `spec.variableSets`. [[GH-497](https://github.com/hashicorp/hcp-terraform-operator/pull/497)]
+
+DEPENDENCIES:
+
+* Bump `github.com/hashicorp/go-slug` from 0.16.1 to 0.16.3. [[GH-549](https://github.com/hashicorp/hcp-terraform-operator/pull/549)]
+
 ## 2.7.1 (December 04, 2024)
 
 BREAKING CHANGES:
