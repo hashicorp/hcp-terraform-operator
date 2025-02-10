@@ -1,5 +1,5 @@
 kind: ENHANCEMENTS
-body: Add the ability to attach variable sets to a workspace via a new optional field `spec.variableSets`..
+body: Add the ability to attach variable sets to a workspace via a new optional field `spec.variableSets`.
 time: 2025-02-10T09:57:11.532623-05:00
 custom:
     PR: "497"
