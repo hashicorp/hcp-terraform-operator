@@ -86,13 +86,11 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 	}
 
 	for _, statusVS := range w.instance.Status.VariableSets {
-		//if _, exists := workspaceVariableSets[id]; exists {
 		statusVariableSets[statusVS.ID] = statusVS
-		//}
 	}
 
 	//If the spec is not empty and status is empty, i.e. no variable sets have been applied yet
-	// 1 | 0
+	//1 | 0
 	if len(specVariableSets) > 0 && len(statusVariableSets) == 0 {
 		for id, specVS := range specVariableSets {
 			if workspaceVS, ok := workspaceVariableSets[id]; ok {
@@ -111,7 +109,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 			} else {
 				return fmt.Errorf("Variable set %s does not exist ", id)
 			}
-			//w.instance.Status.VariableSets[id] = specVS
 			w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
 		}
 		return nil
@@ -152,10 +149,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 		if workspaceVS, ok := workspaceVariableSets[id]; ok {
 
 			if _, exists := statusVariableSets[id]; !exists {
-				w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
-			}
-
-			if _, exists := statusVariableSets[id]; !exists {
 				if !workspaceVS.Global {
 					w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Applying missing variable set %s to workspace", id))
 					options := &tfc.VariableSetApplyToWorkspacesOptions{
@@ -167,6 +160,7 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 						return err
 					}
 				}
+				w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
 			} else {
 				if !workspaceVS.Global {
 					applied := false
@@ -188,8 +182,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 					}
 				}
 			}
-			//w.instance.Status.VariableSets[id] = specVS
-			//w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, specVS)
 		} else {
 			return fmt.Errorf("variable set %s does not exist ", id)
 		}

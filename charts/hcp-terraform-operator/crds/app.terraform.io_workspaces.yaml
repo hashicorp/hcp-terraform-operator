@@ -717,6 +717,7 @@ spec:
                       minLength: 1
                       type: string
                   type: object
+                minItems: 1
                 type: array
               versionControl:
                 description: |-
@@ -829,6 +830,8 @@ spec:
                 items:
                   properties:
                     id:
+                      type: string
+                    name:
                       type: string
                   type: object
                 type: array

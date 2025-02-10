@@ -686,6 +686,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `id` _string_ |  |
+| `name` _string_ |  |
 
 
 #### VariableStatus

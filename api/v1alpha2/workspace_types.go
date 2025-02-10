@@ -593,6 +593,7 @@ type WorkspaceSpec struct {
 	// Example: [{"varSetID": "varset-1", "varSetName": "MyVarSet"}, {"varSetID": "varset-2", "varSetName": "NewVarSet"}]
 	//More information
 	// -https://developer.hashicorp.com/terraform/cloud-docs/api-docs/variable-sets#apply-variable-set-to-workspaces
+	//+kubebuilder:validation:MinItems:=1
 	// +optional
 	VariableSets []WorkspaceVariableSet `json:"variableSets,omitempty"`
 }
@@ -732,7 +733,8 @@ type WorkspaceVariableSet struct {
 }
 
 type VariableSetStatus struct {
-	ID string `json:"id,omitempty"`
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 func init() {

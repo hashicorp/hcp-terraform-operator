@@ -14,7 +14,5 @@ spec:
       key: token
   name: kubernetes-operator-demo
   variableSets: 
-    - name: "testing"
-    #Alternatively, you can use the Variable Set ID
-    #
-    #id: "varset-hLdht7LL9mdV4MYD"
+    - id: "varset-hLdht7LL9mdV4MYD"
+    
