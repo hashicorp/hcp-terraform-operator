@@ -6,6 +6,6 @@ spec:
   organization: kubernetes-operator
   token:
     secretKeyRef:
-      name: tfc-operator
+      name: hcp-terraform-operator
       key: token
   name: this
