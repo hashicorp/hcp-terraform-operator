@@ -3,6 +3,7 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
+    app.kubernetes.io/name: hcp-terraform-operator
   name: controller-manager-metrics-service
   namespace: system
 spec:

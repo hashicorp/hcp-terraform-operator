@@ -24,7 +24,10 @@ spec:
     name: v1alpha2
     schema:
       openAPIV3Schema:
-        description: Project is the Schema for the projects API
+        description: |-
+          Project manages HCP Terraform Projects.
+          More information:
+            - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
         properties:
           apiVersion:
             description: |-

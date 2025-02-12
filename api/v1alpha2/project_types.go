@@ -167,7 +167,9 @@ type ProjectStatus struct {
 //+kubebuilder:printcolumn:name="Project Name",type=string,JSONPath=`.status.name`
 //+kubebuilder:printcolumn:name="Project ID",type=string,JSONPath=`.status.id`
 
-// Project is the Schema for the projects API
+// Project manages HCP Terraform Projects.
+// More information:
+//   - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 type Project struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

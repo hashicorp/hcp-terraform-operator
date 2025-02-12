@@ -6,9 +6,8 @@ metadata:
     app.kubernetes.io/name: clusterrole
     app.kubernetes.io/instance: agentpool-editor-role
     app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: terraform-cloud-operator
-    app.kubernetes.io/part-of: terraform-cloud-operator
-    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: hcp-terraform-operator
+    app.kubernetes.io/part-of: hcp-terraform-operator
   name: agentpool-editor-role
 rules:
 - apiGroups:
