@@ -88,7 +88,7 @@ spec:
     url: https://github.com/hashicorp/hcp-terraform-operator
   maintainers:
   - email: hcp-tf-operator@hashicorp.com
-    name: Terraform Ecosystem - Hybrid Cloud Team
+    name: HashiCorp
   maturity: alpha
   minKubeVersion: 1.24.0
   provider:

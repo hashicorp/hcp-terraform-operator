@@ -1,11 +1,11 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: Project
 metadata:
-  name: this
+  name: <NAME>
 spec:
-  organization: kubernetes-operator
+  organization: <ORG_NAME>
   token:
     secretKeyRef:
-      name: hcp-terraform-operator
-      key: token
-  name: this
+      name: <SECRET_NAME>
+      key: <SECRET_KEY>
+  name: <NAME>
