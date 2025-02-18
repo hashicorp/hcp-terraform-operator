@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
-func (r *workspaceInstance) getVariableSets(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (map[string]*tfc.VariableSet, error) {
-	workspaceVariableSets := make(map[string]*tfc.VariableSet)
+func (w *workspaceInstance) getVariableSets(ctx context.Context) (map[string]*tfc.VariableSet, error) {
+	variableSets := make(map[string]*tfc.VariableSet)
 
 	listOpts := &tfc.VariableSetListOptions{
 		ListOptions: tfc.ListOptions{
@@ -24,12 +24,12 @@ func (r *workspaceInstance) getVariableSets(ctx context.Context, w *workspaceIns
 	for {
 		v, err := w.tfClient.Client.VariableSets.List(ctx, w.instance.Spec.Organization, listOpts)
 		if err != nil {
-			w.log.Info("Reconcile Variable Sets", "msg", "failed to get workspace variable sets")
+			w.log.Error(err, "Reconcile Variable Sets", "msg", "failed to get variable sets")
 			return nil, err
 		}
 
 		for _, vs := range v.Items {
-			workspaceVariableSets[vs.ID] = vs
+			variableSets[vs.ID] = vs
 		}
 
 		if v.NextPage == 0 {
@@ -39,7 +39,7 @@ func (r *workspaceInstance) getVariableSets(ctx context.Context, w *workspaceIns
 		listOpts.PageNumber = v.NextPage
 	}
 
-	return workspaceVariableSets, nil
+	return variableSets, nil
 }
 
 func (r *WorkspaceReconciler) removeVariableSetFromWorkspace(ctx context.Context, w *workspaceInstance, vs *tfc.VariableSet) error {
@@ -80,7 +80,7 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 		}
 	}
 
-	workspaceVariableSets, err := w.getVariableSets(ctx, w, workspace)
+	workspaceVariableSets, err := w.getVariableSets(ctx)
 	if err != nil {
 		return err
 	}
