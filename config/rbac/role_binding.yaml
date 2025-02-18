@@ -1,12 +1,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: manager-rolebinding
+  labels:
+    app.kubernetes.io/name: hcp-terraform-operator
+  name: manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: manager-role
+  name: hcp-terraform-operator-manager
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
+  name: hcp-terraform-operator-manager
   namespace: system

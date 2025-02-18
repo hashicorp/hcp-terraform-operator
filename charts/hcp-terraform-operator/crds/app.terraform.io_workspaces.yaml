@@ -24,7 +24,10 @@ spec:
     name: v1alpha2
     schema:
       openAPIV3Schema:
-        description: Workspace is the Schema for the workspaces API
+        description: |-
+          Workspace manages HCP Terraform Workspaces.
+          More information:
+            - https://developer.hashicorp.com/terraform/cloud-docs/workspaces
         properties:
           apiVersion:
             description: |-

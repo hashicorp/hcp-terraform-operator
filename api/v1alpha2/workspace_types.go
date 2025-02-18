@@ -697,7 +697,9 @@ type WorkspaceStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Workspace ID",type=string,JSONPath=`.status.workspaceID`
 
-// Workspace is the Schema for the workspaces API
+// Workspace manages HCP Terraform Workspaces.
+// More information:
+//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces
 type Workspace struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
