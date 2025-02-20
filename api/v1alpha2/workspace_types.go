@@ -123,7 +123,7 @@ type RunTrigger struct {
 	//
 	// More information:
 	// - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
-	AutoApplyRunTriggers bool `json:"autoapplyRunTriggers,omitempty"`
+	// AutoApplyRunTriggers bool `json:"autoapplyRunTriggers,omitempty"`
 }
 
 // Teams are groups of HCP Terraform users within an organization.
@@ -443,7 +443,6 @@ type WorkspaceSpec struct {
 	Organization string `json:"organization"`
 	// API Token to be used for API calls.
 	Token Token `json:"token"`
-
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// Must be one of the following values: `auto`, `manual`.
 	// Default: `manual`.
@@ -454,6 +453,15 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=manual
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
+	// Specifies the type of apply, whether manual or auto
+	// Must be of value `true` or `false`
+	// Default: `false`
+	// More information:
+	// - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
+	//
+	//+kubebuilder:default=true
+	//+optional
+	AutoApplyRunTrigger bool `json:"autoApplyRunTrigger,omitempty"`
 	// Allows a destroy plan to be created and applied.
 	// Default: `true`.
 	// More information:

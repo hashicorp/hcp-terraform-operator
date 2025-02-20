@@ -533,7 +533,6 @@ _Appears in:_
 | --- | --- |
 | `id` _string_ | Source Workspace ID.<br />Must match pattern: `^ws-[a-zA-Z0-9]+$` |
 | `name` _string_ | Source Workspace Name. |
-| `autoapplyRunTriggers` _boolean_ | Whether the apply needs to be manually confirmed or automatically applied<br />Must be of value `True` or `False`<br /><br />More information:<br />- https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply |
 
 
 #### SSHKey
@@ -828,6 +827,7 @@ _Appears in:_
 | `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual).<br />Must be one of the following values: `auto`, `manual`.<br />Default: `manual`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
+| `autoApplyRunTrigger` _boolean_ | Specifies the type of apply, whether manual or auto<br />Must be of value `true` or `false`<br />Default: `false`<br />More information:<br />- https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply |
 | `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
 | `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/agents |
