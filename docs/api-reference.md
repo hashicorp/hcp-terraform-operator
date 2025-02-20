@@ -533,6 +533,7 @@ _Appears in:_
 | --- | --- |
 | `id` _string_ | Source Workspace ID.<br />Must match pattern: `^ws-[a-zA-Z0-9]+$` |
 | `name` _string_ | Source Workspace Name. |
+| `autoapplyRunTriggers` _boolean_ | Whether the apply needs to be manually confirmed or automatically applied<br />Must be of value `True` or `False`<br /><br />More information:<br />- https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply |
 
 
 #### SSHKey
