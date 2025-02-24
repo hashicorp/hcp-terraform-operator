@@ -197,6 +197,8 @@ var _ = Describe("Helpers", Label("Unit"), func() {
 		It("does not match no prefix and no suffix", func() {
 			result := matchWildcardName("hcp-terraform-workspace", "hcp-tf-workspace")
 			Expect(result).To(BeFalse())
+		})
+	})
 
 	Context("ParseTFEVersion", func() {
 		It("Valid TFE version", func() {
