@@ -216,8 +216,8 @@ func applyMethodToBool(applyMethod string) bool {
 }
 
 // autoApplyRunTriggerToBool turns spec.autoapplyRunTrigger field into bool
-func autoApplyRunTriggerToBool(autoApplyRunTrigger bool) bool {
-	return autoApplyRunTrigger
+func applyRunTriggerToBool(applyRunTrigger string) bool {
+	return applyRunTrigger == "auto"
 }
 
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
@@ -257,7 +257,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		Name:                tfc.String(spec.Name),
 		AllowDestroyPlan:    tfc.Bool(spec.AllowDestroyPlan),
 		AutoApply:           tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
-		AutoApplyRunTrigger: tfc.Bool(autoApplyRunTriggerToBool(spec.AutoApplyRunTrigger)),
+		AutoApplyRunTrigger: tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger)),
 		Description:         tfc.String(spec.Description),
 		ExecutionMode:       tfc.String(spec.ExecutionMode),
 		TerraformVersion:    tfc.String(spec.TerraformVersion),
@@ -355,8 +355,8 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		updateOptions.AutoApply = tfc.Bool(applyMethodToBool(spec.ApplyMethod))
 	}
 
-	if workspace.AutoApplyRunTrigger != autoApplyRunTriggerToBool(spec.AutoApplyRunTrigger) {
-		updateOptions.AutoApplyRunTrigger = tfc.Bool(autoApplyRunTriggerToBool(spec.AutoApplyRunTrigger))
+	if workspace.AutoApplyRunTrigger != applyRunTriggerToBool(spec.ApplyRunTrigger) {
+		updateOptions.AutoApplyRunTrigger = tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger))
 	}
 
 	if workspace.AllowDestroyPlan != spec.AllowDestroyPlan {
