@@ -6,7 +6,9 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -97,4 +99,14 @@ func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName,
 	}
 
 	return "", fmt.Errorf("unable to find key=%q in secret=%q namespace=%q", key, nn.Name, nn.Namespace)
+}
+
+func parseTFEVersion(version string) (int, error) {
+	versionRegexp := regexp.MustCompile(`^v([0-9]{6})-([0-9]{1})$`)
+	matches := versionRegexp.FindStringSubmatch(version)
+	if len(matches) == 3 {
+		return strconv.Atoi(matches[1] + matches[2])
+	}
+
+	return 0, errors.New("malformed TFE version")
 }

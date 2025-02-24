@@ -66,6 +66,7 @@ type AgentDeploymentAutoscaling struct {
 	// associated with the AgentPool.
 	//
 	//+optional
+	//+deprecated
 	TargetWorkspaces *[]TargetWorkspace `json:"targetWorkspaces"`
 
 	// CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300.
