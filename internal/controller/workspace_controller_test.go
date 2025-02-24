@@ -59,6 +59,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name:             workspace,
 				ApplyMethod:      "auto",
+				ApplyRunTrigger:  "auto",
 				AllowDestroyPlan: false,
 				Description:      "Description",
 				ExecutionMode:    "remote",
@@ -137,6 +138,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
 				return ws.AutoApply == applyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					ws.AutoApplyRunTrigger == applyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
 					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
 					ws.Description == instanceCopy.Spec.Description &&
 					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&
@@ -163,6 +165,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
 				return ws.AutoApply == applyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					ws.AutoApplyRunTrigger == applyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
 					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
 					ws.Description == instanceCopy.Spec.Description &&
 					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&

@@ -237,6 +237,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				workspaceAnnotationRunType: runTypeApply,
 			})
 			instance.Spec.ApplyMethod = "auto"
+			instance.Spec.ApplyRunTrigger = "auto"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
 
@@ -258,6 +259,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				workspaceAnnotationRunType: runTypePlan,
 			})
 			instance.Spec.ApplyMethod = "auto"
+			instance.Spec.ApplyRunTrigger = "auto"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
 

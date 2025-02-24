@@ -56,8 +56,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				Name:        workspace,
-				ApplyMethod: "auto",
+				Name:            workspace,
+				ApplyMethod:     "auto",
+				ApplyRunTrigger: "auto",
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
 		}
