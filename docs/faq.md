@@ -292,3 +292,7 @@
     ```
 
     *As a result, you will not see the `Name has already been taken` error in the logs because the operator will recognize the newly created resource as unique within the context of the new cluster.*
+
+  - **What is Auto Apply for Run Triggers?**
+
+  The field `spec.applyRunTrigger` specifies whether to to automatically or manually apply changes for runs that are created by run triggers from another workspace. Value must be set to auto or manual. 

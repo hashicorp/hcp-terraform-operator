@@ -13,3 +13,5 @@ spec:
       name: tfc-operator
       key: token
   name: kubernetes-operator-demo
+  applyMethod: manual
+  applyRunTrigger: manual
