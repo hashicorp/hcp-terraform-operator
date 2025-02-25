@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '"Add support for auto apply for run triggers"'
+time: 2025-02-25T08:59:22.728679-05:00
+custom:
+    PR: "558"

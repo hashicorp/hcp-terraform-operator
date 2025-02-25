@@ -147,6 +147,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Update the Kubernetes workspace object fields(basic workspace attributes)
 			instance.Spec.ApplyMethod = "manual"
+			instance.Spec.ApplyRunTrigger = "manual"
 			instance.Spec.AllowDestroyPlan = true
 			instance.Spec.Description = fmt.Sprintf("%v-new", instance.Spec.Description)
 			instance.Spec.ExecutionMode = "local"
