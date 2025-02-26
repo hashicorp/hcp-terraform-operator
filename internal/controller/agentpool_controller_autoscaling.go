@@ -223,15 +223,20 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		if ap.tfClient.Client.IsCloud() {
 			return pendingRuns(ctx, ap)
 		}
-		version, err := parseTFEVersion(ap.tfClient.Client.RemoteTFEVersion())
+		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
+		version, err := parseTFEVersion(tfeVersion)
 		if err != nil {
-			return 0, err
+			ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to parse TFE version")
+			// If the TFE version parsing fails, do not return the error here and proceed further.
+			// In this case, a legacy algorithm will be taken.
 		}
 		// In TFE version v202409-1, a new API endpoint was introduced.
 		// It now allows retrieving a list of runs for the organization.
 		if version >= 2024091 {
+			ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the new algorithm based on the detected TFE version %s", tfeVersion))
 			return pendingRuns(ctx, ap)
 		}
+		ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the legacy algorithm based to the detected TFE version %s", tfeVersion))
 		return computeRequiredAgents(ctx, ap)
 	}()
 	if err != nil {
