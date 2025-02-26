@@ -6,7 +6,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -108,5 +107,5 @@ func parseTFEVersion(version string) (int, error) {
 		return strconv.Atoi(matches[1] + matches[2])
 	}
 
-	return 0, errors.New("malformed TFE version")
+	return 0, fmt.Errorf("malformed TFE version %s", version)
 }
