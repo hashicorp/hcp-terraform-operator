@@ -249,16 +249,13 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
 	spec := w.instance.Spec
 	options := tfc.WorkspaceCreateOptions{
-		Name:                tfc.String(spec.Name),
-		AllowDestroyPlan:    tfc.Bool(spec.AllowDestroyPlan),
-		AutoApply:           tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
-		Description:         tfc.String(spec.Description),
-		ExecutionMode:       tfc.String(spec.ExecutionMode),
-		FileTriggersEnabled: tfc.Bool(spec.FileTriggersEnabled),
-		TriggerPatterns:     spec.TriggerPatterns,
-		TriggerPrefixes:     spec.TriggerPrefixes,
-		TerraformVersion:    tfc.String(spec.TerraformVersion),
-		WorkingDirectory:    tfc.String(spec.WorkingDirectory),
+		Name:             tfc.String(spec.Name),
+		AllowDestroyPlan: tfc.Bool(spec.AllowDestroyPlan),
+		AutoApply:        tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
+		Description:      tfc.String(spec.Description),
+		ExecutionMode:    tfc.String(spec.ExecutionMode),
+		TerraformVersion: tfc.String(spec.TerraformVersion),
+		WorkingDirectory: tfc.String(spec.WorkingDirectory),
 	}
 
 	if spec.ExecutionMode == "agent" {
@@ -279,6 +276,10 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
 		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		options.FileTriggersEnabled = tfc.Bool(spec.VersionControl.FileTriggersEnabled)
+		options.TriggerPatterns = spec.VersionControl.TriggerPatterns
+		options.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
+
 	}
 
 	if spec.RemoteStateSharing != nil {
@@ -363,20 +364,6 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
 	}
 
-	if workspace.FileTriggersEnabled != spec.FileTriggersEnabled {
-		updateOptions.FileTriggersEnabled = tfc.Bool(spec.FileTriggersEnabled)
-	}
-
-	triggerPatternsDiff := triggerPatternsDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
-	if len(triggerPatternsDiff) != 0 {
-		updateOptions.TriggerPatterns = spec.TriggerPatterns
-	}
-
-	triggerPrefixesDiff := triggerPrefixesDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
-	if len(triggerPrefixesDiff) != 0 {
-		updateOptions.TriggerPrefixes = spec.TriggerPrefixes
-	}
-
 	if spec.RemoteStateSharing != nil {
 		if workspace.GlobalRemoteState != spec.RemoteStateSharing.AllWorkspaces {
 			updateOptions.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
@@ -418,6 +405,20 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 
 		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
 			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		}
+
+		if workspace.FileTriggersEnabled != spec.VersionControl.FileTriggersEnabled {
+			updateOptions.FileTriggersEnabled = tfc.Bool(spec.VersionControl.FileTriggersEnabled)
+		}
+
+		triggerPatternsDiff := triggerPatternsDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
+		if len(triggerPatternsDiff) != 0 {
+			updateOptions.TriggerPatterns = spec.VersionControl.TriggerPatterns
+		}
+
+		triggerPrefixesDiff := triggerPrefixesDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
+		if len(triggerPrefixesDiff) != 0 {
+			updateOptions.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
 		}
 	}
 
