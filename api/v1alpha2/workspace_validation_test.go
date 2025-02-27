@@ -1154,15 +1154,19 @@ func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
 	successCases := map[string]Workspace{
 		"HasOnlyTriggerPatterns": {
 			Spec: WorkspaceSpec{
-				FileTriggersEnabled: true,
-				TriggerPatterns:     []string{"path/*/workspace/*"},
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPatterns:     []string{"path/*/workspace/*"},
+				},
 			},
 		},
 		"HasOnlyTriggerPrefixes": {
 			Spec: WorkspaceSpec{
-				FileTriggersEnabled: true,
-				WorkingDirectory:    "path/",
-				TriggerPrefixes:     []string{"path/to/workspace/"},
+				WorkingDirectory: "path/",
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPrefixes:     []string{"path/to/workspace/"},
+				},
 			},
 		},
 	}
@@ -1178,26 +1182,34 @@ func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
 	errorCases := map[string]Workspace{
 		"TriggerPrefixesWithoutWorkingDirectory": {
 			Spec: WorkspaceSpec{
-				FileTriggersEnabled: true,
-				TriggerPrefixes:     []string{"path/to/workspace/"},
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPrefixes:     []string{"path/to/workspace/"},
+				},
 			},
 		},
 		"BothTriggerOptions": {
 			Spec: WorkspaceSpec{
-				FileTriggersEnabled: true,
-				WorkingDirectory:    "path/",
-				TriggerPatterns:     []string{"path/*/workspace/*"},
-				TriggerPrefixes:     []string{"path/to/workspace/"},
+				WorkingDirectory: "path/",
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPatterns:     []string{"path/*/workspace/*"},
+					TriggerPrefixes:     []string{"path/to/workspace/"},
+				},
 			},
 		},
 		"TriggerPatternsWithoutFileTriggersEnabled": {
 			Spec: WorkspaceSpec{
-				TriggerPatterns: []string{"path/*/workspace/*"},
+				VersionControl: &VersionControl{
+					TriggerPatterns: []string{"path/*/workspace/*"},
+				},
 			},
 		},
 		"TriggerPrefixesWithoutFileTriggersEnabled": {
 			Spec: WorkspaceSpec{
-				TriggerPrefixes: []string{"path/to/workspace/"},
+				VersionControl: &VersionControl{
+					TriggerPrefixes: []string{"path/to/workspace/"},
+				},
 			},
 		},
 	}
