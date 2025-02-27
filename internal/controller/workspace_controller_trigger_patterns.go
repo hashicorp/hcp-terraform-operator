@@ -15,11 +15,11 @@ import (
 func getTriggerPatterns(instance *appv1alpha2.Workspace) map[string]bool {
 	patterns := make(map[string]bool)
 
-	if len(instance.Spec.TriggerPatterns) == 0 {
+	if instance.Spec.VersionControl == nil || len(instance.Spec.VersionControl.TriggerPatterns) == 0 {
 		return patterns
 	}
 
-	for _, t := range instance.Spec.TriggerPatterns {
+	for _, t := range instance.Spec.VersionControl.TriggerPatterns {
 		patterns[string(t)] = true
 	}
 

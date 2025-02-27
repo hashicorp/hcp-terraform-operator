@@ -731,6 +731,9 @@ _Appears in:_
 | `repository` _string_ | A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
 | `speculativePlans` _boolean_ | Whether this workspace allows automatic speculative plans on PR.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans |
+| `fileTriggersEnabled` _boolean_ | File triggers allow you to queue runs in Terraform Cloud when files in your VCS repository change. |
+| `triggerPatterns` _string array_ | The list of pattern triggers that will queue runs in Terraform Cloud when files in your VCS repository change. |
+| `triggerPrefixes` _string array_ | The list of pattern prefixes that will queue runs in Terraform Cloud when files in your VCS repository change. |
 
 
 #### Workspace
@@ -834,9 +837,6 @@ _Appears in:_
 | `runTasks` _[WorkspaceRunTask](#workspaceruntask) array_ | Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-tasks |
 | `tags` _[Tag](#tag) array_ | Workspace tags are used to help identify and group together workspaces.<br />Tags must be one or more characters; can include letters, numbers, colons, hyphens, and underscores; and must begin and end with a letter or number. |
 | `teamAccess` _[TeamAccess](#teamaccess) array_ | HCP Terraform workspaces can only be accessed by users with the correct permissions.<br />You can manage permissions for a workspace on a per-team basis.<br />When a workspace is created, only the owners team and teams with the "manage workspaces" permission can access it,<br />with full admin permissions. These teams' access can't be removed from a workspace.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/access |
-| `fileTriggersEnabled` _boolean_ | File triggers allow you to queue runs in Terraform Cloud when files in your VCS repository change. |
-| `triggerPatterns` _string array_ | The list of pattern triggers that will queue runs in Terraform Cloud when files in your VCS repository change. |
-| `triggerPrefixes` _string array_ | The list of pattern prefixes that will queue runs in Terraform Cloud when files in your VCS repository change. |
 | `terraformVersion` _string_ | The version of Terraform to use for this workspace.<br />If not specified, the latest available version will be used.<br />Must match pattern: `^\\d\{1\}\\.\\d\{1,2\}\\.\\d\{1,2\}$`<br />More information:<br />  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-version |
 | `workingDirectory` _string_ | The directory where Terraform will execute, specified as a relative path from the root of the configuration directory.<br />More information:<br />  - https://www.terraform.io/cloud-docs/workspaces/settings#terraform-working-directory |
 | `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all plans and applies in this workspace.<br />Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables |

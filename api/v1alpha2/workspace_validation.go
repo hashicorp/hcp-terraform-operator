@@ -617,9 +617,9 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 	allErrs := field.ErrorList{}
 	spec := w.Spec
 
-	f := field.NewPath("spec")
+	f := field.NewPath("spec").Child("VersionControl")
 
-	if len(spec.TriggerPatterns) > 0 && len(spec.TriggerPrefixes) > 0 {
+	if spec.VersionControl != nil && len(spec.VersionControl.TriggerPatterns) > 0 && len(spec.VersionControl.TriggerPrefixes) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
@@ -627,9 +627,9 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		)
 	}
 
-	f = field.NewPath("spec").Child("fileTriggerEnabled")
+	f = field.NewPath("spec").Child("VersionControl").Child("fileTriggerEnabled")
 
-	if !spec.FileTriggersEnabled && len(spec.TriggerPatterns) > 0 {
+	if !spec.VersionControl.FileTriggersEnabled && spec.VersionControl != nil && len(spec.VersionControl.TriggerPatterns) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
@@ -637,7 +637,7 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		)
 	}
 
-	if !spec.FileTriggersEnabled && len(spec.TriggerPrefixes) > 0 {
+	if !spec.VersionControl.FileTriggersEnabled && spec.VersionControl != nil && len(spec.VersionControl.TriggerPrefixes) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
@@ -647,7 +647,7 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 
 	f = field.NewPath("spec").Child("workingDirectory")
 
-	if spec.WorkingDirectory == "" && len(spec.TriggerPrefixes) > 0 {
+	if spec.WorkingDirectory == "" && spec.VersionControl != nil && len(spec.VersionControl.TriggerPrefixes) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",

@@ -15,11 +15,11 @@ import (
 func getTriggerPrefixes(instance *appv1alpha2.Workspace) map[string]bool {
 	prefixes := make(map[string]bool)
 
-	if len(instance.Spec.TriggerPrefixes) == 0 {
+	if instance.Spec.VersionControl == nil || len(instance.Spec.VersionControl.TriggerPrefixes) == 0 {
 		return prefixes
 	}
 
-	for _, t := range instance.Spec.TriggerPrefixes {
+	for _, t := range instance.Spec.VersionControl.TriggerPrefixes {
 		prefixes[string(t)] = true
 	}
 
