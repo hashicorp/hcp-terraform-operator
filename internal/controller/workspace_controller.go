@@ -275,8 +275,11 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
-		options.FileTriggersEnabled = tfc.Bool(false)
 		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		options.FileTriggersEnabled = tfc.Bool(spec.VersionControl.FileTriggersEnabled)
+		options.TriggerPatterns = spec.VersionControl.TriggerPatterns
+		options.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
+
 	}
 
 	if spec.RemoteStateSharing != nil {
@@ -399,10 +402,23 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
-		updateOptions.FileTriggersEnabled = tfc.Bool(false)
 
 		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
 			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		}
+
+		if workspace.FileTriggersEnabled != spec.VersionControl.FileTriggersEnabled {
+			updateOptions.FileTriggersEnabled = tfc.Bool(spec.VersionControl.FileTriggersEnabled)
+		}
+
+		triggerPatternsDiff := triggerPatternsDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
+		if len(triggerPatternsDiff) != 0 {
+			updateOptions.TriggerPatterns = spec.VersionControl.TriggerPatterns
+		}
+
+		triggerPrefixesDiff := triggerPrefixesDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
+		if len(triggerPrefixesDiff) != 0 {
+			updateOptions.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
 		}
 	}
 
