@@ -60,13 +60,13 @@ type AgentDeploymentAutoscaling struct {
 	// MinReplicas is the minimum number of replicas for the Agent deployment.
 	MinReplicas *int32 `json:"minReplicas"`
 
+	// DEPRECATED: This field has been deprecated since 2.9.0 and will be removed in future versions.
 	// TargetWorkspaces is a list of HCP Terraform Workspaces which
 	// the agent pool should scale up to meet demand. When this field
 	// is ommited the autoscaler will target all workspaces that are
 	// associated with the AgentPool.
 	//
 	//+optional
-	//+deprecated
 	TargetWorkspaces *[]TargetWorkspace `json:"targetWorkspaces"`
 
 	// CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300.
