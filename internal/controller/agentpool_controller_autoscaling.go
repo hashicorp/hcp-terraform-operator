@@ -226,9 +226,10 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
 		version, err := parseTFEVersion(tfeVersion)
 		if err != nil {
-			ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to parse TFE version")
 			// If the TFE version parsing fails, do not return the error here and proceed further.
 			// In this case, a legacy algorithm will be taken.
+			ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to parse TFE version")
+			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPool", "Failed to parse TFE version: %v", err.Error())
 		}
 		// In TFE version v202409-1, a new API endpoint was introduced.
 		// It now allows retrieving a list of runs for the organization.
