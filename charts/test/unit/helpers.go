@@ -11,7 +11,7 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -41,6 +41,7 @@ const (
 var (
 	// Generic variables.
 	helmChartVersion = "0.0.0"
+	helmChartValues  = &chartValues{}
 
 	// Deployment variables.
 	defaultDeploymentName   = fmt.Sprintf("%s-%s", helmReleaseName, helmChartName)
@@ -58,12 +59,7 @@ var (
 		"app.kubernetes.io/name":     helmChartName,
 		"control-plane":              fmt.Sprintf("%s-controller-manager", helmReleaseName),
 	}
-	defaultDeploymentTemplateSpecLabels = map[string]string{
-		"control-plane": fmt.Sprintf("%s-controller-manager", helmReleaseName),
-	}
 	defaultDeploymentTerminationGracePeriodSeconds = int64(10)
-	defaultDeploymentTemplateVolumeName            = "manager-config"
-	defaultDeploymentTemplateVolumeConfigMapName   = fmt.Sprintf("%s-manager-config", helmReleaseName)
 
 	// RBAC variables.
 	defaultRBACRoleName        = fmt.Sprintf("%s-leader-election-role", helmReleaseName)
@@ -93,6 +89,11 @@ func init() {
 		os.Exit(1)
 	}
 
+	if helmChartValues, err = getChartValues(); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
 	defaultDeploymentLabels["helm.sh/chart"] = fmt.Sprintf("%s-%s", helmChartName, helmChartVersion)
 	defaultDeploymentLabels["app.kubernetes.io/version"] = helmChartVersion
 
@@ -100,8 +101,23 @@ func init() {
 	defaultServiceAccountLabels["app.kubernetes.io/version"] = helmChartVersion
 }
 
-type Chart struct {
+// Chart.yaml
+type chart struct {
 	Version string `yaml:"version"`
+}
+
+// values.yaml
+type chartValues struct {
+	KubeRbacProxy kubeRbacProxy `yaml:"kubeRbacProxy"`
+}
+
+type kubeRbacProxy struct {
+	Image image `yaml:"image"`
+}
+
+type image struct {
+	Tag        string `yaml:"tag"`
+	Repository string `yaml:"repository"`
 }
 
 func getChartVersion() (string, error) {
@@ -110,12 +126,26 @@ func getChartVersion() (string, error) {
 		log.Fatalf("Error reading Chart.yaml: %v", err)
 	}
 
-	var chart Chart
-	if err := yaml.Unmarshal(file, &chart); err != nil {
-		return "", fmt.Errorf("Error unmarshalling YAML: %v", err)
+	var c chart
+	if err := yaml.Unmarshal(file, &c); err != nil {
+		return "", fmt.Errorf("error unmarshalling YAML: %v", err)
 	}
 
-	return chart.Version, nil
+	return c.Version, nil
+}
+
+func getChartValues() (*chartValues, error) {
+	file, err := os.ReadFile(fmt.Sprintf("%s/values.yaml", helmChartPath))
+	if err != nil {
+		log.Fatalf("Error reading values.yaml: %v", err)
+	}
+
+	var cv chartValues
+	if err := yaml.Unmarshal(file, &cv); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML: %v", err)
+	}
+
+	return &cv, nil
 }
 
 func renderDeploymentManifest(t *testing.T, options *helm.Options) appsv1.Deployment {
