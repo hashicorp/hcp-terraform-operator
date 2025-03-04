@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'charts/hcp-terraform-operator/**'
   workflow_dispatch:
 
 jobs:
