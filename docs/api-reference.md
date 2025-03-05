@@ -731,6 +731,9 @@ _Appears in:_
 | `repository` _string_ | A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
 | `speculativePlans` _boolean_ | Whether this workspace allows automatic speculative plans on PR.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans |
+| `fileTriggersEnabled` _boolean_ | File triggers allow you to queue runs in Terraform Cloud when files in your VCS repository change. |
+| `triggerPatterns` _string array_ | The list of pattern triggers that will queue runs in Terraform Cloud when files in your VCS repository change. |
+| `triggerPrefixes` _string array_ | The list of pattern prefixes that will queue runs in Terraform Cloud when files in your VCS repository change. |
 
 
 #### Workspace

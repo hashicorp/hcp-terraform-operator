@@ -23,6 +23,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
 	allErrs = append(allErrs, w.validateSpecProject()...)
+	allErrs = append(allErrs, w.validateSpecFileTriggers()...)
 	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
 	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 	allErrs = append(allErrs, w.validateSpecDeletionPolicy()...)
@@ -607,6 +608,51 @@ func (w *Workspace) validateSpecVariableSets() field.ErrorList {
 			// At least one, either ID or Name must be set
 			allErrs = append(allErrs, field.Required(f, "At least one must be set."))
 		}
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec
+
+	f := field.NewPath("spec").Child("VersionControl")
+
+	if spec.VersionControl != nil && len(spec.VersionControl.TriggerPatterns) > 0 && len(spec.VersionControl.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"only one of the field TriggerPatterns or TriggerPrefixes is allowed"),
+		)
+	}
+
+	f = field.NewPath("spec").Child("VersionControl").Child("fileTriggerEnabled")
+
+	if !spec.VersionControl.FileTriggersEnabled && spec.VersionControl != nil && len(spec.VersionControl.TriggerPatterns) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"TriggerPatterns requires FileTriggersEnabled set to true"),
+		)
+	}
+
+	if !spec.VersionControl.FileTriggersEnabled && spec.VersionControl != nil && len(spec.VersionControl.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"TriggerPrefixes requires FileTriggersEnabled set to true"),
+		)
+	}
+
+	f = field.NewPath("spec").Child("workingDirectory")
+
+	if spec.WorkingDirectory == "" && spec.VersionControl != nil && len(spec.VersionControl.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"TriggerPrefixes requires a non-empty WorkingDirectory"),
+		)
 	}
 
 	return allErrs
