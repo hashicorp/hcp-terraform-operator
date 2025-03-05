@@ -24,10 +24,7 @@ spec:
     name: v1alpha2
     schema:
       openAPIV3Schema:
-        description: |-
-          Project manages HCP Terraform Projects.
-          More information:
-            - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+        description: Project is the Schema for the projects API
         properties:
           apiVersion:
             description: |-
@@ -52,6 +49,21 @@ spec:
               More information:
                 - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects
             properties:
+              deletionPolicyForProject:
+                default: retain
+                description: |-
+                  DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+
+                  You must use one of the following values:
+                  - `retain`:  When the custom resource is deleted, the operator will not delete the associated project.
+                  - `destroy`: Performs a destroy operation to remove the project. The project must be empty.
+                  - `force`: Forcefully and immediately removes all resources in the project. Once this is completed the operator deletes the project.
+                  Default: `retain`.
+                enum:
+                - retain
+                - destroy
+                - force
+                type: string
               name:
                 description: Name of the Project.
                 minLength: 1
