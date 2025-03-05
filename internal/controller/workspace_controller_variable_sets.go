@@ -6,6 +6,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
@@ -83,6 +84,7 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 	}
 
 	specVariableSets := make(map[string]*tfc.VariableSet)
+	//statusVariableSets := make(map[string]appv1alpha2.VariableSetStatus)
 	statusVariableSets := make(map[string]appv1alpha2.VariableSetStatus)
 
 	for _, vs := range w.instance.Spec.VariableSets {
@@ -106,52 +108,44 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 			w.updateVariableSetsStatus(statusVariableSets, specVS.ID)
 			continue
 		}
-		if _, exists := statusVariableSets[id]; exists {
+		if _, exists := statusVariableSets[id]; exists { //picks up element from spec checks if it is in status
 
-			applied := false
-			for _, ws := range specVS.Workspaces {
-				if ws.ID == w.instance.Status.WorkspaceID {
-					applied = true
-					break
-				}
+			if slices.ContainsFunc(specVS.Workspaces, func(ws *tfc.Workspace) bool {
+				return ws.ID == w.instance.Status.WorkspaceID
+			}) {
+				//remove elements in spec that are in status, from status map
+				delete(statusVariableSets, id)
+				continue
 			}
-			if !applied {
-				err := r.applyVariableSetsToWorkspace(ctx, w, specVS)
-				if err != nil {
-					w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Failed to apply variable set %s", id))
-					return err
-				}
-			}
-
-		} else {
-			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Applying missing variable set %s to workspace", id))
-			err := r.applyVariableSetsToWorkspace(ctx, w, specVS)
-			if err != nil {
-				w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Failed to apply variable set %s", id))
-				return err
-			}
-			w.updateVariableSetsStatus(statusVariableSets, specVS.ID)
 		}
+
+		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Applying missing variable set %s to workspace", id))
+		err := r.applyVariableSetsToWorkspace(ctx, w, specVS)
+		if err != nil {
+			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Failed to apply variable set %s", id))
+			return err
+		}
+		w.updateVariableSetsStatus(statusVariableSets, specVS.ID)
 	}
 
 	//Remove variable sets from workspace that are in status but not in spec
 	//0 | 1
 	for id := range statusVariableSets {
-		if _, exists := specVariableSets[id]; !exists {
-			if vs, ok := workspaceVariableSets[id]; ok {
-				err := r.removeVariableSetFromWorkspace(ctx, w, vs)
-				if err != nil {
-					return err
-				}
+		//if _, exists := specVariableSets[id]; !exists {
+		if vs, ok := workspaceVariableSets[id]; ok {
+			err := r.removeVariableSetFromWorkspace(ctx, w, vs)
+			if err != nil {
+				return err
 			}
-			for v, DeleteVS := range w.instance.Status.VariableSets {
-				if DeleteVS.ID == id {
-					w.instance.Status.VariableSets = slice.RemoveFromSlice(w.instance.Status.VariableSets, v)
-					break
-				}
+		}
+		for v, DeleteVS := range w.instance.Status.VariableSets {
+			if DeleteVS.ID == id {
+				w.instance.Status.VariableSets = slice.RemoveFromSlice(w.instance.Status.VariableSets, v)
+				break
 			}
 		}
 	}
+	//}
 
 	return nil
 }
