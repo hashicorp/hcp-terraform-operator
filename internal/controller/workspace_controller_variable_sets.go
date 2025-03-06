@@ -84,7 +84,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 	}
 
 	specVariableSets := make(map[string]*tfc.VariableSet)
-	//statusVariableSets := make(map[string]appv1alpha2.VariableSetStatus)
 	statusVariableSets := make(map[string]appv1alpha2.VariableSetStatus)
 
 	for _, vs := range w.instance.Spec.VariableSets {
@@ -101,19 +100,18 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 
 	//If both spec and status are not empty
 	// 1 | 1
-	w.log.Info("Reconcile Variable Sets", "msg", "reconciling spec and status")
+	w.log.Info("Reconcile Variable Sets", "msg", "Reconciling spec and status")
 
 	for id, specVS := range specVariableSets {
 		if specVS.Global {
 			w.updateVariableSetsStatus(statusVariableSets, specVS.ID)
 			continue
 		}
-		if _, exists := statusVariableSets[id]; exists { //picks up element from spec checks if it is in status
+		if _, exists := statusVariableSets[id]; exists {
 
 			if slices.ContainsFunc(specVS.Workspaces, func(ws *tfc.Workspace) bool {
 				return ws.ID == w.instance.Status.WorkspaceID
 			}) {
-				//remove elements in spec that are in status, from status map
 				delete(statusVariableSets, id)
 				continue
 			}
@@ -131,10 +129,11 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 	//Remove variable sets from workspace that are in status but not in spec
 	//0 | 1
 	for id := range statusVariableSets {
-		//if _, exists := specVariableSets[id]; !exists {
 		if vs, ok := workspaceVariableSets[id]; ok {
+			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Removing variable set %s from workspace", id))
 			err := r.removeVariableSetFromWorkspace(ctx, w, vs)
 			if err != nil {
+				w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Failed to remov'e variable set %s", id))
 				return err
 			}
 		}
@@ -145,8 +144,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 			}
 		}
 	}
-	//}
-
 	return nil
 }
 
