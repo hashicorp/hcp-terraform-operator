@@ -248,23 +248,6 @@ _Appears in:_
 
 
 
-#### DeletionPolicyForProject
-
-_Underlying type:_ _string_
-
-DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
-
-
-You must use one of the following values:
-- `retain`: When the custom resource is deleted, the operator will not delete the associated project.
-- `destroy`: Performs a destroy operation to remove the project. The project must be empty.
-- `force`: Forcefully and immediately removes all resources in the project. Once this is completed the operator deletes the project.
-
-_Appears in:_
-- [ProjectSpec](#projectspec)
-
-
-
 #### Module
 
 
@@ -439,7 +422,9 @@ _Appears in:_
 
 
 
-Project is the Schema for the projects API
+Project manages HCP Terraform Projects.
+More information:
+- https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 
 
 
@@ -451,6 +436,23 @@ Project is the Schema for the projects API
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[ProjectSpec](#projectspec)_ |  |
+
+
+#### ProjectDeletionPolicy
+
+_Underlying type:_ _string_
+
+DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+
+
+You must use one of the following values:
+- `retain`: When the custom resource is deleted, the operator will not delete the associated project.
+- `destroy`: Performs a destroy operation to remove the project. The project must be empty.
+- `force`: Forcefully and immediately removes all resources in the project. Once this is completed the operator deletes the project.
+
+_Appears in:_
+- [ProjectSpec](#projectspec)
+
 
 
 #### ProjectSpec
@@ -470,7 +472,7 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `name` _string_ | Name of the Project. |
 | `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,<br />users must belong to a team that has been granted the appropriate permissions.<br />You can assign project-specific permissions to teams.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
-| `deletionPolicyForProject` _[DeletionPolicyForProject](#deletionpolicyforproject)_ | DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br /><br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `destroy`: Performs a destroy operation to remove the project. The project must be empty.<br />- `force`: Forcefully and immediately removes all resources in the project. Once this is completed the operator deletes the project.<br />Default: `retain`. |
+| `deletionPolicy` _[ProjectDeletionPolicy](#projectdeletionpolicy)_ | DeletionPolicyForProject defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br /><br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `destroy`: Performs a destroy operation to remove the project. The project must be empty.<br />- `force`: Forcefully and immediately removes all resources in the project. Once this is completed the operator deletes the project.<br />Default: `retain`. |
 
 
 

@@ -129,12 +129,12 @@ type ProjectTeamAccess struct {
 // - `retain`: When the custom resource is deleted, the operator will not delete the associated project.
 // - `destroy`: Performs a destroy operation to remove the project. The project must be empty.
 // - `force`: Forcefully and immediately removes all resources in the project. Once this is completed the operator deletes the project.
-type DeletionPolicyForProject string
+type ProjectDeletionPolicy string
 
 const (
-	DeletionPolicyForProjectRetain  DeletionPolicyForProject = "retain"
-	DeletionPolicyForProjectDestroy DeletionPolicyForProject = "destroy"
-	DeletionPolicyForProjectForce   DeletionPolicyForProject = "force"
+	ProjectDeletionPolicyRetain  ProjectDeletionPolicy = "retain"
+	ProjectDeletionPolicyDestroy ProjectDeletionPolicy = "destroy"
+	ProjectDeletionPolicyForce   ProjectDeletionPolicy = "force"
 )
 
 // ProjectSpec defines the desired state of Project.
@@ -164,7 +164,7 @@ type ProjectSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	TeamAccess []*ProjectTeamAccess `json:"teamAccess,omitempty"`
-	// DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+	// DeletionPolicyForProject defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
 	//
 	// You must use one of the following values:
 	// - `retain`:  When the custom resource is deleted, the operator will not delete the associated project.
@@ -175,7 +175,7 @@ type ProjectSpec struct {
 	//+kubebuilder:validation:Enum:=retain;destroy;force
 	//+kubebuilder:default=retain
 	//+optional
-	DeletionPolicyForProject DeletionPolicyForProject `json:"deletionPolicyForProject,omitempty"`
+	DeletionPolicy ProjectDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // ProjectStatus defines the observed state of Project.
@@ -193,7 +193,9 @@ type ProjectStatus struct {
 //+kubebuilder:printcolumn:name="Project Name",type=string,JSONPath=`.status.name`
 //+kubebuilder:printcolumn:name="Project ID",type=string,JSONPath=`.status.id`
 
-// Project is the Schema for the projects API
+// Project manages HCP Terraform Projects.
+// More information:
+// - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 type Project struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
