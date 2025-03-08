@@ -10,7 +10,6 @@ import (
 
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
 func (w *workspaceInstance) getVariableSets(ctx context.Context) (map[string]*tfc.VariableSet, error) {
@@ -65,6 +64,12 @@ func (r *WorkspaceReconciler) applyVariableSetsToWorkspace(ctx context.Context, 
 
 	return w.tfClient.Client.VariableSets.ApplyToWorkspaces(ctx, vs.ID, options)
 
+}
+
+func (w *workspaceInstance) updateVariableSetsStatus(status map[string]appv1alpha2.VariableSetStatus, id string) {
+	if _, ok := status[id]; !ok {
+		w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, appv1alpha2.VariableSetStatus{ID: id})
+	}
 }
 
 func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
@@ -126,8 +131,6 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 		w.updateVariableSetsStatus(statusVariableSets, specVS.ID)
 	}
 
-	//Remove variable sets from workspace that are in status but not in spec
-	//0 | 1
 	for id := range statusVariableSets {
 		if vs, ok := workspaceVariableSets[id]; ok {
 			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("Removing variable set %s from workspace", id))
@@ -137,18 +140,10 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 				return err
 			}
 		}
-		for v, DeleteVS := range w.instance.Status.VariableSets {
-			if DeleteVS.ID == id {
-				w.instance.Status.VariableSets = slice.RemoveFromSlice(w.instance.Status.VariableSets, v)
-				break
-			}
-		}
+		w.instance.Status.VariableSets = slices.DeleteFunc(w.instance.Status.VariableSets, func(vs appv1alpha2.VariableSetStatus) bool {
+			return vs.ID == id
+		})
 	}
-	return nil
-}
 
-func (w *workspaceInstance) updateVariableSetsStatus(status map[string]appv1alpha2.VariableSetStatus, id string) {
-	if _, ok := status[id]; !ok {
-		w.instance.Status.VariableSets = append(w.instance.Status.VariableSets, appv1alpha2.VariableSetStatus{ID: id})
-	}
+	return nil
 }
