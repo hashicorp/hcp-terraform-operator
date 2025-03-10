@@ -104,6 +104,21 @@ More infromation:
 | `spec` _[AgentPoolSpec](#agentpoolspec)_ |  |
 
 
+#### AgentPoolDeletionPolicy
+
+_Underlying type:_ _string_
+
+DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a resource, either manually or by a system event.
+
+
+You must use one of the following values:
+- `retain`: When you delete the custom resource, the operator does not delete the workspace.
+
+_Appears in:_
+- [AgentPoolSpec](#agentpoolspec)
+
+
+
 #### AgentPoolSpec
 
 
@@ -121,6 +136,7 @@ _Appears in:_
 | `agentTokens` _[AgentToken](#agenttoken) array_ | List of the agent tokens to generate. |
 | `agentDeployment` _[AgentDeployment](#agentdeployment)_ | Agent deployment settings |
 | `autoscaling` _[AgentDeploymentAutoscaling](#agentdeploymentautoscaling)_ | Agent deployment settings |
+| `deletionPolicy` _[AgentPoolDeletionPolicy](#agentpooldeletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.<br />- `retain`: When you delete the custom resource, the operator will remove only the custom resource and not the agent pool.<br />  The token will remain active; however, the managed agents will also be removed.<br />Default: `retain`. |
 
 
 

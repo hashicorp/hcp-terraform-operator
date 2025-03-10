@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -213,25 +216,71 @@ func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPool
 }
 
 func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPoolInstance) error {
+	ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("deletion policy is %s", ap.instance.Spec.DeletionPolicy))
+
 	if ap.instance.Status.AgentPoolID == "" {
 		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("status.agentPoolID is empty, remove finalizer %s", agentPoolFinalizer))
 		return r.removeFinalizer(ctx, ap)
 	}
-	err := ap.tfClient.Client.AgentPools.Delete(ctx, ap.instance.Status.AgentPoolID)
-	if err != nil {
-		// if agent pool wasn't found, it means it was deleted from the TF Cloud bypass the operator
-		// in this case, remove the finalizer and let Kubernetes remove the object permanently
-		if err == tfc.ErrResourceNotFound {
-			ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("Agent Pool ID %s not found, remove finalizer", agentPoolFinalizer))
+
+	switch ap.instance.Spec.DeletionPolicy {
+	case appv1alpha2.AgentPoolDeletionPolicyRetain:
+		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("remove finalizer %s", agentPoolFinalizer))
+		return r.removeFinalizer(ctx, ap)
+	case appv1alpha2.AgentPoolDeletionPolicyDelete:
+		// Delete Agent Pool
+		err := ap.tfClient.Client.AgentPools.Delete(ctx, ap.instance.Status.AgentPoolID)
+		if err != nil {
+			// if agent pool wasn't found, it means it was deleted from the TF Cloud bypass the operator
+			// in this case, remove the finalizer and let Kubernetes remove the object permanently
+			if err == tfc.ErrResourceNotFound {
+				ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s not found, remove finalizer", agentPoolFinalizer))
+				return r.removeFinalizer(ctx, ap)
+			}
+			ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete Agent Pool ID %s, retry later", agentPoolFinalizer))
+			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to delete Agent Pool ID %s, retry later", ap.instance.Status.AgentPoolID)
+			// Do not return error
+			// return err
+		} else {
+			ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finalizer", ap.instance.Status.AgentPoolID))
 			return r.removeFinalizer(ctx, ap)
 		}
-		ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete Agent Pool ID %s, retry later", agentPoolFinalizer))
-		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to delete Agent Pool ID %s, retry later", ap.instance.Status.AgentPoolID)
-		return err
+		// Downscale agents
+		if ap.instance.Status.AgentDeploymentAutoscalingStatus != nil && ap.instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas != nil {
+			if *ap.instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas > 0 {
+				ap.log.Info("Reconcile Agent Pool", "msg", "scale agents to 0")
+				var n int32 = 0
+				if err := r.scaleAgentDeployment(ctx, ap, &n); err != nil {
+					ap.log.Error(err, "Reconcile Agent Pool", "msg", "failed to scale agent deployment")
+					return err
+				}
+				ap.instance.Status.AgentDeploymentAutoscalingStatus = &appv1alpha2.AgentDeploymentAutoscalingStatus{
+					DesiredReplicas: &n,
+					LastScalingEvent: &metav1.Time{
+						Time: time.Now(),
+					},
+				}
+			}
+		}
+		// Deactivate tokens
+		ap.log.Info("Reconcile Agent Pool", "msg", "delete tokens")
+		status := make([]string, len(ap.instance.Status.AgentTokens))
+		for i, t := range ap.instance.Status.AgentTokens {
+			status[i] = t.ID
+		}
+		for _, id := range status {
+			err := ap.tfClient.Client.AgentTokens.Delete(ctx, id)
+			if err != nil && err != tfc.ErrResourceNotFound {
+				ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete token %s", id))
+				return err
+			}
+			ap.instance.Status.AgentTokens = slices.DeleteFunc(ap.instance.Status.AgentTokens, func(token *appv1alpha2.AgentToken) bool {
+				return token.ID == id
+			})
+		}
 	}
 
-	ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finalizer", ap.instance.Status.AgentPoolID))
-	return r.removeFinalizer(ctx, ap)
+	return nil
 }
 
 func (r *AgentPoolReconciler) readAgentPool(ctx context.Context, ap *agentPoolInstance) (*tfc.AgentPool, error) {
