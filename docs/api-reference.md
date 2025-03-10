@@ -86,7 +86,11 @@ _Appears in:_
 
 
 
-AgentPool is the Schema for the agentpools API.
+AgentPool manages HCP Terraform Agent Pools, HCP Terraform Agent Tokens and can perform HCP Terraform Agent scaling.
+More infromation:
+  - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools
+  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens
+  - https://developer.hashicorp.com/terraform/cloud-docs/agents
 
 
 
@@ -248,8 +252,7 @@ _Appears in:_
 
 
 
-Module is the Schema for the modules API
-Module implements the API-driven Run Workflow
+Module implements API-driven Run Workflows.
 More information:
   - https://developer.hashicorp.com/terraform/cloud-docs/run/api
 
@@ -419,7 +422,9 @@ _Appears in:_
 
 
 
-Project is the Schema for the projects API
+Project manages HCP Terraform Projects.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 
 
 
@@ -732,7 +737,9 @@ _Appears in:_
 
 
 
-Workspace is the Schema for the workspaces API
+Workspace manages HCP Terraform Workspaces.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces
 
 
 

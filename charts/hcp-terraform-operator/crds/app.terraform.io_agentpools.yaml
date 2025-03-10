@@ -20,7 +20,12 @@ spec:
   - name: v1alpha2
     schema:
       openAPIV3Schema:
-        description: AgentPool is the Schema for the agentpools API.
+        description: |-
+          AgentPool manages HCP Terraform Agent Pools, HCP Terraform Agent Tokens and can perform HCP Terraform Agent scaling.
+          More infromation:
+            - https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools
+            - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens
+            - https://developer.hashicorp.com/terraform/cloud-docs/agents
         properties:
           apiVersion:
             description: |-

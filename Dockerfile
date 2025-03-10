@@ -103,10 +103,10 @@ ENV BIN_NAME=$BIN_NAME
 LABEL name="HCP Terraform Operator"
 LABEL vendor="HashiCorp"
 LABEL release=$PRODUCT_REVISION
-LABEL summary="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources"
-LABEL description="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources"
+LABEL summary="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources."
+LABEL description="HCP Terraform Operator for Kubernetes allows managing HCP Terraform / Terraform Enterprise resources via Kubernetes Custom Resources."
 
-LABEL maintainer="Terraform Ecosystem - Hybrid Cloud Team <hcp-tf-operator@hashicorp.com>"
+LABEL maintainer="HashiCorp <hcp-tf-operator@hashicorp.com>"
 LABEL version=$PRODUCT_VERSION
 LABEL revision=$PRODUCT_REVISION
 
