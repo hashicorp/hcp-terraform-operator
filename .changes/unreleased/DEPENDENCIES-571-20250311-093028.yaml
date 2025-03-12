@@ -1,5 +1,0 @@
-kind: DEPENDENCIES
-body: Bump `sigs.k8s.io/controller-runtimeg` from 0.19.2 to 0.19.7.
-time: 2025-03-11T09:30:28.203991+01:00
-custom:
-    PR: "571"

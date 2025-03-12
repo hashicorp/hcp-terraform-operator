@@ -25,7 +25,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/hcp-terraform-operator \
-      --version 2.8.0 \
+      --version 2.8.1 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -36,7 +36,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.8.0 \
+  --version 2.8.1 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -55,7 +55,7 @@ If targeting a Terraform Enterprise instance rather than HCP Terraform, set the 
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.8.0 \
+  --version 2.8.1 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -67,7 +67,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/hcp-terraform-operator \
-  --version 2.8.0 \
+  --version 2.8.1 \
   --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
@@ -88,9 +88,9 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 
     - The `Workspace` CRD has been changed:
 
-    ```console
-    $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.8.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
-    ```
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.8.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
+      ```
 
   - `2.6.0` to `2.7.0`
 
