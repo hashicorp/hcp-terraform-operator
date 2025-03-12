@@ -89,4 +89,18 @@ To create a new release, adhere to the following steps:
 
 ## How To Release Red Hat OpenShift Bundle
 
--
+Ensure that your GitHub username is added to the HCP Terraform Operator Bundle before proceeding.
+
+  - Log in to the [Red Hat Partner Connect portal](https://connect.redhat.com/manage/products).
+
+  - Navigate to **HashiCorp Terraform** > **Components & Testing** > **HCP Terraform Operator Bundle** > **Repository Information**.
+
+  - Append your GitHub username to **Authorized GitHub user accounts**.
+
+  - Save changes.
+
+*The following steps apply once the CRT release is completed and the Red Hat UBI image is successfully released. Navigate to the **HCP Terraform Operator Image** on the Red Hat Partner Connect portal to ensure the desired image version is available.*
+
+- Fork the Red Hat Certified Operators production catalog [repository](https://github.com/redhat-openshift-ecosystem/certified-operators).
+
+- 
