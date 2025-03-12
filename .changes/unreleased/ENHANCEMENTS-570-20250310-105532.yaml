@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: Add support for attaching variable sets to a workspace referenced by its name.'
-time: 2025-03-10T10:55:32.547033+01:00
-custom:
-    PR: "570"
