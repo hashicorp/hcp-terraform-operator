@@ -103,4 +103,16 @@ Ensure that your GitHub username is added to the HCP Terraform Operator Bundle b
 
 - Fork the Red Hat Certified Operators production catalog [repository](https://github.com/redhat-openshift-ecosystem/certified-operators).
 
-- 
+- Generate:
+
+```console
+$ make bundle VERSION=`cat version/VERSION`
+```
+
+- Branch: `hcp-terraform-operator-v2.8.1`
+
+- copy bundle to repo... `certified-operators/operators/hcp-terraform-operator`
+
+- commit, push, pr
+
+- monitor on portal
