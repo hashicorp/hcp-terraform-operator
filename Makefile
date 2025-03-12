@@ -294,7 +294,7 @@ $(HASHICORP_COPYWRITE): $(LOCALBIN)
 yq: $(YQ) ## Download yq locally if necessary.
 $(YQ): $(LOCALBIN)
 	$(call go-install-tool,$(YQ),github.com/mikefarah/yq/v4,$(YQ_VERSION))
-	ln -s $(YQ) $(LOCALBIN)/yq
+	ln -f -s $(YQ) $(LOCALBIN)/yq
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
@@ -333,6 +333,7 @@ bundle: manifests kustomize operator-sdk yq ## Generate bundle manifests and met
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	./hack/add-bundle-annotations.sh
+	./hack/add-bundle-replaces.sh
 	$(OPERATOR_SDK) bundle validate ./bundle
 
 .PHONY: bundle-build
