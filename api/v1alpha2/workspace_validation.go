@@ -23,11 +23,11 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecRunTriggers()...)
 	allErrs = append(allErrs, w.validateSpecSSHKey()...)
 	allErrs = append(allErrs, w.validateSpecProject()...)
-	allErrs = append(allErrs, w.validateSpecFileTriggers()...)
 	allErrs = append(allErrs, w.validateSpecTerraformVariables()...)
 	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 	allErrs = append(allErrs, w.validateSpecDeletionPolicy()...)
 	allErrs = append(allErrs, w.validateSpecVariableSets()...)
+	allErrs = append(allErrs, w.validateSpecVersionControl()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -613,13 +613,23 @@ func (w *Workspace) validateSpecVariableSets() field.ErrorList {
 	return allErrs
 }
 
-func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
+func (w *Workspace) validateSpecVersionControl() field.ErrorList {
 	allErrs := field.ErrorList{}
-	spec := w.Spec
+	spec := w.Spec.VersionControl
 
-	f := field.NewPath("spec").Child("VersionControl")
+	if spec == nil {
+		return allErrs
+	}
 
-	if spec.VersionControl != nil && len(spec.VersionControl.TriggerPatterns) > 0 && len(spec.VersionControl.TriggerPrefixes) > 0 {
+	return w.validateSpecVersionControlFileTriggers()
+}
+
+func (w *Workspace) validateSpecVersionControlFileTriggers() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.VersionControl
+
+	f := field.NewPath("spec").Child("versionControl")
+	if len(spec.TriggerPatterns) > 0 && len(spec.TriggerPrefixes) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
@@ -627,31 +637,27 @@ func (w *Workspace) validateSpecFileTriggers() field.ErrorList {
 		)
 	}
 
-	f = field.NewPath("spec").Child("VersionControl").Child("fileTriggerEnabled")
-
-	if !spec.VersionControl.FileTriggersEnabled && spec.VersionControl != nil && len(spec.VersionControl.TriggerPatterns) > 0 {
+	f = field.NewPath("spec").Child("versionControl").Child("fileTriggerEnabled")
+	if !spec.FileTriggersEnabled && len(spec.TriggerPatterns) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
-			"TriggerPatterns requires FileTriggersEnabled set to true"),
+			"'spec.versionControl.fileTriggerEnabled' must be set to 'true' when 'spec.versionControl.triggerPatterns' is set"),
 		)
 	}
 
-	if !spec.VersionControl.FileTriggersEnabled && spec.VersionControl != nil && len(spec.VersionControl.TriggerPrefixes) > 0 {
-		allErrs = append(allErrs, field.Invalid(
+	if !spec.FileTriggersEnabled && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Required(
 			f,
-			"",
-			"TriggerPrefixes requires FileTriggersEnabled set to true"),
+			"'spec.versionControl.fileTriggerEnabled' must be set to 'true' when 'spec.versionControl.triggerPrefixes' is set"),
 		)
 	}
 
 	f = field.NewPath("spec").Child("workingDirectory")
-
-	if spec.WorkingDirectory == "" && spec.VersionControl != nil && len(spec.VersionControl.TriggerPrefixes) > 0 {
-		allErrs = append(allErrs, field.Invalid(
+	if w.Spec.WorkingDirectory == "" && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Required(
 			f,
-			"",
-			"TriggerPrefixes requires a non-empty WorkingDirectory"),
+			"'spec.workingDirectory' must not be empty when 'spec.versionControl.triggerPrefixes' is set"),
 		)
 	}
 
