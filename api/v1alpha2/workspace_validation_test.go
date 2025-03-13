@@ -1090,7 +1090,7 @@ func TestValidateSpecDeletionPolicy(t *testing.T) {
 	}
 }
 
-func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
+func TestValidateSpecVariableSets(t *testing.T) {
 	t.Parallel()
 
 	successCases := map[string]Workspace{
@@ -1148,10 +1148,15 @@ func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 	}
 }
 
-func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
+func TestValidateSpecVersionControl(t *testing.T) {
 	t.Parallel()
 
 	successCases := map[string]Workspace{
+		"HasNoVersionControlConfigured": {
+			Spec: WorkspaceSpec{
+				VersionControl: nil,
+			},
+		},
 		"HasOnlyTriggerPatterns": {
 			Spec: WorkspaceSpec{
 				VersionControl: &VersionControl{
@@ -1173,7 +1178,7 @@ func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecFileTriggers(); len(errs) != 0 {
+			if errs := c.validateSpecVersionControl(); len(errs) != 0 {
 				t.Errorf("Unexpected validation errors: %v", errs)
 			}
 		})
@@ -1216,7 +1221,7 @@ func TestValidateWorkspaceSpecFileTriggers(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecFileTriggers(); len(errs) == 0 {
+			if errs := c.validateSpecVersionControl(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})
