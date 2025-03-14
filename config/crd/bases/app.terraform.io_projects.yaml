@@ -59,7 +59,7 @@ spec:
 
                   You must use one of the following values:
                   - `retain`:  When the custom resource is deleted, the operator will not delete the associated project.
-                  - `destroy`: Performs a destroy operation to remove the project. The project must be empty.
+                  - `soft`: Attempts to remove the project. The project must be empty.
                   Default: `retain`.
                 enum:
                 - retain
