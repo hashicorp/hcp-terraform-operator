@@ -224,30 +224,6 @@ func (r *ProjectReconciler) updateProject(ctx context.Context, p *projectInstanc
 	return p.tfClient.Client.Projects.Update(ctx, p.instance.Status.ID, updateOptions)
 }
 
-// func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstance) error {
-// 	// if the Kubernetes object doesn't have project ID, it means it a project was never created
-// 	// in this case, remove the finalizer and let Kubernetes remove the object permanently
-// 	if p.instance.Status.ID == "" {
-// 		p.log.Info("Reconcile Project", "msg", fmt.Sprintf("status.ID is empty, remove finalizer %s", projectFinalizer))
-// 		return r.removeFinalizer(ctx, p)
-// 	}
-// 	err := p.tfClient.Client.Projects.Delete(ctx, p.instance.Status.ID)
-// 	if err != nil {
-// 		// if project wasn't found, it means it was deleted from the TF Cloud bypass the operator
-// 		// in this case, remove the finalizer and let Kubernetes remove the object permanently
-// 		if err == tfc.ErrResourceNotFound {
-// 			p.log.Info("Reconcile Project", "msg", fmt.Sprintf("Project ID %s not found, remove finalizer", p.instance.Status.ID))
-// 			return r.removeFinalizer(ctx, p)
-// 		}
-// 		p.log.Error(err, "Reconcile Project", "msg", fmt.Sprintf("failed to delete Project ID %s, retry later", projectFinalizer))
-// 		r.Recorder.Eventf(&p.instance, corev1.EventTypeWarning, "ReconcileProject", "Failed to delete Project ID %s, retry later", p.instance.Status.ID)
-// 		return err
-// 	}
-
-// 	p.log.Info("Reconcile Project", "msg", fmt.Sprintf("project ID %s has been deleted, remove finalizer", p.instance.Status.ID))
-// 	return r.removeFinalizer(ctx, p)
-// }
-
 func (r *ProjectReconciler) reconcileProject(ctx context.Context, p *projectInstance) error {
 	p.log.Info("Reconcile Project", "msg", "reconciling project")
 

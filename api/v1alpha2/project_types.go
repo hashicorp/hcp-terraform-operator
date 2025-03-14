@@ -127,12 +127,12 @@ type ProjectTeamAccess struct {
 //
 // You must use one of the following values:
 // - `retain`: When the custom resource is deleted, the operator will not delete the associated project.
-// - `destroy`: Performs a destroy operation to remove the project. The project must be empty.
+// - `soft`: Attempts to remove the project. The project must be empty.
 type ProjectDeletionPolicy string
 
 const (
-	ProjectDeletionPolicyRetain  ProjectDeletionPolicy = "retain"
-	ProjectDeletionPolicyDestroy ProjectDeletionPolicy = "destroy"
+	ProjectDeletionPolicyRetain ProjectDeletionPolicy = "retain"
+	ProjectDeletionPolicySoft   ProjectDeletionPolicy = "soft"
 )
 
 // ProjectSpec defines the desired state of Project.
@@ -166,7 +166,7 @@ type ProjectSpec struct {
 	//
 	// You must use one of the following values:
 	// - `retain`:  When the custom resource is deleted, the operator will not delete the associated project.
-	// - `destroy`: Performs a destroy operation to remove the project. The project must be empty.
+	// - `soft`: Attempts to remove the project. The project must be empty.
 	// Default: `retain`.
 	//
 	//+kubebuilder:validation:Enum:=retain;destroy

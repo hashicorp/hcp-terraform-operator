@@ -24,7 +24,7 @@ func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstanc
 	case appv1alpha2.ProjectDeletionPolicyRetain:
 		p.log.Info("Reconcile Project", "msg", fmt.Sprintf("remove finalizer %s", projectFinalizer))
 		return r.removeFinalizer(ctx, p)
-	case appv1alpha2.ProjectDeletionPolicyDestroy:
+	case appv1alpha2.ProjectDeletionPolicySoft:
 		err := p.tfClient.Client.Projects.Delete(ctx, p.instance.Status.ID)
 		if err != nil {
 			if err == tfc.ErrResourceNotFound {
