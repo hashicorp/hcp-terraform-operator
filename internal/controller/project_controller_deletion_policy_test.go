@@ -6,6 +6,7 @@ package controller
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-tfe"
 	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -53,18 +54,19 @@ var _ = Describe("Project controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes Project object and wait until the controller finishes the reconciliation after deletion of the object
+		_, err := tfClient.Projects.Read(ctx, instance.Status.ID)
+		if err == tfc.ErrResourceNotFound {
+			return
+		}
+		Expect(err).Should(Succeed())
 		Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
 		Eventually(func() bool {
 			err := k8sClient.Get(ctx, namespacedName, instance)
-			// The Kubernetes client will return error 'NotFound' on the Get operation once the object is deleted
 			return errors.IsNotFound(err)
 		}).Should(BeTrue())
 
-		// Make sure that the HCP Terraform project is deleted
 		Eventually(func() bool {
 			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
-			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
 			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})
@@ -79,22 +81,34 @@ var _ = Describe("Project controller", Ordered, func() {
 				return errors.IsNotFound(err)
 			}).Should(BeTrue())
 			prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
-			//workspace, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
 			Expect(err).Should(Succeed())
 			Expect(prj).NotTo(BeNil())
 		})
 
 		It("can soft delete a project", func() {
-			instance.Spec.DeletionPolicy = appv1alpha2.ProjectDeletionPolicySoft
 			createProject(instance)
-
 			projectID := instance.Status.ID
+			Eventually(func() bool {
+				listOpts := &tfe.WorkspaceListOptions{
+					ListOptions: tfe.ListOptions{PageSize: 100},
+				}
+				workspaces, err := tfClient.Workspaces.List(ctx, instance.Spec.Organization, listOpts)
+				Expect(err).To(Succeed())
 
+				for _, ws := range workspaces.Items {
+					if ws.Project != nil && ws.Project.ID == projectID {
+						return false
+					}
+				}
+				return true
+			}).Should(BeTrue())
+			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
 				_, err := tfClient.Projects.Read(ctx, projectID)
 				return err == tfc.ErrResourceNotFound
 			}).Should(BeTrue())
 		})
+
 	})
 
 })
