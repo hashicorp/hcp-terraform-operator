@@ -638,7 +638,7 @@ func (w *Workspace) validateSpecVersionControlFileTriggers() field.ErrorList {
 	}
 
 	f = field.NewPath("spec").Child("versionControl").Child("fileTriggerEnabled")
-	if !spec.FileTriggersEnabled && len(spec.TriggerPatterns) > 0 {
+	if !spec.EnableFileTriggers && len(spec.TriggerPatterns) > 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
 			"",
@@ -646,7 +646,7 @@ func (w *Workspace) validateSpecVersionControlFileTriggers() field.ErrorList {
 		)
 	}
 
-	if !spec.FileTriggersEnabled && len(spec.TriggerPrefixes) > 0 {
+	if !spec.EnableFileTriggers && len(spec.TriggerPrefixes) > 0 {
 		allErrs = append(allErrs, field.Required(
 			f,
 			"'spec.versionControl.fileTriggerEnabled' must be set to 'true' when 'spec.versionControl.triggerPrefixes' is set"),
