@@ -282,7 +282,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
 		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
-		options.FileTriggersEnabled = tfc.Bool(spec.VersionControl.FileTriggersEnabled)
+		options.FileTriggersEnabled = tfc.Bool(spec.VersionControl.EnableFileTriggers)
 		options.TriggerPatterns = spec.VersionControl.TriggerPatterns
 		options.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
 
@@ -417,16 +417,16 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
 		}
 
-		if workspace.FileTriggersEnabled != spec.VersionControl.FileTriggersEnabled {
-			updateOptions.FileTriggersEnabled = tfc.Bool(spec.VersionControl.FileTriggersEnabled)
+		if workspace.FileTriggersEnabled != spec.VersionControl.EnableFileTriggers {
+			updateOptions.FileTriggersEnabled = tfc.Bool(spec.VersionControl.EnableFileTriggers)
 		}
 
-		triggerPatternsDiff := triggerPatternsDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
+		triggerPatternsDiff := vcsTriggersDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
 		if len(triggerPatternsDiff) != 0 {
 			updateOptions.TriggerPatterns = spec.VersionControl.TriggerPatterns
 		}
 
-		triggerPrefixesDiff := triggerPrefixesDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
+		triggerPrefixesDiff := vcsTriggersDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
 		if len(triggerPrefixesDiff) != 0 {
 			updateOptions.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
 		}

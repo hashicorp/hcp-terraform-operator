@@ -6,6 +6,7 @@ package controller
 import (
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -67,10 +68,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 				Name: workspace,
 				VersionControl: &appv1alpha2.VersionControl{
-					OAuthTokenID:     oAuthTokenID,
-					Repository:       repository,
-					Branch:           "operator",
-					SpeculativePlans: true,
+					OAuthTokenID:       oAuthTokenID,
+					Repository:         repository,
+					Branch:             "operator",
+					SpeculativePlans:   true,
+					EnableFileTriggers: false,
 				},
 			},
 			Status: appv1alpha2.WorkspaceStatus{},
@@ -105,6 +107,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 
 			instance.Spec.VersionControl.Branch = "main"
+			instance.Spec.VersionControl.EnableFileTriggers = true
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
 			Eventually(func() bool {
@@ -117,7 +120,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				}
 				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
 					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch &&
+					ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers
 			}).Should(BeTrue())
 		})
 
@@ -129,6 +133,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				VCSRepo: &tfc.VCSRepoOptions{
 					Branch: tfc.String("main"),
 				},
+				FileTriggersEnabled: tfc.Bool(true),
 			})
 			Expect(ws).ShouldNot(BeNil())
 			Expect(err).Should(Succeed())
@@ -143,7 +148,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				}
 				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
 					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch &&
+					ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers
 			}).Should(BeTrue())
 		})
 
@@ -269,6 +275,85 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					return false
 				}
 				return instance.Status.Plan.RunCompleted()
+			}).Should(BeTrue())
+		})
+
+		It("cat handle file trigger patterns", func() {
+			instance.Spec.VersionControl.EnableFileTriggers = true
+			instance.Spec.VersionControl.TriggerPatterns = []string{"/modules/", "/variables/"}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				if ws.VCSRepo == nil {
+					return false
+				}
+				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.TriggerPatterns, instance.Spec.VersionControl.TriggerPatterns) == 0
+			}).Should(BeTrue())
+
+			// Revert manual changes
+			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
+				TriggerPatterns: []string{
+					"/var/",
+				},
+			})
+			Expect(ws).ShouldNot(BeNil())
+			Expect(err).Should(Succeed())
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				if ws.VCSRepo == nil {
+					return false
+				}
+				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.TriggerPatterns, instance.Spec.VersionControl.TriggerPatterns) == 0
+			}).Should(BeTrue())
+		})
+
+		It("cat handle file trigger prefixes", func() {
+			instance.Spec.WorkingDirectory = "/mofules/"
+			instance.Spec.VersionControl.EnableFileTriggers = true
+			instance.Spec.VersionControl.TriggerPrefixes = []string{"/modules/", "/variables/"}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				if ws.VCSRepo == nil {
+					return false
+				}
+				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.TriggerPrefixes, instance.Spec.VersionControl.TriggerPrefixes) == 0
+			}).Should(BeTrue())
+
+			// Revert manual changes
+			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
+				TriggerPrefixes: []string{
+					"/var/",
+				},
+			})
+			Expect(ws).ShouldNot(BeNil())
+			Expect(err).Should(Succeed())
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				if ws.VCSRepo == nil {
+					return false
+				}
+				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.TriggerPrefixes, instance.Spec.VersionControl.TriggerPrefixes) == 0
 			}).Should(BeTrue())
 		})
 	})
