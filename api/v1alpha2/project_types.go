@@ -169,7 +169,7 @@ type ProjectSpec struct {
 	// - `soft`: Attempts to remove the project. The project must be empty.
 	// Default: `retain`.
 	//
-	//+kubebuilder:validation:Enum:=retain;destroy
+	//+kubebuilder:validation:Enum:=retain;soft
 	//+kubebuilder:default=retain
 	//+optional
 	DeletionPolicy ProjectDeletionPolicy `json:"deletionPolicy,omitempty"`

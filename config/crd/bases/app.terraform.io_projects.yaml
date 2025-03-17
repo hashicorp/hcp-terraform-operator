@@ -63,7 +63,7 @@ spec:
                   Default: `retain`.
                 enum:
                 - retain
-                - destroy
+                - soft
                 type: string
               name:
                 description: Name of the Project.
