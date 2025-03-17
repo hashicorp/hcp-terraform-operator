@@ -308,7 +308,7 @@ type VersionControl struct {
 	//
 	//+optional
 	//+kubebuilder:default:=false
-	FileTriggersEnabled bool `json:"fileTriggersEnabled"`
+	EnableFileTriggers bool `json:"enableFileTriggers"`
 	// The list of pattern triggers that will queue runs in HCP Terraform when files in your VCS repository change.
 	// `spec.versionControl.fileTriggersEnabled` must be set to `true`.
 	// More informarion:
