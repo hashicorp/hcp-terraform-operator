@@ -1,3 +1,19 @@
+## 2.8.1 (March 12, 2025)
+
+ENHANCEMENTS:
+
+* `Workspace`: Add support for attaching variable sets to a workspace referenced by its name. [[GH-570](https://github.com/hashicorp/hcp-terraform-operator/pull/570)]
+
+DEPENDENCIES:
+
+* Bump `kube-rbac-proxy` from 0.18.2 to 0.19.0. [[GH-560](https://github.com/hashicorp/hcp-terraform-operator/pull/560)]
+* Bump `github.com/hashicorp/go-tfe` from 1.71.0 to 1.76.0. [[GH-566](https://github.com/hashicorp/hcp-terraform-operator/pull/566)]
+* Bump `github.com/hashicorp/go-slug` from 0.16.3 to 0.16.4. [[GH-566](https://github.com/hashicorp/hcp-terraform-operator/pull/566)]
+* Bump `k8s.io/api` from 0.31.3 to 0.31.6. [[GH-571](https://github.com/hashicorp/hcp-terraform-operator/pull/571)]
+* Bump `k8s.io/apimachinery` from 0.31.3 to 0.31.6. [[GH-571](https://github.com/hashicorp/hcp-terraform-operator/pull/571)]
+* Bump `k8s.io/client-go` from 0.31.3 to 0.31.6. [[GH-571](https://github.com/hashicorp/hcp-terraform-operator/pull/571)]
+* Bump `sigs.k8s.io/controller-runtimeg` from 0.19.2 to 0.19.7. [[GH-571](https://github.com/hashicorp/hcp-terraform-operator/pull/571)]
+
 ## 2.8.0 (February 10, 2025)
 
 NOTES:

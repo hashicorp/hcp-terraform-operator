@@ -24,10 +24,17 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		namespacedName types.NamespacedName
 		workspace      string
 
-		variableSetName  string
-		variableSetName2 string
-		variableSetID    string
-		variableSetID2   string
+		variableSetName        string
+		variableSetName2       string
+		variableSetGlobalName  string
+		variableSetProjectName string
+		variableSetID          string
+		variableSetID2         string
+		variableSetGlobalID    string
+		variableSetProjectID   string
+
+		projectName string
+		projectID   string
 	)
 
 	BeforeAll(func() {
@@ -41,8 +48,21 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		variableSetName = fmt.Sprintf("variable-set-%v", randomNumber())
 		variableSetName2 = fmt.Sprintf("%v-2", variableSetName)
-		variableSetID = createTestVariableSet(variableSetName, false)
-		variableSetID2 = createTestVariableSet(variableSetName2, false)
+		variableSetGlobalName = fmt.Sprintf("variable-set-global-%v", randomNumber())
+		variableSetProjectName = fmt.Sprintf("variable-set-project-%v", randomNumber())
+		variableSetID = createVariableSet(variableSetName, false)
+		variableSetID2 = createVariableSet(variableSetName2, false)
+		variableSetGlobalID = createVariableSet(variableSetGlobalName, true)
+		variableSetProjectID = createVariableSet(variableSetProjectName, false)
+
+		// Add variable set to the project
+		projectName = fmt.Sprintf("project-variable-set-%v", randomNumber())
+		projectID = createTestProject(projectName)
+		tfClient.VariableSets.ApplyToProjects(ctx, variableSetProjectID, tfc.VariableSetApplyToProjectsOptions{
+			Projects: []*tfc.Project{
+				{ID: projectID},
+			},
+		})
 
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
@@ -76,6 +96,9 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		deleteWorkspace(instance)
 		Expect(tfClient.VariableSets.Delete(ctx, variableSetID)).Should(Succeed())
 		Expect(tfClient.VariableSets.Delete(ctx, variableSetID2)).Should(Succeed())
+		Expect(tfClient.VariableSets.Delete(ctx, variableSetGlobalID)).Should(Succeed())
+		Expect(tfClient.Projects.Delete(ctx, projectID)).Should(Succeed())
+		Expect(tfClient.VariableSets.Delete(ctx, variableSetProjectID)).Should(Succeed())
 	})
 
 	Context("VariableSet", func() {
@@ -85,22 +108,93 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
-			isReconciledVariableSetByID(instance)
+			isReconciledVariableSet(instance)
 
-			// Update the VariableSet by ID
+			// Ada a new empty variable set
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
-				{ID: variableSetID2},
-			}
+			instance.Spec.VariableSets = append(instance.Spec.VariableSets, appv1alpha2.WorkspaceVariableSet{ID: variableSetID2})
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
-			isReconciledVariableSetByID(instance)
+			isReconciledVariableSet(instance)
+
+			// Manually remove variable set from the workspace
+			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetID2, &tfc.VariableSetRemoveFromWorkspacesOptions{
+				Workspaces: []*tfc.Workspace{
+					{ID: instance.Status.WorkspaceID},
+				},
+			})).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Add a new global variable set
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.VariableSets = append(instance.Spec.VariableSets, appv1alpha2.WorkspaceVariableSet{ID: variableSetGlobalID})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Add a variable set from the different project
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.VariableSets = append(instance.Spec.VariableSets, appv1alpha2.WorkspaceVariableSet{ID: variableSetProjectID})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Manually remove different project variable set from the workspace
+			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetProjectID, &tfc.VariableSetRemoveFromWorkspacesOptions{
+				Workspaces: []*tfc.Workspace{
+					{ID: instance.Status.WorkspaceID},
+				},
+			})).Should(Succeed())
+			isReconciledVariableSet(instance)
+		})
+	})
+
+	Context("VariableSet", func() {
+		It("can be handled by Name", func() {
+			instance.Spec.VariableSets = []appv1alpha2.WorkspaceVariableSet{
+				{Name: variableSetName},
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledVariableSet(instance)
+
+			// Ada a new empty variable set
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.VariableSets = append(instance.Spec.VariableSets, appv1alpha2.WorkspaceVariableSet{Name: variableSetName2})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Manually remove variable set from the workspace
+			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetID2, &tfc.VariableSetRemoveFromWorkspacesOptions{
+				Workspaces: []*tfc.Workspace{
+					{ID: instance.Status.WorkspaceID},
+				},
+			})).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Add a new global variable set
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.VariableSets = append(instance.Spec.VariableSets, appv1alpha2.WorkspaceVariableSet{Name: variableSetGlobalName})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Add a variable set from the different project
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			instance.Spec.VariableSets = append(instance.Spec.VariableSets, appv1alpha2.WorkspaceVariableSet{Name: variableSetProjectName})
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			isReconciledVariableSet(instance)
+
+			// Manually remove different project variable set from the workspace
+			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetProjectID, &tfc.VariableSetRemoveFromWorkspacesOptions{
+				Workspaces: []*tfc.Workspace{
+					{ID: instance.Status.WorkspaceID},
+				},
+			})).Should(Succeed())
+			isReconciledVariableSet(instance)
 		})
 	})
 })
 
-func createTestVariableSet(variableSetName string, global bool) string {
+func createVariableSet(name string, global bool) string {
 	vs, err := tfClient.VariableSets.Create(ctx, organization, &tfc.VariableSetCreateOptions{
-		Name:   &variableSetName,
+		Name:   &name,
 		Global: tfc.Bool(global),
 	})
 	Expect(err).Should(Succeed())
@@ -108,24 +202,29 @@ func createTestVariableSet(variableSetName string, global bool) string {
 	return vs.ID
 }
 
-func isReconciledVariableSetByID(instance *appv1alpha2.Workspace) {
+func isReconciledVariableSet(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
-		variableSets, err := tfClient.VariableSets.List(ctx, instance.Spec.Organization, &tfc.VariableSetListOptions{
-			ListOptions: tfc.ListOptions{
-				PageSize: maxPageSize,
-			},
-		})
-		Expect(err).Should(Succeed())
-		for _, vs := range variableSets.Items {
-			if vs.ID == instance.Spec.VariableSets[0].ID {
-				return true
+		return instance.Generation == instance.Status.ObservedGeneration
+	}).Should(BeTrue())
+	variableSets, err := tfClient.VariableSets.List(ctx, instance.Spec.Organization, &tfc.VariableSetListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	})
+	vs := make(map[string]struct{})
+	for _, v := range variableSets.Items {
+		vs[v.ID] = struct{}{}
+	}
+	Expect(err).Should(Succeed())
+	Eventually(func() bool {
+		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		for _, v := range instance.Status.VariableSets {
+			if _, ok := vs[v.ID]; !ok {
+				return false
 			}
 		}
-		return false
+		return true
 	}).Should(BeTrue())
 }
