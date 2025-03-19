@@ -6,7 +6,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"slices"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -64,7 +63,7 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 				ap.log.Info("Reconcile Agent Pool", "msg", "successfully scaled agents to 0")
 			}
 		}
-		// Deactivate tokens
+		// Delete tokens
 		ap.log.Info("Reconcile Agent Pool", "msg", "delete tokens")
 		for _, t := range ap.instance.Status.AgentTokens {
 			err := ap.tfClient.Client.AgentTokens.Delete(ctx, t.ID)
@@ -72,9 +71,11 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 				ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete token %s", t.ID))
 				return err
 			}
-			ap.instance.Status.AgentTokens = slices.DeleteFunc(ap.instance.Status.AgentTokens, func(token *appv1alpha2.AgentToken) bool {
-				return token.ID == t.ID
-			})
+			err = r.removeToken(ctx, ap, t.ID)
+			if err != nil {
+				ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete token %s from secret", t.ID))
+				return err
+			}
 			ap.log.Info("Reconcile Agent Pool", "msg", "successfully deleted tokens")
 		}
 	}
