@@ -103,16 +103,43 @@ Ensure that your GitHub username is added to the HCP Terraform Operator Bundle b
 
 - Fork the Red Hat Certified Operators production catalog [repository](https://github.com/redhat-openshift-ecosystem/certified-operators).
 
-- Generate:
+- Generate a new bundle in the HCP Terraform operator repository:
 
 ```console
-$ make bundle VERSION=`cat version/VERSION`
+$ export HCP_TF_OPERATOR_RELEASE_VERSION=`cat version/VERSION`
+$ make bundle VERSION=$HCP_TF_OPERATOR_RELEASE_VERSION
 ```
 
-- Branch: `hcp-terraform-operator-v2.8.1`
+- Create a new branch in the Red Hat Certified Operators resoitory following the `hcp-terraform-operator-v$HCP_TF_OPERATOR_RELEASE_VERSION` pattern:
 
-- copy bundle to repo... `certified-operators/operators/hcp-terraform-operator`
+```console
+$ git switch main
+$ git pull
+$ git checkout -b hcp-terraform-operator-v$HCP_TF_OPERATOR_RELEASE_VERSION
+```
 
-- commit, push, pr
+- Copy the generated bundle from the HCP Terraform operator repository to the Red Hat Certified Operators reposiroty:
 
-- monitor on portal
+```console
+$ cp -R <HCP_OPERATOR_REPO>/bundle/* <RED_HAT_CERT_OPERATOR_REPO>/certified-operators/operators/hcp-terraform-operator/$HCP_TF_OPERATOR_RELEASE_VERSION/`
+```
+
+- Review, commit and push changes in the Red Hat Certified Operators resoitory:
+
+```console
+$ git add -A
+$ git commit -m "operator hcp-terraform-operator ($HCP_TF_OPERATOR_RELEASE_VERSION)"
+$ git push
+```
+
+  Ensure that the `spec.replaces` filed in the `hcp-terraform-operator.clusterserviceversion.yaml` file points to the previous release. For example:
+
+```yaml
+spec:
+  replaces: hcp-terraform-operator.v2.8.0
+  version: 2.8.1
+```
+
+- Make a PR in the Red Hat Certified Operators repository on GitHub and wait until it gets merged. If there are any issues, address them.
+
+- Validate that the bundle is now available on the Red Hat Partner Connect portal.
