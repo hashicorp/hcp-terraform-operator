@@ -50,6 +50,9 @@ func init() {
 
 	utilruntime.Must(appv1alpha2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+
+	// Register custom metrics with the global prometheus registry
+	controller.RegisterMetrics()
 }
 
 func main() {

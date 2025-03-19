@@ -187,6 +187,9 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		return nil
 	}
 
+	metricMinAgents.WithLabelValues(ap.instance.Status.AgentPoolID, ap.instance.Spec.Name).Set(float64(*ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas))
+	metricMaxAgents.WithLabelValues(ap.instance.Status.AgentPoolID, ap.instance.Spec.Name).Set(float64(*ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas))
+
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", "new reconciliation event")
 
 	requiredAgents, err := computeRequiredAgents(ctx, ap)
@@ -196,6 +199,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		return err
 	}
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d workspaces have pending runs", requiredAgents))
+	metricRequiredAgents.WithLabelValues(ap.instance.Status.AgentPoolID, ap.instance.Spec.Name).Set(float64(requiredAgents))
 
 	currentReplicas, err := r.getAgentDeploymentReplicas(ctx, ap)
 	if err != nil {
@@ -208,6 +212,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	minReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas
 	maxReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
 	desiredReplicas := computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas)
+	metricDesiredAgents.WithLabelValues(ap.instance.Status.AgentPoolID, ap.instance.Spec.Name).Set(float64(desiredReplicas))
 	if desiredReplicas != currentReplicas {
 		if ap.cooldownSecondsRemaining(currentReplicas, desiredReplicas) > 0 {
 			ap.log.Info("Reconcile Agent Autoscaling", "msg", "autoscaler is within the cooldown period, skipping")

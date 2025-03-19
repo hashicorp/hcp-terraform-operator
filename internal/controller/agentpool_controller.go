@@ -315,6 +315,8 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 		}
 	}
 
+	metricConnectedWorkspaces.WithLabelValues(ap.instance.Status.AgentPoolID, ap.instance.Spec.Name).Set(float64(len(agentPool.Workspaces)))
+
 	// Update Agent Pool
 	if needToUpdateAgentPool(&ap.instance) {
 		_, err = r.updateAgentPool(ctx, ap, agentPool)
