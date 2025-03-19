@@ -60,7 +60,9 @@ func matchWildcardName(wildcard string, str string) bool {
 	}
 }
 
-func pendingRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
+// pendingWorkspaceRuns returns the number of workspaces with pending runs for a given agent pool.
+// This function is compatible with HCP Terraform and TFE version v202409-1 and later.
+func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	runs := map[string]struct{}{}
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
@@ -221,7 +223,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 
 	requiredAgents, err := func() (int32, error) {
 		if ap.tfClient.Client.IsCloud() {
-			return pendingRuns(ctx, ap)
+			return pendingWorkspaceRuns(ctx, ap)
 		}
 		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
 		version, err := parseTFEVersion(tfeVersion)
@@ -235,7 +237,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		// It now allows retrieving a list of runs for the organization.
 		if version >= 2024091 {
 			ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the new algorithm based on the detected TFE version %s", tfeVersion))
-			return pendingRuns(ctx, ap)
+			return pendingWorkspaceRuns(ctx, ap)
 		}
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the legacy algorithm based to the detected TFE version %s", tfeVersion))
 		return computeRequiredAgents(ctx, ap)
