@@ -8,6 +8,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a resource, either manually or by a system event.
+//
+// You must use one of the following values:
+// - `retain`: When you delete the custom resource, the operator does not delete the workspace.
+type AgentPoolDeletionPolicy string
+
+const (
+	AgentPoolDeletionPolicyRetain  AgentPoolDeletionPolicy = "retain"
+	AgentPoolDeletionPolicyDestroy AgentPoolDeletionPolicy = "destroy"
+)
+
 // Agent Token is a secret token that a HCP Terraform Agent is used to connect to the HCP Terraform Agent Pool.
 // In `spec` only the field `Name` is allowed, the rest are used in `status`.
 // More infromation:
@@ -132,6 +143,16 @@ type AgentPoolSpec struct {
 	// Agent deployment settings
 	//+optional
 	AgentDeploymentAutoscaling *AgentDeploymentAutoscaling `json:"autoscaling,omitempty"`
+
+	// The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.
+	// - `retain`: When you delete the custom resource, the operator will remove only the custom resource and not the agent pool.
+	//   The token will remain active; however, the managed agents will also be removed.
+	// Default: `retain`.
+	//
+	//+kubebuilder:validation:Enum:=retain;delete
+	//+kubebuilder:default=retain
+	//+optional
+	DeletionPolicy AgentPoolDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // AgentDeploymentAutoscalingStatus

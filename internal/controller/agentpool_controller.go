@@ -212,28 +212,6 @@ func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPool
 	return ap.tfClient.Client.AgentPools.Update(ctx, ap.instance.Status.AgentPoolID, options)
 }
 
-func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPoolInstance) error {
-	if ap.instance.Status.AgentPoolID == "" {
-		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("status.agentPoolID is empty, remove finalizer %s", agentPoolFinalizer))
-		return r.removeFinalizer(ctx, ap)
-	}
-	err := ap.tfClient.Client.AgentPools.Delete(ctx, ap.instance.Status.AgentPoolID)
-	if err != nil {
-		// if agent pool wasn't found, it means it was deleted from the TF Cloud bypass the operator
-		// in this case, remove the finalizer and let Kubernetes remove the object permanently
-		if err == tfc.ErrResourceNotFound {
-			ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("Agent Pool ID %s not found, remove finalizer", agentPoolFinalizer))
-			return r.removeFinalizer(ctx, ap)
-		}
-		ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete Agent Pool ID %s, retry later", agentPoolFinalizer))
-		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to delete Agent Pool ID %s, retry later", ap.instance.Status.AgentPoolID)
-		return err
-	}
-
-	ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finalizer", ap.instance.Status.AgentPoolID))
-	return r.removeFinalizer(ctx, ap)
-}
-
 func (r *AgentPoolReconciler) readAgentPool(ctx context.Context, ap *agentPoolInstance) (*tfc.AgentPool, error) {
 	return ap.tfClient.Client.AgentPools.ReadWithOptions(ctx, ap.instance.Status.AgentPoolID, &tfc.AgentPoolReadOptions{
 		Include: []tfc.AgentPoolIncludeOpt{

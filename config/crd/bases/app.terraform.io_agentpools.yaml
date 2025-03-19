@@ -8040,6 +8040,17 @@ spec:
                 - maxReplicas
                 - minReplicas
                 type: object
+              deletionPolicy:
+                default: retain
+                description: |-
+                  The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.
+                  - `retain`: When you delete the custom resource, the operator will remove only the custom resource and not the agent pool.
+                    The token will remain active; however, the managed agents will also be removed.
+                  Default: `retain`.
+                enum:
+                - retain
+                - delete
+                type: string
               name:
                 description: |-
                   Agent Pool name.
