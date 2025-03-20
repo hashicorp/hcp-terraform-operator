@@ -260,7 +260,10 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	minReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MinReplicas
 	maxReplicas := *ap.instance.Spec.AgentDeploymentAutoscaling.MaxReplicas
 	desiredReplicas := computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas)
+	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("[DENUG] desiredReplicas %d", desiredReplicas))
+	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("[DENUG] currentReplicas %d", currentReplicas))
 	if desiredReplicas != currentReplicas {
+		ap.log.Info("Reconcile Agent Autoscaling", "msg", "[DENUG]desiredReplicas != currentReplicas")
 		if ap.cooldownSecondsRemaining(currentReplicas, desiredReplicas) > 0 {
 			ap.log.Info("Reconcile Agent Autoscaling", "msg", "autoscaler is within the cooldown period, skipping")
 			return nil

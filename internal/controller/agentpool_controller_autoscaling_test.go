@@ -72,7 +72,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 	AfterEach(func() {
 		Expect(tfClient.Workspaces.Delete(ctx, organization, workspace)).To(Succeed())
-		Expect(tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)).To(Succeed())
+		Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 	})
 
 	Context("Autoscaling", func() {
@@ -181,6 +181,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				if instance.Status.AgentDeploymentAutoscalingStatus == nil {
 					return false
 				}
+				fmt.Println("[DEBUG]", instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas)
 				return *instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas == 1
 			}).Should(BeTrue())
 		})
