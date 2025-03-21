@@ -230,5 +230,12 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 			},
 		}
 	}
+
+	if ap.instance.Status.AgentDeploymentAutoscalingStatus == nil {
+		ap.instance.Status.AgentDeploymentAutoscalingStatus = &appv1alpha2.AgentDeploymentAutoscalingStatus{
+			DesiredReplicas: &desiredReplicas,
+		}
+	}
+
 	return nil
 }
