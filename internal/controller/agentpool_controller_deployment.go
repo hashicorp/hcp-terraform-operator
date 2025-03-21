@@ -110,6 +110,8 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 		nd.Spec.Replicas = d.Spec.Replicas
 	}
 
+	// TODO:
+	// - Add logic to update the deployment only when it has changed
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
