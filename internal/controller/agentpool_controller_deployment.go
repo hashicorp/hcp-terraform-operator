@@ -39,7 +39,7 @@ func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *
 			return r.deleteDeployment(ctx, ap, d)
 		}
 		// Update existing deployment
-		return r.updateDeployment(ctx, ap)
+		return r.updateDeployment(ctx, ap, d)
 	}
 	if errors.IsNotFound(err) {
 		if ap.instance.Spec.AgentDeployment == nil { // Was a deployment configured?
@@ -84,7 +84,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 	return nil
 }
 
-func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance) error {
+func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance, d *appsv1.Deployment) error {
 	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
 	nd := agentPoolDeployment(ap)
 
@@ -95,6 +95,19 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 	// if autoscaler is enabled, set the replicas to the desired replica count
 	if a := ap.instance.Status.AgentDeploymentAutoscalingStatus; a != nil {
 		nd.Spec.Replicas = a.DesiredReplicas
+	}
+
+	// RARE CASE.
+	// The return value from the agentPoolDeployment() function can set spec.replicas to nil when autoscaling is enabled.
+	// If the status has not yet been updated with the desired replica count, the value will remain nil.
+	// In this case, the Update() method below will default replicas to 1.
+	// If a new agent pool has just been created and there is a pending run, this could overwrite the current replica value,
+	// leading to unnecessary pod terminations or creations.
+	// In this scenario, the status will never be updated.
+	// Since the updateDeployment() method is only called when a corresponding deployment exists, we inherit its value
+	// when spec.replicas is nil.
+	if nd.Spec.Replicas == nil {
+		nd.Spec.Replicas = d.Spec.Replicas
 	}
 
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
