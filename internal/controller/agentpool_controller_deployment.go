@@ -97,15 +97,8 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 		nd.Spec.Replicas = a.DesiredReplicas
 	}
 
-	// RARE CASE.
-	// The return value from the agentPoolDeployment() function can set spec.replicas to nil when autoscaling is enabled.
-	// If the status has not yet been updated with the desired replica count, the value will remain nil.
-	// In this case, the Update() method below will default replicas to 1.
-	// If a new agent pool has just been created and there is a pending run, this could overwrite the current replica value,
-	// leading to unnecessary pod terminations or creations.
-	// In this scenario, the status will never be updated.
-	// Since the updateDeployment() method is only called when a corresponding deployment exists, we inherit its value
-	// when spec.replicas is nil.
+	// When spec.replicas is set to nil, the Update() method below defaults it to 1 (one),
+	// which might cause unexpected consequences. Preserve the current value in this case.
 	if nd.Spec.Replicas == nil {
 		nd.Spec.Replicas = d.Spec.Replicas
 	}
