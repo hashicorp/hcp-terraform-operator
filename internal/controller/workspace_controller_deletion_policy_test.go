@@ -97,7 +97,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 			workspaceID := instance.Status.WorkspaceID
 
-			cv := createAndUploadConfigurationVersion(instance, "hoi")
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
 					PageNumber: 1,
@@ -144,7 +144,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 			workspaceID := instance.Status.WorkspaceID
 
-			cv := createAndUploadConfigurationVersion(instance, "hoi")
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
 					PageNumber: 1,
