@@ -52,6 +52,17 @@ spec:
           spec:
             description: ModuleSpec defines the desired state of Module.
             properties:
+              deletionPolicy:
+                description: |-
+                  Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
+                  It controls how the operator should handle the deletion of resources when triggered by
+                  a user action or system event.
+
+                  There is one possible value:
+                  - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+                enum:
+                - retain
+                type: string
               destroyOnDeletion:
                 default: false
                 description: |-

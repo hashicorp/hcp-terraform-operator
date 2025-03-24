@@ -78,6 +78,18 @@ type ModuleOutput struct {
 	Sensitive bool `json:"sensitive,omitempty"`
 }
 
+// Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
+// It controls how the operator should handle the deletion of resources when triggered by
+// a user action or system event.
+//
+// There is one possible value:
+// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+type ModuleDeletionPolicy string
+
+const (
+	ModuleDeletionPolicyRetain ModuleDeletionPolicy = "retain"
+)
+
 // ModuleSpec defines the desired state of Module.
 type ModuleSpec struct {
 	// Organization name where the Workspace will be created.
@@ -122,6 +134,16 @@ type ModuleSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	RestartedAt string `json:"restartedAt,omitempty"`
+	// Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
+	// It controls how the operator should handle the deletion of resources when triggered by
+	// a user action or system event.
+	//
+	// There is one possible value:
+	// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+	//
+	//+kubebuilder:validation:Enum:=retain
+	//+optional
+	DeletionPolicy ModuleDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // ModuleStatus defines the observed state of Module.
