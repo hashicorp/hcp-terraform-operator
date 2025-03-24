@@ -447,6 +447,24 @@ type WorkspaceProject struct {
 	Name string `json:"name,omitempty"`
 }
 
+type WorkspaceVariableSet struct {
+	// ID of the variable set.
+	// Must match pattern: `varset-[a-zA-Z0-9]+$`
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+	//
+	//+kubebuilder:validation:Pattern:="varset-[a-zA-Z0-9]+$"
+	//+optional
+	ID string `json:"id,omitempty"`
+	// Name of the variable set.
+	// More information:
+	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
+	//
+	//+kubebuilder:validation:MinLength:=1
+	//+optional
+	Name string `json:"name,omitempty"`
+}
+
 // WorkspaceSpec defines the desired state of Workspace.
 type WorkspaceSpec struct {
 	// Workspace name.
@@ -717,9 +735,15 @@ type WorkspaceStatus struct {
 	VariableSets []VariableSetStatus `json:"variableSet,omitempty"`
 }
 
+type VariableSetStatus struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Workspace ID",type=string,JSONPath=`.status.workspaceID`
+//+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.4.0"
 
 // Workspace manages HCP Terraform Workspaces.
 // More information:
@@ -739,29 +763,6 @@ type WorkspaceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Workspace `json:"items"`
-}
-
-type WorkspaceVariableSet struct {
-	// ID of the variable set.
-	// Must match pattern: `varset-[a-zA-Z0-9]+$`
-	// More information:
-	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
-	//
-	//+kubebuilder:validation:Pattern:="varset-[a-zA-Z0-9]+$"
-	//+optional
-	ID string `json:"id,omitempty"`
-	// Name of the variable set.
-	// More information:
-	//   - https://developer.hashicorp.com/terraform/tutorials/cloud/cloud-multiple-variable-sets
-	//
-	//+kubebuilder:validation:MinLength:=1
-	//+optional
-	Name string `json:"name,omitempty"`
-}
-
-type VariableSetStatus struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
 }
 
 func init() {
