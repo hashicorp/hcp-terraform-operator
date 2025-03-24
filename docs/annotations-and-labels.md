@@ -12,5 +12,6 @@
 
 | Label key | Target resources | Possible values | Description |
 | --- | --- | --- | --- |
+| `app.terraform.io/crd-schema-version` | CRD[All] | A valid calendar versioning tag format: `vYY.MM.PATCH`. | The label is used to version the HCP Operator CRD. The version is updated whenever there is a change in the schema, following the [calendar versioning](https://calver.org/) approach. |
 | `agentpool.app.terraform.io/pool-name` | Pod[Agent] | Any valid AgentPool name | Associate the resource with a specific agent pool by specifying the name of the agent pool. |
 | `agentpool.app.terraform.io/pool-id` | Pod[Agent] | Any valid AgentPool ID | Associate the resource with a specific agent pool by specifying the ID of the agent pool. |

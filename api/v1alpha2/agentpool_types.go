@@ -167,6 +167,7 @@ type AgentPoolStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.4.0"
 
 // AgentPool manages HCP Terraform Agent Pools, HCP Terraform Agent Tokens and can perform HCP Terraform Agent scaling.
 // More infromation:

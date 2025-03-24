@@ -7,6 +7,8 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
+  labels:
+    app.terraform.io/crd-schema-version: v25.4.0
   name: agentpools.app.terraform.io
 spec:
   group: app.terraform.io

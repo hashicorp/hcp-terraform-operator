@@ -166,6 +166,7 @@ type ProjectStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Project Name",type=string,JSONPath=`.status.name`
 //+kubebuilder:printcolumn:name="Project ID",type=string,JSONPath=`.status.id`
+//+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.4.0"
 
 // Project manages HCP Terraform Projects.
 // More information:
