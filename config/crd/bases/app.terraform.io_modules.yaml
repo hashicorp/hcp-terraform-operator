@@ -57,8 +57,11 @@ spec:
 
                   There is one possible value:
                   - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+                  - `destroy`: Executes a destroy operation. Removes all resources and the module.
+                  Default: `retain`.
                 enum:
                 - retain
+                - destroy
                 type: string
               destroyOnDeletion:
                 default: false

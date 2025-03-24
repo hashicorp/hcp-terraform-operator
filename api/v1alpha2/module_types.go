@@ -83,11 +83,13 @@ type ModuleOutput struct {
 // a user action or system event.
 //
 // There is one possible value:
-// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false. Default value.
+// - `destroy`: Executes a destroy operation. Removes all resources and the module.
 type ModuleDeletionPolicy string
 
 const (
-	ModuleDeletionPolicyRetain ModuleDeletionPolicy = "retain"
+	ModuleDeletionPolicyRetain  ModuleDeletionPolicy = "retain"
+	ModuleDeletionPolicyDestroy ModuleDeletionPolicy = "destroy"
 )
 
 // ModuleSpec defines the desired state of Module.
@@ -140,8 +142,10 @@ type ModuleSpec struct {
 	//
 	// There is one possible value:
 	// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+	// - `destroy`: Executes a destroy operation. Removes all resources and the module.
+	// Default: `retain`.
 	//
-	//+kubebuilder:validation:Enum:=retain
+	//+kubebuilder:validation:Enum:=retain;destroy
 	//+optional
 	DeletionPolicy ModuleDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
