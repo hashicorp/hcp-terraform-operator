@@ -181,7 +181,6 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				if instance.Status.AgentDeploymentAutoscalingStatus == nil {
 					return false
 				}
-				fmt.Println("[DEBUG]", instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas)
 				return *instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas == 1
 			}).Should(BeTrue())
 		})
