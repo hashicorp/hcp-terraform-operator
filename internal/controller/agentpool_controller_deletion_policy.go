@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -40,7 +40,7 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 			}
 			ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete Agent Pool ID %s, retry later", agentPoolFinalizer))
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to delete Agent Pool ID %s, retry later", ap.instance.Status.AgentPoolID)
-			// Do not return the error here; proceed further.
+			// Do not return the error here; proceed further to cale down the agents to 0 and delete all tokens.
 		} else {
 			ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finalizer", ap.instance.Status.AgentPoolID))
 			return r.removeFinalizer(ctx, ap)
@@ -63,18 +63,19 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 				ap.log.Info("Reconcile Agent Pool", "msg", "successfully scaled agents to 0")
 			}
 		}
-		// Delete tokens
-		ap.log.Info("Reconcile Agent Pool", "msg", "delete tokens")
-		for _, t := range ap.instance.Status.AgentTokens {
-			err := ap.tfClient.Client.AgentTokens.Delete(ctx, t.ID)
-			if err != nil && err != tfc.ErrResourceNotFound {
-				ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete token %s", t.ID))
-				return err
-			}
-			err = r.removeToken(ctx, ap, t.ID)
-			if err != nil {
-				ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to delete token %s from secret", t.ID))
-				return err
+		// Remove tokens
+		if len(ap.instance.Status.AgentTokens) > 0 {
+			ap.log.Info("Reconcile Agent Pool", "msg", "remove tokens")
+			for _, t := range ap.instance.Status.AgentTokens {
+				err := ap.tfClient.Client.AgentTokens.Delete(ctx, t.ID)
+				if err != nil && err != tfc.ErrResourceNotFound {
+					ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove token %s", t.ID))
+					return err
+				}
+				err = r.removeToken(ctx, ap, t.ID)
+				if err != nil {
+					return err
+				}
 			}
 			ap.log.Info("Reconcile Agent Pool", "msg", "successfully deleted tokens")
 		}

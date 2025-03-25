@@ -8047,12 +8047,15 @@ spec:
                 default: retain
                 description: |-
                   The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.
-                  - `retain`: When you delete the custom resource, the operator will remove only the custom resource and not the agent pool.
-                    The token will remain active; however, the managed agents will also be removed.
+                  - `retain`: When you delete the custom resource, the operator will remove only the custom resource.
+                    The HCP Terraform agent pool will be retained. The managed tokens will remain active on the HCP Terraform side; however, the corresponding secrets and managed agents will be removed.
+                  - `destroy`: The operator will attempt to remove the managed HCP Terraform agent pool.
+                    On success, the managed agents and the corresponding secret with tokens will be removed along with the custom resource.
+                    On failure, the managed agents will be scaled down to 0, and the managed tokens, along with the corresponding secret, will be removed. The operator will continue attempting to remove the agent pool until it succeeds.
                   Default: `retain`.
                 enum:
                 - retain
-                - delete
+                - destroy
                 type: string
               name:
                 description: |-

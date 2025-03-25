@@ -136,7 +136,7 @@ _Appears in:_
 | `agentTokens` _[AgentToken](#agenttoken) array_ | List of the agent tokens to generate. |
 | `agentDeployment` _[AgentDeployment](#agentdeployment)_ | Agent deployment settings |
 | `autoscaling` _[AgentDeploymentAutoscaling](#agentdeploymentautoscaling)_ | Agent deployment settings |
-| `deletionPolicy` _[AgentPoolDeletionPolicy](#agentpooldeletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.<br />- `retain`: When you delete the custom resource, the operator will remove only the custom resource and not the agent pool.<br />  The token will remain active; however, the managed agents will also be removed.<br />Default: `retain`. |
+| `deletionPolicy` _[AgentPoolDeletionPolicy](#agentpooldeletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.<br />- `retain`: When you delete the custom resource, the operator will remove only the custom resource.<br />  The HCP Terraform agent pool will be retained. The managed tokens will remain active on the HCP Terraform side; however, the corresponding secrets and managed agents will be removed.<br />- `destroy`: The operator will attempt to remove the managed HCP Terraform agent pool.<br />  On success, the managed agents and the corresponding secret with tokens will be removed along with the custom resource.<br />  On failure, the managed agents will be scaled down to 0, and the managed tokens, along with the corresponding secret, will be removed. The operator will continue attempting to remove the agent pool until it succeeds.<br />Default: `retain`. |
 
 
 
