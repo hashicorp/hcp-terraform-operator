@@ -36,7 +36,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		// Create a new module object for each test
+		// Create a new agent pool object for each test
 		instance = &appv1alpha2.AgentPool{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "app.terraform.io/v1alpha2",
