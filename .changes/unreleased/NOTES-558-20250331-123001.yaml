@@ -1,0 +1,5 @@
+kind: NOTES
+body: The `Workspace` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it.
+time: 2025-03-31T12:30:01.838307-04:00
+custom:
+    PR: "558"
