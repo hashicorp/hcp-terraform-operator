@@ -461,7 +461,6 @@ type WorkspaceSpec struct {
 	Organization string `json:"organization"`
 	// API Token to be used for API calls.
 	Token Token `json:"token"`
-
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// Must be one of the following values: `auto`, `manual`.
 	// Default: `manual`.
@@ -472,6 +471,16 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=manual
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
+	// Specifies the type of apply, whether manual or auto
+	// Must be of value `auto` or `manual`
+	// Default: `manual`
+	// More information:
+	// - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
+	//
+	//+kubebuilder:validation:Pattern:="^(auto|manual)$"
+	//+kubebuilder:default=manual
+	//+optional
+	ApplyRunTrigger string `json:"applyRunTrigger,omitempty"`
 	// Allows a destroy plan to be created and applied.
 	// Default: `true`.
 	// More information:
