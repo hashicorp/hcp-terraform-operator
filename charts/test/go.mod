@@ -1,6 +1,6 @@
 module github.com/hashicorp/hcp-terraform-operator/charts/test
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/gruntwork-io/terratest v0.47.2
