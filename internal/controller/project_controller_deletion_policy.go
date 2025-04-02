@@ -31,7 +31,7 @@ func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstanc
 				p.log.Info("Reconcile Project", "msg", "Project was not found, remove finalizer")
 				return r.removeFinalizer(ctx, p)
 			}
-			p.log.Error(err, "Reconcile Project", "msg", fmt.Sprintf("failed to destroy delete project ID %s, retry later", p.instance.Status.ID))
+			p.log.Error(err, "Reconcile Project", "msg", fmt.Sprintf("failed to delete project ID %s, retry later", p.instance.Status.ID))
 			r.Recorder.Eventf(&p.instance, corev1.EventTypeWarning, "Reconcile Project", "Failed to destroy project ID %s, retry later", p.instance.Status.ID)
 			return err
 		}
