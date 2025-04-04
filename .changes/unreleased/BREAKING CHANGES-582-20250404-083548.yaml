@@ -1,0 +1,5 @@
+kind: BREAKING CHANGES
+body: '`Module`: The new field, `spec.deletionPolicy` is set to `retain` by default, which changes the previous default controller when a module is deleted.This change takes into account migration and overall better management of resources.'
+time: 2025-04-04T08:35:48.074085-07:00
+custom:
+    PR: "582"
