@@ -5,8 +5,8 @@ package controller
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/hashicorp/go-tfe"
 	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -22,7 +22,17 @@ var _ = Describe("Project controller", Ordered, func() {
 		instance       *appv1alpha2.Project
 		namespacedName = newNamespacedName()
 		project        = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
+
+	BeforeAll(func() {
+		if tfClient.IsEnterprise() {
+			Skip("Does not run against Terraform Enterprise, skip this test")
+		}
+		// Set default Eventually timers
+		SetDefaultEventuallyTimeout(syncPeriod * 4)
+		SetDefaultEventuallyPollingInterval(2 * time.Second)
+	})
 
 	BeforeEach(func() {
 		// Create a new project object for each test
@@ -54,19 +64,23 @@ var _ = Describe("Project controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		_, err := tfClient.Projects.Read(ctx, instance.Status.ID)
-		if err == tfc.ErrResourceNotFound {
-			return
-		}
-		Expect(err).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, instance)).To(
+			Or(
+				Succeed(),
+				WithTransform(errors.IsNotFound, BeTrue()),
+			),
+		)
 		Eventually(func() bool {
-			err := k8sClient.Get(ctx, namespacedName, instance)
-			return errors.IsNotFound(err)
+			return errors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 		}).Should(BeTrue())
 
 		Eventually(func() bool {
 			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
+			return err == tfc.ErrResourceNotFound || err == nil
+		}).Should(BeTrue())
+
+		Eventually(func() bool {
+			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
 			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})
@@ -77,8 +91,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			createProject(instance)
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
-				err := k8sClient.Get(ctx, namespacedName, instance)
-				return errors.IsNotFound(err)
+				return errors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 			}).Should(BeTrue())
 			prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
 			Expect(err).Should(Succeed())
@@ -86,27 +99,38 @@ var _ = Describe("Project controller", Ordered, func() {
 		})
 
 		It("can soft delete a project", func() {
+			instance.Spec.DeletionPolicy = appv1alpha2.ProjectDeletionPolicySoft
 			createProject(instance)
-			projectID := instance.Status.ID
-			Eventually(func() bool {
-				listOpts := &tfe.WorkspaceListOptions{
-					ListOptions: tfe.ListOptions{PageSize: 100},
-				}
-				workspaces, err := tfClient.Workspaces.List(ctx, instance.Spec.Organization, listOpts)
-				Expect(err).To(Succeed())
-
-				for _, ws := range workspaces.Items {
-					if ws.Project != nil && ws.Project.ID == projectID {
-						return false
-					}
-				}
-				return true
-			}).Should(BeTrue())
+			// Create a workspace and assign it to a newley created project
+			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+				Name: &workspace,
+				Project: &tfc.Project{
+					ID: instance.Status.ID,
+				},
+			})
+			Expect(err).Should(Succeed())
+			Expect(ws).NotTo(BeNil())
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+
+			// Attach the workspace to the default project
+			org, err := tfClient.Organizations.Read(ctx, instance.Spec.Organization)
+			Expect(err).Should(Succeed())
+			Expect(org).NotTo(BeNil())
+			ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
+				Project: &tfc.Project{
+					ID: org.DefaultProject.ID,
+				},
+			})
+			Expect(err).Should(Succeed())
+			Expect(ws).NotTo(BeNil())
+
+			// Wait until the CR is gone
 			Eventually(func() bool {
-				_, err := tfClient.Projects.Read(ctx, projectID)
-				return err == tfc.ErrResourceNotFound
+				return errors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 			}).Should(BeTrue())
+
+			// Delete the workspace
+			Expect(tfClient.Workspaces.DeleteByID(ctx, ws.ID)).Should(Succeed())
 		})
 
 	})
