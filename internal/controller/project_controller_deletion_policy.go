@@ -8,8 +8,9 @@ import (
 	"fmt"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstance) error {

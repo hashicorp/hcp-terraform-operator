@@ -162,7 +162,7 @@ type ProjectSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	TeamAccess []*ProjectTeamAccess `json:"teamAccess,omitempty"`
-	// DeletionPolicyForProject defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+	// DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
 	//
 	// You must use one of the following values:
 	// - `retain`:  When the custom resource is deleted, the operator will not delete the associated project.
