@@ -72,7 +72,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			namespacedName := getNamespacedName(instance)
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
-			createAndUploadConfigurationVersion(instance, "hoi")
+			createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				if instance.Status.Run == nil {
@@ -86,7 +86,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
 
-			createAndUploadConfigurationVersion(instance, "hoi")
+			createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				if instance.Status.Run == nil {
