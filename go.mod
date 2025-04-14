@@ -1,6 +1,6 @@
 module github.com/hashicorp/hcp-terraform-operator
 
-go 1.24.1
+go 1.24.2
 require (
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
