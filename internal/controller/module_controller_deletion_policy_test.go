@@ -21,7 +21,8 @@ var _ = Describe("Module Controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Module
 		namespacedName = newNamespacedName()
-		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		workspaceName  = ""
+		workspace      *tfc.Workspace
 	)
 
 	BeforeAll(func() {
@@ -34,6 +35,24 @@ var _ = Describe("Module Controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		var err error
+		workspaceName = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
+		// Create a new TFC Workspace
+		workspace, err = tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+			Name:      &workspaceName,
+			AutoApply: tfc.Bool(true),
+		})
+		Expect(err).Should(Succeed())
+		Expect(workspace).ShouldNot(BeNil())
+
+		// Create TFC Workspace variables
+		_, err = tfClient.Variables.Create(ctx, workspace.ID, tfc.VariableCreateOptions{
+			Key:      tfc.String("name"),
+			Value:    tfc.String("Pluto"),
+			HCL:      tfc.Bool(false),
+			Category: tfc.Category(tfc.CategoryTerraform),
+		})
+		Expect(err).Should(Succeed())
 		// Create a new module object for each test
 		instance = &appv1alpha2.Module{
 			TypeMeta: metav1.TypeMeta{
@@ -60,7 +79,6 @@ var _ = Describe("Module Controller", Ordered, func() {
 					Source:  "hashicorp/animal/demo",
 					Version: "1.0.0",
 				},
-				DestroyOnDeletion: true,
 				Variables: []appv1alpha2.ModuleVariable{
 					{
 						Name: "name",
@@ -78,54 +96,67 @@ var _ = Describe("Module Controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// Delete the Kubernetes Module object and wait until the controller finishes the reconciliation after deletion of the object
-		Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
-		Eventually(func() bool {
-			err := k8sClient.Get(ctx, namespacedName, instance)
-			// The Kubernetes client will return error 'NotFound' on the "Get" operation once the object is deleted
-			return errors.IsNotFound(err)
-		}).Should(BeTrue())
-
 		// Make sure that the HCP Terraform workspace is deleted
 		Eventually(func() bool {
-			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
+			err := tfClient.Workspaces.DeleteByID(ctx, workspace.ID)
 			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
 			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})
 
-	Context("Deletion Policy", func() {
-		It("can preserve a module", func() {
+	Context("Module Deletion Policy", func() {
+		It("can handle no destroy on deletion and retain deleteion policy", func() {
+			// Create a new Module
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.DestroyOnDeletion = false
 			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyRetain
-
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
-
-			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
-
+			// Make sure a new module is created and executed
 			Eventually(func() bool {
-				err := k8sClient.Get(ctx, namespacedName, instance)
-				return err == nil
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.ObservedGeneration == instance.Generation &&
+					instance.Status.Run.Status == string(tfc.RunApplied)
 			}).Should(BeTrue())
 
-			if instance.Spec.DestroyOnDeletion {
-				Eventually(func() bool {
-					err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-					return err == tfc.ErrResourceNotFound || err == nil
-				}).Should(BeTrue())
-			}
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
 			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, namespacedName, instance)
 				return errors.IsNotFound(err)
 			}).Should(BeTrue())
 
+			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			Expect(err).Should(Succeed())
+			Expect(workspace).ShouldNot(BeNil())
+
+			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			Expect(err).Should(Succeed())
+			Expect(r).ShouldNot(BeNil())
+			Expect(r.IsDestroy).To(BeFalse())
 		})
-		It("can destroy a module", func() {
+
+		It("can handle no destroy on deletion and destroy deleteion policy", func() {
+			// Create a new Module
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.DestroyOnDeletion = false
 			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyDestroy
-
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+			// Make sure a new module is created and executed
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.ObservedGeneration == instance.Generation &&
+					instance.Status.Run.Status == string(tfc.RunApplied)
+			}).Should(BeTrue())
 
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
 
 			Eventually(func() bool {
@@ -133,19 +164,82 @@ var _ = Describe("Module Controller", Ordered, func() {
 				return errors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			if instance.Spec.DestroyOnDeletion {
-				Eventually(func() bool {
-					err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-					return err == tfc.ErrResourceNotFound || err == nil
-				}).Should(BeTrue())
-			}
+			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			Expect(err).Should(Succeed())
+			Expect(workspace).ShouldNot(BeNil())
 
+			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			Expect(err).Should(Succeed())
+			Expect(r).ShouldNot(BeNil())
+			Expect(r.IsDestroy).To(BeTrue())
+		})
+
+		It("can handle destroy on deletion and retain deleteion policy", func() {
+			// Create a new Module
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.DestroyOnDeletion = true
+			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyRetain
+			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+			// Make sure a new module is created and executed
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.ObservedGeneration == instance.Generation &&
+					instance.Status.Run.Status == string(tfc.RunApplied)
+			}).Should(BeTrue())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, namespacedName, instance)
 				return errors.IsNotFound(err)
 			}).Should(BeTrue())
 
+			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			Expect(err).Should(Succeed())
+			Expect(workspace).ShouldNot(BeNil())
+
+			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			Expect(err).Should(Succeed())
+			Expect(r).ShouldNot(BeNil())
+			Expect(r.IsDestroy).To(BeTrue())
+		})
+
+		It("can handle destroy on deletion and destroy deleteion policy", func() {
+			// Create a new Module
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.DestroyOnDeletion = true
+			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyDestroy
+			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+			// Make sure a new module is created and executed
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Run == nil {
+					return false
+				}
+				return instance.Status.ObservedGeneration == instance.Generation &&
+					instance.Status.Run.Status == string(tfc.RunApplied)
+			}).Should(BeTrue())
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
+
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, namespacedName, instance)
+				return errors.IsNotFound(err)
+			}).Should(BeTrue())
+
+			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			Expect(err).Should(Succeed())
+			Expect(workspace).ShouldNot(BeNil())
+
+			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			Expect(err).Should(Succeed())
+			Expect(r).ShouldNot(BeNil())
+			Expect(r.IsDestroy).To(BeTrue())
 		})
 	})
 

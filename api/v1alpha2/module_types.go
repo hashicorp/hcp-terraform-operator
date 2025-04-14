@@ -124,7 +124,7 @@ type ModuleSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Outputs []ModuleOutput `json:"outputs,omitempty"`
-	// Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
+	// DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
 	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
@@ -146,6 +146,7 @@ type ModuleSpec struct {
 	// Default: `retain`.
 	//
 	//+kubebuilder:validation:Enum:=retain;destroy
+	//+kubebuilder:default:=retain
 	//+optional
 	DeletionPolicy ModuleDeletionPolicy `json:"deletionPolicy,omitempty"`
 }

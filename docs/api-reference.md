@@ -334,7 +334,7 @@ _Appears in:_
 | `name` _string_ | Name of the module that will be uploaded and executed.<br />Default: `this`. |
 | `variables` _[ModuleVariable](#modulevariable) array_ | Variables to pass to the module, they must exist in the Workspace. |
 | `outputs` _[ModuleOutput](#moduleoutput) array_ | Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive). |
-| `destroyOnDeletion` _boolean_ | Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.<br />Default: `false`. |
+| `destroyOnDeletion` _boolean_ | DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.<br />Default: `false`. |
 | `restartedAt` _string_ | Allows executing a new Run without changing any Workspace or Module attributes.<br />Example: kubectl patch <KIND> <NAME> --type=merge --patch '\{"spec": \{"restartedAt": "'\`date -u -Iseconds\`'"\}\}' |
 | `deletionPolicy` _[ModuleDeletionPolicy](#moduledeletionpolicy)_ | Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.<br />It controls how the operator should handle the deletion of resources when triggered by<br />a user action or system event.<br /><br />There is one possible value:<br />- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.<br />- `destroy`: Executes a destroy operation. Removes all resources and the module.<br />Default: `retain`. |
 

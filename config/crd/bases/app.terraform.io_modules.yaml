@@ -50,6 +50,7 @@ spec:
             description: ModuleSpec defines the desired state of Module.
             properties:
               deletionPolicy:
+                default: retain
                 description: |-
                   Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
                   It controls how the operator should handle the deletion of resources when triggered by
@@ -66,7 +67,7 @@ spec:
               destroyOnDeletion:
                 default: false
                 description: |-
-                  Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
+                  DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
                   Default: `false`.
                 type: boolean
               module:
