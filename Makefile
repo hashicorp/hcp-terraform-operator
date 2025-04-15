@@ -136,7 +136,7 @@ copywrite: install-copywrite ## Run copywrite against code.
 
 .PHONY: test
 test: manifests generate fmt vet copywrite envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 30m -v ./internal/controller -coverprofile cover.out ${TESTARGS}
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 45m -v ./internal/controller -coverprofile cover.out ${TESTARGS}
 
 .PHONY: test-api
 test-api: fmt vet copywrite ## Run API tests.
@@ -294,7 +294,7 @@ $(HASHICORP_COPYWRITE): $(LOCALBIN)
 yq: $(YQ) ## Download yq locally if necessary.
 $(YQ): $(LOCALBIN)
 	$(call go-install-tool,$(YQ),github.com/mikefarah/yq/v4,$(YQ_VERSION))
-	ln -s $(YQ) $(LOCALBIN)/yq
+	ln -f -s $(YQ) $(LOCALBIN)/yq
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
@@ -333,6 +333,7 @@ bundle: manifests kustomize operator-sdk yq ## Generate bundle manifests and met
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	./hack/add-bundle-annotations.sh
+	./hack/add-bundle-replaces.sh
 	$(OPERATOR_SDK) bundle validate ./bundle
 
 .PHONY: bundle-build

@@ -1090,7 +1090,7 @@ func TestValidateSpecDeletionPolicy(t *testing.T) {
 	}
 }
 
-func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
+func TestValidateSpecVariableSets(t *testing.T) {
 	t.Parallel()
 
 	successCases := map[string]Workspace{
@@ -1142,6 +1142,86 @@ func TestValidateWorkspaceSpecVariableSets(t *testing.T) {
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecVariableSets(); len(errs) == 0 {
+				t.Error("Unexpected failure, at least one error is expected")
+			}
+		})
+	}
+}
+
+func TestValidateSpecVersionControl(t *testing.T) {
+	t.Parallel()
+
+	successCases := map[string]Workspace{
+		"HasNoVersionControlConfigured": {
+			Spec: WorkspaceSpec{
+				VersionControl: nil,
+			},
+		},
+		"HasOnlyTriggerPatterns": {
+			Spec: WorkspaceSpec{
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPatterns:     []string{"path/*/workspace/*"},
+				},
+			},
+		},
+		"HasOnlyTriggerPrefixes": {
+			Spec: WorkspaceSpec{
+				WorkingDirectory: "path/",
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPrefixes:     []string{"path/to/workspace/"},
+				},
+			},
+		},
+	}
+
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecVersionControl(); len(errs) != 0 {
+				t.Errorf("Unexpected validation errors: %v", errs)
+			}
+		})
+	}
+
+	errorCases := map[string]Workspace{
+		"TriggerPrefixesWithoutWorkingDirectory": {
+			Spec: WorkspaceSpec{
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPrefixes:     []string{"path/to/workspace/"},
+				},
+			},
+		},
+		"BothTriggerOptions": {
+			Spec: WorkspaceSpec{
+				WorkingDirectory: "path/",
+				VersionControl: &VersionControl{
+					FileTriggersEnabled: true,
+					TriggerPatterns:     []string{"path/*/workspace/*"},
+					TriggerPrefixes:     []string{"path/to/workspace/"},
+				},
+			},
+		},
+		"TriggerPatternsWithoutFileTriggersEnabled": {
+			Spec: WorkspaceSpec{
+				VersionControl: &VersionControl{
+					TriggerPatterns: []string{"path/*/workspace/*"},
+				},
+			},
+		},
+		"TriggerPrefixesWithoutFileTriggersEnabled": {
+			Spec: WorkspaceSpec{
+				VersionControl: &VersionControl{
+					TriggerPrefixes: []string{"path/to/workspace/"},
+				},
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			if errs := c.validateSpecVersionControl(); len(errs) == 0 {
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})

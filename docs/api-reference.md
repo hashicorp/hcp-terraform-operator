@@ -47,7 +47,7 @@ _Appears in:_
 | --- | --- |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
 | `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
-| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
+| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | DEPRECATED: This field has been deprecated since 2.9.0 and will be removed in future versions.<br />TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
 | `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300. |
 | `cooldownPeriod` _[AgentDeploymentAutoscalingCooldownPeriod](#agentdeploymentautoscalingcooldownperiod)_ | CoolDownPeriod configures the period to wait between scaling up and scaling down |
 
@@ -731,6 +731,9 @@ _Appears in:_
 | `repository` _string_ | A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
 | `speculativePlans` _boolean_ | Whether this workspace allows automatic speculative plans on PR.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans |
+| `fileTriggersEnabled` _boolean_ | File triggers allow you to queue runs in HCP Terraform when files in your VCS repository change.<br />Default: `false`.<br />More informarion:<br /> - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering |
+| `triggerPatterns` _string array_ | The list of pattern triggers that will queue runs in HCP Terraform when files in your VCS repository change.<br />`spec.versionControl.fileTriggersEnabled` must be set to `true`.<br />More informarion:<br /> - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering |
+| `triggerPrefixes` _string array_ | The list of pattern prefixes that will queue runs in HCP Terraform when files in your VCS repository change.<br />`spec.versionControl.fileTriggersEnabled` must be set to `true`.<br />More informarion:<br /> - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering |
 
 
 #### Workspace

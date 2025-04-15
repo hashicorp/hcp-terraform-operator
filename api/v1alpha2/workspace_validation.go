@@ -27,6 +27,7 @@ func (w *Workspace) ValidateSpec() error {
 	allErrs = append(allErrs, w.validateSpecEnvironmentVariables()...)
 	allErrs = append(allErrs, w.validateSpecDeletionPolicy()...)
 	allErrs = append(allErrs, w.validateSpecVariableSets()...)
+	allErrs = append(allErrs, w.validateSpecVersionControl()...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -607,6 +608,57 @@ func (w *Workspace) validateSpecVariableSets() field.ErrorList {
 			// At least one, either ID or Name must be set
 			allErrs = append(allErrs, field.Required(f, "At least one must be set."))
 		}
+	}
+
+	return allErrs
+}
+
+func (w *Workspace) validateSpecVersionControl() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.VersionControl
+
+	if spec == nil {
+		return allErrs
+	}
+
+	return w.validateSpecVersionControlFileTriggers()
+}
+
+func (w *Workspace) validateSpecVersionControlFileTriggers() field.ErrorList {
+	allErrs := field.ErrorList{}
+	spec := w.Spec.VersionControl
+
+	f := field.NewPath("spec").Child("versionControl")
+	if len(spec.TriggerPatterns) > 0 && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"only one of the field TriggerPatterns or TriggerPrefixes is allowed"),
+		)
+	}
+
+	f = field.NewPath("spec").Child("versionControl").Child("fileTriggerEnabled")
+	if !spec.FileTriggersEnabled && len(spec.TriggerPatterns) > 0 {
+		allErrs = append(allErrs, field.Invalid(
+			f,
+			"",
+			"'spec.versionControl.fileTriggerEnabled' must be set to 'true' when 'spec.versionControl.triggerPatterns' is set"),
+		)
+	}
+
+	if !spec.FileTriggersEnabled && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Required(
+			f,
+			"'spec.versionControl.fileTriggerEnabled' must be set to 'true' when 'spec.versionControl.triggerPrefixes' is set"),
+		)
+	}
+
+	f = field.NewPath("spec").Child("workingDirectory")
+	if w.Spec.WorkingDirectory == "" && len(spec.TriggerPrefixes) > 0 {
+		allErrs = append(allErrs, field.Required(
+			f,
+			"'spec.workingDirectory' must not be empty when 'spec.versionControl.triggerPrefixes' is set"),
+		)
 	}
 
 	return allErrs
