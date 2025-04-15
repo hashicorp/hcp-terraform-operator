@@ -84,6 +84,16 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
                 pattern: ^(auto|manual)$
                 type: string
+              applyRunTrigger:
+                default: manual
+                description: |-
+                  Specifies the type of apply, whether manual or auto
+                  Must be of value `auto` or `manual`
+                  Default: `manual`
+                  More information:
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
+                pattern: ^(auto|manual)$
+                type: string
               deletionPolicy:
                 default: retain
                 description: |-
