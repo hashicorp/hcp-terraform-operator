@@ -39,7 +39,7 @@ func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *
 			return r.deleteDeployment(ctx, ap, d)
 		}
 		// Update existing deployment
-		return r.updateDeployment(ctx, ap)
+		return r.updateDeployment(ctx, ap, d)
 	}
 	if errors.IsNotFound(err) {
 		if ap.instance.Spec.AgentDeployment == nil { // Was a deployment configured?
@@ -58,7 +58,6 @@ func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *
 	}
 	ap.log.Error(err, "Reconcile Agent Deployment", "msg", fmt.Sprintf("failed to get Kubernetes Deployment %q", d.Name))
 	return err
-
 }
 
 func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoolInstance) error {
@@ -84,7 +83,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 	return nil
 }
 
-func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance) error {
+func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance, d *appsv1.Deployment) error {
 	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
 	nd := agentPoolDeployment(ap)
 
@@ -97,6 +96,14 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 		nd.Spec.Replicas = a.DesiredReplicas
 	}
 
+	// When spec.replicas is set to nil, the Update() method below defaults it to 1 (one),
+	// which might cause unexpected consequences. Preserve the current value in this case.
+	if nd.Spec.Replicas == nil {
+		nd.Spec.Replicas = d.Spec.Replicas
+	}
+
+	// TODO:
+	// - Add logic to update the deployment only when it has changed
 	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
