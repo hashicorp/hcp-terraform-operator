@@ -109,8 +109,6 @@ More infromation:
 _Underlying type:_ _string_
 
 DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a resource, either manually or by a system event.
-
-
 You must use one of the following values:
 - `retain`: When you delete the custom resource, the operator does not delete the agent pool.
 - `destroy`: The operator will attempt to remove the managed HCP Terraform agent pool.
