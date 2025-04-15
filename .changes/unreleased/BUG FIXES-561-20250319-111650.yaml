@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`AgentPool`: Add a new scaling algorithm that accounts for speculative plans when calculating pending runs. This algorithm is compatible with HCP Terraform and TFE v202409-1 and later.'
+time: 2025-03-19T11:16:50.338096+01:00
+custom:
+    PR: "561"

@@ -25,7 +25,7 @@ Use the option `--version VERSION` with `helm install` and `helm upgrade` comman
 
     ```console
     $ helm install demo hashicorp/hcp-terraform-operator \
-      --version 2.8.0 \
+      --version 2.8.1 \
       --namespace tfc-operator-system \
       --create-namespace
     ```
@@ -36,7 +36,7 @@ Below are examples of the Operator installation/upgrade Helm chart with options.
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.8.0 \
+  --version 2.8.1 \
   --namespace tfc-operator-system \
   --create-namespace \
   --set operator.syncPeriod=10m \
@@ -55,7 +55,7 @@ If targeting a Terraform Enterprise instance rather than HCP Terraform, set the 
 
 ```console
 $ helm install demo hashicorp/hcp-terraform-operator \
-  --version 2.8.0 \
+  --version 2.8.1 \
   --set operator.tfeAddress="https://tfe-api.my-company.com"
 ```
 
@@ -67,7 +67,7 @@ For more information, please refer to the [FAQ](./../../docs/faq.md#general-ques
 
 ```console
 $ helm upgrade demo hashicorp/hcp-terraform-operator \
-  --version 2.8.0 \
+  --version 2.8.1 \
   --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
@@ -88,9 +88,9 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 
     - The `Workspace` CRD has been changed:
 
-    ```console
-    $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.8.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
-    ```
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.8.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
+      ```
 
   - `2.6.0` to `2.7.0`
 
@@ -170,7 +170,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | imagePullSecrets | list | `[]` | Reference to one or more secrets essential for pulling container images. |
 | kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | kubeRbacProxy.image.repository | string | `"quay.io/brancz/kube-rbac-proxy"` | Image repository. |
-| kubeRbacProxy.image.tag | string | `"v0.18.2"` | Image tag. |
+| kubeRbacProxy.image.tag | string | `"v0.19.0"` | Image tag. |
 | kubeRbacProxy.resources.limits.cpu | string | `"500m"` | Limits as a maximum amount of CPU to be used by a container. |
 | kubeRbacProxy.resources.limits.memory | string | `"128Mi"` | Limits as a maximum amount of memory to be used by a container. |
 | kubeRbacProxy.resources.requests.cpu | string | `"50m"` | Guaranteed minimum amount of CPU to be used by a container. |
