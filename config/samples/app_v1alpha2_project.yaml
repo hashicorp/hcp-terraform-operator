@@ -1,11 +1,11 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: Project
 metadata:
-  name: <NAME>
+  name: NAME
 spec:
-  organization: <ORG_NAME>
+  organization: HCP_TF_ORG_NAME
   token:
     secretKeyRef:
-      name: <SECRET_NAME>
-      key: <SECRET_KEY>
-  name: <NAME>
+      name: SECRET_NAME
+      key: SECRET_KEY
+  name: NAME

@@ -301,6 +301,30 @@ type VersionControl struct {
 	//+kubebuilder:default=true
 	//+optional
 	SpeculativePlans bool `json:"speculativePlans"`
+	// File triggers allow you to queue runs in HCP Terraform when files in your VCS repository change.
+	// Default: `false`.
+	// More informarion:
+	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering
+	//
+	//+optional
+	//+kubebuilder:default:=false
+	EnableFileTriggers bool `json:"enableFileTriggers"`
+	// The list of pattern triggers that will queue runs in HCP Terraform when files in your VCS repository change.
+	// `spec.versionControl.fileTriggersEnabled` must be set to `true`.
+	// More informarion:
+	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering
+	//
+	//+kubebuilder:validation:MinItems:=1
+	//+optional
+	TriggerPatterns []string `json:"triggerPatterns,omitempty"`
+	// The list of pattern prefixes that will queue runs in HCP Terraform when files in your VCS repository change.
+	// `spec.versionControl.fileTriggersEnabled` must be set to `true`.
+	// More informarion:
+	//  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering
+	//
+	//+kubebuilder:validation:MinItems:=1
+	//+optional
+	TriggerPrefixes []string `json:"triggerPrefixes,omitempty"`
 }
 
 // SSH key used to clone Terraform modules.
@@ -437,7 +461,6 @@ type WorkspaceSpec struct {
 	Organization string `json:"organization"`
 	// API Token to be used for API calls.
 	Token Token `json:"token"`
-
 	// Define either change will be applied automatically(auto) or require an operator to confirm(manual).
 	// Must be one of the following values: `auto`, `manual`.
 	// Default: `manual`.
@@ -448,6 +471,16 @@ type WorkspaceSpec struct {
 	//+kubebuilder:default=manual
 	//+optional
 	ApplyMethod string `json:"applyMethod,omitempty"`
+	// Specifies the type of apply, whether manual or auto
+	// Must be of value `auto` or `manual`
+	// Default: `manual`
+	// More information:
+	// - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
+	//
+	//+kubebuilder:validation:Pattern:="^(auto|manual)$"
+	//+kubebuilder:default=manual
+	//+optional
+	ApplyRunTrigger string `json:"applyRunTrigger,omitempty"`
 	// Allows a destroy plan to be created and applied.
 	// Default: `true`.
 	// More information:
