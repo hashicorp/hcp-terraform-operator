@@ -47,7 +47,7 @@ _Appears in:_
 | --- | --- |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
 | `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
-| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
+| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | DEPRECATED: This field has been deprecated since 2.9.0 and will be removed in future versions.<br />TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
 | `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300. |
 | `cooldownPeriod` _[AgentDeploymentAutoscalingCooldownPeriod](#agentdeploymentautoscalingcooldownperiod)_ | CoolDownPeriod configures the period to wait between scaling up and scaling down |
 
@@ -847,6 +847,7 @@ _Appears in:_
 | `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual).<br />Must be one of the following values: `auto`, `manual`.<br />Default: `manual`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
+| `applyRunTrigger` _string_ | Specifies the type of apply, whether manual or auto<br />Must be of value `auto` or `manual`<br />Default: `manual`<br />More information:<br />- https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply |
 | `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
 | `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/agents |

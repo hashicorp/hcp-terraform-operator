@@ -132,7 +132,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createAndUploadConfigurationVersion(wID string, outputValue string) *tfc.ConfigurationVersion {
+func createAndUploadConfigurationVersion(workspaceID string, outputValue string) *tfc.ConfigurationVersion {
 	GinkgoHelper()
 	// Create a temporary dir in the current one
 	cd, err := os.Getwd()
@@ -158,7 +158,7 @@ func createAndUploadConfigurationVersion(wID string, outputValue string) *tfc.Co
 	_, err = f.WriteString(tf)
 	Expect(err).Should(Succeed())
 
-	cv, err := tfClient.ConfigurationVersions.Create(ctx, wID, tfc.ConfigurationVersionCreateOptions{
+	cv, err := tfClient.ConfigurationVersions.Create(ctx, workspaceID, tfc.ConfigurationVersionCreateOptions{
 		AutoQueueRuns: tfc.Bool(true),
 		Speculative:   tfc.Bool(false),
 	})
