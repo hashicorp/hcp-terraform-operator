@@ -29,7 +29,7 @@ func TestRBACRoleBindingCreateTrue(t *testing.T) {
 	testRBACRoleBindingSubjects(t, rbac, defaultNamespace)
 }
 
-func testRBACRoleBindingCreateFalse(t *testing.T) {
+func TestRBACRoleBindingCreateFalse(t *testing.T) {
 	options := &helm.Options{
 		SetValues: map[string]string{
 			"rbac.create": "false",
@@ -42,7 +42,7 @@ func testRBACRoleBindingCreateFalse(t *testing.T) {
 	assert.Contains(t, err.Error(), "could not find template")
 }
 
-func testRBACRoleBindingNamespace(t *testing.T) {
+func TestRBACRoleBindingNamespace(t *testing.T) {
 	ns := "this"
 	options := &helm.Options{
 		SetValues: map[string]string{
@@ -55,7 +55,7 @@ func testRBACRoleBindingNamespace(t *testing.T) {
 	}
 	rbac := renderRBACRoleBindingManifest(t, options)
 
-	assert.Equal(t, defaultRBACRoleName, rbac.Name)
+	assert.Equal(t, defaultRBACRoleBindingName, rbac.Name)
 	assert.Empty(t, rbac.Labels)
 	assert.Empty(t, rbac.Annotations)
 	assert.Equal(t, ns, rbac.Namespace)
