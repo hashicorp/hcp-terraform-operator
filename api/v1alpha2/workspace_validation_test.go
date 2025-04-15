@@ -1160,8 +1160,8 @@ func TestValidateSpecVersionControl(t *testing.T) {
 		"HasOnlyTriggerPatterns": {
 			Spec: WorkspaceSpec{
 				VersionControl: &VersionControl{
-					FileTriggersEnabled: true,
-					TriggerPatterns:     []string{"path/*/workspace/*"},
+					EnableFileTriggers: true,
+					TriggerPatterns:    []string{"path/*/workspace/*"},
 				},
 			},
 		},
@@ -1169,8 +1169,8 @@ func TestValidateSpecVersionControl(t *testing.T) {
 			Spec: WorkspaceSpec{
 				WorkingDirectory: "path/",
 				VersionControl: &VersionControl{
-					FileTriggersEnabled: true,
-					TriggerPrefixes:     []string{"path/to/workspace/"},
+					EnableFileTriggers: true,
+					TriggerPrefixes:    []string{"path/to/workspace/"},
 				},
 			},
 		},
@@ -1188,8 +1188,8 @@ func TestValidateSpecVersionControl(t *testing.T) {
 		"TriggerPrefixesWithoutWorkingDirectory": {
 			Spec: WorkspaceSpec{
 				VersionControl: &VersionControl{
-					FileTriggersEnabled: true,
-					TriggerPrefixes:     []string{"path/to/workspace/"},
+					EnableFileTriggers: true,
+					TriggerPrefixes:    []string{"path/to/workspace/"},
 				},
 			},
 		},
@@ -1197,20 +1197,20 @@ func TestValidateSpecVersionControl(t *testing.T) {
 			Spec: WorkspaceSpec{
 				WorkingDirectory: "path/",
 				VersionControl: &VersionControl{
-					FileTriggersEnabled: true,
-					TriggerPatterns:     []string{"path/*/workspace/*"},
-					TriggerPrefixes:     []string{"path/to/workspace/"},
+					EnableFileTriggers: true,
+					TriggerPatterns:    []string{"path/*/workspace/*"},
+					TriggerPrefixes:    []string{"path/to/workspace/"},
 				},
 			},
 		},
-		"TriggerPatternsWithoutFileTriggersEnabled": {
+		"TriggerPatternsWithoutEnableFileTriggers": {
 			Spec: WorkspaceSpec{
 				VersionControl: &VersionControl{
 					TriggerPatterns: []string{"path/*/workspace/*"},
 				},
 			},
 		},
-		"TriggerPrefixesWithoutFileTriggersEnabled": {
+		"TriggerPrefixesWithoutEnableFileTriggers": {
 			Spec: WorkspaceSpec{
 				VersionControl: &VersionControl{
 					TriggerPrefixes: []string{"path/to/workspace/"},
