@@ -81,6 +81,16 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
                 pattern: ^(auto|manual)$
                 type: string
+              applyRunTrigger:
+                default: manual
+                description: |-
+                  Specifies the type of apply, whether manual or auto
+                  Must be of value `auto` or `manual`
+                  Default: `manual`
+                  More information:
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
+                pattern: ^(auto|manual)$
+                type: string
               deletionPolicy:
                 default: retain
                 description: |-
@@ -729,6 +739,14 @@ spec:
                       This defaults to the repository's default branch (e.g. main).
                     minLength: 1
                     type: string
+                  enableFileTriggers:
+                    default: false
+                    description: |-
+                      File triggers allow you to queue runs in HCP Terraform when files in your VCS repository change.
+                      Default: `false`.
+                      More informarion:
+                       - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering
+                    type: boolean
                   oAuthTokenID:
                     description: |-
                       The VCS Connection (OAuth Connection + Token) to use.
@@ -750,6 +768,26 @@ spec:
                         - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests
                         - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans
                     type: boolean
+                  triggerPatterns:
+                    description: |-
+                      The list of pattern triggers that will queue runs in HCP Terraform when files in your VCS repository change.
+                      `spec.versionControl.fileTriggersEnabled` must be set to `true`.
+                      More informarion:
+                       - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
+                  triggerPrefixes:
+                    description: |-
+                      The list of pattern prefixes that will queue runs in HCP Terraform when files in your VCS repository change.
+                      `spec.versionControl.fileTriggersEnabled` must be set to `true`.
+                      More informarion:
+                       - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
                 type: object
               workingDirectory:
                 description: |-

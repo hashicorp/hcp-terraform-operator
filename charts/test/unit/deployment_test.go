@@ -104,7 +104,7 @@ func defaultDeployment() appsv1.Deployment {
 						},
 						{
 							Name:  "kube-rbac-proxy",
-							Image: "quay.io/brancz/kube-rbac-proxy:v0.18.2",
+							Image: fmt.Sprintf("%s:%s", helmChartValues.KubeRbacProxy.Image.Repository, helmChartValues.KubeRbacProxy.Image.Tag),
 							Args: []string{
 								"--secure-listen-address=0.0.0.0:8443",
 								"--upstream=http://127.0.0.1:8080/",

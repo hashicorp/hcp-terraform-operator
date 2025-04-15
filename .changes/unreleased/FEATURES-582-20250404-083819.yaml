@@ -1,0 +1,5 @@
+kind: FEATURES
+body: '`Module`: Add a new field `spec.deletionPolicy`, that specifies the behavior of a custom resource and its associated module when the custom resource is deleted. This field aims to replace `spec.destroyOnDeletion`.'
+time: 2025-04-04T08:38:19.533156-07:00
+custom:
+    PR: "582"

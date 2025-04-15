@@ -215,6 +215,11 @@ func applyMethodToBool(applyMethod string) bool {
 	return applyMethod == "auto"
 }
 
+// autoApplyRunTriggerToBool turns spec.autoapplyRunTrigger field into bool
+func applyRunTriggerToBool(applyRunTrigger string) bool {
+	return applyRunTrigger == "auto"
+}
+
 func (r *WorkspaceReconciler) addFinalizer(ctx context.Context, instance *appv1alpha2.Workspace) error {
 	patch := client.MergeFrom(instance.DeepCopy())
 	controllerutil.AddFinalizer(instance, workspaceFinalizer)
@@ -249,13 +254,14 @@ func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInst
 func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
 	spec := w.instance.Spec
 	options := tfc.WorkspaceCreateOptions{
-		Name:             tfc.String(spec.Name),
-		AllowDestroyPlan: tfc.Bool(spec.AllowDestroyPlan),
-		AutoApply:        tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
-		Description:      tfc.String(spec.Description),
-		ExecutionMode:    tfc.String(spec.ExecutionMode),
-		TerraformVersion: tfc.String(spec.TerraformVersion),
-		WorkingDirectory: tfc.String(spec.WorkingDirectory),
+		Name:                tfc.String(spec.Name),
+		AllowDestroyPlan:    tfc.Bool(spec.AllowDestroyPlan),
+		AutoApply:           tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
+		AutoApplyRunTrigger: tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger)),
+		Description:         tfc.String(spec.Description),
+		ExecutionMode:       tfc.String(spec.ExecutionMode),
+		TerraformVersion:    tfc.String(spec.TerraformVersion),
+		WorkingDirectory:    tfc.String(spec.WorkingDirectory),
 	}
 
 	if spec.ExecutionMode == "agent" {
@@ -275,8 +281,11 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
-		options.FileTriggersEnabled = tfc.Bool(false)
 		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		options.FileTriggersEnabled = tfc.Bool(spec.VersionControl.EnableFileTriggers)
+		options.TriggerPatterns = spec.VersionControl.TriggerPatterns
+		options.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
+
 	}
 
 	if spec.RemoteStateSharing != nil {
@@ -349,6 +358,10 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		updateOptions.AutoApply = tfc.Bool(applyMethodToBool(spec.ApplyMethod))
 	}
 
+	if workspace.AutoApplyRunTrigger != applyRunTriggerToBool(spec.ApplyRunTrigger) {
+		updateOptions.AutoApplyRunTrigger = tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger))
+	}
+
 	if workspace.AllowDestroyPlan != spec.AllowDestroyPlan {
 		updateOptions.AllowDestroyPlan = tfc.Bool(spec.AllowDestroyPlan)
 	}
@@ -399,10 +412,23 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			Identifier:   tfc.String(spec.VersionControl.Repository),
 			Branch:       tfc.String(spec.VersionControl.Branch),
 		}
-		updateOptions.FileTriggersEnabled = tfc.Bool(false)
 
 		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
 			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
+		}
+
+		if workspace.FileTriggersEnabled != spec.VersionControl.EnableFileTriggers {
+			updateOptions.FileTriggersEnabled = tfc.Bool(spec.VersionControl.EnableFileTriggers)
+		}
+
+		triggerPatternsDiff := vcsTriggersDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
+		if len(triggerPatternsDiff) != 0 {
+			updateOptions.TriggerPatterns = spec.VersionControl.TriggerPatterns
+		}
+
+		triggerPrefixesDiff := vcsTriggersDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
+		if len(triggerPrefixesDiff) != 0 {
+			updateOptions.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
 		}
 	}
 
@@ -558,7 +584,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	r.Recorder.Eventf(&w.instance, corev1.EventTypeNormal, "ReconcileVariables", "Reconcilied variables in workspace ID %s", w.instance.Status.WorkspaceID)
 
 	// Reconcile Variable Sets
-	err = r.reconcileVariableSets(ctx, w, workspace)
+	err = r.reconcileVariableSets(ctx, w)
 	if err != nil {
 		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID))
 		r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileVariableSets", "Failed to reconcile variable sets in workspace ID %s", w.instance.Status.WorkspaceID)

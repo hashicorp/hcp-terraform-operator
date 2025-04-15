@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `k8s.io/apimachinery` from 0.31.6 to 0.32.1.
+time: 2025-04-01T09:13:30.114994+02:00
+custom:
+    PR: "586"

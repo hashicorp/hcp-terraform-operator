@@ -47,7 +47,7 @@ _Appears in:_
 | --- | --- |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum number of replicas for the Agent deployment. |
 | `minReplicas` _integer_ | MinReplicas is the minimum number of replicas for the Agent deployment. |
-| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
+| `targetWorkspaces` _[TargetWorkspace](#targetworkspace)_ | DEPRECATED: This field has been deprecated since 2.9.0 and will be removed in future versions.<br />TargetWorkspaces is a list of HCP Terraform Workspaces which<br />the agent pool should scale up to meet demand. When this field<br />is ommited the autoscaler will target all workspaces that are<br />associated with the AgentPool. |
 | `cooldownPeriodSeconds` _integer_ | CooldownPeriodSeconds is the time to wait between scaling events. Defaults to 300. |
 | `cooldownPeriod` _[AgentDeploymentAutoscalingCooldownPeriod](#agentdeploymentautoscalingcooldownperiod)_ | CoolDownPeriod configures the period to wait between scaling up and scaling down |
 
@@ -283,6 +283,24 @@ More information:
 | `spec` _[ModuleSpec](#modulespec)_ |  |
 
 
+#### ModuleDeletionPolicy
+
+_Underlying type:_ _string_
+
+Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
+It controls how the operator should handle the deletion of resources when triggered by
+a user action or system event.
+
+
+There is one possible value:
+- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false. Default value.
+- `destroy`: Executes a destroy operation. Removes all resources and the module.
+
+_Appears in:_
+- [ModuleSpec](#modulespec)
+
+
+
 #### ModuleOutput
 
 
@@ -331,8 +349,9 @@ _Appears in:_
 | `name` _string_ | Name of the module that will be uploaded and executed.<br />Default: `this`. |
 | `variables` _[ModuleVariable](#modulevariable) array_ | Variables to pass to the module, they must exist in the Workspace. |
 | `outputs` _[ModuleOutput](#moduleoutput) array_ | Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive). |
-| `destroyOnDeletion` _boolean_ | Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.<br />Default: `false`. |
+| `destroyOnDeletion` _boolean_ | DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.<br />Default: `false`. |
 | `restartedAt` _string_ | Allows executing a new Run without changing any Workspace or Module attributes.<br />Example: kubectl patch <KIND> <NAME> --type=merge --patch '\{"spec": \{"restartedAt": "'\`date -u -Iseconds\`'"\}\}' |
+| `deletionPolicy` _[ModuleDeletionPolicy](#moduledeletionpolicy)_ | Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.<br />It controls how the operator should handle the deletion of resources when triggered by<br />a user action or system event.<br /><br />There is one possible value:<br />- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.<br />- `destroy`: Executes a destroy operation. Removes all resources and the module.<br />Default: `retain`. |
 
 
 
@@ -439,7 +458,7 @@ _Appears in:_
 
 Project manages HCP Terraform Projects.
 More information:
-  - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+- https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 
 
 
@@ -451,6 +470,22 @@ More information:
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[ProjectSpec](#projectspec)_ |  |
+
+
+#### ProjectDeletionPolicy
+
+_Underlying type:_ _string_
+
+DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+
+
+You must use one of the following values:
+- `retain`: When the custom resource is deleted, the operator will not delete the associated project.
+- `soft`: Attempts to remove the project. The project must be empty.
+
+_Appears in:_
+- [ProjectSpec](#projectspec)
+
 
 
 #### ProjectSpec
@@ -470,6 +505,7 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `name` _string_ | Name of the Project. |
 | `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,<br />users must belong to a team that has been granted the appropriate permissions.<br />You can assign project-specific permissions to teams.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
+| `deletionPolicy` _[ProjectDeletionPolicy](#projectdeletionpolicy)_ | DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br /><br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `soft`: Attempts to remove the project. The project must be empty.<br />Default: `retain`. |
 
 
 
@@ -746,6 +782,9 @@ _Appears in:_
 | `repository` _string_ | A reference to your VCS repository in the format `<organization>/<repository>` where `<organization>` and `<repository>` refer to the organization and repository in your VCS provider. |
 | `branch` _string_ | The repository branch that Run will execute from. This defaults to the repository's default branch (e.g. main). |
 | `speculativePlans` _boolean_ | Whether this workspace allows automatic speculative plans on PR.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/ui#speculative-plans-on-pull-requests<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations#speculative-plans |
+| `enableFileTriggers` _boolean_ | File triggers allow you to queue runs in HCP Terraform when files in your VCS repository change.<br />Default: `false`.<br />More informarion:<br /> - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering |
+| `triggerPatterns` _string array_ | The list of pattern triggers that will queue runs in HCP Terraform when files in your VCS repository change.<br />`spec.versionControl.fileTriggersEnabled` must be set to `true`.<br />More informarion:<br /> - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering |
+| `triggerPrefixes` _string array_ | The list of pattern prefixes that will queue runs in HCP Terraform when files in your VCS repository change.<br />`spec.versionControl.fileTriggersEnabled` must be set to `true`.<br />More informarion:<br /> - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/vcs#automatic-run-triggering |
 
 
 #### Workspace
@@ -842,6 +881,7 @@ _Appears in:_
 | `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `applyMethod` _string_ | Define either change will be applied automatically(auto) or require an operator to confirm(manual).<br />Must be one of the following values: `auto`, `manual`.<br />Default: `manual`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply |
+| `applyRunTrigger` _string_ | Specifies the type of apply, whether manual or auto<br />Must be of value `auto` or `manual`<br />Default: `manual`<br />More information:<br />- https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply |
 | `allowDestroyPlan` _boolean_ | Allows a destroy plan to be created and applied.<br />Default: `true`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#destruction-and-deletion |
 | `description` _string_ | Workspace description. |
 | `agentPool` _[WorkspaceAgentPool](#workspaceagentpool)_ | HCP Terraform Agents allow HCP Terraform to communicate with isolated, private, or on-premises infrastructure.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/agents |

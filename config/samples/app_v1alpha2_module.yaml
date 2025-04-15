@@ -1,15 +1,15 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: Module
 metadata:
-  name: <NAME>
+  name: NAME
 spec:
-  organization: <ORG_NAME>
+  organization: HCP_TF_ORG_NAME
   token:
     secretKeyRef:
-      name: <SECRET_NAME>
-      key: <SECRET_KEY>
+      name: SECRET_NAME
+      key: SECRET_KEY
   module:
     source: redeux/terraform-cloud-agent/kubernetes
     version: 1.0.1
   workspace:
-    id: <WORKSPACE_ID>
+    id: WORKSPACE_ID

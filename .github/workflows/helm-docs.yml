@@ -1,0 +1,39 @@
+name: "Helm Chart Documentation"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'charts/hcp-terraform-operator/**'
+  workflow_dispatch:
+
+jobs:
+  helm-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+    - name: Setup Go
+      uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+      with:
+        go-version-file: 'go.mod'
+
+    - name: Run Helm documentation generator
+      run: make helm-docs
+
+    - name: Validate changes
+      run: git diff --exit-code
+
+    - name: Uncommited changes
+      if: ${{ failure() }}
+      run: |
+        echo "There are uncommitted changes in Helm Chart Documentation. Please run 'make helm-docs'."
+        exit 1
+
+    - name: Green light
+      if:   ${{ success() }}
+      run: |
+        echo "Helm Chart Documentation is up to date."
+        exit 0

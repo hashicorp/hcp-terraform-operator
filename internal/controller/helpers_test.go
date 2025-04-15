@@ -162,4 +162,60 @@ var _ = Describe("Helpers", Label("Unit"), func() {
 			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeTrue())
 		})
 	})
+
+	Context("Match wildcard name", func() {
+		// True
+		It("match prefix", func() {
+			result := matchWildcardName("*-terraform-workspace", "hcp-terraform-workspace")
+			Expect(result).To(BeTrue())
+		})
+		It("match suffix", func() {
+			result := matchWildcardName("hcp-terraform-*", "hcp-terraform-workspace")
+			Expect(result).To(BeTrue())
+		})
+		It("match prefix and suffix", func() {
+			result := matchWildcardName("*-terraform-*", "hcp-terraform-workspace")
+			Expect(result).To(BeTrue())
+		})
+		It("match no prefix and no suffix", func() {
+			result := matchWildcardName("hcp-terraform-workspace", "hcp-terraform-workspace")
+			Expect(result).To(BeTrue())
+		})
+		// False
+		It("does not match prefix", func() {
+			result := matchWildcardName("*-terraform-workspace", "hcp-tf-workspace")
+			Expect(result).To(BeFalse())
+		})
+		It("does not match suffix", func() {
+			result := matchWildcardName("hcp-terraform-*", "hashicorp-tf-workspace")
+			Expect(result).To(BeFalse())
+		})
+		It("does not match prefix and suffix", func() {
+			result := matchWildcardName("*-terraform-*", "hcp-tf-workspace")
+			Expect(result).To(BeFalse())
+		})
+		It("does not match no prefix and no suffix", func() {
+			result := matchWildcardName("hcp-terraform-workspace", "hcp-tf-workspace")
+			Expect(result).To(BeFalse())
+		})
+	})
+
+	Context("ParseTFEVersion", func() {
+		It("Valid TFE version", func() {
+			version := "v202502-1"
+			v, err := parseTFEVersion(version)
+			Expect(err).To(Succeed())
+			Expect(v).To(Equal(2025021))
+		})
+		It("Invalid TFE version", func() {
+			version := "202502-1"
+			_, err := parseTFEVersion(version)
+			Expect(err).ToNot(Succeed())
+		})
+		It("Empty TFE version", func() {
+			version := ""
+			_, err := parseTFEVersion(version)
+			Expect(err).ToNot(Succeed())
+		})
+	})
 })
