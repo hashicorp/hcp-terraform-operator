@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: '`AgentPool`: Add a new field, `spec.deletionPolicy`, that specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.'
+time: 2025-04-15T12:49:14.665714+02:00
+custom:
+    PR: "584"

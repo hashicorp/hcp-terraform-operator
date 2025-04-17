@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -72,7 +73,12 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 	AfterEach(func() {
 		Expect(tfClient.Workspaces.Delete(ctx, organization, workspace)).To(Succeed())
+		// Delete Agent Pool CR
 		Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, namespacedName, instance)
+			return errors.IsNotFound(err)
+		}).Should(BeTrue())
 	})
 
 	Context("Autoscaling", func() {
@@ -100,6 +106,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 					return run.Status == tfc.RunApplied
 				}).Should(BeTrue())
 				// Create a new Agent Pool
+				instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
 				Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 				Eventually(func() bool {
 					Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -154,6 +161,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return run.Status == tfc.RunApplied
 			}).Should(BeTrue())
 			// New Agent Pool
+			instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())

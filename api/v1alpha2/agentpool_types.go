@@ -8,6 +8,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a resource, either manually or by a system event.
+// You must use one of the following values:
+// - `retain`: When you delete the custom resource, the operator does not delete the agent pool.
+// - `destroy`: The operator will attempt to remove the managed HCP Terraform agent pool.
+type AgentPoolDeletionPolicy string
+
+const (
+	AgentPoolDeletionPolicyRetain  AgentPoolDeletionPolicy = "retain"
+	AgentPoolDeletionPolicyDestroy AgentPoolDeletionPolicy = "destroy"
+)
+
 // Agent Token is a secret token that a HCP Terraform Agent is used to connect to the HCP Terraform Agent Pool.
 // In `spec` only the field `Name` is allowed, the rest are used in `status`.
 // More infromation:
@@ -133,6 +144,19 @@ type AgentPoolSpec struct {
 	// Agent deployment settings
 	//+optional
 	AgentDeploymentAutoscaling *AgentDeploymentAutoscaling `json:"autoscaling,omitempty"`
+
+	// The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.
+	// - `retain`: When you delete the custom resource, the operator will remove only the custom resource.
+	//   The HCP Terraform agent pool will be retained. The managed tokens will remain active on the HCP Terraform side; however, the corresponding secrets and managed agents will be removed.
+	// - `destroy`: The operator will attempt to remove the managed HCP Terraform agent pool.
+	//   On success, the managed agents and the corresponding secret with tokens will be removed along with the custom resource.
+	//   On failure, the managed agents will be scaled down to 0, and the managed tokens, along with the corresponding secret, will be removed. The operator will continue attempting to remove the agent pool until it succeeds.
+	// Default: `retain`.
+	//
+	//+kubebuilder:validation:Enum:=retain;destroy
+	//+kubebuilder:default=retain
+	//+optional
+	DeletionPolicy AgentPoolDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // AgentDeploymentAutoscalingStatus
