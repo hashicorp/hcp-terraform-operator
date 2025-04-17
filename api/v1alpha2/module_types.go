@@ -178,6 +178,7 @@ type ModuleStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="CV Status",type=string,JSONPath=`.status.configurationVersion.status`
 //+kubebuilder:printcolumn:name="Run Status",type=string,JSONPath=`.status.run.status`
+//+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.4.0"
 
 // Module implements API-driven Run Workflows.
 // More information:
