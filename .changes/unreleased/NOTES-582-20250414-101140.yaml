@@ -1,0 +1,5 @@
+kind: NOTES
+body: '`Module`: The field `spec.destroyOnDeletion` is deprecated and will be removed in a future release. This change is motivated by the introduction of a new field, `spec.deletionPolicy`, which aligns with the approach the operator uses across all other controllers. The default value of `spec.deletionPolicy` is `retain`, which replaces the default value `false` of `spec.destroyOnDeletion`. The corresponding value `true` of `spec.destroyOnDeletion` is replaced with `destroy` in `spec.deletionPolicy`.'
+time: 2025-04-14T10:11:40.801773+02:00
+custom:
+    PR: "582"

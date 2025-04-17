@@ -86,6 +86,16 @@ spec:
                     - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply-and-manual-apply
                 pattern: ^(auto|manual)$
                 type: string
+              applyRunTrigger:
+                default: manual
+                description: |-
+                  Specifies the type of apply, whether manual or auto
+                  Must be of value `auto` or `manual`
+                  Default: `manual`
+                  More information:
+                  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings#auto-apply
+                pattern: ^(auto|manual)$
+                type: string
               deletionPolicy:
                 default: retain
                 description: |-
@@ -734,7 +744,7 @@ spec:
                       This defaults to the repository's default branch (e.g. main).
                     minLength: 1
                     type: string
-                  fileTriggersEnabled:
+                  enableFileTriggers:
                     default: false
                     description: |-
                       File triggers allow you to queue runs in HCP Terraform when files in your VCS repository change.

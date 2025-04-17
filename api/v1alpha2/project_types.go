@@ -123,6 +123,18 @@ type ProjectTeamAccess struct {
 	Custom *CustomProjectPermissions `json:"custom,omitempty"`
 }
 
+// DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+//
+// You must use one of the following values:
+// - `retain`: When the custom resource is deleted, the operator will not delete the associated project.
+// - `soft`: Attempts to remove the project. The project must be empty.
+type ProjectDeletionPolicy string
+
+const (
+	ProjectDeletionPolicyRetain ProjectDeletionPolicy = "retain"
+	ProjectDeletionPolicySoft   ProjectDeletionPolicy = "soft"
+)
+
 // ProjectSpec defines the desired state of Project.
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects
@@ -150,6 +162,17 @@ type ProjectSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	TeamAccess []*ProjectTeamAccess `json:"teamAccess,omitempty"`
+	// DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
+	//
+	// You must use one of the following values:
+	// - `retain`:  When the custom resource is deleted, the operator will not delete the associated project.
+	// - `soft`: Attempts to remove the project. The project must be empty.
+	// Default: `retain`.
+	//
+	//+kubebuilder:validation:Enum:=retain;soft
+	//+kubebuilder:default=retain
+	//+optional
+	DeletionPolicy ProjectDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // ProjectStatus defines the observed state of Project.
@@ -170,7 +193,7 @@ type ProjectStatus struct {
 
 // Project manages HCP Terraform Projects.
 // More information:
-//   - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+// - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 type Project struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

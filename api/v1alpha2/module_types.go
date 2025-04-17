@@ -78,6 +78,20 @@ type ModuleOutput struct {
 	Sensitive bool `json:"sensitive,omitempty"`
 }
 
+// Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
+// It controls how the operator should handle the deletion of resources when triggered by
+// a user action or system event.
+//
+// There is one possible value:
+// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false. Default value.
+// - `destroy`: Executes a destroy operation. Removes all resources and the module.
+type ModuleDeletionPolicy string
+
+const (
+	ModuleDeletionPolicyRetain  ModuleDeletionPolicy = "retain"
+	ModuleDeletionPolicyDestroy ModuleDeletionPolicy = "destroy"
+)
+
 // ModuleSpec defines the desired state of Module.
 type ModuleSpec struct {
 	// Organization name where the Workspace will be created.
@@ -110,7 +124,7 @@ type ModuleSpec struct {
 	//+kubebuilder:validation:MinItems:=1
 	//+optional
 	Outputs []ModuleOutput `json:"outputs,omitempty"`
-	// Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
+	// DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.
 	// Default: `false`.
 	//
 	//+kubebuilder:default:=false
@@ -122,6 +136,19 @@ type ModuleSpec struct {
 	//+kubebuilder:validation:MinLength:=1
 	//+optional
 	RestartedAt string `json:"restartedAt,omitempty"`
+	// Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
+	// It controls how the operator should handle the deletion of resources when triggered by
+	// a user action or system event.
+	//
+	// There is one possible value:
+	// - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.
+	// - `destroy`: Executes a destroy operation. Removes all resources and the module.
+	// Default: `retain`.
+	//
+	//+kubebuilder:validation:Enum:=retain;destroy
+	//+kubebuilder:default:=retain
+	//+optional
+	DeletionPolicy ModuleDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // ModuleStatus defines the observed state of Module.

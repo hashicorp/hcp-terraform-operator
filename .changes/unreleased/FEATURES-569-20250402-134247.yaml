@@ -1,0 +1,5 @@
+kind: FEATURES
+body: '`Project`: Add a new field, `spec.deletionPolicy`, that specifies the behavior of a custom resource and its associated project when the custom resource is deleted.'
+time: 2025-04-02T13:42:47.06895-04:00
+custom:
+    PR: "569"

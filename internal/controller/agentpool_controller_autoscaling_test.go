@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -72,19 +73,80 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 	AfterEach(func() {
 		Expect(tfClient.Workspaces.Delete(ctx, organization, workspace)).To(Succeed())
+		// Delete Agent Pool CR
 		Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, namespacedName, instance)
+			return errors.IsNotFound(err)
+		}).Should(BeTrue())
 	})
 
 	Context("Autoscaling", func() {
-		It("fix: can update the status property on the first run", func() {
-			// Create a new Workspace
+		Context("Autoscaling", func() {
+			It("fix: can update the status property on the first run", func() {
+				// Create a new Workspace
+				ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+					Name:      &workspace,
+					AutoApply: tfc.Bool(true),
+				})
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				// Create a new Run and execute it
+				_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
+				Eventually(func() bool {
+					ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
+					Expect(err).Should(Succeed())
+					Expect(ws).ShouldNot(BeNil())
+					if ws.CurrentRun == nil {
+						return false
+					}
+					run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+					Expect(err).Should(Succeed())
+					Expect(run).ShouldNot(BeNil())
+					return run.Status == tfc.RunApplied
+				}).Should(BeTrue())
+				// Create a new Agent Pool
+				instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
+				Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+				Eventually(func() bool {
+					Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+					return instance.Status.AgentPoolID != ""
+				}).Should(BeTrue())
+				// Attrach the Workspace to the Agent pool
+				ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
+					ExecutionMode: pointer.PointerOf("agent"),
+					AgentPoolID:   &instance.Status.AgentPoolID,
+				})
+				Expect(err).Should(Succeed())
+				Expect(ws).ShouldNot(BeNil())
+				// Trigger a new run
+				run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
+					PlanOnly: pointer.PointerOf(false),
+					Workspace: &tfc.Workspace{
+						ID: ws.ID,
+					},
+				})
+				Expect(err).Should(Succeed())
+				Expect(run).ShouldNot(BeNil())
+				// Ensure it scales up
+				Eventually(func() bool {
+					Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+					if instance.Status.AgentDeploymentAutoscalingStatus == nil {
+						return false
+					}
+					return *instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas == 1
+				}).Should(BeTrue())
+			})
+		})
+		It("can scale up for a speculative plan run", func() {
+			// New Workspace
 			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
 				Name:      &workspace,
 				AutoApply: tfc.Bool(true),
 			})
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
-			// Create a new Run and execute it
+			// New Run
 			_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
 			Eventually(func() bool {
 				ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
@@ -98,22 +160,23 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				Expect(run).ShouldNot(BeNil())
 				return run.Status == tfc.RunApplied
 			}).Should(BeTrue())
-			// Create a new Agent Pool
+			// New Agent Pool
+			instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				return instance.Status.AgentPoolID != ""
 			}).Should(BeTrue())
-			// Attrach the Workspace to the Agent pool
+			// Update Workspace
 			ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
 				ExecutionMode: pointer.PointerOf("agent"),
 				AgentPoolID:   &instance.Status.AgentPoolID,
 			})
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
-			// Trigger a new run
+			// New Speculative Plan
 			run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-				PlanOnly: pointer.PointerOf(false),
+				PlanOnly: pointer.PointerOf(true),
 				Workspace: &tfc.Workspace{
 					ID: ws.ID,
 				},

@@ -58,7 +58,6 @@ func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *
 	}
 	ap.log.Error(err, "Reconcile Agent Deployment", "msg", fmt.Sprintf("failed to get Kubernetes Deployment %q", d.Name))
 	return err
-
 }
 
 func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoolInstance) error {
