@@ -19,7 +19,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var _ = Describe("Workspace controller", Ordered, func() {
+var _ = Describe("Agent Pool controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.AgentPool
 		namespacedName = newNamespacedName()
@@ -87,7 +87,6 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		}).Should(BeTrue())
 
 		// DELETE AGENT POOL
-
 		Eventually(func() bool {
 			err := k8sClient.Delete(ctx, instance)
 			return errors.IsNotFound(err) || err == nil
