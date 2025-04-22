@@ -195,6 +195,97 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				return err == tfc.ErrResourceNotFound
 			}).Should(BeTrue())
 		})
+		It("can destroy delete a workspace when the destroy was retried manually after failing", func() {
+			if cloudEndpoint != tfcDefaultAddress {
+				Skip("Does not run against TFC, skip this test")
+			}
+			instance.Spec.AllowDestroyPlan = true
+			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyDestroy
+			createWorkspace(instance)
+			workspaceID := instance.Status.WorkspaceID
+
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
+			Eventually(func() bool {
+				listOpts := tfc.ListOptions{
+					PageNumber: 1,
+					PageSize:   maxPageSize,
+				}
+				for listOpts.PageNumber != 0 {
+					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
+						ListOptions: listOpts,
+					})
+					Expect(err).To(Succeed())
+					for _, r := range runs.Items {
+						if r.ConfigurationVersion.ID == cv.ID {
+							return r.Status == tfc.RunApplied
+						}
+					}
+					listOpts.PageNumber = runs.NextPage
+				}
+				return false
+			}).Should(BeTrue())
+
+			// create an errored ConfigurationVersion for the delete to fail
+			cv = createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, false)
+
+			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+
+			var destroyRunID string
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				Expect(err).To(Succeed())
+				Expect(ws).ToNot(BeNil())
+				Expect(ws.CurrentRun).ToNot(BeNil())
+				run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+				Expect(err).To(Succeed())
+				Expect(run).ToNot(BeNil())
+				destroyRunID = run.ID
+
+				return run.IsDestroy
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				run, _ := tfClient.Runs.Read(ctx, destroyRunID)
+				if run.Status == tfc.RunErrored {
+					return true
+				}
+
+				return false
+			}).Should(BeTrue())
+
+			// put back a working configuration
+			cv = createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
+
+			// start a new destroy run manually
+			run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
+				IsDestroy: tfc.Bool(true),
+				Message:   tfc.String(runMessage),
+				Workspace: &tfc.Workspace{
+					ID: workspaceID,
+				},
+			})
+			Expect(err).To(Succeed())
+			Expect(run).ToNot(BeNil())
+
+			var newDestroyRunID string
+			Eventually(func() bool {
+				ws, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				Expect(err).To(Succeed())
+				Expect(ws).ToNot(BeNil())
+				Expect(ws.CurrentRun).ToNot(BeNil())
+				run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+				Expect(err).To(Succeed())
+				Expect(run).ToNot(BeNil())
+				newDestroyRunID = run.ID
+
+				return run.IsDestroy && newDestroyRunID != destroyRunID
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				_, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				return err == tfc.ErrResourceNotFound
+			}).Should(BeTrue())
+		})
 		It("can force delete a workspace", func() {
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyForce
 			createWorkspace(instance)

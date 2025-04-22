@@ -180,3 +180,46 @@ func createAndUploadConfigurationVersion(workspaceID string, outputValue string)
 
 	return cv
 }
+
+func createAndUploadErroredConfigurationVersion(workspaceID string, autoQueueRuns bool) *tfc.ConfigurationVersion {
+	GinkgoHelper()
+	// Create a temporary dir in the current one
+	cd, err := os.Getwd()
+	Expect(err).Should(Succeed())
+	td, err := os.MkdirTemp(cd, "tf-*")
+	Expect(err).Should(Succeed())
+	defer os.RemoveAll(td)
+	// Create a temporary file in the temporary dir
+	f, err := os.CreateTemp(td, "*.tf")
+	Expect(err).Should(Succeed())
+	defer os.Remove(f.Name())
+	// Terraform code to upload
+	tf := fmt.Sprint(`
+				resource "test_non_existent_resource" "this" {}
+				`)
+	// Save the Terraform code to the temporary file
+	_, err = f.WriteString(tf)
+	Expect(err).Should(Succeed())
+
+	cv, err := tfClient.ConfigurationVersions.Create(ctx, workspaceID, tfc.ConfigurationVersionCreateOptions{
+		AutoQueueRuns: tfc.Bool(autoQueueRuns),
+		Speculative:   tfc.Bool(false),
+	})
+	Expect(err).Should(Succeed())
+	Expect(cv).ShouldNot(BeNil())
+
+	Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
+
+	Eventually(func() bool {
+		c, err := tfClient.ConfigurationVersions.Read(ctx, cv.ID)
+		if err != nil {
+			return false
+		}
+		if c.Status == tfc.ConfigurationUploaded {
+			return true
+		}
+		return false
+	}).Should(BeTrue())
+
+	return cv
+}
