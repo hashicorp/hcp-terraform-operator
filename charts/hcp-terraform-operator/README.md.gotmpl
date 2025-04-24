@@ -84,6 +84,32 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 
 #### Upgrade recommendations
 
+  - `2.8.0` to `2.9.0`
+
+    - The `AgentPool` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.9.0/charts/hcp-terraform-operator/crds/app.terraform.io_agentpools.yaml
+      ```
+
+    - The `Module` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.9.0/charts/hcp-terraform-operator/crds/app.terraform.io_modules.yaml
+      ```
+
+    - The `Project` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.9.0/charts/hcp-terraform-operator/crds/app.terraform.io_projects.yaml
+      ```
+
+    - The `Workspace` CRD has been changed:
+
+      ```console
+      $ kubectl replace -f https://raw.githubusercontent.com/hashicorp/hcp-terraform-operator/v2.9.0/charts/hcp-terraform-operator/crds/app.terraform.io_workspaces.yaml
+      ```
+
   - `2.7.0` to `2.8.0`
 
     - The `Workspace` CRD has been changed:
