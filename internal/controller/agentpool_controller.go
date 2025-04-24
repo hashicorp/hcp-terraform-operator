@@ -26,6 +26,7 @@ import (
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/version"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // AgentPoolReconciler reconciles a AgentPool object
@@ -230,6 +231,7 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 		return err
 	}
 
+	metricConnectedWorkspaces.Delete(prometheus.Labels{"id": ap.instance.Status.AgentPoolID, "name": ap.instance.Spec.Name})
 	ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s has been deleted, remove finalizer", ap.instance.Status.AgentPoolID))
 	return r.removeFinalizer(ctx, ap)
 }
