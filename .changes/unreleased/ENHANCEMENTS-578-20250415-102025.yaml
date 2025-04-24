@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: Rename spec.versionControl.fileTriggersEnabled to spec.versionControl.enableFileTriggers.'
-time: 2025-04-15T10:20:25.248052+02:00
-custom:
-    PR: "578"

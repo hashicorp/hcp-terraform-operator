@@ -1,5 +1,0 @@
-kind: NOTES
-body: 'The `Module` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it.'
-time: 2025-04-04T08:39:29.49029-07:00
-custom:
-    PR: "582"

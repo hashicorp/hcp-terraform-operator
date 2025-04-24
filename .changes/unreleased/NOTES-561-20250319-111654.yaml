@@ -1,5 +1,0 @@
-kind: NOTES
-body: '`AgentPool`: The field `spec.autoscaling.targetWorkspaces` is deprecated and will be removed in a future release. The motivation behind this change is that the field does not guarantee newly provisioned agents will pick up runs only for the listed workspaces. Additionally, using this field could lead to situations where agents are not scaled to process runs for unlisted workspaces.'
-time: 2025-03-19T11:16:54.398697+01:00
-custom:
-    PR: "561"

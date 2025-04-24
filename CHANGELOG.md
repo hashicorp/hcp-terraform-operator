@@ -1,3 +1,42 @@
+## 2.9.0 (April 24, 2025)
+
+BREAKING CHANGES:
+
+* `AgentPool`: The new field, `spec.deletionPolicy`, is set to `retain` by default, which changes the previous default controller behavior when resources are deleted. The previous behavior corresponded to the `destroy` deletion policy value. This change is considered safer in cases of accidental resource deletion, planned migration, or other scenarios involving the deletion of a custom resource. [[GH-584](https://github.com/hashicorp/hcp-terraform-operator/pull/584)]
+* `Projects`: The new field, `spec.deletionPolicy` is set to `retain` by default, which changes the previous default controller when projects are deleted. The previous behavior corresponded to the `soft` deletion policy. This change takes into account migration and overall better management of resources. [[GH-569](https://github.com/hashicorp/hcp-terraform-operator/pull/569)]
+
+NOTES:
+
+* `AgentPool`: The field `spec.autoscaling.targetWorkspaces` is deprecated and will be removed in a future release. The motivation behind this change is that the field does not guarantee newly provisioned agents will pick up runs only for the listed workspaces. Additionally, using this field could lead to situations where agents are not scaled to process runs for unlisted workspaces. [[GH-561](https://github.com/hashicorp/hcp-terraform-operator/pull/561)]
+* `Module`: The field `spec.destroyOnDeletion` is deprecated and will be removed in a future release. This change is motivated by the introduction of a new field, `spec.deletionPolicy`, which aligns with the approach the operator uses across all other controllers. The default value of `spec.deletionPolicy` is `retain`, which replaces the default value `false` of `spec.destroyOnDeletion`. The corresponding value `true` of `spec.destroyOnDeletion` is replaced with `destroy` in `spec.deletionPolicy`. [[GH-582](https://github.com/hashicorp/hcp-terraform-operator/pull/582)]
+* The `AgentPool` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-494](https://github.com/hashicorp/hcp-terraform-operator/pull/494)]
+* The `Module` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-582](https://github.com/hashicorp/hcp-terraform-operator/pull/582)]
+* The `Project` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it.  [[GH-569](https://github.com/hashicorp/hcp-terraform-operator/pull/569)]
+* The `Workspace` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. [[GH-558](https://github.com/hashicorp/hcp-terraform-operator/pull/558)]
+
+BUG FIXES:
+
+* `AgentPool`: Add a new scaling algorithm that accounts for speculative plans when calculating pending runs. This algorithm is compatible with HCP Terraform and TFE v202409-1 and later. [[GH-561](https://github.com/hashicorp/hcp-terraform-operator/pull/561)]
+* `AgentPool`: Fix an issue where, in some circumstances, a newly created CR with the autoscaling feature enabled does not update its status while handling runs. [[GH-580](https://github.com/hashicorp/hcp-terraform-operator/pull/580)]
+
+FEATURES:
+
+* `AgentPool`: Add a new field, `spec.deletionPolicy`, that specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted. [[GH-584](https://github.com/hashicorp/hcp-terraform-operator/pull/584)]
+* `Module`: Add a new field `spec.deletionPolicy`, that specifies the behavior of a custom resource and its associated module when the custom resource is deleted. This field aims to replace `spec.destroyOnDeletion`. [[GH-582](https://github.com/hashicorp/hcp-terraform-operator/pull/582)]
+* `Project`: Add a new field, `spec.deletionPolicy`, that specifies the behavior of a custom resource and its associated project when the custom resource is deleted. [[GH-569](https://github.com/hashicorp/hcp-terraform-operator/pull/569)]
+
+ENHANCEMENTS:
+
+* `Workspace`: Add the ability to enable auto apply for run triggers via a new optional field `spec.applyRunTrigger`. This feature is available in HCP Terraform and Terraform Enterprise starting with version v202401-1. [[GH-558](https://github.com/hashicorp/hcp-terraform-operator/pull/558)]
+* `Workspace`: Add new fields, `spec.versionControl.enableFileTriggers`, `spec.versionControl.triggerPatterns` and `spec.versionControl.triggerPrefixes`, which specify whether a new run should be triggered when files in the specified paths change in the connected repository. [[GH-496](https://github.com/hashicorp/hcp-terraform-operator/pull/496)] [[GH-578](https://github.com/hashicorp/hcp-terraform-operator/pull/578)]
+
+DEPENDENCIES:
+
+* Bump `k8s.io/api` from 0.31.6 to 0.32.3. [[GH-586](https://github.com/hashicorp/hcp-terraform-operator/pull/586)] [[GH-587](https://github.com/hashicorp/hcp-terraform-operator/pull/587)]
+* Bump `k8s.io/apimachinery` from 0.31.6 to 0.32.3. [[GH-586](https://github.com/hashicorp/hcp-terraform-operator/pull/586)] [[GH-587](https://github.com/hashicorp/hcp-terraform-operator/pull/587)]
+* Bump `k8s.io/client-go` from 0.31.6 to 0.32.3. [[GH-586](https://github.com/hashicorp/hcp-terraform-operator/pull/586)] [[GH-587](https://github.com/hashicorp/hcp-terraform-operator/pull/587)]
+* Bump `sigs.k8s.io/controller-runtime` from 0.19.7 to 0.20.4. [[GH-586](https://github.com/hashicorp/hcp-terraform-operator/pull/586)]
+
 ## 2.8.1 (March 12, 2025)
 
 ENHANCEMENTS:
