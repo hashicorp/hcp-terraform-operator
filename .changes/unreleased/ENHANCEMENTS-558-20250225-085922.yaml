@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: Add the ability to enable auto apply for run triggers via a new optional field `spec.applyRunTrigger`. This feature is available in HCP Terraform and Terraform Enterprise starting with version v202401-1.'
-time: 2025-02-25T08:59:22.728679-05:00
-custom:
-    PR: "558"

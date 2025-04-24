@@ -1,5 +1,0 @@
-kind: BREAKING CHANGES
-body: '`Projects`: The new field, `spec.deletionPolicy` is set to `retain` by default, which changes the previous default controller when projects are deleted. The previous behavior corresponded to the `soft` deletion policy. This change takes into account migration and overall better management of resources.'
-time: 2025-04-02T13:38:53.864003-04:00
-custom:
-    PR: "569"

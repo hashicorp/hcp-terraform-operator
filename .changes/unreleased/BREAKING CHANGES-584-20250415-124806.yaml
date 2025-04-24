@@ -1,5 +1,0 @@
-kind: BREAKING CHANGES
-body: '`AgentPool`: The new field, `spec.deletionPolicy`, is set to `retain` by default, which changes the previous default controller behavior when resources are deleted. The previous behavior corresponded to the `destroy` deletion policy value. This change is considered safer in cases of accidental resource deletion, planned migration, or other scenarios involving the deletion of a custom resource.'
-time: 2025-04-15T12:48:06.601466+02:00
-custom:
-    PR: "584"

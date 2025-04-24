@@ -1,5 +1,0 @@
-kind: NOTES
-body: 'The `Project` CRD has been changed. Please follow the Helm chart instructions on how to upgrade it. '
-time: 2025-04-02T13:41:11.906132-04:00
-custom:
-    PR: "569"

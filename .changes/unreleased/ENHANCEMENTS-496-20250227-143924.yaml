@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Workspace`: Add new fields, `spec.versionControl.fileTriggersEnabled`, `spec.versionControl.triggerPatterns` and `spec.versionControl.triggerPrefixes`, which specify whether a new run should be triggered when files in the specified paths change in the connected repository.'
-time: 2025-02-27T14:39:24.297227408+01:00
-custom:
-    PR: "496"

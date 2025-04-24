@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: '`AgentPool`: Fix an issue where, in some circumstances, a newly created CR with the autoscaling feature enabled does not update its status while handling runs.'
-time: 2025-03-21T15:45:28.002276+01:00
-custom:
-    PR: "580"
