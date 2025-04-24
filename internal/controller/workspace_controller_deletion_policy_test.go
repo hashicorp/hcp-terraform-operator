@@ -97,7 +97,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 			workspaceID := instance.Status.WorkspaceID
 
-			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi", true)
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
 					PageNumber: 1,
@@ -144,7 +144,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 			workspaceID := instance.Status.WorkspaceID
 
-			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi", true)
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
 					PageNumber: 1,
@@ -204,7 +204,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 			workspaceID := instance.Status.WorkspaceID
 
-			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi", true)
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
 					PageNumber: 1,
@@ -254,7 +254,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			// put back a working configuration
-			cv = createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
+			cv = createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi", true)
 
 			// start a new destroy run manually
 			run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{

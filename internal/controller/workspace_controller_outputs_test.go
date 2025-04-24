@@ -76,7 +76,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspace(instance)
 
 			outputValue := "hoi"
-			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, outputValue)
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, outputValue, true)
 
 			By("Validating configuration version and workspace run")
 			Eventually(func() bool {
@@ -132,7 +132,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createAndUploadConfigurationVersion(workspaceID string, outputValue string) *tfc.ConfigurationVersion {
+func createAndUploadConfigurationVersion(workspaceID string, outputValue string, autoQueueRuns bool) *tfc.ConfigurationVersion {
 	GinkgoHelper()
 	// Create a temporary dir in the current one
 	cd, err := os.Getwd()
@@ -140,7 +140,7 @@ func createAndUploadConfigurationVersion(workspaceID string, outputValue string)
 	td, err := os.MkdirTemp(cd, "tf-*")
 	Expect(err).Should(Succeed())
 	defer os.RemoveAll(td)
-	// Create a temporary file in the temporary dir
+	// Create a te		AutoQueueRuns: tfc.Bool(autoQueueRuns), dir
 	f, err := os.CreateTemp(td, "*.tf")
 	Expect(err).Should(Succeed())
 	defer os.Remove(f.Name())
@@ -159,7 +159,7 @@ func createAndUploadConfigurationVersion(workspaceID string, outputValue string)
 	Expect(err).Should(Succeed())
 
 	cv, err := tfClient.ConfigurationVersions.Create(ctx, workspaceID, tfc.ConfigurationVersionCreateOptions{
-		AutoQueueRuns: tfc.Bool(true),
+		AutoQueueRuns: tfc.Bool(autoQueueRuns),
 		Speculative:   tfc.Bool(false),
 	})
 	Expect(err).Should(Succeed())
