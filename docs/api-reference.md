@@ -561,8 +561,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `limit` _integer_ | Limit is the maximum number of retries for failed runs.<br />Default: `0`. |
-| `backoff` _string_ | Backoff is the time to wait before retrying a failed run. It is specified as a golang duration string.<br />More information:<br />  - https://pkg.go.dev/time#ParseDuration<br />Default: `""`. |
+| `backoffLimit` _integer_ | Limit is the maximum number of retries for failed runs. If set to a negative number, no limit will be applied.<br />Default: `0`. |
 
 
 #### RetryStatus
@@ -577,8 +576,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `retriesLeft` _integer_ | RetriesLeft is the number of retries left for the latest run on the workspace. |
-| `nextRetryTimestamp` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#time-v1-meta)_ | NextRetryTimestamp is a timestamp representing the server time after which the operator whould start a new retry<br />if the Backoff option was added. It is represented in RFC3339 form and is in UTC. |
+| `failed` _integer_ | Failed is the number of failed attempts. |
 
 
 #### RunStatus

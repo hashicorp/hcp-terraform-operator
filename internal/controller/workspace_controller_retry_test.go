@@ -73,8 +73,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can retry failed runs", func() {
 			namespacedName := getNamespacedName(instance)
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			instance.Spec.RetryStrategy = &appv1alpha2.RetryPolicy{
+				Enabled: true,
+			}
 			createWorkspace(instance)
-			// TODO: add the retry config in the CRD to actually do a retry
 
 			// start a run that will fail
 			createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, true)
@@ -116,6 +118,27 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				}
 
 				return runID != instance.Status.Run.ID && instance.Status.Run.RunCompleted()
+			}).Should(BeTrue())
+		})
+		It("can retry until the limit of retries is reached", func() {
+			namespacedName := getNamespacedName(instance)
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			instance.Spec.RetryStrategy = &appv1alpha2.RetryPolicy{
+				Enabled: true,
+				Limit:   1,
+			}
+
+			createWorkspace(instance)
+			// start a run that will fail
+			createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, true)
+
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Retry == nil {
+					return false
+				}
+
+				return instance.Status.Retry.RetriesLeft == 0
 			}).Should(BeTrue())
 		})
 	})
