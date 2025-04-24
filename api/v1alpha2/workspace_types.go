@@ -65,6 +65,25 @@ type RemoteStateSharing struct {
 	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
 }
 
+// RetryPolicy allows you to configure retry behavior for failed runs on the workspace.
+// It will apply for the latest current run of the operator.
+type RetryPolicy struct {
+	// Limit is the maximum number of retries for failed runs.
+	// Default: `0`.
+	//
+	// +kubebuilder:default:=0
+	// +optional
+	Limit int64 `json:"limit,omitempty"`
+	// Backoff is the time to wait before retrying a failed run. It is specified as a golang duration string.
+	// More information:
+	//   - https://pkg.go.dev/time#ParseDuration
+	// Default: `""`.
+	//
+	// +kubebuilder:default:=""
+	// +optional
+	Backoff string `json:"backoff,omitempty"`
+}
+
 // Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
 // Only one of the fields `ID` or `Name` is allowed.
 // At least one of the fields `ID` or `Name` is mandatory.
@@ -592,6 +611,10 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	RemoteStateSharing *RemoteStateSharing `json:"remoteStateSharing,omitempty"`
+	// Retry Policy allows you to specify how the operator should retry failed runs automatically.
+	//
+	//+optional
+	RetryPolicy *RetryPolicy `json:"retryPolicy,omitempty"`
 	// Run triggers allow you to connect this workspace to one or more source workspaces.
 	// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 	// More information:
@@ -742,11 +765,29 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	VariableSets []VariableSetStatus `json:"variableSet,omitempty"`
+
+	// Retry status of the latest run on the workspace.
+	//
+	//+optional
+	Retry *RetryStatus `json:"retry,omitempty"`
 }
 
 type VariableSetStatus struct {
 	ID   string `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
+}
+
+// RetryStatus contains the status of the retry of the latest run on the workspace. How many attempts are left and
+// possibly a time to wait for the next attempt.
+type RetryStatus struct {
+	// RetriesLeft is the number of retries left for the latest run on the workspace.
+	RetriesLeft int64 `json:"retriesLeft,omitempty"`
+
+	// NextRetryTimestamp is a timestamp representing the server time after which the operator whould start a new retry
+	// if the Backoff option was added. It is represented in RFC3339 form and is in UTC.
+	//
+	// +optional
+	NextRetryTimestamp metav1.Time `json:"nextRetryTimestamp,omitempty"`
 }
 
 //+kubebuilder:object:root=true

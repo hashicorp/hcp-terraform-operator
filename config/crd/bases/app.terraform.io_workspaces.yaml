@@ -371,6 +371,26 @@ spec:
                     minItems: 1
                     type: array
                 type: object
+              retryPolicy:
+                description: Retry Policy allows you to specify how the operator should
+                  retry failed runs automatically.
+                properties:
+                  backoff:
+                    default: ""
+                    description: |-
+                      Backoff is the time to wait before retrying a failed run. It is specified as a golang duration string.
+                      More information:
+                        - https://pkg.go.dev/time#ParseDuration
+                      Default: `""`.
+                    type: string
+                  limit:
+                    default: 0
+                    description: |-
+                      Limit is the maximum number of retries for failed runs.
+                      Default: `0`.
+                    format: int64
+                    type: integer
+                type: object
               runTasks:
                 description: |-
                   Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
@@ -832,6 +852,21 @@ spec:
                     description: The version of Terraform to use for this run.
                     pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                     type: string
+                type: object
+              retry:
+                description: Retry status of the latest run on the workspace.
+                properties:
+                  nextRetryTimestamp:
+                    description: |-
+                      NextRetryTimestamp is a timestamp representing the server time after which the operator whould start a new retry
+                      if the Backoff option was added. It is represented in RFC3339 form and is in UTC.
+                    format: date-time
+                    type: string
+                  retriesLeft:
+                    description: RetriesLeft is the number of retries left for the
+                      latest run on the workspace.
+                    format: int64
+                    type: integer
                 type: object
               runStatus:
                 description: Workspace Runs status.
