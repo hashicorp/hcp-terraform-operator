@@ -772,7 +772,7 @@ type VariableSetStatus struct {
 // RetryStatus contains the status of the retry of the latest run on the workspace. How many attempts are left and
 // possibly a time to wait for the next attempt.
 type RetryStatus struct {
-	// Failed is the number of failed attempts.
+	// Failed is the number of failed attempts, counting the initial one.
 	Failed int64 `json:"failed,omitempty"`
 }
 

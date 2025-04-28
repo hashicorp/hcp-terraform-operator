@@ -72,28 +72,37 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	Context("Retry", func() {
 		It("can retry failed runs", func() {
 			namespacedName := getNamespacedName(instance)
-			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			instance.Spec.RetryStrategy = &appv1alpha2.RetryPolicy{
-				Enabled: true,
+			instance.Spec.RetryPolicy = &appv1alpha2.RetryPolicy{
+				BackoffLimit: -1,
 			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspace(instance)
+			workspaceID := instance.Status.WorkspaceID
 
 			// start a run that will fail
-			createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, true)
+			cv := createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, true)
 
 			var runID string
 
 			Eventually(func() bool {
-				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Status.Run == nil {
-					return false
+				listOpts := tfc.ListOptions{
+					PageNumber: 1,
+					PageSize:   maxPageSize,
 				}
-
-				runID = instance.Status.Run.ID
-
-				_, ok := runStatusUnsuccessful[tfc.RunStatus(instance.Status.Run.Status)]
-
-				return ok
+				for listOpts.PageNumber != 0 {
+					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
+						ListOptions: listOpts,
+					})
+					Expect(err).To(Succeed())
+					for _, r := range runs.Items {
+						if r.ConfigurationVersion.ID == cv.ID {
+							runID = r.ID
+							return r.Status == tfc.RunErrored
+						}
+					}
+					listOpts.PageNumber = runs.NextPage
+				}
+				return false
 			}).Should(BeTrue())
 
 			// Fix the code but no not start a run manually
@@ -105,9 +114,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				if instance.Status.Run == nil {
 					return false
 				}
-				// TODO: check that the retry count of the status decreased
-
 				return runID != instance.Status.Run.ID
+			}).Should(BeTrue())
+
+			// the number of failed attemps should be reset to 0
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+				if instance.Status.Retry == nil {
+					return false
+				}
+				return instance.Status.Retry.Failed == 0
 			}).Should(BeTrue())
 
 			// Since the code is fixed at some point a run will succeed
@@ -122,13 +138,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 		It("can retry until the limit of retries is reached", func() {
 			namespacedName := getNamespacedName(instance)
-			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			instance.Spec.RetryStrategy = &appv1alpha2.RetryPolicy{
-				Enabled: true,
-				Limit:   1,
+
+			instance.Spec.RetryPolicy = &appv1alpha2.RetryPolicy{
+				BackoffLimit: 2,
 			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 
 			createWorkspace(instance)
+			workspaceID := instance.Status.WorkspaceID
+
 			// start a run that will fail
 			createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, true)
 
@@ -138,7 +156,24 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					return false
 				}
 
-				return instance.Status.Retry.RetriesLeft == 0
+				return instance.Status.Retry.Failed == 3
+			}).Should(BeTrue())
+
+			Eventually(func() bool {
+				listOpts := tfc.ListOptions{
+					PageNumber: 1,
+					PageSize:   maxPageSize,
+				}
+				runCount := 0
+				for listOpts.PageNumber != 0 {
+					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
+						ListOptions: listOpts,
+					})
+					Expect(err).To(Succeed())
+					runCount += len(runs.Items)
+					listOpts.PageNumber = runs.NextPage
+				}
+				return runCount == 3
 			}).Should(BeTrue())
 		})
 	})

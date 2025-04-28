@@ -576,7 +576,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `failed` _integer_ | Failed is the number of failed attempts. |
+| `failed` _integer_ | Failed is the number of failed attempts, counting the initial one. |
 
 
 #### RunStatus
