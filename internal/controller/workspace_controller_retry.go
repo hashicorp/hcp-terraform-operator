@@ -5,16 +5,64 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 func (r *WorkspaceReconciler) resetRetryStatus(ctx context.Context, w *workspaceInstance) error {
-	if w.instance.Spec.RetryPolicy == nil || w.instance.Spec.RetryPolicy.BackoffLimit == 0 {
+	if !isRetryEnabled(w) {
 		return nil
 	}
 	w.instance.Status.Retry = &appv1alpha2.RetryStatus{
 		Failed: 0,
+	}
+	return nil
+}
+
+func isRetryEnabled(w *workspaceInstance) bool {
+	return w.instance.Spec.RetryPolicy != nil && w.instance.Spec.RetryPolicy.BackoffLimit != 0
+}
+
+func (r *WorkspaceReconciler) retryFailedRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) error {
+	if w.instance.Status.Retry == nil {
+		w.instance.Status.Retry = &appv1alpha2.RetryStatus{
+			Failed: 0,
+		}
+	}
+	w.instance.Status.Retry.Failed++
+
+	if w.instance.Spec.RetryPolicy.BackoffLimit < 0 || w.instance.Status.Retry.Failed <= w.instance.Spec.RetryPolicy.BackoffLimit {
+
+		options := tfc.RunCreateOptions{
+			Message:     tfc.String(runMessage),
+			Workspace:   workspace,
+			IsDestroy:   tfc.Bool(failedRun.IsDestroy),
+			RefreshOnly: tfc.Bool(failedRun.RefreshOnly),
+		}
+		retriedRun, err := w.tfClient.Client.Runs.Create(ctx, options)
+		if err != nil {
+			w.log.Error(err, "Retry Runs", "msg", "failed to create a new apply run for retry")
+			return err
+		}
+		w.log.Info("Retry Runs", "msg", fmt.Sprintf("successfully created a new apply run %s for to retry failed %s", retriedRun.ID, failedRun.ID))
+
+		// Update status
+		if w.instance.Status.Run == nil {
+			w.instance.Status.Run = &appv1alpha2.RunStatus{}
+		}
+		w.instance.Status.Run.ID = retriedRun.ID
+		w.instance.Status.Run.Status = string(retriedRun.Status)
+		w.instance.Status.Run.ConfigurationVersion = retriedRun.ConfigurationVersion.ID
+
+		// WARNING: there is a race limit here in case the run fails very fast and the initial status returned
+		// by the Runs.Create funtion is Errored. In this case the run is never retried.
+		// TODO: loop back ? I don't like loops so maybe the best would be to change the reconcile runs function to
+		// make sure we didn't miss a retry
+	} else {
+		w.log.Info("Retry Runs", "msg", "backoff limit was reached, skip retry")
+		return nil
 	}
 	return nil
 }
