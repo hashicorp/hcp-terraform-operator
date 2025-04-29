@@ -176,5 +176,70 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				return runCount == 3
 			}).Should(BeTrue())
 		})
+		It("can retry failed destroy runs when deleting the workspace", func() {
+			instance.Spec.RetryPolicy = &appv1alpha2.RetryPolicy{
+				BackoffLimit: -1,
+			}
+			instance.Spec.AllowDestroyPlan = true
+			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyDestroy
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			workspaceID := instance.Status.WorkspaceID
+
+			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi", true)
+			Eventually(func() bool {
+				listOpts := tfc.ListOptions{
+					PageNumber: 1,
+					PageSize:   maxPageSize,
+				}
+				for listOpts.PageNumber != 0 {
+					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
+						ListOptions: listOpts,
+					})
+					Expect(err).To(Succeed())
+					for _, r := range runs.Items {
+						if r.ConfigurationVersion.ID == cv.ID {
+							return r.Status == tfc.RunApplied
+						}
+					}
+					listOpts.PageNumber = runs.NextPage
+				}
+				return false
+			}).Should(BeTrue())
+
+			// create an errored ConfigurationVersion for the delete to fail
+			cv = createAndUploadErroredConfigurationVersion(instance.Status.WorkspaceID, false)
+
+			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+
+			Eventually(func() bool {
+				listOpts := tfc.ListOptions{
+					PageNumber: 1,
+					PageSize:   maxPageSize,
+				}
+				for listOpts.PageNumber != 0 {
+					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
+						ListOptions: listOpts,
+					})
+					Expect(err).To(Succeed())
+					for _, r := range runs.Items {
+						if r.ConfigurationVersion.ID == cv.ID {
+							return r.Status == tfc.RunErrored
+						}
+					}
+					listOpts.PageNumber = runs.NextPage
+				}
+				return false
+			}).Should(BeTrue())
+
+			// Fix the code but no not start a run manually
+			createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi", false)
+
+			// The retry should eventually delete the workspace
+			Eventually(func() bool {
+				_, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				return err == tfc.ErrResourceNotFound
+			}).Should(BeTrue())
+		})
 	})
 })
