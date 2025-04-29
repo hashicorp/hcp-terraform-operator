@@ -36,14 +36,7 @@ func (r *WorkspaceReconciler) retryFailedApplyRun(ctx context.Context, w *worksp
 		return nil
 	}
 
-	// Update status
-	if w.instance.Status.Run == nil {
-		w.instance.Status.Run = &appv1alpha2.RunStatus{}
-	}
-	w.instance.Status.Run.ID = retriedRun.ID
-	w.instance.Status.Run.Status = string(retriedRun.Status)
-	w.instance.Status.Run.ConfigurationVersion = retriedRun.ConfigurationVersion.ID
-
+	w.updateWorkspaceStatusRun(retriedRun)
 	// WARNING: there is a race limit here in case the run fails very fast and the initial status returned
 	// by the Runs.Create funtion is Errored. In this case the run is never retried.
 	// TODO: loop back ? I don't like loops so maybe the best would be to change the reconcile runs function to
@@ -52,7 +45,7 @@ func (r *WorkspaceReconciler) retryFailedApplyRun(ctx context.Context, w *worksp
 	return nil
 }
 
-func (r *WorkspaceReconciler) retryFaileDestroyRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) error {
+func (r *WorkspaceReconciler) retryFailedDestroyRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) error {
 	retriedRun, err := r.retryFailedRun(ctx, w, workspace, failedRun)
 	if err != nil {
 		return err
@@ -64,6 +57,7 @@ func (r *WorkspaceReconciler) retryFaileDestroyRun(ctx context.Context, w *works
 	}
 
 	w.instance.Status.DestroyRunID = retriedRun.ID
+	w.updateWorkspaceStatusRun(retriedRun)
 
 	return nil
 }

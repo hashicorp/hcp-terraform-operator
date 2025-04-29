@@ -124,6 +124,15 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceI
 					return r.Status().Update(ctx, &w.instance)
 				}
 			}
+			if isRetryEnabled(w) {
+				w.log.Info("Destroy Run", "msg", fmt.Sprintf("ongoing destroy run %s is unsuccessful, retrying it", run.ID))
+				err := r.retryFailedDestroyRun(ctx, w, workspace, run)
+				if err != nil {
+					w.log.Info("Destroy Run", "msg", fmt.Sprintf("ongoing destroy run %s is unsuccessful, retrying it", run.ID))
+					return err
+				}
+				return r.Status().Update(ctx, &w.instance)
+			}
 
 			return nil
 		}
