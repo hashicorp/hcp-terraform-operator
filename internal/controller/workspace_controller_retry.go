@@ -25,7 +25,50 @@ func isRetryEnabled(w *workspaceInstance) bool {
 	return w.instance.Spec.RetryPolicy != nil && w.instance.Spec.RetryPolicy.BackoffLimit != 0
 }
 
-func (r *WorkspaceReconciler) retryFailedRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) error {
+func (r *WorkspaceReconciler) retryFailedApplyRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) error {
+	retriedRun, err := r.retryFailedRun(ctx, w, workspace, failedRun)
+	if err != nil {
+		return err
+	}
+
+	// when no run is returned, it means the backoff limit was reached
+	if retriedRun == nil {
+		return nil
+	}
+
+	// Update status
+	if w.instance.Status.Run == nil {
+		w.instance.Status.Run = &appv1alpha2.RunStatus{}
+	}
+	w.instance.Status.Run.ID = retriedRun.ID
+	w.instance.Status.Run.Status = string(retriedRun.Status)
+	w.instance.Status.Run.ConfigurationVersion = retriedRun.ConfigurationVersion.ID
+
+	// WARNING: there is a race limit here in case the run fails very fast and the initial status returned
+	// by the Runs.Create funtion is Errored. In this case the run is never retried.
+	// TODO: loop back ? I don't like loops so maybe the best would be to change the reconcile runs function to
+	// make sure we didn't miss a retry
+
+	return nil
+}
+
+func (r *WorkspaceReconciler) retryFaileDestroyRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) error {
+	retriedRun, err := r.retryFailedRun(ctx, w, workspace, failedRun)
+	if err != nil {
+		return err
+	}
+
+	// when no run is returned, it means the backoff limit was reached
+	if retriedRun == nil {
+		return nil
+	}
+
+	w.instance.Status.DestroyRunID = retriedRun.ID
+
+	return nil
+}
+
+func (r *WorkspaceReconciler) retryFailedRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace, failedRun *tfc.Run) (*tfc.Run, error) {
 	if w.instance.Status.Retry == nil {
 		w.instance.Status.Retry = &appv1alpha2.RetryStatus{
 			Failed: 0,
@@ -44,25 +87,13 @@ func (r *WorkspaceReconciler) retryFailedRun(ctx context.Context, w *workspaceIn
 		retriedRun, err := w.tfClient.Client.Runs.Create(ctx, options)
 		if err != nil {
 			w.log.Error(err, "Retry Runs", "msg", "failed to create a new apply run for retry")
-			return err
+			return nil, err
 		}
 		w.log.Info("Retry Runs", "msg", fmt.Sprintf("successfully created a new apply run %s for to retry failed %s", retriedRun.ID, failedRun.ID))
 
-		// Update status
-		if w.instance.Status.Run == nil {
-			w.instance.Status.Run = &appv1alpha2.RunStatus{}
-		}
-		w.instance.Status.Run.ID = retriedRun.ID
-		w.instance.Status.Run.Status = string(retriedRun.Status)
-		w.instance.Status.Run.ConfigurationVersion = retriedRun.ConfigurationVersion.ID
-
-		// WARNING: there is a race limit here in case the run fails very fast and the initial status returned
-		// by the Runs.Create funtion is Errored. In this case the run is never retried.
-		// TODO: loop back ? I don't like loops so maybe the best would be to change the reconcile runs function to
-		// make sure we didn't miss a retry
+		return retriedRun, nil
 	} else {
 		w.log.Info("Retry Runs", "msg", "backoff limit was reached, skip retry")
-		return nil
+		return nil, nil
 	}
-	return nil
 }

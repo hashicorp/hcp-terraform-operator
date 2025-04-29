@@ -88,7 +88,7 @@ func (r *WorkspaceReconciler) reconcileCurrentRun(ctx context.Context, w *worksp
 		if _, ok := runStatusUnsuccessful[run.Status]; ok {
 			w.log.Info("Reconcile Runs", "msg", "ongoing non-speculative run is unsuccessful, retrying it")
 
-			if err = r.retryFailedRun(ctx, w, workspace, run); err != nil {
+			if err = r.retryFailedApplyRun(ctx, w, workspace, run); err != nil {
 				return err
 			}
 		}
