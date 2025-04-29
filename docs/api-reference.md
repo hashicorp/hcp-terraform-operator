@@ -549,6 +549,36 @@ _Appears in:_
 | `workspaces` _[ConsumerWorkspace](#consumerworkspace) array_ | Allow access to the state for specific workspaces within the same organization. |
 
 
+#### RetryPolicy
+
+
+
+RetryPolicy allows you to configure retry behavior for failed runs on the workspace.
+It will apply for the latest current run of the operator.
+
+_Appears in:_
+- [WorkspaceSpec](#workspacespec)
+
+| Field | Description |
+| --- | --- |
+| `backoffLimit` _integer_ | Limit is the maximum number of retries for failed runs. If set to a negative number, no limit will be applied.<br />Default: `0`. |
+
+
+#### RetryStatus
+
+
+
+RetryStatus contains the status of the retry of the latest run on the workspace. How many attempts are left and
+possibly a time to wait for the next attempt.
+
+_Appears in:_
+- [WorkspaceStatus](#workspacestatus)
+
+| Field | Description |
+| --- | --- |
+| `failed` _integer_ | Failed is the number of failed attempts, counting the initial one. |
+
+
 #### RunStatus
 
 
@@ -894,6 +924,7 @@ _Appears in:_
 | `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all plans and applies in this workspace.<br />Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#environment-variables |
 | `terraformVariables` _[Variable](#variable) array_ | Terraform variables for all plans and applies in this workspace.<br />Variables defined within a workspace always overwrite variables from variable sets that have the same type and the same key.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables#terraform-variables |
 | `remoteStateSharing` _[RemoteStateSharing](#remotestatesharing)_ | Remote state access between workspaces.<br />By default, new workspaces in HCP Terraform do not allow other workspaces to access their state.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/state#accessing-state-from-other-workspaces |
+| `retryPolicy` _[RetryPolicy](#retrypolicy)_ | Retry Policy allows you to specify how the operator should retry failed runs automatically. |
 | `runTriggers` _[RunTrigger](#runtrigger) array_ | Run triggers allow you to connect this workspace to one or more source workspaces.<br />These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers |
 | `versionControl` _[VersionControl](#versioncontrol)_ | Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.<br />Omit this argument to utilize the CLI-driven and API-driven workflows, where runs are not driven by webhooks on your VCS provider.<br />More information:<br />  - https://www.terraform.io/cloud-docs/run/ui<br />  - https://www.terraform.io/cloud-docs/vcs |
 | `sshKey` _[SSHKey](#sshkey)_ | SSH key used to clone Terraform modules.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/ssh-keys |
