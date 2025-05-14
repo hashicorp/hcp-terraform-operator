@@ -203,6 +203,7 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | kubeRbacProxy.resources.requests.memory | string | `"64Mi"` | Guaranteed minimum amount of memory to be used by a container. |
 | kubeRbacProxy.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"seccompProfile":{"type":"RuntimeDefault"}}` | Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/). |
 | operator.affinity | object | `{}` | Kubernetes Affinity. More information: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| operator.env | object | `{}` | Environment variables. |
 | operator.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | operator.image.repository | string | `"hashicorp/hcp-terraform-operator"` | Image repository. |
 | operator.image.tag | string | `""` | Image tag. Defaults to `.Chart.AppVersion`. |

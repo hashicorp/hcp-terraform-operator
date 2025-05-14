@@ -49,6 +49,11 @@ spec:
           - --namespace={{ . }}
           {{- end }}
           {{- $envVars := dict }}
+          {{- if .Values.operator.env }}
+            {{- range $key, $value := .Values.operator.env }}
+              {{- $_ := set $envVars $key $value }}
+            {{- end }}
+          {{- end }}
           {{- if .Values.operator.tfeAddress }}
             {{- $_ := set $envVars "TFE_ADDRESS" .Values.operator.tfeAddress }}
           {{- end }}
@@ -60,7 +65,7 @@ spec:
             {{- range $ek, $ev := $envVars }}
             - name: {{ $ek }}
               value: "{{ $ev -}}"
-            {{ end }}
+            {{- end }}
           {{- end }}
           command:
           - /manager

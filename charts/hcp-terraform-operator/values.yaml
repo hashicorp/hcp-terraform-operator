@@ -37,6 +37,11 @@ operator:
       cpu: 50m
       # -- Guaranteed minimum amount of memory to be used by a container.
       memory: 64Mi
+  # Usage example:
+  # env:
+  #   HTTP_PROXY: http://proxy:3128
+  # -- Environment variables.
+  env: {}
 
   # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:

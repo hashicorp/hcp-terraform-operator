@@ -474,6 +474,25 @@ func TestDeploymentOperatorSkipTLSVerify(t *testing.T) {
 	assert.Equal(t, dd, deployment)
 }
 
+func TestDeploymentOperatorEnv(t *testing.T) {
+	options := &helm.Options{
+		SetValues: map[string]string{
+			"operator.env.HTTP_PROXY": "http://proxy:3128",
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	dd := defaultDeployment()
+	dd.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http://proxy:3128",
+		},
+	}
+
+	assert.Equal(t, dd, deployment)
+}
+
 func TestDeploymentKubeRbacProxyImage(t *testing.T) {
 	options := &helm.Options{
 		SetValues: map[string]string{
