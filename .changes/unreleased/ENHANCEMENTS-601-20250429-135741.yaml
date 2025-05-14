@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Helm Chart`: Add the ability to configure environment variables for the Operator Deployment via `operator.env`.'
-time: 2025-04-29T13:57:41.925639+02:00
-custom:
-    PR: "601"
