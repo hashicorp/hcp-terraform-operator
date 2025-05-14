@@ -10,6 +10,20 @@ For the rest type of the pull requests please use ✨.
 Thank you!
 --->
 
+<!-- heimdall_github_prtemplate:grc-pci_dss-2024-01-05 -->
+
+ ## Rollback Plan
+
+ If a change needs to be reverted, we will publish an updated version of the library.
+
+ ## Changes to Security Controls
+
+ Are there any changes to security controls (access controls, encryption, logging) in this pull request? If so, explain.
+
+ <!---
+Please describe your changes to security controls in detail.
+--->
+
 ### Description
 
 <!---
