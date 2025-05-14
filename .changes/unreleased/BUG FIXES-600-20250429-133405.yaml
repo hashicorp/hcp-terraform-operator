@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Fixed an issue where the operator could not connect to the HCP Terraform / TFE instance when using the UBI-based image due to a TLS validation error. The previous workaround required setting the `TFC_TLS_SKIP_VERIFY` environment variable to `true` in the Deployment.
+time: 2025-04-29T13:34:05.597842+02:00
+custom:
+    PR: "600"
