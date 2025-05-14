@@ -54,6 +54,7 @@ DEPENDENCIES:
 ## Community Contributors :raised_hands:
 
 - @baptman21 made their contribution in https://github.com/hashicorp/hcp-terraform-operator/pull/496
+
 ## 2.8.1 (March 12, 2025)
 
 ENHANCEMENTS:
