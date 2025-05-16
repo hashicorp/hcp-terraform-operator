@@ -50,6 +50,10 @@ func genericPredicates() predicate.Predicate {
 				return true
 			}
 
+			if e.ObjectNew.GetAnnotations()[annotationPaused] != "" || e.ObjectOld.GetAnnotations()[annotationPaused] != "" {
+				return true
+			}
+
 			// Do not call reconciliation in all other cases
 			return false
 		},
