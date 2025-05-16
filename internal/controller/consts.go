@@ -9,11 +9,12 @@ import (
 
 // SHARED CONSTANTS
 const (
-	annotationTrue  = "true"
-	annotationFalse = "false"
-	maxPageSize     = 100
-	requeueInterval = 15 * time.Second
-	runMessage      = "Triggered by HCP Terraform Operator"
+	annotationPaused = "app.terraform.io/paused"
+	annotationTrue   = "true"
+	annotationFalse  = "false"
+	maxPageSize      = 100
+	requeueInterval  = 15 * time.Second
+	runMessage       = "Triggered by HCP Terraform Operator"
 )
 
 // AGENT POOL CONTROLLER'S CONSTANTS

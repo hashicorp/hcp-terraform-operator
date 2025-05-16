@@ -65,6 +65,11 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return requeueAfter(requeueInterval)
 	}
 
+	if a, ok := p.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+		p.log.Info("Project Controller", "msg", "reconciliation is paused for this resource")
+		return doNotRequeue()
+	}
+
 	p.log.Info("Spec Validation", "msg", "validating instance object spec")
 	if err := p.instance.ValidateSpec(); err != nil {
 		p.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")
