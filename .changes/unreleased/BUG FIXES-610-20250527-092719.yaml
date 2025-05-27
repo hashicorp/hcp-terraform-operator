@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Fix an issue where the agent can be terminated while it still has an active run during the post-plan or post-apply stage, such as, but not limited to, Sentinel policy evaluation.
+time: 2025-05-27T09:27:19.677453+02:00
+custom:
+    PR: "610"
