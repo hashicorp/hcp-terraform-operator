@@ -18,15 +18,6 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var (
-	runStatuses = strings.Join([]string{
-		string(tfc.RunPlanQueued),
-		string(tfc.RunApplyQueued),
-		string(tfc.RunApplying),
-		string(tfc.RunPlanning),
-	}, ",")
-)
-
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
 // The wildcard pattern can contain '*' at the beginning and/or end to match any sequence of characters.
 // If the pattern contains '*' at both ends, the function checks if the substring exists within the string.
@@ -66,7 +57,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 	runs := map[string]struct{}{}
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
-		Status:         runStatuses,
+		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
 			PageNumber: 1,
@@ -97,7 +88,12 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 	workspaceIDs := map[string]struct{}{}
 
 	listOpts := &tfc.WorkspaceListOptions{
-		CurrentRunStatus: runStatuses,
+		CurrentRunStatus: strings.Join([]string{
+			string(tfc.RunPlanQueued),
+			string(tfc.RunApplyQueued),
+			string(tfc.RunApplying),
+			string(tfc.RunPlanning),
+		}, ","),
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
 			PageNumber: 1,
