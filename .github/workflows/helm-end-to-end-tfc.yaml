@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - 'controllers/**'
+      - 'internal/controller/**'
       - 'charts/hcp-terraform-operator/**'
   workflow_dispatch:
   workflow_call:
