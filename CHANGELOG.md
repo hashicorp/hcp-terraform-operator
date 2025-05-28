@@ -1,3 +1,13 @@
+## 2.9.2 (May 28, 2025)
+
+BUG FIXES:
+
+* Fix an issue where the agent can be terminated while it still has an active run during the post-plan or post-apply stage, such as, but not limited to, Sentinel policy evaluation. [[GH-610](https://github.com/hashicorp/hcp-terraform-operator/pull/610)]
+
+## Community Contributors :raised_hands:
+
+- @munnep identified and successfully reproduced the issue. Great work tracking it down! https://github.com/hashicorp/hcp-terraform-operator/pull/610
+
 ## 2.9.1 (May 14, 2025)
 
 BUG FIXES:
@@ -54,6 +64,7 @@ DEPENDENCIES:
 ## Community Contributors :raised_hands:
 
 - @baptman21 made their contribution in https://github.com/hashicorp/hcp-terraform-operator/pull/496
+
 ## 2.8.1 (March 12, 2025)
 
 ENHANCEMENTS:
