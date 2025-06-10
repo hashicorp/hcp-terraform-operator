@@ -101,6 +101,30 @@ func (r *WorkspaceReconciler) deleteWorkspace(ctx context.Context, w *workspaceI
 
 		if _, ok := runStatusUnsuccessful[run.Status]; ok {
 			w.log.Info("Destroy Run", "msg", fmt.Sprintf("destroy run %s is unsuccessful: %s", run.ID, run.Status))
+
+			workspace, err := w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
+			if err != nil {
+				return r.handleWorkspaceErrorNotFound(ctx, w, err)
+			}
+
+			w.log.Info("Destroy Run", "msg", fmt.Sprintf("CurrentRun: %s %s %v", workspace.CurrentRun.ID, workspace.CurrentRun.Status, workspace.CurrentRun.IsDestroy))
+
+			if workspace.CurrentRun != nil && workspace.CurrentRun.ID != w.instance.Status.DestroyRunID {
+
+				run, err := w.tfClient.Client.Runs.Read(ctx, w.instance.Status.DestroyRunID)
+				if err != nil {
+					// ignore this run id, and let the next reconcile loop handle the error
+					return nil
+				}
+				if run.IsDestroy {
+					w.log.Info("Destroy Run", "msg", fmt.Sprintf("found more recent destroy run %s, updating DestroyRunID", workspace.CurrentRun.ID))
+
+					w.instance.Status.DestroyRunID = workspace.CurrentRun.ID
+					w.updateWorkspaceStatusRun(run)
+					return r.Status().Update(ctx, &w.instance)
+				}
+			}
+
 			return nil
 		}
 		w.log.Info("Destroy Run", "msg", fmt.Sprintf("destroy run %s is not finished", run.ID))
