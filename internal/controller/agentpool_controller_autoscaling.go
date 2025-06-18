@@ -18,6 +18,26 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
+// agentRunStatuses is a comma-separated list of run statuses that require an agent.
+var (
+	agentRunStatuses = strings.Join([]string{
+		string(tfc.RunApplying),
+		string(tfc.RunApplyQueued),
+		string(tfc.RunConfirmed),
+		string(tfc.RunCostEstimating),
+		string(tfc.RunFetching),
+		string(tfc.RunFetchingCompleted),
+		string(tfc.RunPlanQueued),
+		string(tfc.RunPlanning),
+		string(tfc.RunPolicyChecking),
+		string(tfc.RunPostPlanRunning),
+		string(tfc.RunPreApplyRunning),
+		string(tfc.RunPrePlanRunning),
+		string(tfc.RunQueuing),
+		string(tfc.RunQueuingApply),
+	}, ",")
+)
+
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
 // The wildcard pattern can contain '*' at the beginning and/or end to match any sequence of characters.
 // If the pattern contains '*' at both ends, the function checks if the substring exists within the string.
@@ -57,7 +77,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 	runs := map[string]struct{}{}
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
-		StatusGroup:    "non_final",
+		Status:         agentRunStatuses,
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
 			PageNumber: 1,
@@ -80,6 +100,8 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 	return int32(len(runs)), nil
 }
 
+// computeRequiredAgents is a legacy algorithm that is used to compute the number of agents needed.
+// It is used when the TFE version is less than v202409-1.
 func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	required := 0
 	// NOTE:
@@ -201,7 +223,7 @@ func (a *agentPoolInstance) cooldownSecondsRemaining(currentReplicas, desiredRep
 		if v := cooldownPeriod.ScaleUpSeconds; v != nil {
 			if desiredReplicas > currentReplicas {
 				cooldownPeriodSeconds = int(*v)
-				a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling up, using configured scale down period: %v", cooldownPeriodSeconds))
+				a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling up, using configured scale up period: %v", cooldownPeriodSeconds))
 			}
 		}
 	}
