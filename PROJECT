@@ -47,4 +47,13 @@ resources:
   kind: Project
   path: github.com/hashicorp/hcp-terraform-operator/api/v1alpha2
   version: v1alpha2
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: terraform.io
+  group: app
+  kind: AgentToken
+  path: github.com/hashicorp/hcp-terraform-operator/api/v1alpha2
+  version: v1alpha2
 version: "3"

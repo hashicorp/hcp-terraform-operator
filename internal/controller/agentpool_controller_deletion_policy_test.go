@@ -56,7 +56,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				AgentTokens: []*appv1alpha2.AgentToken{
+				AgentTokens: []*appv1alpha2.AgentAPIToken{
 					{Name: "first"},
 					{Name: "second"},
 				},

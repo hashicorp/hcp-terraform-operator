@@ -67,6 +67,13 @@ func main() {
 		"The number of the Agent Pool controller workers.")
 	flag.DurationVar(&controller.AgentPoolSyncPeriod, "agent-pool-sync-period", 30*time.Second,
 		"The minimum frequency at which watched agent pool resources are reconciled. Format: 5s, 1m, etc.")
+	// AGENT TOKEN CONTROLLER OPTIONS
+	var agentTokenWorkers int
+	flag.IntVar(&agentTokenWorkers, "agent-token-workers", 1,
+		"The number of the Agent Token controller workers.")
+	flag.DurationVar(&controller.AgentTokenSyncPeriod, "agent-token-sync-period", 10*time.Minute,
+		"The minimum frequency at which watched agent token resources are reconciled. Format: 5s, 1m, etc.")
+
 	// MODULE CONTROLLER OPTIONS
 	var moduleWorkers int
 	flag.IntVar(&moduleWorkers, "module-workers", 1,
@@ -124,10 +131,11 @@ func main() {
 	options := ctrl.Options{
 		Controller: config.Controller{
 			GroupKindConcurrency: map[string]int{
-				"AgentPool.app.terraform.io": agentPoolWorkers,
-				"Module.app.terraform.io":    moduleWorkers,
-				"Project.app.terraform.io":   projectWorkers,
-				"Workspace.app.terraform.io": workspaceWorkers,
+				"AgentPool.app.terraform.io":  agentPoolWorkers,
+				"AgentToken.app.terraform.io": agentTokenWorkers,
+				"Module.app.terraform.io":     moduleWorkers,
+				"Project.app.terraform.io":    projectWorkers,
+				"Workspace.app.terraform.io":  workspaceWorkers,
 			},
 		},
 		Scheme: scheme,
@@ -171,6 +179,7 @@ func main() {
 
 	setupLog.Info(fmt.Sprintf("Operator sync period: %s", syncPeriod))
 	setupLog.Info(fmt.Sprintf("Agent Pool sync period: %s", controller.AgentPoolSyncPeriod))
+	setupLog.Info(fmt.Sprintf("Agent Token sync period: %s", controller.AgentTokenSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Module sync period: %s", controller.ModuleSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Project sync period: %s", controller.ProjectSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Workspace sync period: %s", controller.WorkspaceSyncPeriod))
@@ -187,6 +196,14 @@ func main() {
 		Recorder: mgr.GetEventRecorderFor("AgentPoolController"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AgentPool")
+		os.Exit(1)
+	}
+	if err = (&controller.AgentTokenReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("AgentTokenController"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AgentToken")
 		os.Exit(1)
 	}
 	if err = (&controller.ModuleReconciler{
