@@ -14,7 +14,7 @@ import (
 // At least one of the fields `ID` or `Name` is mandatory.
 // More information:
 //   - https://developer.hashicorp.com/terraform/cloud-docs/agents
-type WorkspaceAgentPool struct {
+type AgentPoolRef struct {
 	// Agent Pool ID.
 	// Must match pattern: `^apool-[a-zA-Z0-9]+$`
 	//
@@ -517,7 +517,7 @@ type WorkspaceSpec struct {
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/agents
 	//
 	//+optional
-	AgentPool *WorkspaceAgentPool `json:"agentPool,omitempty"`
+	AgentPool *AgentPoolRef `json:"agentPool,omitempty"`
 	// Define where the Terraform code will be executed.
 	// Must be one of the following values: `agent`, `local`, `remote`.
 	// Default: `remote`.

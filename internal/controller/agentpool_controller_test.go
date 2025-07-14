@@ -59,7 +59,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 						Key: secretKey,
 					},
 				},
-				AgentTokens: []*appv1alpha2.AgentToken{
+				AgentTokens: []*appv1alpha2.AgentAPIToken{
 					{Name: "first"},
 					{Name: "second"},
 				},
@@ -123,7 +123,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			// ADD ONE MORE AGENT TOKEN
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			instance.Spec.AgentTokens = append(instance.Spec.AgentTokens, &appv1alpha2.AgentToken{Name: "third"})
+			instance.Spec.AgentTokens = append(instance.Spec.AgentTokens, &appv1alpha2.AgentAPIToken{Name: "third"})
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
@@ -627,7 +627,7 @@ func testWorkspace(name, namespace, agentPoolName string) *appv1alpha2.Workspace
 			},
 			Name:          fmt.Sprintf("test-workspace-%v", randomNumber()),
 			ExecutionMode: "agent",
-			AgentPool: &appv1alpha2.WorkspaceAgentPool{
+			AgentPool: &appv1alpha2.AgentPoolRef{
 				Name: agentPoolName,
 			},
 		},

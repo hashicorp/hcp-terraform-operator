@@ -21,6 +21,11 @@ const (
 	agentPoolFinalizer = "agentpool.app.terraform.io/finalizer"
 )
 
+// AGENT TOKEN CONTROLLER'S CONSTANTS
+const (
+	agentTokenFinalizer = "agenttoken.app.terraform.io/finalizer"
+)
+
 // MODULE CONTROLLER'S CONSTANTS
 const (
 	requeueConfigurationUploadInterval = 10 * time.Second
