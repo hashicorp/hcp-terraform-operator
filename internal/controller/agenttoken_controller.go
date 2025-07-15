@@ -13,6 +13,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -167,6 +168,96 @@ func (r *AgentTokenReconciler) removeFinalizer(ctx context.Context, t *agentToke
 	return err
 }
 
+func (r *AgentTokenReconciler) getAgentPoolIDByName(ctx context.Context, t *agentTokenInstance) (*tfc.AgentPool, error) {
+	agentPoolName := t.instance.Spec.AgentPool.Name
+
+	listOpts := &tfc.AgentPoolListOptions{
+		Query: agentPoolName,
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
+	for {
+		agentPoolIDs, err := t.tfClient.Client.AgentPools.List(ctx, t.instance.Spec.Organization, listOpts)
+		if err != nil {
+			return nil, err
+		}
+		for _, a := range agentPoolIDs.Items {
+			if a.Name == agentPoolName {
+				return a, nil
+			}
+		}
+		if agentPoolIDs.NextPage == 0 {
+			break
+		}
+		listOpts.PageNumber = agentPoolIDs.NextPage
+	}
+
+	return nil, fmt.Errorf("agent pool ID not found for agent pool name %q", agentPoolName)
+}
+
+func (r *AgentTokenReconciler) getAgentPoolID(ctx context.Context, t *agentTokenInstance) (*tfc.AgentPool, error) {
+	specAgentPool := t.instance.Spec.AgentPool
+
+	if specAgentPool.Name != "" {
+		t.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID by name")
+		return r.getAgentPoolIDByName(ctx, t)
+	}
+
+	t.log.Info("Reconcile Agent Pool", "msg", "getting agent pool ID from the spec.AgentPool.ID")
+
+	return t.tfClient.Client.AgentPools.Read(ctx, specAgentPool.ID)
+}
+
+func (r *AgentTokenReconciler) getAgentPool(ctx context.Context, t *agentTokenInstance) (*tfc.AgentPool, error) {
+	specAgentPool := t.instance.Spec.AgentPool
+
+	if specAgentPool.Name != "" {
+		t.log.Info("Reconcile Agent Token", "msg", "getting agent pool by name")
+		return r.getAgentPoolIDByName(ctx, t)
+	}
+
+	t.log.Info("Reconcile Agent Token", "msg", "getting agent pool by ID")
+	return r.getAgentPoolID(ctx, t)
+}
+
+func (r *AgentTokenReconciler) createSecret(ctx context.Context, t *agentTokenInstance) error {
+	s := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      t.instance.Spec.SecretName,
+			Namespace: t.instance.Namespace,
+			Annotations: map[string]string{
+				"app.terraform.io/agent-pool-id":   t.instance.Status.AgentPool.ID,
+				"app.terraform.io/agent-pool-name": t.instance.Status.AgentPool.Name,
+			},
+		},
+	}
+	if err := controllerutil.SetControllerReference(&t.instance, s, r.Scheme); err != nil {
+		t.log.Error(err, "Reconcile Agent Tokens", "msg", "failed to set controller reference")
+		return err
+	}
+	nn := types.NamespacedName{
+		Namespace: t.instance.Namespace,
+		Name:      t.instance.Spec.SecretName,
+	}
+
+	if err := r.Client.Get(ctx, nn, s); err != nil {
+		if errors.IsNotFound(err) {
+			t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("creating a new Kubernetes Secret %q", s.Name))
+			if err = r.Client.Create(ctx, s); err != nil {
+				t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to create a new Kubernetes Secret %q", s.Name))
+				return err
+			}
+			t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new Kubernetes Secret %q", s.Name))
+			return nil
+		}
+		t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to get Kubernetes Secret %q", s.Name))
+		return err
+	}
+
+	return nil
+}
+
 func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentTokenInstance) error {
 	t.log.Info("Reconcile Agent Token", "msg", "reconciling agent token")
 
@@ -177,5 +268,21 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 		return r.deleteAgentToken(ctx, t)
 	}
 
-	return nil
+	pool, err := r.getAgentPool(ctx, t)
+	if err != nil {
+		return err
+	}
+
+	t.instance.Status.AgentPool = &appv1alpha2.AgentPoolRef{
+		ID:   pool.ID,
+		Name: pool.Name,
+	}
+
+	t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent pool %s/%s", pool.Name, pool.ID))
+
+	if err := r.createSecret(ctx, t); err != nil {
+		return err
+	}
+
+	return r.Status().Update(ctx, &t.instance)
 }

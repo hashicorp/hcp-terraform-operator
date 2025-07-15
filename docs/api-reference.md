@@ -31,6 +31,7 @@ _Appears in:_
 - [AgentPoolSpec](#agentpoolspec)
 - [AgentPoolStatus](#agentpoolstatus)
 - [AgentTokenSpec](#agenttokenspec)
+- [AgentTokenStatus](#agenttokenstatus)
 
 | Field | Description |
 | --- | --- |
@@ -263,6 +264,7 @@ _Appears in:_
 | `agentPool` _[AgentPoolRef](#agentpoolref)_ |  |
 | `managementPolicy` _[AgentTokenManagementPolicy](#agenttokenmanagementpolicy)_ |  |
 | `agentTokens` _[AgentAPIToken](#agentapitoken) array_ |  |
+| `secretName` _string_ |  |
 
 
 
