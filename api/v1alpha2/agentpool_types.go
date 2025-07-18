@@ -145,6 +145,11 @@ type AgentPoolSpec struct {
 	//+optional
 	AgentDeploymentAutoscaling *AgentDeploymentAutoscaling `json:"autoscaling,omitempty"`
 
+	//AllowedWorkspaces is a list of HCP Terraform Workspaces ID which
+	// are scoped to this agent pool.
+	//+optional
+	AllowedWorkspaces *[]string `json:"allowedWorkspaces,omitempty"`
+
 	// The Deletion Policy specifies the behavior of the custom resource and its associated agent pool when the custom resource is deleted.
 	// - `retain`: When you delete the custom resource, the operator will remove only the custom resource.
 	//   The HCP Terraform agent pool will be retained. The managed tokens will remain active on the HCP Terraform side; however, the corresponding secrets and managed agents will be removed.

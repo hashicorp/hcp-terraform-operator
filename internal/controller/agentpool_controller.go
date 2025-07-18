@@ -185,8 +185,21 @@ func (r *AgentPoolReconciler) updateStatus(ctx context.Context, ap *agentPoolIns
 
 func (r *AgentPoolReconciler) createAgentPool(ctx context.Context, ap *agentPoolInstance) (*tfc.AgentPool, error) {
 	options := tfc.AgentPoolCreateOptions{
-		Name: &ap.instance.Spec.Name,
+		Name:               &ap.instance.Spec.Name,
+		OrganizationScoped: tfc.Bool(true),
 	}
+
+	if ap.instance.Spec.AllowedWorkspaces != nil {
+		options.AllowedWorkspaces = []*tfc.Workspace{}
+		if len(*ap.instance.Spec.AllowedWorkspaces) > 0 {
+			options.OrganizationScoped = tfc.Bool(false)
+			for _, workspace := range *ap.instance.Spec.AllowedWorkspaces {
+				ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("creating allowed workspace %s to the agent pool", workspace))
+				options.AllowedWorkspaces = append(options.AllowedWorkspaces, &tfc.Workspace{ID: workspace})
+			}
+		}
+	}
+
 	agentPool, err := ap.tfClient.Client.AgentPools.Create(ctx, ap.instance.Spec.Organization, options)
 	if err != nil {
 		return nil, err
@@ -207,6 +220,24 @@ func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPool
 
 	if agentPool.Name != spec.Name {
 		options.Name = tfc.String(spec.Name)
+	}
+	optionsAllow := tfc.AgentPoolAllowedWorkspacesUpdateOptions{
+		AllowedWorkspaces: []*tfc.Workspace{},
+	}
+	if spec.AllowedWorkspaces != nil {
+		if len(*ap.instance.Spec.AllowedWorkspaces) > 0 {
+			options.OrganizationScoped = tfc.Bool(false)
+			for _, workspace := range *ap.instance.Spec.AllowedWorkspaces {
+				ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("Updating allowed workspace %s to the agent pool", workspace))
+				optionsAllow.AllowedWorkspaces = append(optionsAllow.AllowedWorkspaces, &tfc.Workspace{ID: workspace})
+			}
+			_, err := ap.tfClient.Client.AgentPools.UpdateAllowedWorkspaces(ctx, ap.instance.Status.AgentPoolID, optionsAllow)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		options.OrganizationScoped = tfc.Bool(true)
 	}
 
 	return ap.tfClient.Client.AgentPools.Update(ctx, ap.instance.Status.AgentPoolID, options)
