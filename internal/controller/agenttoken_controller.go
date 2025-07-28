@@ -47,6 +47,7 @@ type agentTokenInstance struct {
 //+kubebuilder:rbac:groups=apt.terraform.io,resources=agenttokens/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=apt.terraform.io,resources=agenttokens/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;update;watch
 
 func (r *AgentTokenReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	t := agentTokenInstance{}
@@ -169,10 +170,10 @@ func (r *AgentTokenReconciler) removeFinalizer(ctx context.Context, t *agentToke
 }
 
 func (r *AgentTokenReconciler) getAgentPoolIDByName(ctx context.Context, t *agentTokenInstance) (*tfc.AgentPool, error) {
-	agentPoolName := t.instance.Spec.AgentPool.Name
+	spec := t.instance.Spec.AgentPool.Name
 
 	listOpts := &tfc.AgentPoolListOptions{
-		Query: agentPoolName,
+		Query: spec,
 		ListOptions: tfc.ListOptions{
 			PageSize: maxPageSize,
 		},
@@ -183,7 +184,7 @@ func (r *AgentTokenReconciler) getAgentPoolIDByName(ctx context.Context, t *agen
 			return nil, err
 		}
 		for _, a := range agentPoolIDs.Items {
-			if a.Name == agentPoolName {
+			if a.Name == spec {
 				return a, nil
 			}
 		}
@@ -193,7 +194,7 @@ func (r *AgentTokenReconciler) getAgentPoolIDByName(ctx context.Context, t *agen
 		listOpts.PageNumber = agentPoolIDs.NextPage
 	}
 
-	return nil, fmt.Errorf("agent pool ID not found for agent pool name %q", agentPoolName)
+	return nil, fmt.Errorf("agent pool ID not found for agent pool name %q", spec)
 }
 
 func (r *AgentTokenReconciler) getAgentPoolID(ctx context.Context, t *agentTokenInstance) (*tfc.AgentPool, error) {
@@ -210,9 +211,9 @@ func (r *AgentTokenReconciler) getAgentPoolID(ctx context.Context, t *agentToken
 }
 
 func (r *AgentTokenReconciler) getAgentPool(ctx context.Context, t *agentTokenInstance) (*tfc.AgentPool, error) {
-	specAgentPool := t.instance.Spec.AgentPool
+	spec := t.instance.Spec.AgentPool
 
-	if specAgentPool.Name != "" {
+	if spec.Name != "" {
 		t.log.Info("Reconcile Agent Token", "msg", "getting agent pool by name")
 		return r.getAgentPoolIDByName(ctx, t)
 	}
@@ -221,17 +222,19 @@ func (r *AgentTokenReconciler) getAgentPool(ctx context.Context, t *agentTokenIn
 	return r.getAgentPoolID(ctx, t)
 }
 
-func (r *AgentTokenReconciler) createSecret(ctx context.Context, t *agentTokenInstance) error {
+func (r *AgentTokenReconciler) createOrUpdateSecret(ctx context.Context, t *agentTokenInstance) error {
+	a := map[string]string{
+		"app.terraform.io/agent-pool-id":   t.instance.Status.AgentPool.ID,
+		"app.terraform.io/agent-pool-name": t.instance.Status.AgentPool.Name,
+	}
 	s := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      t.instance.Spec.SecretName,
-			Namespace: t.instance.Namespace,
-			Annotations: map[string]string{
-				"app.terraform.io/agent-pool-id":   t.instance.Status.AgentPool.ID,
-				"app.terraform.io/agent-pool-name": t.instance.Status.AgentPool.Name,
-			},
+			Name:        t.instance.Spec.SecretName,
+			Namespace:   t.instance.Namespace,
+			Annotations: a,
 		},
 	}
+	t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("setting controller reference for Kubernetes Secret %q", s.Name))
 	if err := controllerutil.SetControllerReference(&t.instance, s, r.Scheme); err != nil {
 		t.log.Error(err, "Reconcile Agent Tokens", "msg", "failed to set controller reference")
 		return err
@@ -255,19 +258,23 @@ func (r *AgentTokenReconciler) createSecret(ctx context.Context, t *agentTokenIn
 		return err
 	}
 
+	d := make(map[string][]byte)
+	if s.Data != nil {
+		d = s.DeepCopy().Data
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, s, func() error {
+		s.Data = d
+		s.Annotations = a
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentTokenInstance) error {
-	t.log.Info("Reconcile Agent Token", "msg", "reconciling agent token")
-
-	// verify whether the Kubernetes object has been marked as deleted and if so delete the project
-	if isDeletionCandidate(&t.instance, agentTokenFinalizer) {
-		t.log.Info("Reconcile Agent Token", "msg", "object marked as deleted, need to delete project first")
-		r.Recorder.Event(&t.instance, corev1.EventTypeNormal, "ReconcileAgentToken", "Object marked as deleted, need to delete project first")
-		return r.deleteAgentToken(ctx, t)
-	}
-
+func (r *AgentTokenReconciler) updateStatusAgentPool(ctx context.Context, t *agentTokenInstance) error {
 	pool, err := r.getAgentPool(ctx, t)
 	if err != nil {
 		return err
@@ -278,9 +285,50 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 		Name: pool.Name,
 	}
 
-	t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent pool %s/%s", pool.Name, pool.ID))
+	return nil
+}
 
-	if err := r.createSecret(ctx, t); err != nil {
+func (r *AgentTokenReconciler) listAgentTokens(ctx context.Context, t *agentTokenInstance) (*tfc.AgentTokenList, error) {
+	if t.instance.Status.AgentPool == nil {
+		if err := r.updateStatusAgentPool(ctx, t); err != nil {
+			return nil, err
+		}
+	}
+	tokens, err := t.tfClient.Client.AgentTokens.List(ctx, t.instance.Status.AgentPool.ID)
+	if err == tfc.ErrResourceNotFound {
+		t.log.Info("Reconcile Agent Token", "msg", "[DEBUG] Agent Pool was not found")
+		if err := r.updateStatusAgentPool(ctx, t); err != nil {
+			return nil, err
+		}
+		return t.tfClient.Client.AgentTokens.List(ctx, t.instance.Status.AgentPool.ID)
+	}
+
+	return tokens, err
+}
+
+func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentTokenInstance) error {
+	t.log.Info("Reconcile Agent Token", "msg", "reconciling agent token")
+
+	// verify whether the Kubernetes object has been marked as deleted and if so delete the tokens
+	if isDeletionCandidate(&t.instance, agentTokenFinalizer) {
+		t.log.Info("Reconcile Agent Token", "msg", "object marked as deleted, need to delete tokens first")
+		r.Recorder.Event(&t.instance, corev1.EventTypeNormal, "ReconcileAgentToken", "Object marked as deleted, need to delete tokens first")
+		return r.deleteAgentToken(ctx, t)
+	}
+
+	tokens, err := r.listAgentTokens(ctx, t)
+	if err != nil {
+		return err
+	}
+	for _, token := range tokens.Items {
+		t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent token %s/%s", token.Description, token.ID))
+	}
+	// Add reconciliation logic based on the policy
+
+	t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent pool %s/%s", t.instance.Status.AgentPool.Name, t.instance.Status.AgentPool.ID))
+
+	// Make this conditional
+	if err := r.createOrUpdateSecret(ctx, t); err != nil {
 		return err
 	}
 

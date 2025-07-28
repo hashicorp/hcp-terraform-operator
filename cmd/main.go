@@ -71,9 +71,8 @@ func main() {
 	var agentTokenWorkers int
 	flag.IntVar(&agentTokenWorkers, "agent-token-workers", 1,
 		"The number of the Agent Token controller workers.")
-	flag.DurationVar(&controller.AgentTokenSyncPeriod, "agent-token-sync-period", 10*time.Minute,
+	flag.DurationVar(&controller.AgentTokenSyncPeriod, "agent-token-sync-period", 1*time.Minute,
 		"The minimum frequency at which watched agent token resources are reconciled. Format: 5s, 1m, etc.")
-
 	// MODULE CONTROLLER OPTIONS
 	var moduleWorkers int
 	flag.IntVar(&moduleWorkers, "module-workers", 1,
