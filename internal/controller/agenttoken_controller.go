@@ -26,6 +26,8 @@ import (
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
+	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
@@ -288,22 +290,125 @@ func (r *AgentTokenReconciler) updateStatusAgentPool(ctx context.Context, t *age
 	return nil
 }
 
-func (r *AgentTokenReconciler) listAgentTokens(ctx context.Context, t *agentTokenInstance) (*tfc.AgentTokenList, error) {
+func (r *AgentTokenReconciler) listAgentTokens(ctx context.Context, t *agentTokenInstance) (map[string]string, error) {
 	if t.instance.Status.AgentPool == nil {
 		if err := r.updateStatusAgentPool(ctx, t); err != nil {
 			return nil, err
 		}
 	}
+	m := make(map[string]string)
 	tokens, err := t.tfClient.Client.AgentTokens.List(ctx, t.instance.Status.AgentPool.ID)
 	if err == tfc.ErrResourceNotFound {
 		t.log.Info("Reconcile Agent Token", "msg", "[DEBUG] Agent Pool was not found")
 		if err := r.updateStatusAgentPool(ctx, t); err != nil {
 			return nil, err
 		}
-		return t.tfClient.Client.AgentTokens.List(ctx, t.instance.Status.AgentPool.ID)
+		tokens, err := t.tfClient.Client.AgentTokens.List(ctx, t.instance.Status.AgentPool.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, token := range tokens.Items {
+			m[token.ID] = token.Description
+		}
+		return m, err
+	}
+	for _, token := range tokens.Items {
+		m[token.ID] = token.Description
 	}
 
-	return tokens, err
+	return m, err
+}
+
+func (r *AgentTokenReconciler) createToken(ctx context.Context, t *agentTokenInstance, name string) error {
+	nn := types.NamespacedName{
+		Namespace: t.instance.Namespace,
+		Name:      t.instance.Spec.SecretName,
+	}
+	t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("creating a new agent token %q", name))
+	at, err := t.tfClient.Client.AgentTokens.Create(ctx, t.instance.Status.AgentPool.ID, tfc.AgentTokenCreateOptions{
+		Description: &name,
+	})
+	if err != nil {
+		t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to create a new token %q", name))
+		return err
+	}
+	t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new agent token %q %q", name, at.ID))
+	// UPDATE SECRET
+	s := &corev1.Secret{}
+	t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("update Kubernets Secret %q with token %q", nn.Name, name))
+	if err := r.Client.Get(ctx, nn, s); err != nil {
+		t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to get Kubernets Secret %q", nn.Name))
+		return err
+	}
+	d := make(map[string][]byte)
+	if s.Data != nil {
+		d = s.DeepCopy().Data
+	}
+	d[at.Description] = []byte(at.Token)
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, s, func() error {
+		s.Data = d
+		s.Annotations = map[string]string{
+			"app.terraform.io/agent-pool-id":   t.instance.Status.AgentPool.ID,
+			"app.terraform.io/agent-pool-name": t.instance.Status.AgentPool.Name,
+		}
+		return nil
+	})
+	if err != nil {
+		t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to update Kubernets Secret %q with token %q", s.Name, name))
+		return err
+	}
+	t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully updated Kubernets Secret %q with token %q", s.Name, name))
+
+	t.instance.Status.AgentTokens = append(t.instance.Status.AgentTokens, &appv1alpha2.AgentAPIToken{
+		Name:       at.Description,
+		ID:         at.ID,
+		CreatedAt:  pointer.PointerOf(at.CreatedAt.Unix()),
+		LastUsedAt: pointer.PointerOf(at.LastUsedAt.Unix()),
+	})
+
+	return nil
+}
+
+func (r *AgentTokenReconciler) removeToken(ctx context.Context, t *agentTokenInstance, id string) error {
+	nn := types.NamespacedName{
+		Namespace: t.instance.Namespace,
+		Name:      t.instance.Spec.SecretName,
+	}
+	a := map[string]string{
+		"app.terraform.io/agent-pool-id":   t.instance.Status.AgentPool.ID,
+		"app.terraform.io/agent-pool-name": t.instance.Status.AgentPool.Name,
+	}
+	for i, token := range t.instance.Status.AgentTokens {
+		if token.ID == id {
+			// UPDATE SECRET
+			s := &corev1.Secret{}
+			t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("remove token %q from Kubernets Secret %q", id, nn.Name))
+			if err := r.Client.Get(ctx, nn, s); err != nil {
+				t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to get Kubernets Secret %q", nn.Name))
+				return err
+			}
+			d := make(map[string][]byte)
+			if s.Data != nil {
+				d = s.DeepCopy().Data
+			}
+			delete(d, token.Name)
+			_, err := controllerutil.CreateOrUpdate(ctx, r.Client, s, func() error {
+				s.Data = d
+				s.Annotations = a
+				return nil
+			})
+			if err != nil {
+				t.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove token %q from Kubernets Secret %q", id, s.Name))
+				return err
+			}
+			t.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully removed token %q from Kubernets Secret %q", id, s.Name))
+			// UPDATE STATUS
+			t.instance.Status.AgentTokens = slice.RemoveFromSlice(t.instance.Status.AgentTokens, i)
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentTokenInstance) error {
@@ -320,10 +425,36 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 	if err != nil {
 		return err
 	}
-	for _, token := range tokens.Items {
-		t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent token %s/%s", token.Description, token.ID))
+
+	statusTokens := make(map[string]string, len(t.instance.Status.AgentTokens))
+	for _, token := range t.instance.Status.AgentTokens {
+		statusTokens[token.Name] = token.ID
+	}
+
+	for id, name := range tokens {
+		t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent token %s/%s", name, id))
 	}
 	// Add reconciliation logic based on the policy
+
+	switch t.instance.Spec.ManagementPolicy {
+	case appv1alpha2.AgentTokenManagementPolicyMerge:
+		for _, token := range t.instance.Spec.AgentTokens {
+			if tokenID, ok := statusTokens[token.Name]; ok {
+				delete(statusTokens, token.Name)
+				if _, ok := tokens[tokenID]; ok {
+					delete(tokens, tokenID)
+					continue
+				}
+				if err := r.removeToken(ctx, t, tokenID); err != nil {
+					return err
+				}
+			}
+			if err := r.createToken(ctx, t, token.Name); err != nil {
+				return err
+			}
+		}
+		// Add deletion handling
+	}
 
 	t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("[DEBUG] agent pool %s/%s", t.instance.Status.AgentPool.Name, t.instance.Status.AgentPool.ID))
 
