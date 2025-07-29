@@ -11,5 +11,7 @@ import (
 func (r *AgentTokenReconciler) deleteAgentToken(ctx context.Context, t *agentTokenInstance) error {
 	t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("deletion policy is %s", t.instance.Spec.DeletionPolicy))
 
+	// TODO
+
 	return r.removeFinalizer(ctx, t)
 }
