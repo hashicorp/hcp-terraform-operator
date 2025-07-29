@@ -374,56 +374,33 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 		statusTokens[token.Name] = token.ID
 	}
 
+	// Clean up.
+	for _, token := range t.instance.Spec.AgentTokens {
+		if tokenID, ok := statusTokens[token.Name]; ok {
+			delete(statusTokens, token.Name)
+			if _, ok := tokens[tokenID]; ok {
+				delete(tokens, tokenID)
+				continue
+			}
+			if err := r.removeToken(ctx, t, tokenID); err != nil {
+				return err
+			}
+		}
+		if err := r.createToken(ctx, t, token.Name); err != nil {
+			return err
+		}
+	}
+	// Clean up.
+	for _, id := range statusTokens {
+		if err := r.removeToken(ctx, t, id); err != nil {
+			return err
+		}
+	}
+
 	switch t.instance.Spec.ManagementPolicy {
 	case appv1alpha2.AgentTokenManagementPolicyMerge:
-		for _, token := range t.instance.Spec.AgentTokens {
-			if id, ok := statusTokens[token.Name]; ok {
-				delete(statusTokens, token.Name)
-				if _, ok := tokens[id]; ok {
-					delete(tokens, id)
-					continue
-				}
-				if err := r.removeToken(ctx, t, id); err != nil {
-					return err
-				}
-			}
-			if err := r.createToken(ctx, t, token.Name); err != nil {
-				return err
-			}
-		}
-
-		// Clean up.
-		// This does not actually removes tokens from HCPT.
-		for _, id := range statusTokens {
-			if err := r.removeToken(ctx, t, id); err != nil {
-				return err
-			}
-		}
-		// Add deletion handling
-		// - deleted from spec
+		// This remains no-op.
 	case appv1alpha2.AgentTokenManagementPolicyOwner:
-		for _, token := range t.instance.Spec.AgentTokens {
-			if tokenID, ok := statusTokens[token.Name]; ok {
-				delete(statusTokens, token.Name)
-				if _, ok := tokens[tokenID]; ok {
-					delete(tokens, tokenID)
-					continue
-				}
-				if err := r.removeToken(ctx, t, tokenID); err != nil {
-					return err
-				}
-			}
-			if err := r.createToken(ctx, t, token.Name); err != nil {
-				return err
-			}
-		}
-		// Clean up.
-		for _, id := range statusTokens {
-			if err := r.removeToken(ctx, t, id); err != nil {
-				return err
-			}
-		}
-
 		for id := range tokens {
 			t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("removing agent token %q", id))
 			err := t.tfClient.Client.AgentTokens.Delete(ctx, id)
@@ -435,9 +412,6 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 				return err
 			}
 		}
-		// Add deletion handling
-		// - deleted from spec
-		// - delete everything that is not in spec
 	}
 
 	return r.Status().Update(ctx, &t.instance)
