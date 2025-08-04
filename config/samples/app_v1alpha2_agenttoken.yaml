@@ -1,9 +1,18 @@
 apiVersion: app.terraform.io/v1alpha2
 kind: AgentToken
 metadata:
-  labels:
-    app.kubernetes.io/name: hcp-terraform-operator
-    app.kubernetes.io/managed-by: kustomize
-  name: agenttoken-sample
+  name: NAME
 spec:
-  # TODO(user): Add fields here
+  organization: HCP_TF_ORG_NAME
+  token:
+    secretKeyRef:
+      name: SECRET_NAME
+      key: SECRET_KEY
+  agentPool:
+    name: AGENT_POOL_NAME
+  agentTokens:
+  - name: token-a
+  - name: token-b
+  secretName: SECRET_NAME
+  deletionPolicy: destroy
+  managementPolicy: merge

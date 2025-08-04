@@ -50,7 +50,7 @@ type agentTokenInstance struct {
 //+kubebuilder:rbac:groups=apt.terraform.io,resources=agenttokens/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=apt.terraform.io,resources=agenttokens/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;update;watch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=create;list;update;watch;patch
 
 func (r *AgentTokenReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	t := agentTokenInstance{}
