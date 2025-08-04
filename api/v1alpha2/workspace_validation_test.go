@@ -609,7 +609,6 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecRemoteStateSharing(); len(errs) == 0 {
-				// fmt.Println(errs)
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})
