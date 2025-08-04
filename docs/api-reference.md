@@ -211,7 +211,10 @@ _Appears in:_
 
 _Underlying type:_ _string_
 
-
+The Deletion Policy defines how managed tokens and Kubernetes Secrets should be handled when the custom resource is deleted.
+  - `retain`: When the custom resource is deleted, the operator will remove only the resource itself.
+    The managed HCP Terraform Agent tokens will remain active on the HCP Terraform side, and the corresponding Kubernetes Secret will not be modified.
+  - `destroy`: The operator will attempt to delete the managed HCP Terraform Agent tokens and remove the corresponding Kubernetes Secret.
 
 _Appears in:_
 - [AgentTokenSpec](#agenttokenspec)
@@ -240,7 +243,9 @@ AgentTokenList contains a list of AgentToken.
 
 _Underlying type:_ _string_
 
-
+The Management Policy defines how the controller will manage tokens in the specified Agent Pool.
+- `merge`  — the controller will manage its tokens alongside any existing tokens in the pool, without modifying or deleting tokens it does not own.
+- `owner`  — the controller assumes full ownership of all agent tokens in the pool, managing and potentially modifying or deleting all tokens, including those not created by it.
 
 _Appears in:_
 - [AgentTokenSpec](#agenttokenspec)
@@ -260,11 +265,11 @@ _Appears in:_
 | --- | --- |
 | `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
-| `deletionPolicy` _[AgentTokenDeletionPolicy](#agenttokendeletionpolicy)_ |  |
-| `agentPool` _[AgentPoolRef](#agentpoolref)_ |  |
-| `managementPolicy` _[AgentTokenManagementPolicy](#agenttokenmanagementpolicy)_ |  |
-| `agentTokens` _[AgentAPIToken](#agentapitoken) array_ |  |
-| `secretName` _string_ |  |
+| `deletionPolicy` _[AgentTokenDeletionPolicy](#agenttokendeletionpolicy)_ | The Deletion Policy defines how managed tokens and Kubernetes Secrets should be handled when the custom resource is deleted.<br />- `retain`: When the custom resource is deleted, the operator will remove only the resource itself.<br />  The managed HCP Terraform Agent tokens will remain active on the HCP Terraform side, and the corresponding Kubernetes Secret will not be modified.<br />- `destroy`: The operator will attempt to delete the managed HCP Terraform Agent tokens and remove the corresponding Kubernetes Secret.<br />Default: `retain`. |
+| `agentPool` _[AgentPoolRef](#agentpoolref)_ | The Agent Pool name or ID where the tokens will be managed. |
+| `managementPolicy` _[AgentTokenManagementPolicy](#agenttokenmanagementpolicy)_ | The Management Policy defines how the controller will manage tokens in the specified Agent Pool.<br />- `merge`  — the controller will manage its tokens alongside any existing tokens in the pool, without modifying or deleting tokens it does not own.<br />- `owner`  — the controller assumes full ownership of all agent tokens in the pool, managing and potentially modifying or deleting all tokens, including those not created by it.<br />Default: `merge`. |
+| `agentTokens` _[AgentAPIToken](#agentapitoken) array_ | List of the HCP Terraform Agent tokens to manage. |
+| `secretName` _string_ | secretName specifies the name of the Kubernetes Secret<br />where the HCP Terraform Agent tokens are stored. |
 
 
 
