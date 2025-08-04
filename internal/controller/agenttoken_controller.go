@@ -319,26 +319,28 @@ func (r *AgentTokenReconciler) createToken(ctx context.Context, t *agentTokenIns
 }
 
 func (r *AgentTokenReconciler) removeToken(ctx context.Context, t *agentTokenInstance, id string) error {
-	nn := types.NamespacedName{
-		Namespace: t.instance.Namespace,
-		Name:      t.instance.Spec.SecretName,
-	}
 	for i, token := range t.instance.Status.AgentTokens {
 		if token.ID == id {
 			err := t.tfClient.Client.AgentTokens.Delete(ctx, id)
 			if err != nil && err != tfc.ErrResourceNotFound {
-				t.log.Error(err, "Reconcile Agent Token", "msg", fmt.Sprintf("failed to remove agent token %q", id))
+				t.log.Error(err, "Reconcile Agent Token", "msg", fmt.Sprintf("failed to remove token %q", id))
 				return err
 			}
 			s := &corev1.Secret{}
-			t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("remove token %q from Kubernets Secret %q", id, nn.Name))
+			nn := types.NamespacedName{
+				Namespace: t.instance.Namespace,
+				Name:      t.instance.Spec.SecretName,
+			}
+			t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("remove key=%q from in secret=%q namespace=%q", id, nn.Name, nn.Namespace))
 			if err := r.Client.Get(ctx, nn, s); err != nil {
 				if apierrors.IsNotFound(err) {
+					t.instance.Status.AgentTokens = slice.RemoveFromSlice(t.instance.Status.AgentTokens, i)
 					return nil
 				}
 				t.log.Error(err, "Reconcile Agent Token", "msg", fmt.Sprintf("failed to get secret=%q namespace=%q", nn.Name, nn.Namespace))
 				return err
 			}
+			//
 			patch := client.MergeFrom(s.DeepCopy())
 			delete(s.Data, token.Name)
 			if err := r.Client.Patch(ctx, s, patch); err != nil {
@@ -390,7 +392,6 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 			return err
 		}
 	}
-	// Clean up.
 	for _, id := range statusTokens {
 		if err := r.removeToken(ctx, t, id); err != nil {
 			return err
@@ -413,6 +414,8 @@ func (r *AgentTokenReconciler) reconcileToken(ctx context.Context, t *agentToken
 			}
 		}
 	}
+
+	t.instance.Status.ObservedGeneration = t.instance.Generation
 
 	return r.Status().Update(ctx, &t.instance)
 }
