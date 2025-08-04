@@ -203,6 +203,12 @@ spec:
                   - name
                   type: object
                 type: array
+              observedGeneration:
+                description: Real world state generation.
+                format: int64
+                type: integer
+            required:
+            - observedGeneration
             type: object
         required:
         - spec
