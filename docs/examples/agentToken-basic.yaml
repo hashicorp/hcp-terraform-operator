@@ -1,0 +1,31 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+---
+apiVersion: app.terraform.io/v1alpha2
+kind: AgentToken
+metadata:
+  name: this
+spec:
+  organization: kubernetes-operator
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  agentPool:
+    name: multik
+    # Alternatively, you can use the Agent Pool ID:
+    #
+    # id: apool-nXkqizJF2XGyyXRG
+  agentTokens:
+  - name: token-a
+  - name: token-b
+  secretName: this
+  deletionPolicy: retain
+  # Alternatively, you can use different policy:
+  #
+  # deletionPolicy: destroy
+  managementPolicy: merge
+  # Alternatively, you can use different policy:
+  #
+  # managementPolicy: owner
