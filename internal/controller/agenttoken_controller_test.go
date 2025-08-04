@@ -189,7 +189,7 @@ func validateTokensPolicyOwner(ctx context.Context, instance *appv1alpha2.AgentT
 	nn := getNamespacedName(instance)
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, nn, instance)).Should(Succeed())
-		if instance.Generation == instance.Status.ObservedGeneration {
+		if instance.Generation != instance.Status.ObservedGeneration {
 			return false
 		}
 		at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPool.ID)
@@ -214,7 +214,7 @@ func validateTokensPolicyMerge(ctx context.Context, instance *appv1alpha2.AgentT
 	nn := getNamespacedName(instance)
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, nn, instance)).Should(Succeed())
-		if instance.Generation == instance.Status.ObservedGeneration {
+		if instance.Generation != instance.Status.ObservedGeneration {
 			return false
 		}
 		at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPool.ID)
