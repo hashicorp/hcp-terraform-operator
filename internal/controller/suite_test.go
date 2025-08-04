@@ -109,8 +109,6 @@ var _ = BeforeSuite(func() {
 
 	err = appv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).ToNot(HaveOccurred())
-	err = appv1alpha2.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
 
