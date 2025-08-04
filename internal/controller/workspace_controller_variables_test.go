@@ -201,7 +201,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Can make a variable no sensitive
 			instance.Spec.TerraformVariables = []appv1alpha2.Variable{
 				{
-					Name:        "test2",
+					Name:        "test",
 					Description: "test2",
 					Value:       "test2",
 					HCL:         false,
@@ -337,7 +337,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Can make a variable no sensitive
 			instance.Spec.EnvironmentVariables = []appv1alpha2.Variable{
 				{
-					Name:        "test2",
+					Name:        "test",
 					Description: "test2",
 					Value:       "test2",
 					HCL:         false,
