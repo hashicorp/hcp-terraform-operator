@@ -6,6 +6,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,25 +19,14 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-// agentRunStatuses is a comma-separated list of run statuses that require an agent.
-var (
-	agentRunStatuses = strings.Join([]string{
-		string(tfc.RunApplying),
-		string(tfc.RunApplyQueued),
-		string(tfc.RunConfirmed),
-		string(tfc.RunCostEstimating),
-		string(tfc.RunFetching),
-		string(tfc.RunFetchingCompleted),
-		string(tfc.RunPlanQueued),
-		string(tfc.RunPlanning),
-		string(tfc.RunPolicyChecking),
-		string(tfc.RunPostPlanRunning),
-		string(tfc.RunPreApplyRunning),
-		string(tfc.RunPrePlanRunning),
-		string(tfc.RunQueuing),
-		string(tfc.RunQueuingApply),
-	}, ",")
-)
+// userInteractionRunStatuses contains run statuses that require user interaction.
+// These statuses are excluded from the agent pool autoscaling calculation by
+// not being counted in the pendingWorkspaceRuns function.
+var userInteractionRunStatuses = []tfc.RunStatus{
+	tfc.RunCostEstimated,
+	tfc.RunPolicyOverride,
+	tfc.RunPlannedAndSaved,
+}
 
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
 // The wildcard pattern can contain '*' at the beginning and/or end to match any sequence of characters.
@@ -77,7 +67,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 	runs := map[string]struct{}{}
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
-		Status:         agentRunStatuses,
+		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
 			PageNumber: 1,
@@ -89,7 +79,10 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 			return 0, err
 		}
 		for _, run := range runsList.Items {
-			runs[run.Workspace.ID] = struct{}{}
+			// Only add workspaces that don't require user interaction
+			if !slices.Contains(userInteractionRunStatuses, run.Status) {
+				runs[run.Workspace.ID] = struct{}{}
+			}
 		}
 		if runsList.NextPage == 0 {
 			break
