@@ -6,7 +6,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -20,12 +19,13 @@ import (
 )
 
 // userInteractionRunStatuses contains run statuses that require user interaction.
-// These statuses are excluded from the agent pool autoscaling calculation by
-// not being counted in the pendingWorkspaceRuns function.
-var userInteractionRunStatuses = []tfc.RunStatus{
-	tfc.RunCostEstimated,
-	tfc.RunPolicyOverride,
-	tfc.RunPlannedAndSaved,
+var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
+	tfc.RunCostEstimated:            {},
+	tfc.RunPlanned:                  {},
+	tfc.RunPlannedAndSaved:          {},
+	tfc.RunPolicyOverride:           {},
+	tfc.RunPostPlanAwaitingDecision: {},
+	tfc.RunPostPlanCompleted:        {},
 }
 
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
@@ -65,6 +65,7 @@ func matchWildcardName(wildcard string, str string) bool {
 // This function is compatible with HCP Terraform and TFE version v202409-1 and later.
 func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	runs := map[string]struct{}{}
+	awaitingUserInteractionRuns := map[string]int{} // Track runs awaiting user interaction by status for future metrics
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
 		StatusGroup:    "non_final",
@@ -73,22 +74,29 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 			PageNumber: 1,
 		},
 	}
+
 	for {
 		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
 		if err != nil {
 			return 0, err
 		}
 		for _, run := range runsList.Items {
-			// Only add workspaces that don't require user interaction
-			if !slices.Contains(userInteractionRunStatuses, run.Status) {
-				runs[run.Workspace.ID] = struct{}{}
+			// Skip runs that require user interaction
+			if _, ok := userInteractionRunStatuses[run.Status]; ok {
+				// Save the user interactable run statuses for future metrics with count split by status
+				awaitingUserInteractionRuns[string(run.Status)]++
+				continue
 			}
+			runs[run.Workspace.ID] = struct{}{}
 		}
 		if runsList.NextPage == 0 {
 			break
 		}
 		listOpts.PageNumber = runsList.NextPage
 	}
+
+	// TODO:
+	// Add metric(s) for runs awaiting user interaction
 
 	return int32(len(runs)), nil
 }
