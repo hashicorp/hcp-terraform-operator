@@ -50,6 +50,7 @@ func genericPredicates() predicate.Predicate {
 				return true
 			}
 
+			// Continue with reconciliation if the app.terraform.io/paused annotation is set or has been removed.
 			if e.ObjectNew.GetAnnotations()[annotationPaused] != "" || e.ObjectOld.GetAnnotations()[annotationPaused] != "" {
 				return true
 			}

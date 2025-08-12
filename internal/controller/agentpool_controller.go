@@ -24,6 +24,7 @@ import (
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
+
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )

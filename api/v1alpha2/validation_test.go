@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestValidateLabels(t *testing.T) {
+func TestValidateDeploymentLabels(t *testing.T) {
 	tests := []struct {
 		name    string
 		labels  map[string]string
@@ -40,7 +40,7 @@ func TestValidateLabels(t *testing.T) {
 
 	for _, l := range tests {
 		t.Run(l.name, func(t *testing.T) {
-			errs := validateLabels(l.labels, field.NewPath("metadata").Child("labels"))
+			errs := validateDeploymentLabels(l.labels, field.NewPath("metadata").Child("labels"))
 			if (len(errs) > 0) != l.wantErr {
 				t.Errorf("validateLabels() error = %v, wantErr %v", errs, l.wantErr)
 			}
@@ -48,7 +48,7 @@ func TestValidateLabels(t *testing.T) {
 	}
 }
 
-func TestValidateAnnotations(t *testing.T) {
+func TestValidateDeploymentAnnotations(t *testing.T) {
 	tests := []struct {
 		name        string
 		annotations map[string]string
@@ -79,7 +79,7 @@ func TestValidateAnnotations(t *testing.T) {
 
 	for _, a := range tests {
 		t.Run(a.name, func(t *testing.T) {
-			errs := validateAnnotations(a.annotations, field.NewPath("metadata").Child("annotations"))
+			errs := validateDeploymentAnnotations(a.annotations, field.NewPath("metadata").Child("annotations"))
 			if (len(errs) > 0) != a.wantErr {
 				t.Errorf("validateAnnotations() error = %v, wantErr %v", errs, a.wantErr)
 			}
