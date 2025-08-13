@@ -73,7 +73,7 @@ func updateWorkspaceVariable(ctx context.Context, w *workspaceInstance, specVari
 		if err := deleteWorkspaceVariable(ctx, w, workspaceVariable); err != nil {
 			return err
 		}
-		if err := createWorkspaceVariable(ctx, w, workspaceVariable); err != nil {
+		if err := createWorkspaceVariable(ctx, w, specVariable); err != nil {
 			return err
 		}
 		w.log.Info("Reconcile Variables", "msg", fmt.Sprintf("successfully updated %s variable %s", specVariable.Category, specVariable.Key))
