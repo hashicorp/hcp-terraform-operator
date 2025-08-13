@@ -78,6 +78,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return doNotRequeue()
 	}
 
+	if a, ok := w.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+		w.log.Info("Workspace Controller", "msg", "reconciliation is paused for this resource")
+		return doNotRequeue()
+	}
+
 	// Migration Validation
 	if controllerutil.ContainsFinalizer(&w.instance, workspaceFinalizerAlpha1) {
 		w.log.Error(err, "Migration", "msg", fmt.Sprintf("spec contains old finalizer %s", workspaceFinalizerAlpha1))
