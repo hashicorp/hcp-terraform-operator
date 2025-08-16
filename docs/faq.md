@@ -76,6 +76,8 @@
 
   The `--agent-pool-sync-period` is a `AgentPool` controller option that specifies the time interval for requeuing AgentPool resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
+  The `--agent-token-sync-period` is a `AgentToken` controller option that specifies the time interval for requeuing AgentToken resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
+
   The `--module-sync-period` is a `Module` controller option that specifies the time interval for requeuing Module resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
   The `--project-sync-period` is a `Project` controller option that specifies the time interval for requeuing Project resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
@@ -207,6 +209,12 @@
 
   The Operator regularly monitors specific workspaces and boosts the agent count when pending runs are detected. The maximum number of agents can be increased up to the value defined in `autoscaling.maxReplicas` or limited by the license, depending on which limit is reached first. If there are no pending runs, the Operator will reduce the number of agents to the specified value in `autoscaling.minReplicas` within the timeframe of `autoscaling.cooldownPeriodSeconds`.
 
+## Agent Token Controller
+
+- **Where can I find Agent tokens?**
+
+  Agent tokens are sensitive and will be stored in a Kubernetes Secret. The tokens will be saved in the Secret referenced by `spec.secretName`. The Secret can either already exist or be created by the controller if it doesn't. We strongly recommend using a unique name for this Secret to avoid data loss or unintentional overwrites.
+
 ## Module Controller
 
 - **Where can I find Module outputs?**
@@ -295,4 +303,4 @@
 
   - **What is Auto Apply for Run Triggers?**
 
-  The field `spec.applyRunTrigger` specifies whether to to automatically or manually apply changes for runs that are created by run triggers from another workspace. Value must be set to auto or manual. 
+  The field `spec.applyRunTrigger` specifies whether to to automatically or manually apply changes for runs that are created by run triggers from another workspace. Value must be set to auto or manual.

@@ -94,6 +94,7 @@ func workspacePredicates() predicate.Predicate {
 func deletionTimestampPredicate(o client.Object) bool {
 	finalizers := []string{
 		agentPoolFinalizer,
+		agentTokenFinalizer,
 		moduleFinalizer,
 		projectFinalizer,
 		workspaceFinalizer,

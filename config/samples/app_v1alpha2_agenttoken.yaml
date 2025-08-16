@@ -1,0 +1,18 @@
+apiVersion: app.terraform.io/v1alpha2
+kind: AgentToken
+metadata:
+  name: NAME
+spec:
+  organization: HCP_TF_ORG_NAME
+  token:
+    secretKeyRef:
+      name: SECRET_NAME
+      key: SECRET_KEY
+  agentPool:
+    name: AGENT_POOL_NAME
+  agentTokens:
+  - name: token-a
+  - name: token-b
+  secretName: SECRET_NAME
+  deletionPolicy: destroy
+  managementPolicy: merge

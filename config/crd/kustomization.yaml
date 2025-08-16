@@ -6,6 +6,7 @@ resources:
 - bases/app.terraform.io_modules.yaml
 - bases/app.terraform.io_agentpools.yaml
 - bases/app.terraform.io_projects.yaml
+- bases/app.terraform.io_agenttokens.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

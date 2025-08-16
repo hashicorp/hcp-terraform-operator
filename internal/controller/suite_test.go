@@ -109,6 +109,7 @@ var _ = BeforeSuite(func() {
 
 	err = appv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).ToNot(HaveOccurred())
+
 	//+kubebuilder:scaffold:scheme
 
 	if organization == "" {
@@ -154,10 +155,11 @@ var _ = BeforeSuite(func() {
 			},
 			Controller: config.Controller{
 				GroupKindConcurrency: map[string]int{
-					"AgentPool.app.terraform.io": 5,
-					"Module.app.terraform.io":    5,
-					"Project.app.terraform.io":   5,
-					"Workspace.app.terraform.io": 5,
+					"AgentPool.app.terraform.io":  5,
+					"AgentToken.app.terraform.io": 5,
+					"Module.app.terraform.io":     5,
+					"Project.app.terraform.io":    5,
+					"Workspace.app.terraform.io":  5,
 				},
 			},
 		})
@@ -167,6 +169,13 @@ var _ = BeforeSuite(func() {
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("AgentPoolController"),
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = (&AgentTokenReconciler{
+			Client:   k8sManager.GetClient(),
+			Scheme:   k8sManager.GetScheme(),
+			Recorder: k8sManager.GetEventRecorderFor("AgentTokenController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
