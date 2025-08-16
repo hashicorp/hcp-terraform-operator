@@ -65,6 +65,17 @@ type RemoteStateSharing struct {
 	Workspaces []*ConsumerWorkspace `json:"workspaces,omitempty"`
 }
 
+// RetryPolicy allows you to configure retry behavior for failed runs on the workspace.
+// It will apply for the latest current run of the operator.
+type RetryPolicy struct {
+	// Limit is the maximum number of retries for failed runs. If set to a negative number, no limit will be applied.
+	// Default: `0`.
+	//
+	//+kubebuilder:default:=0
+	//+optional
+	BackoffLimit int64 `json:"backoffLimit,omitempty"`
+}
+
 // Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
 // Only one of the fields `ID` or `Name` is allowed.
 // At least one of the fields `ID` or `Name` is mandatory.
@@ -592,12 +603,16 @@ type WorkspaceSpec struct {
 	//
 	//+optional
 	RemoteStateSharing *RemoteStateSharing `json:"remoteStateSharing,omitempty"`
+	// Retry Policy allows you to specify how the operator should retry failed runs automatically.
+	//
+	//+optional
+	RetryPolicy *RetryPolicy `json:"retryPolicy,omitempty"`
 	// Run triggers allow you to connect this workspace to one or more source workspaces.
 	// These connections allow runs to queue automatically in this workspace on successful apply of runs in any of the source workspaces.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers
 	//
-	//+kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=2
 	//+optional
 	RunTriggers []RunTrigger `json:"runTriggers,omitempty"`
 	// Settings for the workspace's VCS repository, enabling the UI/VCS-driven run workflow.
@@ -742,11 +757,23 @@ type WorkspaceStatus struct {
 	//
 	//+optional
 	VariableSets []VariableSetStatus `json:"variableSet,omitempty"`
+
+	// Retry status of the latest run on the workspace.
+	//
+	//+optional
+	Retry *RetryStatus `json:"retry,omitempty"`
 }
 
 type VariableSetStatus struct {
 	ID   string `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
+}
+
+// RetryStatus contains the status of the retry of the latest run on the workspace. How many attempts are left and
+// possibly a time to wait for the next attempt.
+type RetryStatus struct {
+	// Failed is the number of failed attempts, counting the initial one.
+	Failed int64 `json:"failed,omitempty"`
 }
 
 //+kubebuilder:object:root=true
