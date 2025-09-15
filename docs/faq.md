@@ -82,6 +82,8 @@
 
   The `--project-sync-period` is a `Project` controller option that specifies the time interval for requeuing Project resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
+  The `--runs-collector-sync-period` is a `RunsCollector` controller option that specifies the time interval for requeuing Runs Collector resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
+
   The `--workspace-sync-period` is a `Workspace` controller option that specifies the time interval for requeuing Workspace resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
   The controller synchronization period should be aligned with the number of managed Custom Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
@@ -232,6 +234,12 @@
 ## Project Controller
 
 - **Can I delete a project that has workspaces in it?**
+
+  This decision was made intentionally to follow the single-responsibility principle and to simplify deployment in a multi-cluster environment.
+
+## Runs Collector Controller
+
+- **Why can't I configure multiple Agent Pools for scraping within a single CR?**
 
   No, you can only delete a project if it is empty and you have the proper permissions.
 

@@ -50,6 +50,9 @@ func init() {
 
 	utilruntime.Must(appv1alpha2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+
+	// Register custom metrics with the global prometheus registry
+	controller.RegisterMetrics()
 }
 
 func main() {
@@ -85,6 +88,12 @@ func main() {
 		"The number of the Project controller workers.")
 	flag.DurationVar(&controller.ProjectSyncPeriod, "project-sync-period", 5*time.Minute,
 		"The minimum frequency at which watched project resources are reconciled. Format: 5s, 1m, etc.")
+	// RUNS COLLECTOR CONTROLLER OPTIONS
+	var runsCollectorWorkers int
+	flag.IntVar(&runsCollectorWorkers, "runs-collector-workers", 1,
+		"The number of the Runs Collector controller workers.")
+	flag.DurationVar(&controller.RunsCollectorSyncPeriod, "runs-collector-sync-period", 15*time.Second,
+		"The minimum frequency at which watched runs collector resources are reconciled. Format: 5s, 1m, etc.")
 	// WORKSPACE CONTROLLER OPTIONS
 	var workspaceWorkers int
 	flag.IntVar(&workspaceWorkers, "workspace-workers", 1,
@@ -130,11 +139,12 @@ func main() {
 	options := ctrl.Options{
 		Controller: config.Controller{
 			GroupKindConcurrency: map[string]int{
-				"AgentPool.app.terraform.io":  agentPoolWorkers,
-				"AgentToken.app.terraform.io": agentTokenWorkers,
-				"Module.app.terraform.io":     moduleWorkers,
-				"Project.app.terraform.io":    projectWorkers,
-				"Workspace.app.terraform.io":  workspaceWorkers,
+				"AgentPool.app.terraform.io":     agentPoolWorkers,
+				"AgentToken.app.terraform.io":    agentTokenWorkers,
+				"Module.app.terraform.io":        moduleWorkers,
+				"Project.app.terraform.io":       projectWorkers,
+				"RunsCollector.app.terraform.io": runsCollectorWorkers,
+				"Workspace.app.terraform.io":     workspaceWorkers,
 			},
 		},
 		Scheme: scheme,
@@ -181,6 +191,7 @@ func main() {
 	setupLog.Info(fmt.Sprintf("Agent Token sync period: %s", controller.AgentTokenSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Module sync period: %s", controller.ModuleSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Project sync period: %s", controller.ProjectSyncPeriod))
+	setupLog.Info(fmt.Sprintf("Runs Collector sync period: %s", controller.RunsCollectorSyncPeriod))
 	setupLog.Info(fmt.Sprintf("Workspace sync period: %s", controller.WorkspaceSyncPeriod))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
@@ -189,7 +200,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.AgentPoolReconciler{
+	if err := (&controller.AgentPoolReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("AgentPoolController"),
@@ -213,7 +224,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Module")
 		os.Exit(1)
 	}
-	if err = (&controller.ProjectReconciler{
+	if err := (&controller.ProjectReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("ProjectController"),
@@ -221,7 +232,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}
-	if err = (&controller.WorkspaceReconciler{
+	if err := (&controller.RunsCollectorReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("RunsCollectorController"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "RunsCollector")
+		os.Exit(1)
+	}
+	if err := (&controller.WorkspaceReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("WorkspaceController"),

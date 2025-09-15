@@ -45,6 +45,7 @@ $ helm install demo hashicorp/hcp-terraform-operator \
   --set controllers.agentToken.workers=5 \
   --set controllers.module.workers=5 \
   --set controllers.project.workers=5 \
+  --set controllers.runsCollector.workers=5 \
   --set controllers.workspace.workers=5
 ```
 
@@ -75,6 +76,7 @@ $ helm upgrade demo hashicorp/hcp-terraform-operator \
   --set controllers.agentToken.workers=5 \
   --set controllers.module.workers=10 \
   --set controllers.project.workers=2 \
+  --set controllers.runsCollector.workers=7 \
   --set controllers.workspace.workers=20
 ```
 
@@ -194,6 +196,8 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
 | controllers.project.syncPeriod | string | `"5m"` | The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.project.workers | int | `1` | The number of the Project controller workers. |
+| controllers.runsCollector.syncPeriod | string | `"15s"` | The minimum frequency at which watched Runs Collector resources are reconciled. Format: 5s, 1m, etc. |
+| controllers.runsCollector.workers | int | `1` | The number of the Runs Collector controller workers. |
 | controllers.workspace.syncPeriod | string | `"5m"` | The minimum frequency at which watched Workspace resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.workspace.workers | int | `1` | The number of the Workspace controller workers. |
 | customCAcertificates | string | `""` | The base64 encoded custom Certificate Authority bundle used to validate API TLS certificates. |

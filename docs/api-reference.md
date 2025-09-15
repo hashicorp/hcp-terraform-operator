@@ -14,6 +14,8 @@ Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
 - [AgentTokenList](#agenttokenlist)
 - [Module](#module)
 - [Project](#project)
+- [RunsCollector](#runscollector)
+- [RunsCollectorList](#runscollectorlist)
 - [Workspace](#workspace)
 
 
@@ -156,6 +158,8 @@ More information:
 _Appears in:_
 - [AgentTokenSpec](#agenttokenspec)
 - [AgentTokenStatus](#agenttokenstatus)
+- [RunsCollectorSpec](#runscollectorspec)
+- [RunsCollectorStatus](#runscollectorstatus)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |
@@ -699,6 +703,63 @@ _Appears in:_
 | `name` _string_ | Source Workspace Name. |
 
 
+#### RunsCollector
+
+
+
+Runs Collector scraptes HCP Terraform Runs from a given Agent Pool.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations
+
+_Appears in:_
+- [RunsCollectorList](#runscollectorlist)
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `RunsCollector`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[RunsCollectorSpec](#runscollectorspec)_ |  |
+
+
+#### RunsCollectorList
+
+
+
+RunsCollectorList contains a list of RunsCollector.
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `RunsCollectorList`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `items` _[RunsCollector](#runscollector) array_ |  |
+
+
+#### RunsCollectorSpec
+
+
+
+
+
+_Appears in:_
+- [RunsCollector](#runscollector)
+
+| Field | Description |
+| --- | --- |
+| `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `token` _[Token](#token)_ | API Token to be used for API calls. |
+| `agentPool` _[AgentPoolRef](#agentpoolref)_ | The Agent Pool name or ID from which the controller will collect runs.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/states |
+
+
+
+
 #### SSHKey
 
 
@@ -800,6 +861,7 @@ _Appears in:_
 - [AgentTokenSpec](#agenttokenspec)
 - [ModuleSpec](#modulespec)
 - [ProjectSpec](#projectspec)
+- [RunsCollectorSpec](#runscollectorspec)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |

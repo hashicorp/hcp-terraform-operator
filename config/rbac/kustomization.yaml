@@ -28,6 +28,8 @@ resources:
 # - module_viewer_role.yaml
 # - project_editor_role.yaml
 # - project_viewer_role.yaml
+# - runscollector_editor_role.yaml
+# - runscollector_viewer_role.yaml
 # - workspace_editor_role.yaml
 # - workspace_viewer_role.yaml
 # For each CRD, "Admin", "Editor" and "Viewer" roles are scaffolded by

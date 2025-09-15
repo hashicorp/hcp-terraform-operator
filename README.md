@@ -19,6 +19,7 @@ The Operator can manage the following types of resources:
 - `AgentToken` manages [HCP Terraform Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 - `Project` manages [HCP Terraform Projects](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects)
+- `Runs Collector` Runs scrapes HCP Terraform run statuses from a given Agent Pool. Learn more about [Runs](https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations).
 - `Workspace` manages [HCP Terraform Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
 ## Getting started
@@ -60,6 +61,7 @@ Controllers usage guides:
 - [AgentToken](./docs/agenttoken.md)
 - [Module](./docs/module.md)
 - [Project](./docs/project.md)
+- [Runs Collector](./docs/runs_collector.md)
 - [Workspace](./docs/workspace.md)
 
 Annotations and Labels used by HCP Terraform Operator can be found [here](./docs/annotations-and-labels.md).
@@ -115,6 +117,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     $ kubectl get agenttoken <NAME>
     $ kubectl get module <NAME>
     $ kubectl get project <NAME>
+    $ kubectl get runscollectors <NAME>
     $ kubectl get workspace <NAME>
     ```
 
@@ -125,6 +128,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     $ kubectl describe agenttoken <NAME>
     $ kubectl describe module <NAME>
     $ kubectl describe project <NAME>
+    $ kubectl describe runscollectors <NAME>
     $ kubectl describe workspace <NAME>
     ```
 

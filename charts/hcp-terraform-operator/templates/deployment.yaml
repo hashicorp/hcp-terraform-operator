@@ -45,6 +45,8 @@ spec:
           - --module-sync-period={{ .Values.controllers.module.syncPeriod }}
           - --project-workers={{ .Values.controllers.project.workers }}
           - --project-sync-period={{ .Values.controllers.project.syncPeriod }}
+          - --runs-collector-workers={{ .Values.controllers.runsCollector.workers }}
+          - --runs-collector-sync-period={{ .Values.controllers.runsCollector.syncPeriod }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
           - --workspace-sync-period={{ .Values.controllers.workspace.syncPeriod }}
           {{- range .Values.operator.watchedNamespaces }}
