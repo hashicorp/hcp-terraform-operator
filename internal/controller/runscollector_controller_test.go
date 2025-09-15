@@ -4,68 +4,91 @@
 package controller
 
 import (
-	"context"
+	"io"
+	"net/http"
+	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var _ = Describe("RunsCollector Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
+var _ = Describe("RunsCollector Controller", Ordered, func() {
+	var (
+		instance       *appv1alpha2.RunsCollector
+		namespacedName = newNamespacedName()
+	)
 
-		ctx := context.Background()
+	BeforeAll(func() {
+		// Set default Eventually timers
+		SetDefaultEventuallyTimeout(syncPeriod * 4)
+		SetDefaultEventuallyPollingInterval(2 * time.Second)
+	})
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
-		}
-		runscollector := &appv1alpha2.RunsCollector{}
-
-		BeforeEach(func() {
-			By("creating the custom resource for the Kind RunsCollector")
-			err := k8sClient.Get(ctx, typeNamespacedName, runscollector)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &appv1alpha2.RunsCollector{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
+	BeforeEach(func() {
+		instance = &appv1alpha2.RunsCollector{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "app.terraform.io/v1alpha2",
+				Kind:       "RunsCollector",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              namespacedName.Name,
+				Namespace:         namespacedName.Namespace,
+				DeletionTimestamp: nil,
+				Finalizers:        []string{},
+			},
+			Spec: appv1alpha2.RunsCollectorSpec{
+				Organization: organization,
+				Token: appv1alpha2.Token{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secretNamespacedName.Name,
+						},
+						Key: secretKey,
 					},
-					// TODO(user): Specify other spec details if needed.
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-			}
-		})
+				},
+				AgentPool: &appv1alpha2.AgentPoolRef{},
+			},
+			Status: appv1alpha2.RunsCollectorStatus{},
+		}
+		// Register metrics
+		metricRuns.WithLabelValues("pink_panther").Set(float64(162))
+		metricRunsTotal.WithLabelValues().Set(float64(2134))
+	})
 
-		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &appv1alpha2.RunsCollector{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
-			Expect(err).NotTo(HaveOccurred())
+	AfterEach(func() {
+		Eventually(func() bool {
+			err := k8sClient.Delete(ctx, instance)
+			return errors.IsNotFound(err) || err == nil
+		}).Should(BeTrue())
 
-			By("Cleanup the specific resource instance RunsCollector")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &RunsCollectorReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, namespacedName, instance)
+			return errors.IsNotFound(err)
+		}).Should(BeTrue())
+	})
 
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+	Context("When reconciling a resource", func() {
+		It("It registers metrics", func() {
+			metrics := readMetrics()
+
+			Expect(strings.Contains(metrics, "hcp_tf_runs")).To(BeTrue())
+			Expect(strings.Contains(metrics, "hcp_tf_runs_total")).To(BeTrue())
 		})
 	})
 })
+
+func readMetrics() string {
+	resp, err := http.Get("http://" + metricsBindAddress + "/metrics")
+	Expect(err).Should(Succeed())
+	Expect(resp.StatusCode).Should(Equal(200))
+	body, err := io.ReadAll(resp.Body)
+	Expect(err).Should(Succeed())
+
+	return string(body)
+}

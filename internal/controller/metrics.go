@@ -31,5 +31,6 @@ var (
 func RegisterMetrics() {
 	metrics.Registry.MustRegister(
 		metricRuns,
+		metricRunsTotal,
 	)
 }
