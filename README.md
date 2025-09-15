@@ -19,7 +19,7 @@ The Operator can manage the following types of resources:
 - `AgentToken` manages [HCP Terraform Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 - `Project` manages [HCP Terraform Projects](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects)
-- `Runs Collector` Runs scrapes HCP Terraform run statuses from a given Agent Pool. Learn more about [Runs](https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations).
+- `Runs Collector` Runs scrapes HCP Terraform run statuses from a given Agent Pool and exposes them as Prometheus-compatible metrics. Learn more about [Runs](https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations).
 - `Workspace` manages [HCP Terraform Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
 ## Getting started
