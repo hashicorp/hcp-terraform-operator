@@ -217,5 +217,20 @@ var _ = Describe("Helpers", Label("Unit"), func() {
 			_, err := parseTFEVersion(version)
 			Expect(err).ToNot(Succeed())
 		})
+		It("New valid TFE version", func() {
+			version := "1.0.0"
+			_, err := parseTFEVersion(version)
+			Expect(err).To(Succeed())
+		})
+		It("New valid TFE version 2", func() {
+			version := "v1.0.1"
+			_, err := parseTFEVersion(version)
+			Expect(err).To(Succeed())
+		})
+		It("New invalid TFE version", func() {
+			version := "1.0"
+			_, err := parseTFEVersion(version)
+			Expect(err).ToNot(Succeed())
+		})
 	})
 })

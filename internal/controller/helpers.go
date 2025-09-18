@@ -101,11 +101,18 @@ func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName,
 }
 
 func parseTFEVersion(version string) (int, error) {
+	// Check for the version format vYYYYMM-N (e.g., v202310-1)
 	versionRegexp := regexp.MustCompile(`^v([0-9]{6})-([0-9]{1})$`)
 	matches := versionRegexp.FindStringSubmatch(version)
 	if len(matches) == 3 {
 		return strconv.Atoi(matches[1] + matches[2])
 	}
-
+	//Check for the version format vX.Y.Z (e.g., v1.2.3) or X.Y.Z (e.g., 1.2.3)
+	versionRegexp = regexp.MustCompile(`v?([0-9]+)\.([0-9]+)\.([0-9]+)`)
+	matches = versionRegexp.FindStringSubmatch(version)
+	if len(matches) == 4 {
+		// Return an arbitrary value greater than 2024091 to indicate that the version is valid and of type vX.Y.Z or X.Y.Z
+		return 3000000, nil
+	}
 	return 0, fmt.Errorf("malformed TFE version %s", version)
 }
