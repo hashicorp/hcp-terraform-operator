@@ -368,7 +368,6 @@ _Underlying type:_ _string_
 
 DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a resource, either manually or by a system event.
 
-
 You must use one of the following values:
 - `retain`: When you delete the custom resource, the operator does not delete the workspace.
 - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
@@ -407,7 +406,6 @@ _Underlying type:_ _string_
 Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
 It controls how the operator should handle the deletion of resources when triggered by
 a user action or system event.
-
 
 There is one possible value:
 - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false. Default value.
@@ -468,7 +466,7 @@ _Appears in:_
 | `outputs` _[ModuleOutput](#moduleoutput) array_ | Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive). |
 | `destroyOnDeletion` _boolean_ | DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.<br />Default: `false`. |
 | `restartedAt` _string_ | Allows executing a new Run without changing any Workspace or Module attributes.<br />Example: kubectl patch <KIND> <NAME> --type=merge --patch '\{"spec": \{"restartedAt": "'\`date -u -Iseconds\`'"\}\}' |
-| `deletionPolicy` _[ModuleDeletionPolicy](#moduledeletionpolicy)_ | Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.<br />It controls how the operator should handle the deletion of resources when triggered by<br />a user action or system event.<br /><br />There is one possible value:<br />- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.<br />- `destroy`: Executes a destroy operation. Removes all resources and the module.<br />Default: `retain`. |
+| `deletionPolicy` _[ModuleDeletionPolicy](#moduledeletionpolicy)_ | Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.<br />It controls how the operator should handle the deletion of resources when triggered by<br />a user action or system event.<br />There is one possible value:<br />- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.<br />- `destroy`: Executes a destroy operation. Removes all resources and the module.<br />Default: `retain`. |
 
 
 
@@ -595,7 +593,6 @@ _Underlying type:_ _string_
 
 DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
 
-
 You must use one of the following values:
 - `retain`: When the custom resource is deleted, the operator will not delete the associated project.
 - `soft`: Attempts to remove the project. The project must be empty.
@@ -622,7 +619,7 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `name` _string_ | Name of the Project. |
 | `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,<br />users must belong to a team that has been granted the appropriate permissions.<br />You can assign project-specific permissions to teams.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
-| `deletionPolicy` _[ProjectDeletionPolicy](#projectdeletionpolicy)_ | DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br /><br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `soft`: Attempts to remove the project. The project must be empty.<br />Default: `retain`. |
+| `deletionPolicy` _[ProjectDeletionPolicy](#projectdeletionpolicy)_ | DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `soft`: Attempts to remove the project. The project must be empty.<br />Default: `retain`. |
 
 
 

@@ -117,7 +117,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     $ kubectl get agenttoken <NAME>
     $ kubectl get module <NAME>
     $ kubectl get project <NAME>
-    $ kubectl get runscollectors <NAME>
+    $ kubectl get runscollector <NAME>
     $ kubectl get workspace <NAME>
     ```
 
@@ -128,7 +128,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
     $ kubectl describe agenttoken <NAME>
     $ kubectl describe module <NAME>
     $ kubectl describe project <NAME>
-    $ kubectl describe runscollectors <NAME>
+    $ kubectl describe runscollector <NAME>
     $ kubectl describe workspace <NAME>
     ```
 
