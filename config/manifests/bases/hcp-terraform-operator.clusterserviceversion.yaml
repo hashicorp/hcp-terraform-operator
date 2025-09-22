@@ -63,6 +63,14 @@ spec:
       name: projects.app.terraform.io
       version: v1alpha2
     - description: |-
+        Runs Collector scraptes HCP Terraform Run statuses from a given Agent Pool and exposes them as Prometheus-compatible metrics.
+        More information:
+          - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations
+      displayName: Runs Collector
+      kind: RunsCollector
+      name: runscollectors.app.terraform.io
+      version: v1alpha2
+    - description: |-
         Workspace manages HCP Terraform Workspaces.
         More information:
           - https://developer.hashicorp.com/terraform/cloud-docs/workspaces

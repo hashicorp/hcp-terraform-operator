@@ -573,7 +573,7 @@ _Appears in:_
 
 Project manages HCP Terraform Projects.
 More information:
-- https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+  - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 
 
 
