@@ -1,0 +1,5 @@
+kind: FEATURES
+body: '`RunsCollector`: Introduce a new controller that scrapes HCP Terraform run statuses from a specified Agent Pool and exposes them as Prometheus-compatible metrics.'
+time: 2025-09-22T13:22:43.774802+02:00
+custom:
+    PR: "637"
