@@ -15,6 +15,9 @@ var (
 			Name: "hcp_tf_runs",
 			Help: "HCP Terraform - Pending runs by statuses",
 		},
+		// TODO:
+		// - Add agent_pool_name as label?
+		// - Add agent_pool_id as label?
 		[]string{
 			"run_status",
 		},
@@ -24,6 +27,9 @@ var (
 			Name: "hcp_tf_runs_total",
 			Help: "HCP Terraform - Total number of pending Runs by statuses",
 		},
+		// TODO:
+		// - Add agent_pool_name as label?
+		// - Add agent_pool_id as label?
 		[]string{},
 	)
 )

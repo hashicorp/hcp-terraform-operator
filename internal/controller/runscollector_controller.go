@@ -243,3 +243,8 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 
 	return r.Status().Update(ctx, &rc.instance)
 }
+
+// TODO:
+// - Since we have one CR per Agent Pool, we can implement an aggregation logic
+//   to to perform one API call to collect runs for all Agent Pools instead of one
+//   call per CR.
