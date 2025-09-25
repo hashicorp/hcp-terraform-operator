@@ -56,6 +56,7 @@ General usage documentation can be found [here](./docs/usage.md).
 Controllers usage guides:
 
 - [AgentPool](./docs/agentpool.md)
+- [AgentToken](./docs/agenttoken.md)
 - [Module](./docs/module.md)
 - [Project](./docs/project.md)
 - [Workspace](./docs/workspace.md)
@@ -110,6 +111,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
 
     ```console
     $ kubectl get agentpool <NAME>
+    $ kubectl get agenttoken <NAME>
     $ kubectl get module <NAME>
     $ kubectl get project <NAME>
     $ kubectl get workspace <NAME>
@@ -119,6 +121,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
 
     ```console
     $ kubectl describe agentpool <NAME>
+    $ kubectl describe agenttoken <NAME>
     $ kubectl describe module <NAME>
     $ kubectl describe project <NAME>
     $ kubectl describe workspace <NAME>
