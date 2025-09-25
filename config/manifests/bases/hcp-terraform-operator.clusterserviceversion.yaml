@@ -39,6 +39,14 @@ spec:
       name: agentpools.app.terraform.io
       version: v1alpha2
     - description: |-
+        AgentToken manages HCP Terraform Agent Tokens.
+        More information:
+        - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens
+      displayName: Agent Token
+      kind: AgentToken
+      name: agenttokens.app.terraform.io
+      version: v1alpha2
+    - description: |-
         Module implements API-driven Run Workflows.
         More information:
           - https://developer.hashicorp.com/terraform/cloud-docs/run/api
@@ -49,7 +57,7 @@ spec:
     - description: |-
         Project manages HCP Terraform Projects.
         More information:
-          - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+        - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
       displayName: Project
       kind: Project
       name: projects.app.terraform.io
