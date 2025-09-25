@@ -1,0 +1,5 @@
+kind: FEATURES
+body: '`AgentToken`: Introduce a new controller that manages tokens in arbitrary agent pools.'
+time: 2025-09-25T09:16:57.344633+02:00
+custom:
+    PR: "628"
