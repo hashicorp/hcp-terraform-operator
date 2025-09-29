@@ -42,6 +42,7 @@ $ helm install demo hashicorp/hcp-terraform-operator \
   --set operator.syncPeriod=10m \
   --set 'operator.watchedNamespaces={white,blue,red}' \
   --set controllers.agentPool.workers=5 \
+  --set controllers.agentToken.workers=5 \
   --set controllers.module.workers=5 \
   --set controllers.project.workers=5 \
   --set controllers.workspace.workers=5
@@ -71,6 +72,7 @@ $ helm upgrade demo hashicorp/hcp-terraform-operator \
   --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
+  --set controllers.agentToken.workers=5 \
   --set controllers.module.workers=10 \
   --set controllers.project.workers=2 \
   --set controllers.workspace.workers=20
@@ -186,6 +188,8 @@ For a more detailed explanation, please refer to the [FAQ](../../docs/faq.md#gen
 |-----|------|---------|-------------|
 | controllers.agentPool.syncPeriod | string | `"30s"` | The minimum frequency at which watched Agent Pool resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.agentPool.workers | int | `1` | The number of the Agent Pool controller workers. |
+| controllers.agentToken.syncPeriod | string | `"15m"` | The minimum frequency at which watched Agent Token resources are reconciled. Format: 5s, 1m, etc. |
+| controllers.agentToken.workers | int | `1` | The number of the Agent Token controller workers. |
 | controllers.module.syncPeriod | string | `"5m"` | The minimum frequency at which watched Module resources are reconciled. Format: 5s, 1m, etc. |
 | controllers.module.workers | int | `1` | The number of the Module controller workers. |
 | controllers.project.syncPeriod | string | `"5m"` | The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc. |

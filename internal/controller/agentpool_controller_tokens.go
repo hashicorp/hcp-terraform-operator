@@ -69,7 +69,7 @@ func (r *AgentPoolReconciler) createToken(ctx context.Context, ap *agentPoolInst
 	}
 	ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully updated Kubernets Secret %q with token %q", s.Name, token))
 
-	ap.instance.Status.AgentTokens = append(ap.instance.Status.AgentTokens, &appv1alpha2.AgentToken{
+	ap.instance.Status.AgentTokens = append(ap.instance.Status.AgentTokens, &appv1alpha2.AgentAPIToken{
 		Name:       at.Description,
 		ID:         at.ID,
 		CreatedAt:  pointer.PointerOf(at.CreatedAt.Unix()),

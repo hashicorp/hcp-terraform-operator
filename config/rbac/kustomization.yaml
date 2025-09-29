@@ -22,9 +22,15 @@ resources:
 # if you do not want those helpers be installed with your Project.
 # - agentpool_editor_role.yaml
 # - agentpool_viewer_role.yaml
+# - agenttoken_editor_role.yaml
+# - agenttoken_viewer_role.yaml
 # - module_editor_role.yaml
 # - module_viewer_role.yaml
 # - project_editor_role.yaml
 # - project_viewer_role.yaml
 # - workspace_editor_role.yaml
 # - workspace_viewer_role.yaml
+# For each CRD, "Admin", "Editor" and "Viewer" roles are scaffolded by
+# default, aiding admins in cluster management. Those roles are
+# not used by the {{ .ProjectName }} itself. You can comment the following lines
+# if you do not want those helpers be installed with your Project.

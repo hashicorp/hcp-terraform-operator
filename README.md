@@ -16,6 +16,7 @@ Kubernetes Operator allows managing HCP Terraform / Terraform Enterprise resourc
 The Operator can manage the following types of resources:
 
 - `AgentPool` manages [HCP Terraform Agent Pools](https://developer.hashicorp.com/terraform/cloud-docs/agents/agent-pools), [HCP Terraform Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens) and can perform TFC agent scaling
+- `AgentToken` manages [HCP Terraform Agent Tokens](https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/api-tokens#agent-api-tokens)
 - `Module` implements [API-driven Run Workflows](https://developer.hashicorp.com/terraform/cloud-docs/run/api)
 - `Project` manages [HCP Terraform Projects](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects)
 - `Workspace` manages [HCP Terraform Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
@@ -56,6 +57,7 @@ General usage documentation can be found [here](./docs/usage.md).
 Controllers usage guides:
 
 - [AgentPool](./docs/agentpool.md)
+- [AgentToken](./docs/agenttoken.md)
 - [Module](./docs/module.md)
 - [Project](./docs/project.md)
 - [Workspace](./docs/workspace.md)
@@ -110,6 +112,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
 
     ```console
     $ kubectl get agentpool <NAME>
+    $ kubectl get agenttoken <NAME>
     $ kubectl get module <NAME>
     $ kubectl get project <NAME>
     $ kubectl get workspace <NAME>
@@ -119,6 +122,7 @@ If you encounter any issues with the Operator there are a number of ways how to 
 
     ```console
     $ kubectl describe agentpool <NAME>
+    $ kubectl describe agenttoken <NAME>
     $ kubectl describe module <NAME>
     $ kubectl describe project <NAME>
     $ kubectl describe workspace <NAME>

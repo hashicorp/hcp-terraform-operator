@@ -81,6 +81,7 @@ jobs:
             --set operator.image.tag=${{ env.DOCKER_METADATA_OUTPUT_VERSION }} \
             --set operator.syncPeriod=30s \
             --set controllers.agentPool.workers=5 \
+            --set controllers.agentToken.workers=5 \
             --set controllers.module.workers=5 \
             --set controllers.project.workers=5 \
             --set controllers.workspace.workers=5

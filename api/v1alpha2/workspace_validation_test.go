@@ -17,7 +17,7 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 	successCases := map[string]Workspace{
 		"HasOnlyID": {
 			Spec: WorkspaceSpec{
-				AgentPool: &WorkspaceAgentPool{
+				AgentPool: &AgentPoolRef{
 					ID: "this",
 				},
 				ExecutionMode: "agent",
@@ -25,7 +25,7 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 		},
 		"HasOnlyName": {
 			Spec: WorkspaceSpec{
-				AgentPool: &WorkspaceAgentPool{
+				AgentPool: &AgentPoolRef{
 					Name: "this",
 				},
 				ExecutionMode: "agent",
@@ -44,7 +44,7 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 	errorCases := map[string]Workspace{
 		"HasIDandName": {
 			Spec: WorkspaceSpec{
-				AgentPool: &WorkspaceAgentPool{
+				AgentPool: &AgentPoolRef{
 					ID:   "this",
 					Name: "this",
 				},
@@ -53,13 +53,13 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 		},
 		"HasEmptyIDandName": {
 			Spec: WorkspaceSpec{
-				AgentPool:     &WorkspaceAgentPool{},
+				AgentPool:     &AgentPoolRef{},
 				ExecutionMode: "agent",
 			},
 		},
 		"HasInvalidExecutionMode": {
 			Spec: WorkspaceSpec{
-				AgentPool: &WorkspaceAgentPool{
+				AgentPool: &AgentPoolRef{
 					ID:   "this",
 					Name: "this",
 				},
@@ -84,7 +84,7 @@ func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
 		"AgentWithAgentPoolWithID": {
 			Spec: WorkspaceSpec{
 				ExecutionMode: "agent",
-				AgentPool: &WorkspaceAgentPool{
+				AgentPool: &AgentPoolRef{
 					ID: "this",
 				},
 			},
@@ -92,7 +92,7 @@ func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
 		"AgentWithAgentPoolWithName": {
 			Spec: WorkspaceSpec{
 				ExecutionMode: "agent",
-				AgentPool: &WorkspaceAgentPool{
+				AgentPool: &AgentPoolRef{
 					Name: "this",
 				},
 			},
@@ -609,7 +609,6 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecRemoteStateSharing(); len(errs) == 0 {
-				// fmt.Println(errs)
 				t.Error("Unexpected failure, at least one error is expected")
 			}
 		})

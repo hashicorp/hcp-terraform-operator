@@ -8,7 +8,8 @@ controller:
 - any:
   - changed-files:
     - any-glob-to-any-file:
-      - 'controllers/*.go'
+      - 'internal/controller/*.go'
+      - 'cmd/*.go'
 
 crd:
 - any:
