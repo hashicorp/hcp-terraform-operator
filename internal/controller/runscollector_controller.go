@@ -28,37 +28,37 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
-var runStatuses = []string{
-	string(tfc.RunApplied),
-	string(tfc.RunApplying),
-	string(tfc.RunApplyQueued),
-	string(tfc.RunCanceled),
-	string(tfc.RunConfirmed),
-	string(tfc.RunCostEstimated),
-	string(tfc.RunCostEstimating),
-	string(tfc.RunDiscarded),
-	string(tfc.RunErrored),
-	string(tfc.RunFetching),
-	string(tfc.RunFetchingCompleted),
-	string(tfc.RunPending),
-	string(tfc.RunPlanned),
-	string(tfc.RunPlannedAndFinished),
-	string(tfc.RunPlannedAndSaved),
-	string(tfc.RunPlanning),
-	string(tfc.RunPlanQueued),
-	string(tfc.RunPolicyChecked),
-	string(tfc.RunPolicyChecking),
-	string(tfc.RunPolicyOverride),
-	string(tfc.RunPolicySoftFailed),
-	string(tfc.RunPostPlanAwaitingDecision),
-	string(tfc.RunPostPlanCompleted),
-	string(tfc.RunPostPlanRunning),
-	string(tfc.RunPreApplyRunning),
-	string(tfc.RunPreApplyCompleted),
-	string(tfc.RunPrePlanCompleted),
-	string(tfc.RunPrePlanRunning),
-	string(tfc.RunQueuing),
-	string(tfc.RunQueuingApply),
+var runStatuses = []tfc.RunStatus{
+	tfc.RunApplied,
+	tfc.RunApplying,
+	tfc.RunApplyQueued,
+	tfc.RunCanceled,
+	tfc.RunConfirmed,
+	tfc.RunCostEstimated,
+	tfc.RunCostEstimating,
+	tfc.RunDiscarded,
+	tfc.RunErrored,
+	tfc.RunFetching,
+	tfc.RunFetchingCompleted,
+	tfc.RunPending,
+	tfc.RunPlanned,
+	tfc.RunPlannedAndFinished,
+	tfc.RunPlannedAndSaved,
+	tfc.RunPlanning,
+	tfc.RunPlanQueued,
+	tfc.RunPolicyChecked,
+	tfc.RunPolicyChecking,
+	tfc.RunPolicyOverride,
+	tfc.RunPolicySoftFailed,
+	tfc.RunPostPlanAwaitingDecision,
+	tfc.RunPostPlanCompleted,
+	tfc.RunPostPlanRunning,
+	tfc.RunPreApplyRunning,
+	tfc.RunPreApplyCompleted,
+	tfc.RunPrePlanCompleted,
+	tfc.RunPrePlanRunning,
+	tfc.RunQueuing,
+	tfc.RunQueuingApply,
 }
 
 // RunsCollectorReconciler reconciles a RunsCollector object
@@ -75,9 +75,9 @@ type runsCollectorInstance struct {
 	tfClient HCPTerraformClient
 }
 
-// +kubebuilder:rbac:groups=app.terraform.io,resources=runscollectors,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=app.terraform.io,resources=runscollectors/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=app.terraform.io,resources=runscollectors/finalizers,verbs=update
+//+kubebuilder:rbac:groups=app.terraform.io,resources=runscollectors,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=app.terraform.io,resources=runscollectors/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=app.terraform.io,resources=runscollectors/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *RunsCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -201,8 +201,8 @@ func (r *RunsCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCollectorInstance) error {
-	runs := map[string]int{}
-	runsTotal := 0
+	runs := map[tfc.RunStatus]float64{}
+	var runsTotal float64
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: rc.instance.Spec.AgentPool.Name,
 		StatusGroup:    "non_final",
@@ -219,9 +219,9 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 		if err != nil {
 			return err
 		}
+		runsTotal += float64(len(runsList.Items))
 		for _, run := range runsList.Items {
-			runs[string(run.Status)]++
-			runsTotal++
+			runs[run.Status]++
 		}
 		if runsList.NextPage == 0 {
 			break
@@ -229,15 +229,12 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 		listOpts.PageNumber = runsList.NextPage
 	}
 
-	// TODO:
-	// - Think about different logic here. For example, interate over all labels
-	//   and set 0 for those which are not in the 'runs' map.
 	for _, status := range runStatuses {
-		metricRuns.WithLabelValues(status).Set(float64(runs[status]))
+		metricRuns.WithLabelValues(string(status)).Set(float64(runs[status]))
 	}
 
-	rc.log.Info("Reconcile Runs Collector", "msg", fmt.Sprintf("Total Runs: %d", runsTotal))
-	metricRunsTotal.WithLabelValues().Set(float64(runsTotal))
+	rc.log.Info("Reconcile Runs Collector", "msg", fmt.Sprintf("Total Runs: %.0f", runsTotal))
+	metricRunsTotal.WithLabelValues().Set(runsTotal)
 
 	rc.instance.Status.ObservedGeneration = rc.instance.Generation
 

@@ -16,8 +16,10 @@ var (
 			Help: "HCP Terraform - Pending runs by statuses",
 		},
 		// TODO:
-		// - Add agent_pool_name as label?
-		// - Add agent_pool_id as label?
+		// - Add a status label to indicate whether the metric is up or down
+		//   (for example, when an endpoint is unreachable or the CR is suspended).
+		// - Add agent_pool_name as label.
+		// - Add agent_pool_id as label.
 		[]string{
 			"run_status",
 		},
@@ -28,10 +30,14 @@ var (
 			Help: "HCP Terraform - Total number of pending Runs by statuses",
 		},
 		// TODO:
-		// - Add agent_pool_name as label?
-		// - Add agent_pool_id as label?
+		// - Add a status label to indicate whether the metric is up or down
+		//   (for example, when an endpoint is unreachable or the CR is suspended).
+		// - Add agent_pool_name as label.
+		// - Add agent_pool_id as label.
 		[]string{},
 	)
+	// TODO:
+	// - Add a metric to track associated Workspaces.
 )
 
 func RegisterMetrics() {
