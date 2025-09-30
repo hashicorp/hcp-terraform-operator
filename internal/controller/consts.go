@@ -12,6 +12,7 @@ const (
 	annotationPaused = "app.terraform.io/paused"
 	annotationTrue   = "true"
 	annotationFalse  = "false"
+	initPageNumber   = 1
 	maxPageSize      = 100
 	requeueInterval  = 15 * time.Second
 	runMessage       = "Triggered by HCP Terraform Operator"
@@ -69,6 +70,11 @@ output "{{ $o.Name }}" {
 // PROJECT CONTROLLER'S CONSTANTS
 const (
 	projectFinalizer = "project.app.terraform.io/finalizer"
+)
+
+// RUNS COLLECTOR CONTROLLER'S CONSTANTS
+const (
+	runsCollectorFinalizer = "runscollector.app.terraform.io/finalizer"
 )
 
 // WORKSPACE CONTROLLER'S CONSTANTS

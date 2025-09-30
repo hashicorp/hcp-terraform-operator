@@ -140,6 +140,11 @@ controllers:
     workers: 1
     # -- The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc.
     syncPeriod: 5m
+  runsCollector:
+    # -- The number of the Runs Collector controller workers.
+    workers: 1
+    # -- The minimum frequency at which watched Runs Collector resources are reconciled. Format: 5s, 1m, etc.
+    syncPeriod: 15s
   workspace:
     # -- The number of the Workspace controller workers.
     workers: 1

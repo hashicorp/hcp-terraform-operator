@@ -14,6 +14,8 @@ Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
 - [AgentTokenList](#agenttokenlist)
 - [Module](#module)
 - [Project](#project)
+- [RunsCollector](#runscollector)
+- [RunsCollectorList](#runscollectorlist)
 - [Workspace](#workspace)
 
 
@@ -156,6 +158,8 @@ More information:
 _Appears in:_
 - [AgentTokenSpec](#agenttokenspec)
 - [AgentTokenStatus](#agenttokenstatus)
+- [RunsCollectorSpec](#runscollectorspec)
+- [RunsCollectorStatus](#runscollectorstatus)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |
@@ -364,7 +368,6 @@ _Underlying type:_ _string_
 
 DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a resource, either manually or by a system event.
 
-
 You must use one of the following values:
 - `retain`: When you delete the custom resource, the operator does not delete the workspace.
 - `soft`: Attempts to delete the associated workspace only if it does not contain any managed resources.
@@ -403,7 +406,6 @@ _Underlying type:_ _string_
 Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.
 It controls how the operator should handle the deletion of resources when triggered by
 a user action or system event.
-
 
 There is one possible value:
 - `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false. Default value.
@@ -464,7 +466,7 @@ _Appears in:_
 | `outputs` _[ModuleOutput](#moduleoutput) array_ | Module outputs to store in ConfigMap(non-sensitive) or Secret(sensitive). |
 | `destroyOnDeletion` _boolean_ | DEPRECATED: Specify whether or not to execute a Destroy run when the object is deleted from the Kubernetes.<br />Default: `false`. |
 | `restartedAt` _string_ | Allows executing a new Run without changing any Workspace or Module attributes.<br />Example: kubectl patch <KIND> <NAME> --type=merge --patch '\{"spec": \{"restartedAt": "'\`date -u -Iseconds\`'"\}\}' |
-| `deletionPolicy` _[ModuleDeletionPolicy](#moduledeletionpolicy)_ | Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.<br />It controls how the operator should handle the deletion of resources when triggered by<br />a user action or system event.<br /><br />There is one possible value:<br />- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.<br />- `destroy`: Executes a destroy operation. Removes all resources and the module.<br />Default: `retain`. |
+| `deletionPolicy` _[ModuleDeletionPolicy](#moduledeletionpolicy)_ | Deletion Policy defines the strategies for resource deletion in the Kubernetes operator.<br />It controls how the operator should handle the deletion of resources when triggered by<br />a user action or system event.<br />There is one possible value:<br />- `retain`: When the custom resource is deleted, the associated module is retained. `destroyOnDeletion` must be set to false.<br />- `destroy`: Executes a destroy operation. Removes all resources and the module.<br />Default: `retain`. |
 
 
 
@@ -571,7 +573,7 @@ _Appears in:_
 
 Project manages HCP Terraform Projects.
 More information:
-- https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+  - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 
 
 
@@ -590,7 +592,6 @@ More information:
 _Underlying type:_ _string_
 
 DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.
-
 
 You must use one of the following values:
 - `retain`: When the custom resource is deleted, the operator will not delete the associated project.
@@ -618,7 +619,7 @@ _Appears in:_
 | `token` _[Token](#token)_ | API Token to be used for API calls. |
 | `name` _string_ | Name of the Project. |
 | `teamAccess` _[ProjectTeamAccess](#projectteamaccess) array_ | HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,<br />users must belong to a team that has been granted the appropriate permissions.<br />You can assign project-specific permissions to teams.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/organize-workspaces-with-projects#permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions |
-| `deletionPolicy` _[ProjectDeletionPolicy](#projectdeletionpolicy)_ | DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br /><br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `soft`: Attempts to remove the project. The project must be empty.<br />Default: `retain`. |
+| `deletionPolicy` _[ProjectDeletionPolicy](#projectdeletionpolicy)_ | DeletionPolicy defines the strategy the Kubernetes operator uses when you delete a project, either manually or by a system event.<br />You must use one of the following values:<br />- `retain`:  When the custom resource is deleted, the operator will not delete the associated project.<br />- `soft`: Attempts to remove the project. The project must be empty.<br />Default: `retain`. |
 
 
 
@@ -697,6 +698,63 @@ _Appears in:_
 | --- | --- |
 | `id` _string_ | Source Workspace ID.<br />Must match pattern: `^ws-[a-zA-Z0-9]+$` |
 | `name` _string_ | Source Workspace Name. |
+
+
+#### RunsCollector
+
+
+
+Runs Collector scraptes HCP Terraform Run statuses from a given Agent Pool and exposes them as Prometheus-compatible metrics.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations
+
+_Appears in:_
+- [RunsCollectorList](#runscollectorlist)
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `RunsCollector`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[RunsCollectorSpec](#runscollectorspec)_ |  |
+
+
+#### RunsCollectorList
+
+
+
+RunsCollectorList contains a list of RunsCollector.
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `RunsCollectorList`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `items` _[RunsCollector](#runscollector) array_ |  |
+
+
+#### RunsCollectorSpec
+
+
+
+
+
+_Appears in:_
+- [RunsCollector](#runscollector)
+
+| Field | Description |
+| --- | --- |
+| `organization` _string_ | Organization name where the Workspace will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `token` _[Token](#token)_ | API Token to be used for API calls. |
+| `agentPool` _[AgentPoolRef](#agentpoolref)_ | The Agent Pool name or ID from which the controller will collect runs.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/run/states |
+
+
 
 
 #### SSHKey
@@ -800,6 +858,7 @@ _Appears in:_
 - [AgentTokenSpec](#agenttokenspec)
 - [ModuleSpec](#modulespec)
 - [ProjectSpec](#projectspec)
+- [RunsCollectorSpec](#runscollectorspec)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |

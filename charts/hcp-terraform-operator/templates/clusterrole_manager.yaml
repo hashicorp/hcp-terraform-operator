@@ -33,6 +33,7 @@ rules:
   - agenttokens
   - modules
   - projects
+  - runscollectors
   - workspaces
   verbs:
   - create
@@ -49,6 +50,7 @@ rules:
   - agenttokens/finalizers
   - modules/finalizers
   - projects/finalizers
+  - runscollectors/finalizers
   - workspaces/finalizers
   verbs:
   - update
@@ -59,6 +61,7 @@ rules:
   - agenttokens/status
   - modules/status
   - projects/status
+  - runscollectors/status
   - workspaces/status
   verbs:
   - get

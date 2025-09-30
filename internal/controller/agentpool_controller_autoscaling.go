@@ -71,7 +71,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
-			PageNumber: 1,
+			PageNumber: initPageNumber,
 		},
 	}
 
@@ -119,7 +119,7 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 		}, ","),
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
-			PageNumber: 1,
+			PageNumber: initPageNumber,
 		},
 	}
 	for {

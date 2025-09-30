@@ -1,0 +1,94 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
+package controller
+
+import (
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+)
+
+var _ = Describe("RunsCollector Controller", Ordered, func() {
+	var (
+		instance       *appv1alpha2.RunsCollector
+		namespacedName = newNamespacedName()
+	)
+
+	BeforeAll(func() {
+		// Set default Eventually timers
+		SetDefaultEventuallyTimeout(syncPeriod * 4)
+		SetDefaultEventuallyPollingInterval(2 * time.Second)
+	})
+
+	BeforeEach(func() {
+		instance = &appv1alpha2.RunsCollector{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "app.terraform.io/v1alpha2",
+				Kind:       "RunsCollector",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              namespacedName.Name,
+				Namespace:         namespacedName.Namespace,
+				DeletionTimestamp: nil,
+				Finalizers:        []string{},
+			},
+			Spec: appv1alpha2.RunsCollectorSpec{
+				Organization: organization,
+				Token: appv1alpha2.Token{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secretNamespacedName.Name,
+						},
+						Key: secretKey,
+					},
+				},
+				AgentPool: &appv1alpha2.AgentPoolRef{},
+			},
+			Status: appv1alpha2.RunsCollectorStatus{},
+		}
+		// Register metrics
+		metricRuns.WithLabelValues("pink_panther").Set(float64(162))
+		metricRunsTotal.WithLabelValues().Set(float64(2134))
+	})
+
+	AfterEach(func() {
+		Eventually(func() bool {
+			err := k8sClient.Delete(ctx, instance)
+			return errors.IsNotFound(err) || err == nil
+		}).Should(BeTrue())
+
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, namespacedName, instance)
+			return errors.IsNotFound(err)
+		}).Should(BeTrue())
+	})
+
+	Context("When reconciling a resource", func() {
+		It("It registers metrics", func() {
+			metrics := readMetrics()
+
+			Expect(strings.Contains(metrics, "hcp_tf_runs")).To(BeTrue())
+			Expect(strings.Contains(metrics, "hcp_tf_runs_total")).To(BeTrue())
+		})
+	})
+})
+
+func readMetrics() string {
+	resp, err := http.Get("http://" + metricsBindAddress + "/metrics")
+	Expect(err).Should(Succeed())
+	Expect(resp.StatusCode).Should(Equal(200))
+	body, err := io.ReadAll(resp.Body)
+	Expect(err).Should(Succeed())
+
+	return string(body)
+}
