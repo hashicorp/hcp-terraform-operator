@@ -15,7 +15,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 	successCases := map[string]AgentPool{
 		"HasOnlyName": {
 			Spec: AgentPoolSpec{
-				AgentTokens: []*AgentToken{
+				AgentTokens: []*AgentAPIToken{
 					{
 						Name: "this",
 					},
@@ -24,7 +24,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 		},
 		"HasMultipleTokens": {
 			Spec: AgentPoolSpec{
-				AgentTokens: []*AgentToken{
+				AgentTokens: []*AgentAPIToken{
 					{
 						Name: "this",
 					},
@@ -47,7 +47,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 	errorCases := map[string]AgentPool{
 		"HasID": {
 			Spec: AgentPoolSpec{
-				AgentTokens: []*AgentToken{
+				AgentTokens: []*AgentAPIToken{
 					{
 						Name: "this",
 						ID:   "this",
@@ -57,7 +57,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 		},
 		"HasCreatedAt": {
 			Spec: AgentPoolSpec{
-				AgentTokens: []*AgentToken{
+				AgentTokens: []*AgentAPIToken{
 					{
 						Name:      "this",
 						CreatedAt: pointer.PointerOf(int64(1984)),
@@ -67,7 +67,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 		},
 		"HasLastUsedAt": {
 			Spec: AgentPoolSpec{
-				AgentTokens: []*AgentToken{
+				AgentTokens: []*AgentAPIToken{
 					{
 						Name:       "this",
 						LastUsedAt: pointer.PointerOf(int64(1984)),
@@ -77,7 +77,7 @@ func TestValidateAgentPoolSpecAgentToken(t *testing.T) {
 		},
 		"HasDuplicateName": {
 			Spec: AgentPoolSpec{
-				AgentTokens: []*AgentToken{
+				AgentTokens: []*AgentAPIToken{
 					{
 						Name: "this",
 					},

@@ -18,6 +18,16 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
+// userInteractionRunStatuses contains run statuses that require user interaction.
+var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
+	tfc.RunCostEstimated:            {},
+	tfc.RunPlanned:                  {},
+	tfc.RunPlannedAndSaved:          {},
+	tfc.RunPolicyOverride:           {},
+	tfc.RunPostPlanAwaitingDecision: {},
+	tfc.RunPostPlanCompleted:        {},
+}
+
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
 // The wildcard pattern can contain '*' at the beginning and/or end to match any sequence of characters.
 // If the pattern contains '*' at both ends, the function checks if the substring exists within the string.
@@ -55,20 +65,28 @@ func matchWildcardName(wildcard string, str string) bool {
 // This function is compatible with HCP Terraform and TFE version v202409-1 and later.
 func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	runs := map[string]struct{}{}
+	awaitingUserInteractionRuns := map[string]int{} // Track runs awaiting user interaction by status for future metrics
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
 		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
-			PageNumber: 1,
+			PageNumber: initPageNumber,
 		},
 	}
+
 	for {
 		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
 		if err != nil {
 			return 0, err
 		}
 		for _, run := range runsList.Items {
+			// Skip runs that require user interaction
+			if _, ok := userInteractionRunStatuses[run.Status]; ok {
+				// Save the user interactable run statuses for future metrics with count split by status
+				awaitingUserInteractionRuns[string(run.Status)]++
+				continue
+			}
 			runs[run.Workspace.ID] = struct{}{}
 		}
 		if runsList.NextPage == 0 {
@@ -77,9 +95,14 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 		listOpts.PageNumber = runsList.NextPage
 	}
 
+	// TODO:
+	// Add metric(s) for runs awaiting user interaction
+
 	return int32(len(runs)), nil
 }
 
+// computeRequiredAgents is a legacy algorithm that is used to compute the number of agents needed.
+// It is used when the TFE version is less than v202409-1.
 func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	required := 0
 	// NOTE:
@@ -96,7 +119,7 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 		}, ","),
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,
-			PageNumber: 1,
+			PageNumber: initPageNumber,
 		},
 	}
 	for {
@@ -201,7 +224,7 @@ func (a *agentPoolInstance) cooldownSecondsRemaining(currentReplicas, desiredRep
 		if v := cooldownPeriod.ScaleUpSeconds; v != nil {
 			if desiredReplicas > currentReplicas {
 				cooldownPeriodSeconds = int(*v)
-				a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling up, using configured scale down period: %v", cooldownPeriodSeconds))
+				a.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Agents scaling up, using configured scale up period: %v", cooldownPeriodSeconds))
 			}
 		}
 	}

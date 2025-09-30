@@ -8,8 +8,10 @@ import (
 )
 
 var (
-	AgentPoolSyncPeriod time.Duration
-	ModuleSyncPeriod    time.Duration
-	ProjectSyncPeriod   time.Duration
-	WorkspaceSyncPeriod time.Duration
+	AgentPoolSyncPeriod     time.Duration
+	AgentTokenSyncPeriod    time.Duration
+	ModuleSyncPeriod        time.Duration
+	ProjectSyncPeriod       time.Duration
+	RunsCollectorSyncPeriod time.Duration
+	WorkspaceSyncPeriod     time.Duration
 )

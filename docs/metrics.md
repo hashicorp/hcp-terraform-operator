@@ -8,6 +8,13 @@ The metrics are protected by [kube-rbac-proxy](https://github.com/brancz/kube-rb
 
 The Operator exposes all metrics provided by the controller-runtime by default. The full list you can find on the [Kubebuilder documentation](https://book.kubebuilder.io/reference/metrics-reference.html).
 
+Starting with version `2.10.0`, the operator introduces HCP Terraform–specific metrics. These metrics use the prefix `hcp_tf_*`. Below is the full list of HCP Terraform–specific metrics.
+
+| Metric name | Type | Description | Controller | Status |
+|-------------|------|-------------|------------|--------|
+| `hcp_tf_runs{run_status="<HCP Terraform Run Status>"}` | Gauge | Pending runs by statuses. | RunsCollector | Alpha |
+| `hcp_tf_runs_total` | Gauge | Total number of pending Runs by statuses. | RunsCollector | Alpha |
+
 ## Scraping Metrics
 
 How metrics are scraped will depend on how you operate your Prometheus server. The below example assumes that the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator) is being used to run Prometheus.

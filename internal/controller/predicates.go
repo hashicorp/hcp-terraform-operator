@@ -50,6 +50,11 @@ func genericPredicates() predicate.Predicate {
 				return true
 			}
 
+			// Continue with reconciliation if the app.terraform.io/paused annotation is set or has been removed.
+			if e.ObjectNew.GetAnnotations()[annotationPaused] != "" || e.ObjectOld.GetAnnotations()[annotationPaused] != "" {
+				return true
+			}
+
 			// Do not call reconciliation in all other cases
 			return false
 		},
@@ -89,6 +94,7 @@ func workspacePredicates() predicate.Predicate {
 func deletionTimestampPredicate(o client.Object) bool {
 	finalizers := []string{
 		agentPoolFinalizer,
+		agentTokenFinalizer,
 		moduleFinalizer,
 		projectFinalizer,
 		workspaceFinalizer,

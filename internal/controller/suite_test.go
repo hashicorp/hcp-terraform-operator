@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/version"
@@ -51,6 +52,8 @@ var organization = os.Getenv("TFC_ORG")
 var terraformToken = os.Getenv("TFC_TOKEN")
 var tfcDefaultAddress = "app.terraform.io"
 var cloudEndpoint = tfcDefaultAddress
+
+var metricsBindAddress = "127.0.0.1:8080"
 
 var syncPeriod = 30 * time.Second
 
@@ -109,6 +112,9 @@ var _ = BeforeSuite(func() {
 
 	err = appv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).ToNot(HaveOccurred())
+
+	RegisterMetrics()
+
 	//+kubebuilder:scaffold:scheme
 
 	if organization == "" {
@@ -154,11 +160,16 @@ var _ = BeforeSuite(func() {
 			},
 			Controller: config.Controller{
 				GroupKindConcurrency: map[string]int{
-					"AgentPool.app.terraform.io": 5,
-					"Module.app.terraform.io":    5,
-					"Project.app.terraform.io":   5,
-					"Workspace.app.terraform.io": 5,
+					"AgentPool.app.terraform.io":     5,
+					"AgentToken.app.terraform.io":    5,
+					"Module.app.terraform.io":        5,
+					"Project.app.terraform.io":       5,
+					"RunsCollector.app.terraform.io": 5,
+					"Workspace.app.terraform.io":     5,
 				},
+			},
+			Metrics: server.Options{
+				BindAddress: metricsBindAddress,
 			},
 		})
 		Expect(err).ToNot(HaveOccurred())
@@ -167,6 +178,13 @@ var _ = BeforeSuite(func() {
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("AgentPoolController"),
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = (&AgentTokenReconciler{
+			Client:   k8sManager.GetClient(),
+			Scheme:   k8sManager.GetScheme(),
+			Recorder: k8sManager.GetEventRecorderFor("AgentTokenController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -181,6 +199,13 @@ var _ = BeforeSuite(func() {
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("ProjectController"),
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = (&RunsCollectorReconciler{
+			Client:   k8sManager.GetClient(),
+			Scheme:   k8sManager.GetScheme(),
+			Recorder: k8sManager.GetEventRecorderFor("RunsCollectorController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 

@@ -100,7 +100,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
-					PageNumber: 1,
+					PageNumber: initPageNumber,
 					PageSize:   maxPageSize,
 				}
 				for listOpts.PageNumber != 0 {
@@ -147,7 +147,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
-					PageNumber: 1,
+					PageNumber: initPageNumber,
 					PageSize:   maxPageSize,
 				}
 				for listOpts.PageNumber != 0 {

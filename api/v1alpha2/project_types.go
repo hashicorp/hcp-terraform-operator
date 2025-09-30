@@ -193,7 +193,7 @@ type ProjectStatus struct {
 
 // Project manages HCP Terraform Projects.
 // More information:
-// - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
+//   - https://developer.hashicorp.com/terraform/cloud-docs/projects/manage
 type Project struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

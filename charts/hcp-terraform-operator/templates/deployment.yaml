@@ -39,10 +39,14 @@ spec:
           - --sync-period={{ .Values.operator.syncPeriod }}
           - --agent-pool-workers={{ .Values.controllers.agentPool.workers }}
           - --agent-pool-sync-period={{ .Values.controllers.agentPool.syncPeriod }}
+          - --agent-token-workers={{ .Values.controllers.agentToken.workers }}
+          - --agent-token-sync-period={{ .Values.controllers.agentToken.syncPeriod }}
           - --module-workers={{ .Values.controllers.module.workers }}
           - --module-sync-period={{ .Values.controllers.module.syncPeriod }}
           - --project-workers={{ .Values.controllers.project.workers }}
           - --project-sync-period={{ .Values.controllers.project.syncPeriod }}
+          - --runs-collector-workers={{ .Values.controllers.runsCollector.workers }}
+          - --runs-collector-sync-period={{ .Values.controllers.runsCollector.syncPeriod }}
           - --workspace-workers={{ .Values.controllers.workspace.workers }}
           - --workspace-sync-period={{ .Values.controllers.workspace.syncPeriod }}
           {{- range .Values.operator.watchedNamespaces }}

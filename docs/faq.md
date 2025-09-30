@@ -30,7 +30,7 @@
 
   - The Operator consists of multiple controllers that manage different HCP Terraform resources. This provides additional flexibility, e.g. a module can be executed in a workspace that is not managed by the Operator. More details about controllers you can find in the [README](../README.md) file.
 
-  - Each controller has the option to manage the number of workers it has. By default, each controller has 1 worker. A worker is a thread that runs the control loop for a given Custom Resource. The more workers the controller has, the more Customer Resources it can handle concurrently. This improves the Operator's performance. Please refer to the [performance FAQ section](./faq.md#performance) to better understand the pros and cons.
+  - Each controller has the option to manage the number of workers it has. By default, each controller has 1 worker. A worker is a thread that runs the control loop for a given Custom Resource. The more workers the controller has, the more Custom Resources it can handle concurrently. This improves the Operator's performance. Please refer to the [performance FAQ section](./faq.md#performance) to better understand the pros and cons.
 
   - Additional technical improvements:
 
@@ -62,7 +62,7 @@
 
 - **What will happen if I have multiple deployments of the Operator watching the same namespace(s)?**
 
-  Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Customer Resource objects are constantly reconciled and this can cause constant updates of HCP Terraform objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
+  Unexpected behaviour is likely when multiple deployments of the operator try to reconcile the same resource. Most likely you will notice that Custom Resource objects are constantly reconciled and this can cause constant updates of HCP Terraform objects. For example, the `Module` controller might trigger a new run every reconciliation and because of that the Run queue could grow infinitely.
 
   It is definitely better to avoid such situations.
 
@@ -76,13 +76,17 @@
 
   The `--agent-pool-sync-period` is a `AgentPool` controller option that specifies the time interval for requeuing AgentPool resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
+  The `--agent-token-sync-period` is a `AgentToken` controller option that specifies the time interval for requeuing AgentToken resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
+
   The `--module-sync-period` is a `Module` controller option that specifies the time interval for requeuing Module resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
   The `--project-sync-period` is a `Project` controller option that specifies the time interval for requeuing Project resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
+  The `--runs-collector-sync-period` is a `RunsCollector` controller option that specifies the time interval for requeuing Runs Collector resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
+
   The `--workspace-sync-period` is a `Workspace` controller option that specifies the time interval for requeuing Workspace resources, ensuring they will be reconciled. This time is set individually per resource and it helps avoid spike of the resources to reconcile.
 
-  The controller synchronization period should be aligned with the number of managed Customer Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
+  The controller synchronization period should be aligned with the number of managed Custom Resources. If the period is too low and the number of managed resources is too high, you may observe slowness in synchronization.
 
   The value of `sync-period` should be higher than the value of `*-sync-period`.
 
@@ -199,13 +203,19 @@
 
   No. You will have to update the Custom Resource to re-create tokens.
 
-- **What will happen if I delete an Agent Pool Customer Resource?**
+- **What will happen if I delete an Agent Pool Custom Resource?**
 
   The Agent Pool controller will delete Agent Pool from HCP Terraform, as well as the Kubernetes Secret that stores the Agent Tokens that were generated for this pool.
 
 - **What triggers Agents scaling?**
 
   The Operator regularly monitors specific workspaces and boosts the agent count when pending runs are detected. The maximum number of agents can be increased up to the value defined in `autoscaling.maxReplicas` or limited by the license, depending on which limit is reached first. If there are no pending runs, the Operator will reduce the number of agents to the specified value in `autoscaling.minReplicas` within the timeframe of `autoscaling.cooldownPeriodSeconds`.
+
+## Agent Token Controller
+
+- **Where can I find Agent tokens?**
+
+  Agent tokens are sensitive and will be stored in a Kubernetes Secret. The tokens will be saved in the Secret referenced by `spec.secretName`. The Secret can either already exist or be created by the controller if it doesn't. We strongly recommend using a unique name for this Secret to avoid data loss or unintentional overwrites.
 
 ## Module Controller
 
@@ -224,6 +234,12 @@
 ## Project Controller
 
 - **Can I delete a project that has workspaces in it?**
+
+  This decision was made intentionally to follow the single-responsibility principle and to simplify deployment in a multi-cluster environment.
+
+## Runs Collector Controller
+
+- **Why can't I configure multiple Agent Pools for scraping within a single CR?**
 
   No, you can only delete a project if it is empty and you have the proper permissions.
 
@@ -295,4 +311,4 @@
 
   - **What is Auto Apply for Run Triggers?**
 
-  The field `spec.applyRunTrigger` specifies whether to to automatically or manually apply changes for runs that are created by run triggers from another workspace. Value must be set to auto or manual. 
+  The field `spec.applyRunTrigger` specifies whether to to automatically or manually apply changes for runs that are created by run triggers from another workspace. Value must be set to auto or manual.

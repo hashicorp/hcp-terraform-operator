@@ -9,16 +9,23 @@ import (
 
 // SHARED CONSTANTS
 const (
-	annotationTrue  = "true"
-	annotationFalse = "false"
-	maxPageSize     = 100
-	requeueInterval = 15 * time.Second
-	runMessage      = "Triggered by HCP Terraform Operator"
+	annotationPaused = "app.terraform.io/paused"
+	annotationTrue   = "true"
+	annotationFalse  = "false"
+	initPageNumber   = 1
+	maxPageSize      = 100
+	requeueInterval  = 15 * time.Second
+	runMessage       = "Triggered by HCP Terraform Operator"
 )
 
 // AGENT POOL CONTROLLER'S CONSTANTS
 const (
 	agentPoolFinalizer = "agentpool.app.terraform.io/finalizer"
+)
+
+// AGENT TOKEN CONTROLLER'S CONSTANTS
+const (
+	agentTokenFinalizer = "agenttoken.app.terraform.io/finalizer"
 )
 
 // MODULE CONTROLLER'S CONSTANTS
@@ -63,6 +70,11 @@ output "{{ $o.Name }}" {
 // PROJECT CONTROLLER'S CONSTANTS
 const (
 	projectFinalizer = "project.app.terraform.io/finalizer"
+)
+
+// RUNS COLLECTOR CONTROLLER'S CONSTANTS
+const (
+	runsCollectorFinalizer = "runscollector.app.terraform.io/finalizer"
 )
 
 // WORKSPACE CONTROLLER'S CONSTANTS

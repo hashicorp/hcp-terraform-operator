@@ -24,6 +24,7 @@ import (
 
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
+
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
@@ -65,6 +66,11 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		ap.log.Error(err, "Agent Pool Controller", "msg", "get instance object")
 		return requeueAfter(requeueInterval)
+	}
+
+	if a, ok := ap.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+		ap.log.Info("Agent Pool Controller", "msg", "reconciliation is paused for this resource")
+		return doNotRequeue()
 	}
 
 	ap.log.Info("Spec Validation", "msg", "validating instance object spec")

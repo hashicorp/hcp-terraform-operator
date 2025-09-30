@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
-func hasNotificationItem(notificaions []tfc.NotificationConfiguration, notificaion tfc.NotificationConfiguration) (int, bool) {
-	for i, n := range notificaions {
-		if notificaion.Name == n.Name && notificaion.DestinationType == n.DestinationType {
+func hasNotificationItem(notifications []tfc.NotificationConfiguration, notification tfc.NotificationConfiguration) (int, bool) {
+	for i, n := range notifications {
+		if notification.Name == n.Name && notification.DestinationType == n.DestinationType {
 			return i, true
 		}
 	}
@@ -130,24 +130,24 @@ func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *
 	return notifications, nil
 }
 
-func (w *workspaceInstance) createNotification(ctx context.Context, notificaion tfc.NotificationConfiguration) error {
-	w.log.Info("Reconcile Notifications", "msg", "creating notificaion")
-	nt := make([]tfc.NotificationTriggerType, len(notificaion.Triggers))
-	for i, t := range notificaion.Triggers {
+func (w *workspaceInstance) createNotification(ctx context.Context, notification tfc.NotificationConfiguration) error {
+	w.log.Info("Reconcile Notifications", "msg", "creating notification")
+	nt := make([]tfc.NotificationTriggerType, len(notification.Triggers))
+	for i, t := range notification.Triggers {
 		nt[i] = tfc.NotificationTriggerType(t)
 	}
 	_, err := w.tfClient.Client.NotificationConfigurations.Create(ctx, w.instance.Status.WorkspaceID, tfc.NotificationConfigurationCreateOptions{
-		Name:            &notificaion.Name,
-		DestinationType: &notificaion.DestinationType,
-		URL:             &notificaion.URL,
-		Enabled:         &notificaion.Enabled,
-		Token:           &notificaion.Token,
+		Name:            &notification.Name,
+		DestinationType: &notification.DestinationType,
+		URL:             &notification.URL,
+		Enabled:         &notification.Enabled,
+		Token:           &notification.Token,
 		Triggers:        nt,
-		EmailUsers:      notificaion.EmailUsers,
-		EmailAddresses:  notificaion.EmailAddresses,
+		EmailUsers:      notification.EmailUsers,
+		EmailAddresses:  notification.EmailAddresses,
 	})
 	if err != nil {
-		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to create a new notification %q", notificaion.ID))
+		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to create a new notification %q", notification.ID))
 		return err
 	}
 
@@ -156,7 +156,7 @@ func (w *workspaceInstance) createNotification(ctx context.Context, notificaion 
 
 func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.NotificationConfiguration) error {
 	if !cmp.Equal(sn, wn, cmpopts.IgnoreFields(tfc.NotificationConfiguration{}, "ID", "CreatedAt", "DeliveryResponses", "UpdatedAt", "Subscribable")) {
-		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("updating notificaion %q", wn.ID))
+		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("updating notification %q", wn.ID))
 		triggers := make([]tfc.NotificationTriggerType, len(sn.Triggers))
 		for i, t := range sn.Triggers {
 			triggers[i] = tfc.NotificationTriggerType(t)
@@ -171,7 +171,7 @@ func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.N
 			EmailUsers:     sn.EmailUsers,
 		})
 		if err != nil {
-			w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to update notificaion %q", wn.ID))
+			w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to update notification %q", wn.ID))
 			return err
 		}
 	}
@@ -180,9 +180,9 @@ func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.N
 }
 
 func (w *workspaceInstance) deleteNotification(ctx context.Context, notification tfc.NotificationConfiguration) error {
-	w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("deleting notificaion %q", notification.ID))
+	w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("deleting notification %q", notification.ID))
 	if err := w.tfClient.Client.NotificationConfigurations.Delete(ctx, notification.ID); err != nil {
-		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to delete notificaion %q", notification.ID))
+		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to delete notification %q", notification.ID))
 		return err
 	}
 
@@ -200,7 +200,7 @@ func (r *WorkspaceReconciler) reconcileNotifications(ctx context.Context, w *wor
 
 	specNotifications, err := r.getInstanceNotifications(ctx, w)
 	if err != nil {
-		w.log.Error(err, "Reconcile Notifications", "msg", "failed to get instance notificaions")
+		w.log.Error(err, "Reconcile Notifications", "msg", "failed to get instance notifications")
 		return err
 	}
 

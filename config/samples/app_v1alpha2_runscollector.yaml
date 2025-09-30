@@ -1,0 +1,12 @@
+apiVersion: app.terraform.io/v1alpha2
+kind: RunsCollector
+metadata:
+  name: NAME
+spec:
+  organization: HCP_TF_ORG_NAME
+  token:
+    secretKeyRef:
+      name: SECRET_NAME
+      key: SECRET_KEY
+  agentPool:
+    name: AGENT_POOL_NAME

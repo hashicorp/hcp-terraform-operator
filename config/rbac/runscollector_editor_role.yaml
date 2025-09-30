@@ -1,0 +1,24 @@
+# permissions for end users to edit runscollectors.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: runscollector-editor-role
+rules:
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - runscollectors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.terraform.io
+  resources:
+  - runscollectors/status
+  verbs:
+  - get

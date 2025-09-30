@@ -95,7 +95,7 @@ kubeRbacProxy:
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Image tag.
-    tag: v0.19.1
+    tag: v0.20.0
 
   # -- Container security context. More information in [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
   securityContext:
@@ -125,6 +125,11 @@ controllers:
     workers: 1
     # -- The minimum frequency at which watched Agent Pool resources are reconciled. Format: 5s, 1m, etc.
     syncPeriod: 30s
+  agentToken:
+    # --  The number of the Agent Token controller workers.
+    workers: 1
+    # -- The minimum frequency at which watched Agent Token resources are reconciled. Format: 5s, 1m, etc.
+    syncPeriod: 15m
   module:
     # -- The number of the Module controller workers.
     workers: 1
@@ -135,6 +140,11 @@ controllers:
     workers: 1
     # -- The minimum frequency at which watched Project resources are reconciled. Format: 5s, 1m, etc.
     syncPeriod: 5m
+  runsCollector:
+    # -- The number of the Runs Collector controller workers.
+    workers: 1
+    # -- The minimum frequency at which watched Runs Collector resources are reconciled. Format: 5s, 1m, etc.
+    syncPeriod: 15s
   workspace:
     # -- The number of the Workspace controller workers.
     workers: 1

@@ -62,6 +62,8 @@ spec:
         - --sync-period=5m
         - --agent-pool-workers=1
         - --agent-pool-sync-period=30s
+        - --agent-token-workers=1
+        - --agent-token-sync-period=30s
         - --module-workers=1
         - --module-sync-period=5m
         - --project-workers=1

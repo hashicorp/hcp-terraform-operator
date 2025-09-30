@@ -83,6 +83,11 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return requeueAfter(requeueInterval)
 	}
 
+	if a, ok := m.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+		m.log.Info("Module Controller", "msg", "reconciliation is paused for this resource")
+		return doNotRequeue()
+	}
+
 	m.log.Info("Spec Validation", "msg", "validating instance object spec")
 	if err := m.instance.ValidateSpec(); err != nil {
 		m.log.Error(err, "Spec Validation", "msg", "spec is invalid, exit from reconciliation")

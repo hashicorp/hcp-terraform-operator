@@ -42,8 +42,10 @@ $ helm install demo hashicorp/hcp-terraform-operator \
   --set operator.syncPeriod=10m \
   --set 'operator.watchedNamespaces={white,blue,red}' \
   --set controllers.agentPool.workers=5 \
+  --set controllers.agentToken.workers=5 \
   --set controllers.module.workers=5 \
   --set controllers.project.workers=5 \
+  --set controllers.runsCollector.workers=5 \
   --set controllers.workspace.workers=5
 ```
 
@@ -71,8 +73,10 @@ $ helm upgrade demo hashicorp/hcp-terraform-operator \
   --namespace hcp-terraform-operator-system \
   --set operator.syncPeriod=5m \
   --set controllers.agentPool.workers=5 \
+  --set controllers.agentToken.workers=5 \
   --set controllers.module.workers=10 \
   --set controllers.project.workers=2 \
+  --set controllers.runsCollector.workers=7 \
   --set controllers.workspace.workers=20
 ```
 
