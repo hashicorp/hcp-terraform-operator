@@ -3,13 +3,14 @@ module github.com/hashicorp/hcp-terraform-operator
 go 1.25.1
 
 require (
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-slug v0.16.4
 	github.com/hashicorp/go-tfe v1.76.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.36.3
+	github.com/prometheus/client_golang v1.19.1
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
@@ -48,7 +49,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
