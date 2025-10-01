@@ -6,6 +6,7 @@ package controller
 import (
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -25,6 +26,9 @@ var _ = Describe("RunsCollector Controller", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		if os.Getenv("USE_EXISTING_CLUSTER") == "true" {
+			Skip("Does not run on an existing cluster")
+		}
 		// Set default Eventually timers
 		SetDefaultEventuallyTimeout(syncPeriod * 4)
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
