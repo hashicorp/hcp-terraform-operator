@@ -101,7 +101,7 @@ func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName,
 }
 
 func validateTFEVersion(version string) (bool, error) {
-	// Temporary: Handle empty version string for IPL-8663
+	// For versions 1.0.0 and 1.0.1 version string will be empty
 	if version == "" {
 		return true, nil
 	}
@@ -111,19 +111,22 @@ func validateTFEVersion(version string) (bool, error) {
 	matches := versionRegexp.FindStringSubmatch(version)
 	if len(matches) == 3 {
 		dateVersion, err := strconv.Atoi(matches[1] + matches[2])
+		if err != nil {
+			return false, err
+		}
 		if dateVersion >= 2024091 {
-			return true, err
+			return true, nil
 		}
 	}
 
 	// Check for the version format vX.Y.Z (e.g., v1.2.3) or X.Y.Z (e.g., 1.2.3)
-	versionRegexp = regexp.MustCompile(`v?([0-9]+)\.([0-9]+)\.([0-9]+)`)
-	matches = versionRegexp.FindStringSubmatch(version)
-	if len(matches) == 4 {
-		semVer, err := strconv.Atoi(matches[1] + matches[2] + matches[3])
-		if semVer >= 100 {
-			return true, err
-		}
+	isASemVer, err := regexp.MatchString(`v?([0-9]+)\.([0-9]+)\.([0-9]+)`, version)
+	if err != nil {
+		return false, err
+	} else if isASemVer {
+		return true, nil
 	}
+
+	// If the version does not match any of the expected formats, return an error
 	return false, fmt.Errorf("malformed TFE version %s", version)
 }
