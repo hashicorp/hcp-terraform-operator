@@ -100,12 +100,34 @@ func secretKeyRef(ctx context.Context, c client.Client, nn types.NamespacedName,
 	return "", fmt.Errorf("unable to find key=%q in secret=%q namespace=%q", key, nn.Name, nn.Namespace)
 }
 
-func parseTFEVersion(version string) (int, error) {
+func validateTFEVersion(version string) (bool, error) {
+	// For versions 1.0.0 and 1.0.1 version string will be empty
+	if version == "" {
+		return true, nil
+	}
+
+	// Check for the version format vYYYYMM-N (e.g., v202310-1)
 	versionRegexp := regexp.MustCompile(`^v([0-9]{6})-([0-9]{1})$`)
 	matches := versionRegexp.FindStringSubmatch(version)
 	if len(matches) == 3 {
-		return strconv.Atoi(matches[1] + matches[2])
+		dateVersion, err := strconv.Atoi(matches[1] + matches[2])
+		if err != nil {
+			return false, err
+		}
+		if dateVersion >= 2024091 {
+			return true, nil
+		}
 	}
 
-	return 0, fmt.Errorf("malformed TFE version %s", version)
+	// Check for the version format vX.Y.Z (e.g., v1.2.3) or X.Y.Z (e.g., 1.2.3)
+	isASemVer, err := regexp.MatchString(`v?([0-9]+)\.([0-9]+)\.([0-9]+)`, version)
+	if err != nil {
+		return false, err
+	}
+	if isASemVer {
+		return true, nil
+	}
+
+	// If the version does not match any of the expected formats, return an error
+	return false, fmt.Errorf("malformed TFE version %s", version)
 }
