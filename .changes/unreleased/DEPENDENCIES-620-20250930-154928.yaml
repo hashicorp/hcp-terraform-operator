@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Bump `github.com/hashicorp/go-slug` from 0.16.4 to 0.16.7.
+time: 2025-09-30T15:49:28.83459+02:00
+custom:
+    PR: "620"
