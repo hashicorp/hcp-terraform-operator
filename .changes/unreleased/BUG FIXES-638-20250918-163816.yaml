@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Support TFE versions of type vX.Y.Z
+time: 2025-09-18T16:38:16.255351-07:00
+custom:
+    PR: "638"
