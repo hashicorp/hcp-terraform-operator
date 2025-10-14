@@ -5,11 +5,13 @@ package controller
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -24,26 +26,26 @@ func (in *TestObject) DeepCopyObject() runtime.Object {
 	return nil
 }
 
-var _ = Describe("Helpers", Label("Unit"), func() {
-	Context("Returns", func() {
-		It("do not requeue", func() {
-			result, err := doNotRequeue()
-			Expect(result).To(BeEquivalentTo(reconcile.Result{}))
-			Expect(err).To(BeNil())
-		})
-		It("requeue after", func() {
-			duration := 1 * time.Second
-			result, err := requeueAfter(duration)
-			Expect(result).To(BeEquivalentTo(reconcile.Result{Requeue: true, RequeueAfter: duration}))
-			Expect(err).To(BeNil())
-		})
-		It("requeue on error", func() {
-			result, err := requeueOnErr(fmt.Errorf(""))
-			Expect(result).To(BeEquivalentTo(reconcile.Result{}))
-			Expect(err).ToNot(BeNil())
-		})
-	})
+func TestDoNotRequeue(t *testing.T) {
+	result, err := doNotRequeue()
+	assert.Nil(t, err)
+	assert.Equal(t, reconcile.Result{}, result)
+}
 
+func TestRequeueAfter(t *testing.T) {
+	duration := 1 * time.Second
+	result, err := requeueAfter(duration)
+	assert.Nil(t, err)
+	assert.Equal(t, reconcile.Result{Requeue: true, RequeueAfter: duration}, result)
+}
+
+func TestRequeueOnErr(t *testing.T) {
+	result, err := requeueOnErr(fmt.Errorf(""))
+	assert.Nil(t, err)
+	assert.Equal(t, reconcile.Result{}, result)
+}
+
+var _ = Describe("Helpers", Label("Unit"), func() {
 	Context("FormatOutput", func() {
 		It("bool", func() {
 			o := &tfc.StateVersionOutput{
