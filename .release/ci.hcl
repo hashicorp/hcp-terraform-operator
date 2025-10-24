@@ -6,7 +6,7 @@ schema = "1"
 project "hcp-terraform-operator" {
   team = "terraform"
   slack {
-    notification_channel = "C051FAAHL8M" # feed-terraform-ecosystem-kubernetes-releases
+    notification_channel = "C09KZMG23S6" # feed-terraform-ecosystem-kubernetes-releases
   }
   github {
     organization = "hashicorp"
