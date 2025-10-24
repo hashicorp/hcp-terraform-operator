@@ -200,22 +200,49 @@ var _ = Describe("Helpers", Label("Unit"), func() {
 		})
 	})
 
-	Context("ParseTFEVersion", func() {
+	Context("ValidateTFEVersion", func() {
 		It("Valid TFE version", func() {
 			version := "v202502-1"
-			v, err := parseTFEVersion(version)
+			answer, err := validateTFEVersion(version)
 			Expect(err).To(Succeed())
-			Expect(v).To(Equal(2025021))
+			Expect(answer).To(Equal(true))
 		})
 		It("Invalid TFE version", func() {
 			version := "202502-1"
-			_, err := parseTFEVersion(version)
+			answer, err := validateTFEVersion(version)
 			Expect(err).ToNot(Succeed())
+			Expect(answer).To(Equal(false))
+
 		})
 		It("Empty TFE version", func() {
 			version := ""
-			_, err := parseTFEVersion(version)
+			answer, err := validateTFEVersion(version)
+			Expect(err).To(Succeed())
+			Expect(answer).To(Equal(true))
+		})
+		It("New valid TFE version", func() {
+			version := "1.0.0"
+			answer, err := validateTFEVersion(version)
+			Expect(err).To(Succeed())
+			Expect(answer).To(Equal(true))
+		})
+		It("New valid TFE version 2", func() {
+			version := "v1.0.1"
+			answer, err := validateTFEVersion(version)
+			Expect(err).To(Succeed())
+			Expect(answer).To(Equal(true))
+		})
+		It("New invalid TFE version", func() {
+			version := "1.0"
+			answer, err := validateTFEVersion(version)
 			Expect(err).ToNot(Succeed())
+			Expect(answer).To(Equal(false))
+		})
+		It("New invalid TFE version 2", func() {
+			version := "v1.0"
+			answer, err := validateTFEVersion(version)
+			Expect(err).ToNot(Succeed())
+			Expect(answer).To(Equal(false))
 		})
 	})
 })
