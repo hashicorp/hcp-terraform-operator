@@ -148,6 +148,14 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 		./internal/pointer \
 		./internal/slice
 
+.PHONY: test-unit
+test-unit: fmt vet copywrite ## Run internal/controller tests.
+	go test ./internal/controller/... \
+		-timeout 5m \
+		-count 1 \
+		-v \
+		-run="^Test(DoNotRequeue|RequeueAfter|RequeueOnErr|FormatOutput|FinalizerBehaviors|MatchWildcardName|ValidateTFEVersion)$$"
+
 .PHONY: test-helm
 test-helm: ## Run Helm chart tests.
 	cd charts/test; go test -timeout 5m -count=1 -v ./...
