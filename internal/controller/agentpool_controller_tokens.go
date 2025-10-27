@@ -6,6 +6,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 
 	tfc "github.com/hashicorp/go-tfe"
@@ -111,6 +112,10 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 		ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to create a new Kubernetes Secret %s", agentPoolOutputObjectName(ap.instance.Name)))
 		return err
 	}
+	if s.Data == nil {
+		s.Data = make(map[string][]byte)
+	}
+	data := s.DeepCopy().Data
 
 	agentTokens, err := ap.getTokens(ctx)
 	if err != nil {
@@ -123,14 +128,14 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	}
 
 	for _, token := range ap.instance.Spec.AgentTokens {
-		if tokenID, ok := statusTokens[token.Name]; ok {
+		if id, ok := statusTokens[token.Name]; ok {
 			delete(statusTokens, token.Name)
-			if _, ok := agentTokens[tokenID]; ok {
-				delete(agentTokens, tokenID)
+			if _, ok := agentTokens[id]; ok {
+				delete(agentTokens, id)
 				continue
 			}
-			delete(s.Data, tokenID)
-			ap.deleteTokenStatus(tokenID)
+			delete(s.Data, token.Name)
+			ap.deleteTokenStatus(id)
 		}
 		t, err := r.createToken(ctx, ap, token.Name)
 		if err != nil {
@@ -140,20 +145,20 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	}
 
 	// Clean up.
-	for _, tokenID := range statusTokens {
-		delete(s.Data, tokenID)
-		ap.deleteTokenStatus(tokenID)
+	for name, id := range statusTokens {
+		delete(s.Data, name)
+		ap.deleteTokenStatus(id)
 	}
 
-	for tokenID := range agentTokens {
-		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("removing agent token %q", tokenID))
-		err := ap.tfClient.Client.AgentTokens.Delete(ctx, tokenID)
+	for id, name := range agentTokens {
+		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("removing agent token %q", id))
+		err := ap.tfClient.Client.AgentTokens.Delete(ctx, id)
 		if err != nil && err != tfc.ErrResourceNotFound {
-			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token %q", tokenID))
+			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token %q", id))
 			return err
 		}
-		delete(s.Data, tokenID)
-		ap.deleteTokenStatus(tokenID)
+		delete(s.Data, name)
+		ap.deleteTokenStatus(id)
 	}
 
 	// Use defer to ensure the Secret is always updated, even if token creation or deletion fails.
@@ -162,6 +167,12 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	defer func() {
 		// Handle unexpected nil Secret, e.g. failed to retrieve it (should not happen here).
 		if s == nil {
+			return
+		}
+		// Do not update if there are no changes.
+		if maps.EqualFunc(s.Data, data, func(vs, vd []byte) bool {
+			return string(vs) == string(vd)
+		}) {
 			return
 		}
 		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("updating Kubernetes Secret %q", s.Name))
