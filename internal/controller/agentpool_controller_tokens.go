@@ -151,10 +151,10 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	}
 
 	for id, name := range agentTokens {
-		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("removing agent token %q", id))
+		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("removing agent token name=%q id=%q", name, id))
 		err := ap.tfClient.Client.AgentTokens.Delete(ctx, id)
 		if err != nil && err != tfc.ErrResourceNotFound {
-			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token %q", id))
+			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token name=%q id=%q", name, id))
 			return err
 		}
 		delete(s.Data, name)
