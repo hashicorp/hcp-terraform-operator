@@ -108,7 +108,7 @@ func deleteSecretKey(s *corev1.Secret, key string) {
 	if s.Labels == nil {
 		return
 	}
-	s.Labels[labelHasChanged] = labelTrue
+	s.Labels[labelHasChanged] = metaTrue
 }
 
 func setSecretKey(s *corev1.Secret, key, value string) {
@@ -116,7 +116,7 @@ func setSecretKey(s *corev1.Secret, key, value string) {
 	if s.Labels == nil {
 		return
 	}
-	s.Labels[labelHasChanged] = labelTrue
+	s.Labels[labelHasChanged] = metaTrue
 }
 
 func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agentPoolInstance) error {
@@ -133,7 +133,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	if s.Labels == nil {
 		s.Labels = make(map[string]string)
 	}
-	s.Labels[labelHasChanged] = labelFalse
+	s.Labels[labelHasChanged] = metaFalse
 
 	agentTokens, err := ap.getTokens(ctx)
 	if err != nil {
@@ -188,7 +188,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			return
 		}
 		// Do not update if there are no changes.
-		if s.GetLabels()[labelHasChanged] == labelFalse {
+		if s.GetLabels()[labelHasChanged] == metaFalse {
 			delete(s.Labels, labelHasChanged)
 			ap.log.Info("Reconcile Agent Tokens", "msg", "no changes detected in Kubernetes Secret")
 			return

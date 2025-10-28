@@ -10,12 +10,9 @@ import (
 // SHARED CONSTANTS
 const (
 	annotationPaused = "app.terraform.io/paused"
-	annotationTrue   = "true"
-	annotationFalse  = "false"
-
-	labelHasChanged = "app.terraform.io/has-changed"
-	labelTrue       = "true"
-	labelFalse      = "false"
+	labelHasChanged  = "app.terraform.io/has-changed"
+	metaTrue         = "true"
+	metaFalse        = "false"
 
 	initPageNumber  = 1
 	maxPageSize     = 100
