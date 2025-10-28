@@ -6,7 +6,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"maps"
 	"slices"
 
 	tfc "github.com/hashicorp/go-tfe"
@@ -104,6 +103,22 @@ func (r *AgentPoolReconciler) createOrGetSecret(ctx context.Context, ap *agentPo
 	return s, nil
 }
 
+func deleteSecretKey(s *corev1.Secret, key string) {
+	delete(s.Data, key)
+	if s.Labels == nil {
+		return
+	}
+	s.Labels[labelHasChanged] = labelTrue
+}
+
+func setSecretKey(s *corev1.Secret, key, value string) {
+	s.Data[key] = []byte(value)
+	if s.Labels == nil {
+		return
+	}
+	s.Labels[labelHasChanged] = labelTrue
+}
+
 func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Tokens", "msg", "new reconciliation event")
 
@@ -115,7 +130,10 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 	if s.Data == nil {
 		s.Data = make(map[string][]byte)
 	}
-	data := s.DeepCopy().Data
+	if s.Labels == nil {
+		s.Labels = make(map[string]string)
+	}
+	s.Labels[labelHasChanged] = labelFalse
 
 	agentTokens, err := ap.getTokens(ctx)
 	if err != nil {
@@ -134,19 +152,19 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 				delete(agentTokens, id)
 				continue
 			}
-			delete(s.Data, token.Name)
+			deleteSecretKey(s, token.Name)
 			ap.deleteTokenStatus(id)
 		}
 		t, err := r.createToken(ctx, ap, token.Name)
 		if err != nil {
 			return err
 		}
-		s.Data[t.Description] = []byte(t.Token)
+		setSecretKey(s, t.Description, t.Token)
 	}
 
 	// Clean up.
 	for name, id := range statusTokens {
-		delete(s.Data, name)
+		deleteSecretKey(s, name)
 		ap.deleteTokenStatus(id)
 	}
 
@@ -157,7 +175,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token name=%q id=%q", name, id))
 			return err
 		}
-		delete(s.Data, name)
+		deleteSecretKey(s, name)
 		ap.deleteTokenStatus(id)
 	}
 
@@ -170,11 +188,12 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			return
 		}
 		// Do not update if there are no changes.
-		if maps.EqualFunc(s.Data, data, func(vs, vd []byte) bool {
-			return string(vs) == string(vd)
-		}) {
+		if s.GetLabels()[labelHasChanged] == labelFalse {
+			delete(s.Labels, labelHasChanged)
+			ap.log.Info("Reconcile Agent Tokens", "msg", "no changes detected in Kubernetes Secret")
 			return
 		}
+		delete(s.Labels, labelHasChanged)
 		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("updating Kubernetes Secret %q", s.Name))
 		if err := r.Client.Update(ctx, s); err != nil {
 			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to update Kubernetes Secret %q", s.Name))
