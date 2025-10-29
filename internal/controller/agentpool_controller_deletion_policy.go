@@ -72,10 +72,7 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 					ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove token %s", t.ID))
 					return err
 				}
-				err = r.removeToken(ctx, ap, t.ID)
-				if err != nil {
-					return err
-				}
+				ap.deleteTokenStatus(t.ID)
 			}
 			ap.log.Info("Reconcile Agent Pool", "msg", "successfully deleted tokens")
 		}
