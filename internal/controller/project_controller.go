@@ -65,7 +65,7 @@ func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return requeueAfter(requeueInterval)
 	}
 
-	if a, ok := p.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+	if a, ok := p.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
 		p.log.Info("Project Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}
