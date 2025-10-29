@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: Workspace CRD option for the operator to retry failed runs
+time: 2025-04-29T15:45:03.031933484+02:00
+custom:
+    PR: "602"
