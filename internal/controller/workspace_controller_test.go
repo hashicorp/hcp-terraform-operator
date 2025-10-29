@@ -261,6 +261,21 @@ func createWorkspace(instance *appv1alpha2.Workspace) {
 	Expect(instance.Status.WorkspaceID).Should(HavePrefix("ws-"))
 }
 
+func updateWorkspace(instance *appv1alpha2.Workspace) {
+	namespacedName := getNamespacedName(instance)
+
+	// Create a new Kubernetes workspace object
+	Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+	// Wait until the controller finishes the reconciliation
+	Eventually(func() bool {
+		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+		return instance.Status.ObservedGeneration == instance.Generation
+	}).Should(BeTrue())
+
+	// The Kubernetes workspace object should have Status.WorkspaceID with the valid workspace ID
+	Expect(instance.Status.WorkspaceID).Should(HavePrefix("ws-"))
+}
+
 func deleteWorkspace(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
 
