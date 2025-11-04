@@ -74,7 +74,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 			PageNumber: initPageNumber,
 		},
 	}
-
+	runCount := 0
 	for {
 		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
 		if err != nil {
@@ -87,6 +87,10 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 				awaitingUserInteractionRuns[string(run.Status)]++
 				continue
 			}
+			if _, exists := runs[run.Workspace.ID]; exists && run.PlanOnly {
+				runCount++
+				continue
+			}
 			runs[run.Workspace.ID] = struct{}{}
 		}
 		if runsList.NextPage == 0 {
@@ -97,8 +101,10 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 
 	// TODO:
 	// Add metric(s) for runs awaiting user interaction
-
-	return int32(len(runs)), nil
+	ap.log.Info("Runs", "msg", fmt.Sprintf("Runs: %+v", runs))
+	ap.log.Info("Run count", "msg", fmt.Sprintf("RunCount: %+v", runCount))
+	runCount = len(runs) + runCount
+	return int32(runCount), nil
 }
 
 // computeRequiredAgents is a legacy algorithm that is used to compute the number of agents needed.
