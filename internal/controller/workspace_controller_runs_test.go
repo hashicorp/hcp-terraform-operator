@@ -99,14 +99,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Trigger a new apply run with annotations
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  annotationTrue,
+				workspaceAnnotationRunNew:  metaTrue,
 				workspaceAnnotationRunType: runTypeApply,
 			})
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == annotationTrue {
+				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
 					return false
 				}
 				if instance.Status.Run == nil {
@@ -119,7 +119,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Trigger a new plan run with annotations
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:              annotationTrue,
+				workspaceAnnotationRunNew:              metaTrue,
 				workspaceAnnotationRunType:             runTypePlan,
 				workspaceAnnotationRunTerraformVersion: tf,
 			})
@@ -127,7 +127,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == annotationTrue {
+				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
 					return false
 				}
 				if instance.Status.Plan == nil {

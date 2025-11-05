@@ -1,5 +1,30 @@
 name: E2E on HCP Terraform Operator [Helm]
 
+# To run this workflow locally, you can use https://github.com/nektos/act.
+# Act is a tool for executing GitHub Actions in your local environment.
+
+# First, export the required secrets as environment variables:
+
+# export TFC_OAUTH_TOKEN=<OAUTH_TOKEN>
+# export TFC_ORG=<ORG_NAME>
+# export TFC_TOKEN=<TOKEN>
+# export TFC_VCS_REPO=<VCS_REPO>
+
+
+# Then execute the workflow with:
+
+# act workflow_dispatch --rm \
+#   --container-architecture linux/arm64 \
+#   -P linux=catthehacker/ubuntu:act-latest \
+#   --var KIND_VERSION=0.30.0 \
+#   --var BIN_NAME=manager \
+#   --env PLATFORMS=arm64 \
+#   -s TFC_OAUTH_TOKEN \
+#   -s TFC_ORG \
+#   -s TFC_TOKEN \
+#   -s TFC_VCS_REPO \
+#   -W .github/workflows/helm-end-to-end-tfc.yaml
+
 on:
   schedule:
     - cron: '30 6 * * 0'
@@ -17,6 +42,7 @@ env:
   CLUSTER_NAME: 'this'
   DOCKER_IMAGE: 'this'
   KUBECONFIG: ${{ github.workspace }}/.kube/config
+  PLATFORMS: 'amd64'
 
 jobs:
   tests:
@@ -56,7 +82,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
         with:
-          platforms: amd64
+          platforms: ${{ env.PLATFORMS }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -64,7 +90,7 @@ jobs:
       - name: Build and load Docker image
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
-          platforms: linux/amd64
+          platforms: linux/${{ env.PLATFORMS }}
           load: true
           build-args:
             BIN_NAME=${{ vars.BIN_NAME }}
