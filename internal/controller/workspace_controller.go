@@ -78,7 +78,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return doNotRequeue()
 	}
 
-	if a, ok := w.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+	if a, ok := w.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
 		w.log.Info("Workspace Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}

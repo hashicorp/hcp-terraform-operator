@@ -83,7 +83,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return requeueAfter(requeueInterval)
 	}
 
-	if a, ok := m.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+	if a, ok := m.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
 		m.log.Info("Module Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}
