@@ -5,10 +5,12 @@
 processor:
   ignoreTypes:
     - "AgentPoolList$"
+    - "AgentTokenList$"
     - "ModuleList$"
     - "ProjectList$"
+    - "RunsCollectorList$"
     - "WorkspaceList$"
   ignoreFields:
     - "status$"
 render:
-  kubernetesVersion: 1.27
+  kubernetesVersion: 1.32
