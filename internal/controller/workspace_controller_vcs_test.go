@@ -239,7 +239,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("cat trigger a new apply run on creation", func() {
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  annotationTrue,
+				workspaceAnnotationRunNew:  metaTrue,
 				workspaceAnnotationRunType: runTypeApply,
 			})
 			instance.Spec.ApplyMethod = "auto"
@@ -249,7 +249,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == annotationTrue {
+				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
 					return false
 				}
 				if instance.Status.Run == nil {
@@ -261,7 +261,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("cat trigger a new plan run on creation", func() {
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  annotationTrue,
+				workspaceAnnotationRunNew:  metaTrue,
 				workspaceAnnotationRunType: runTypePlan,
 			})
 			instance.Spec.ApplyMethod = "auto"

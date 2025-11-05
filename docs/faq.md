@@ -235,13 +235,15 @@
 
 - **Can I delete a project that has workspaces in it?**
 
-  This decision was made intentionally to follow the single-responsibility principle and to simplify deployment in a multi-cluster environment.
+  No, you can only delete a project if it is empty and you have the proper permissions.
+
 
 ## Runs Collector Controller
 
 - **Why can't I configure multiple Agent Pools for scraping within a single CR?**
 
-  No, you can only delete a project if it is empty and you have the proper permissions.
+  This decision was made intentionally to follow the single-responsibility principle and to simplify deployment in a multi-cluster environment.
+
 
 ## Workspace Controller
 
