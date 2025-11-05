@@ -64,6 +64,9 @@ Controllers usage guides:
 - [Runs Collector](./docs/runs_collector.md)
 - [Workspace](./docs/workspace.md)
 
+
+### Annotations and Labels
+
 Annotations and Labels used by HCP Terraform Operator can be found [here](./docs/annotations-and-labels.md).
 
 ### Metrics
