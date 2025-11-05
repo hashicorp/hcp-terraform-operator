@@ -92,7 +92,7 @@ var _ = Describe("AgentToken Controller", Ordered, func() {
 		It("should successfully manage tokens with merge policy", func() {
 			// CREATE AGENT POOL WITH ONE TOKEN
 			pool := createAgentPoolWithToken(poolName)
-			// CREATE KUBERNETS ITEM
+			// CREATE KUBERNETES ITEM
 			instance.Spec.AgentPool = appv1alpha2.AgentPoolRef{
 				ID: pool.ID,
 			}
@@ -126,7 +126,7 @@ var _ = Describe("AgentToken Controller", Ordered, func() {
 		It("should successfully manage tokens with owner policy", func() {
 			// CREATE AGENT POOL WITH ONE TOKEN
 			pool := createAgentPoolWithToken(poolName)
-			// CREATE KUBERNETS ITEM
+			// CREATE KUBERNETES ITEM
 			instance.Spec.AgentPool = appv1alpha2.AgentPoolRef{
 				ID: pool.ID,
 			}

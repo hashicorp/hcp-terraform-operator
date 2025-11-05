@@ -105,7 +105,7 @@ func (r *RunsCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return doNotRequeue()
 	}
 
-	if a, ok := rc.instance.GetAnnotations()[annotationPaused]; ok && a == annotationTrue {
+	if a, ok := rc.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
 		rc.log.Info("Runs Collector Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}

@@ -1,6 +1,6 @@
 # Main codeowners
-* @hashicorp/tf-eco-hybrid-cloud
+* @hashicorp/team-ipg-product-integrations
 
 # Release configuration
-/.release/                      @hashicorp/tf-eco-hybrid-cloud
-/.github/workflows/build.yml    @hashicorp/tf-eco-hybrid-cloud
+/.release/                      @hashicorp/team-ipg-product-integrations
+/.github/workflows/build.yml    @hashicorp/team-ipg-product-integrations
