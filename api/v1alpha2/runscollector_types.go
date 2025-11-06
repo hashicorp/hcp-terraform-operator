@@ -32,8 +32,8 @@ type RunsCollectorStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Pool ID",type=string,JSONPath=`.status.agentPool.ID`
-//+kubebuilder:printcolumn:name="Pool Name",type=string,JSONPath=`.status.agentPool.Name`
+//+kubebuilder:printcolumn:name="Pool ID",type=string,JSONPath=`.status.agentPool.id`
+//+kubebuilder:printcolumn:name="Pool Name",type=string,JSONPath=`.status.agentPool.name`
 //+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.11.0"
 
 // Runs Collector scraptes HCP Terraform Run statuses from a given Agent Pool and exposes them as Prometheus-compatible metrics.
