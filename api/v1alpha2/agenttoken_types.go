@@ -84,9 +84,9 @@ type AgentTokenStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Agent Pool Name",type=string,JSONPath=`.status.agentPool.name`
-//+kubebuilder:printcolumn:name="Agent Pool ID",type=string,JSONPath=`.status.agentPool.id`
-//+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.9.0"
+//+kubebuilder:printcolumn:name="Pool Name",type=string,JSONPath=`.status.agentPool.name`
+//+kubebuilder:printcolumn:name="Pool ID",type=string,JSONPath=`.status.agentPool.id`
+//+kubebuilder:metadata:labels="app.terraform.io/crd-schema-version=v25.11.0"
 
 // AgentToken manages HCP Terraform Agent Tokens.
 // More information:

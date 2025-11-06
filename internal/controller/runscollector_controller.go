@@ -200,11 +200,70 @@ func (r *RunsCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *RunsCollectorReconciler) getAgentPoolIDByName(ctx context.Context, rc *runsCollectorInstance) (*tfc.AgentPool, error) {
+	name := rc.instance.Spec.AgentPool.Name
+
+	listOpts := &tfc.AgentPoolListOptions{
+		Query: name,
+		ListOptions: tfc.ListOptions{
+			PageSize: maxPageSize,
+		},
+	}
+	for {
+		ap, err := rc.tfClient.Client.AgentPools.List(ctx, rc.instance.Spec.Organization, listOpts)
+		if err != nil {
+			return nil, err
+		}
+		for _, a := range ap.Items {
+			if a.Name == name {
+				return a, nil
+			}
+		}
+		if ap.NextPage == 0 {
+			break
+		}
+		listOpts.PageNumber = ap.NextPage
+	}
+
+	return nil, fmt.Errorf("agent pool ID not found for agent pool name %q", name)
+}
+
+func (r *RunsCollectorReconciler) updateStatusAgentPool(ctx context.Context, rc *runsCollectorInstance) error {
+	var pool *tfc.AgentPool
+	var err error
+	if rc.instance.Spec.AgentPool.Name != "" {
+		pool, err = r.getAgentPoolIDByName(ctx, rc)
+		if err != nil {
+			return err
+		}
+
+	}
+	if rc.instance.Spec.AgentPool.ID != "" {
+		pool, err = rc.tfClient.Client.AgentPools.Read(ctx, rc.instance.Spec.AgentPool.ID)
+		if err != nil {
+			return err
+		}
+
+	}
+	rc.instance.Status.AgentPool = &appv1alpha2.AgentPoolRef{
+		ID:   pool.ID,
+		Name: pool.Name,
+	}
+
+	return nil
+}
+
 func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCollectorInstance) error {
 	runs := map[tfc.RunStatus]float64{}
 	var runsTotal float64
+	// TODO:
+	// - If a new name or ID is set in the spec, we need to zero related metrics.
+	if rc.instance.NeedUpdateStatus() {
+		r.updateStatusAgentPool(ctx, rc)
+	}
+
 	listOpts := &tfc.RunListForOrganizationOptions{
-		AgentPoolNames: rc.instance.Spec.AgentPool.Name,
+		AgentPoolNames: rc.instance.Status.AgentPool.Name,
 		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
 			PageSize:   maxPageSize,

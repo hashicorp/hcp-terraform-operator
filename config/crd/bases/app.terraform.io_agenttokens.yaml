@@ -5,7 +5,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
   labels:
-    app.terraform.io/crd-schema-version: v25.9.0
+    app.terraform.io/crd-schema-version: v25.11.0
   name: agenttokens.app.terraform.io
 spec:
   group: app.terraform.io
@@ -18,10 +18,10 @@ spec:
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.agentPool.name
-      name: Agent Pool Name
+      name: Pool Name
       type: string
     - jsonPath: .status.agentPool.id
-      name: Agent Pool ID
+      name: Pool ID
       type: string
     name: v1alpha2
     schema:
