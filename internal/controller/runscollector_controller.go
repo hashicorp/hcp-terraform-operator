@@ -256,6 +256,8 @@ func (r *RunsCollectorReconciler) updateStatusAgentPool(ctx context.Context, rc 
 func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCollectorInstance) error {
 	runs := map[tfc.RunStatus]float64{}
 	var runsTotal float64
+	// TODO:
+	// - If a new name or ID is set in the spec, we need to zero related metrics.
 	if rc.instance.NeedUpdateStatus() {
 		r.updateStatusAgentPool(ctx, rc)
 	}
