@@ -12,8 +12,8 @@ Starting with version `2.10.0`, the operator introduces HCP Terraform–specific
 
 | Metric name | Type | Description | Controller | Status |
 |-------------|------|-------------|------------|--------|
-| `hcp_tf_runs{run_status="<HCP Terraform Run Status>"}` | Gauge | Pending runs by statuses. | RunsCollector | Alpha |
-| `hcp_tf_runs_total` | Gauge | Total number of pending Runs by statuses. | RunsCollector | Alpha |
+| `hcp_tf_runs{run_status, agent_pool_id, agent_pool_name}` | Gauge | Pending runs by statuses. | RunsCollector | Alpha |
+| `hcp_tf_runs_total{agent_pool_id, agent_pool_name}` | Gauge | Total number of pending Runs. | RunsCollector | Alpha |
 
 ## Scraping Metrics
 

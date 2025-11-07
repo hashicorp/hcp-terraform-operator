@@ -17,11 +17,11 @@ var (
 		},
 		// TODO:
 		// - Add a status label to indicate whether the metric is up or down
-		//   (for example, when an endpoint is unreachable or the CR is suspended).
-		// - Add agent_pool_name as label.
-		// - Add agent_pool_id as label.
+		//   (for example, when an endpoint is unreachable or the CR is suspended/paused).
 		[]string{
 			"run_status",
+			"agent_pool_id",
+			"agent_pool_name",
 		},
 	)
 	metricRunsTotal = prometheus.NewGaugeVec(
@@ -31,10 +31,11 @@ var (
 		},
 		// TODO:
 		// - Add a status label to indicate whether the metric is up or down
-		//   (for example, when an endpoint is unreachable or the CR is suspended).
-		// - Add agent_pool_name as label.
-		// - Add agent_pool_id as label.
-		[]string{},
+		//   (for example, when an endpoint is unreachable or the CR is suspended/paused).
+		[]string{
+			"agent_pool_id",
+			"agent_pool_name",
+		},
 	)
 	// TODO:
 	// - Add a metric to track associated Workspaces.
