@@ -97,6 +97,7 @@ func deletionTimestampPredicate(o client.Object) bool {
 		agentTokenFinalizer,
 		moduleFinalizer,
 		projectFinalizer,
+		runsCollectorFinalizer,
 		workspaceFinalizer,
 	}
 

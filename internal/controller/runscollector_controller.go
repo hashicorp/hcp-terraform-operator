@@ -200,6 +200,18 @@ func (r *RunsCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *RunsCollectorReconciler) removeFinalizer(ctx context.Context, rc *runsCollectorInstance) error {
+	controllerutil.RemoveFinalizer(&rc.instance, runsCollectorFinalizer)
+
+	err := r.Update(ctx, &rc.instance)
+	if err != nil {
+		rc.log.Error(err, "Reconcile Runs Collector", "msg", fmt.Sprintf("failed to remove finalizer %s", runsCollectorFinalizer))
+		r.Recorder.Eventf(&rc.instance, corev1.EventTypeWarning, "RemoveRunsCollector", "Failed to remove finalizer %s", runsCollectorFinalizer)
+	}
+
+	return err
+}
+
 func (r *RunsCollectorReconciler) getAgentPoolIDByName(ctx context.Context, rc *runsCollectorInstance) (*tfc.AgentPool, error) {
 	name := rc.instance.Spec.AgentPool.Name
 
@@ -254,6 +266,14 @@ func (r *RunsCollectorReconciler) updateStatusAgentPool(ctx context.Context, rc 
 }
 
 func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCollectorInstance) error {
+	// TODO:
+	// - Think if we need to reset all metrics to 0 when remove finalizer.
+	if isDeletionCandidate(&rc.instance, runsCollectorFinalizer) {
+		rc.log.Info("Reconcile Runs Collector", "msg", "object marked as deleted, need to remove finalizer")
+		r.Recorder.Event(&rc.instance, corev1.EventTypeNormal, "ReconcileRunsCollector", "Object marked as deleted, need to remove finalizer")
+		return r.removeFinalizer(ctx, rc)
+	}
+
 	runs := map[tfc.RunStatus]float64{}
 	var runsTotal float64
 	// TODO:
