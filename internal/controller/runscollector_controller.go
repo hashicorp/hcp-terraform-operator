@@ -289,11 +289,18 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 	}
 
 	for _, status := range runStatuses {
-		metricRuns.WithLabelValues(string(status)).Set(float64(runs[status]))
+		metricRuns.WithLabelValues(
+			string(status),                    // run_status
+			rc.instance.Status.AgentPool.ID,   // agent_pool_id
+			rc.instance.Status.AgentPool.Name, // agent_pool_name
+		).Set(float64(runs[status]))
 	}
 
 	rc.log.Info("Reconcile Runs Collector", "msg", fmt.Sprintf("Total Runs: %.0f", runsTotal))
-	metricRunsTotal.WithLabelValues().Set(runsTotal)
+	metricRunsTotal.WithLabelValues(
+		rc.instance.Status.AgentPool.ID,   // agent_pool_id
+		rc.instance.Status.AgentPool.Name, // agent_pool_name
+	).Set(runsTotal)
 
 	rc.instance.Status.ObservedGeneration = rc.instance.Generation
 
