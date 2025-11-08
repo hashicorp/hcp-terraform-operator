@@ -61,8 +61,15 @@ var _ = Describe("RunsCollector Controller", Ordered, func() {
 			Status: appv1alpha2.RunsCollectorStatus{},
 		}
 		// Register metrics
-		metricRuns.WithLabelValues("pink_panther").Set(float64(162))
-		metricRunsTotal.WithLabelValues().Set(float64(2134))
+		metricRuns.WithLabelValues(
+			"pink_panther",
+			"apool-pp1963",
+			"pink-shadow",
+		).Set(float64(162))
+		metricRunsTotal.WithLabelValues(
+			"apool-pp1963",
+			"pink-shadow",
+		).Set(float64(2134))
 	})
 
 	AfterEach(func() {
