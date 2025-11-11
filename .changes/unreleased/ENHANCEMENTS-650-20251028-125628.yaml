@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`AgentPool`: Update Kubernetes Secret synchronization to perform batch updates at the end of agent token reconciliation, reducing API calls and preventing race conditions.'
-time: 2025-10-28T12:56:28.082375+01:00
-custom:
-    PR: "650"

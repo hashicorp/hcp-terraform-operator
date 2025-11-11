@@ -683,7 +683,7 @@ _Appears in:_
 
 
 
-Runs Collector scraptes HCP Terraform Run statuses from a given Agent Pool and exposes them as Prometheus-compatible metrics.
+RunsCollector scraptes HCP Terraform Run statuses from a given Agent Pool and exposes them as Prometheus-compatible metrics.
 More information:
   - https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations
 

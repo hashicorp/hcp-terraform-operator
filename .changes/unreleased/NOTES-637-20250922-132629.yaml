@@ -1,5 +1,0 @@
-kind: NOTES
-body: '`RunsCollector`: Add new Prometheus-compatible metrics `hcp_tf_runs` and `hcp_tf_runs_total` to collect pending runs by status and the total number of pending runs by status, respectively. These metrics are in the alpha stage and subject to change.'
-time: 2025-09-22T13:26:29.977557+02:00
-custom:
-    PR: "637"
