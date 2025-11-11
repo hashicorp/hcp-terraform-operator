@@ -47,10 +47,17 @@ To create a new release, adhere to the following steps:
 
   Note that the version option (`auto` in the example above) must match the option you selected earlier. If there are any issues, address them before proceeding.
 
-  Once the log entry appears as expected, proceed with the generation and merge your changes.
+  Once the log entry appears as expected, proceed with the generation.
 
   ```console
   $ changie batch auto
+  ```
+
+  _This is the time to review the corresponding changelog for the version in the `.changie/<SEMVER>.md` file and update it if necessary. Please include any community contribution acknowledgements here._
+
+  Merge the release changes into the [`CHANGELOG`](./CHANGELOG.md) file.
+
+  ```console
   $ changie merge
   ```
 

@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: '`Controllers`: Add a new annotation, `app.terraform.io/paused`, to pause reconciliation for a specific CR.'
-time: 2025-08-13T08:47:14.104109+02:00
-custom:
-    PR: "631"
