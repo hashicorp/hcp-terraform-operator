@@ -71,7 +71,7 @@ var _ = Describe("AgentToken Controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		// DELETE AGENT POOL
+		// DELETE AGENT TOKEN RESOURCE
 		Expect(k8sClient.Delete(ctx, instance)).Should(Succeed())
 
 		Eventually(func() bool {
@@ -84,7 +84,7 @@ var _ = Describe("AgentToken Controller", Ordered, func() {
 				return true
 			}
 			err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPool.ID)
-			return err == tfc.ErrResourceNotFound || err == nil
+			return err == tfc.ErrResourceNotFound
 		}).Should(BeTrue())
 	})
 
