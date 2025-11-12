@@ -6,12 +6,9 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "🌱"
-  - package-ecosystem: "github-actions"
+  - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "monthly"
-    # DependaBot does not open a pull request to update the version of GH actions, only security updates.
-    # TSCCR is responsible for opening a pull request to update the version of GH actions.
-    open-pull-requests-limit: 0
+      interval: "weekly"
     commit-message:
-      prefix: "🤖"
+      prefix: "🐳"
