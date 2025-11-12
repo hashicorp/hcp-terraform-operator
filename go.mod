@@ -5,6 +5,7 @@ go 1.25.4
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
+	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-slug v0.16.7
 	github.com/hashicorp/go-tfe v1.93.0
@@ -12,6 +13,7 @@ require (
 	github.com/onsi/gomega v1.36.3
 	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.11.1
+	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
