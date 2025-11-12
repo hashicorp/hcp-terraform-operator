@@ -90,7 +90,7 @@ ENTRYPOINT ["/bin/sh", "-c", "/$BIN_NAME"]
 
 # Red Hat UBI release image
 # -----------------------------------
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5 AS release-ubi
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7 AS release-ubi
 
 ARG BIN_NAME
 ARG PRODUCT_VERSION
