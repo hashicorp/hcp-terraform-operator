@@ -68,6 +68,8 @@ spec:
         - --module-sync-period=5m
         - --project-workers=1
         - --project-sync-period=5m
+        - --runs-collector-workers=1
+        - --runs-collector-sync-period=15s
         - --workspace-workers=1
         - --workspace-sync-period=5m
         image: controller:latest

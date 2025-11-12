@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: '`Workspace`: Fix an issue where sensitive Terraform or Environment variables are not updated when their sensitivity changes.'
-time: 2025-08-04T18:39:59.523146+02:00
-custom:
-    PR: "629"

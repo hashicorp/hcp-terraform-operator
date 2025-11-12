@@ -46,7 +46,7 @@ Three simple commands to install the Operator:
 ```console
 $ helm repo add hashicorp https://helm.releases.hashicorp.com
 $ helm repo update
-$ helm install demo hashicorp/hcp-terraform-operator --wait --version 2.9.2
+$ helm install demo hashicorp/hcp-terraform-operator --wait --version 2.10.0
 ```
 
 More detailed information about the installation and available values can be found [here](./charts/hcp-terraform-operator/README.md).
@@ -61,7 +61,7 @@ Controllers usage guides:
 - [AgentToken](./docs/agenttoken.md)
 - [Module](./docs/module.md)
 - [Project](./docs/project.md)
-- [Runs Collector](./docs/runs_collector.md)
+- [RunsCollector](./docs/runs_collector.md)
 - [Workspace](./docs/workspace.md)
 
 

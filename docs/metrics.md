@@ -15,6 +15,8 @@ Starting with version `2.10.0`, the operator introduces HCP Terraform–specific
 | `hcp_tf_runs{run_status, agent_pool_id, agent_pool_name}` | Gauge | Pending runs by statuses. | RunsCollector | Alpha |
 | `hcp_tf_runs_total{agent_pool_id, agent_pool_name}` | Gauge | Total number of pending Runs. | RunsCollector | Alpha |
 
+_When combined with external scalers such as [KEDA](https://keda.sh/), runs-related metrics offer greater flexibility for scaling._
+
 ## Scraping Metrics
 
 How metrics are scraped will depend on how you operate your Prometheus server. The below example assumes that the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator) is being used to run Prometheus.
