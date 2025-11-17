@@ -81,7 +81,6 @@ func (ap *agentPoolInstance) pendingWorkspaceRuns(ctx context.Context) (int32, e
 	}
 	planOnlyRunCount := 0
 	for {
-		ap.log.Info("Fetching runs for organization", "org", ap.instance.Spec.Organization, "page", listOpts.PageNumber)
 		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
 		if err != nil {
 			return 0, err
@@ -108,9 +107,9 @@ func (ap *agentPoolInstance) pendingWorkspaceRuns(ctx context.Context) (int32, e
 
 	// TODO:
 	// Add metric(s) for runs awaiting user interaction
-	agentsCount := len(runs) + planOnlyRunCount
-	ap.log.Info("Workspaces and plan-only runs count", "msg", fmt.Sprintf("Workspaces: %+v Plan-only runs: %d Total agents: %d", runs, planOnlyRunCount, agentsCount))
-	return int32(agentsCount), nil
+	totalPendingRuns := len(runs) + planOnlyRunCount
+	ap.log.Info("Runs", "msg", fmt.Sprintf("Workspaces: %+v Plan-only runs: %d Total pending runs: %d", runs, planOnlyRunCount, totalPendingRuns))
+	return int32(totalPendingRuns), nil
 }
 
 // computeRequiredAgents is a legacy algorithm that is used to compute the number of agents needed.
@@ -278,7 +277,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
 		return err
 	}
-	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d workspaces have pending runs", requiredAgents))
+	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d agents are required", requiredAgents))
 
 	currentReplicas, err := r.getAgentDeploymentReplicas(ctx, ap)
 	if err != nil {

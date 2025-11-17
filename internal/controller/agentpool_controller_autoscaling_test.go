@@ -263,7 +263,7 @@ func TestPendingWorkspaceRuns(t *testing.T) {
 			mockRuns := mocks.NewMockRuns(ctrl)
 			mockRuns.EXPECT().
 				ListForOrganization(gomock.Any(), "test-org", gomock.Any()).
-				Return(&tfc.RunList{Items: tt.mockRuns, Pagination: &tfc.Pagination{NextPage: 0}}, tt.mockErr)
+				Return(&tfc.OrganizationRunList{Items: tt.mockRuns, PaginationNextPrev: &tfc.PaginationNextPrev{NextPage: 0}}, tt.mockErr)
 
 			ap := &agentPoolInstance{
 				tfClient: HCPTerraformClient{Client: &tfc.Client{Runs: mockRuns}},
