@@ -65,8 +65,7 @@ func matchWildcardName(wildcard string, str string) bool {
 	}
 }
 
-// pendingWorkspaceRuns returns the number of agents needed to execute current pending runs for a given agent pool.
-// If there are no plan-only runs in the list of current pending runs for a workspace this functoion returns the number of workspaces.
+// pendingWorkspaceRuns returns the number pending runs for a given agent pool.
 // This function is compatible with HCP Terraform and TFE version v202409-1 and later.
 func (ap *agentPoolInstance) pendingWorkspaceRuns(ctx context.Context) (int32, error) {
 	runs := map[string]struct{}{}
