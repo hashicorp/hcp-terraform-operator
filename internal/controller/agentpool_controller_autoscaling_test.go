@@ -13,16 +13,18 @@ import (
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/go-tfe/mocks"
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
-	gomock "go.uber.org/mock/gomock"
+	"go.uber.org/mock/gomock"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Agent Pool controller", Ordered, func() {
@@ -83,20 +85,8 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 	AfterEach(func() {
 		Expect(tfClient.Workspaces.Delete(ctx, organization, workspace)).To(Succeed())
-		// Delete Agent Pool CR
-		Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
-		Eventually(func() bool {
-			err := k8sClient.Get(ctx, namespacedName, instance)
-			return kerrors.IsNotFound(err)
-		}).Should(BeTrue())
-
-		Eventually(func() bool {
-			if instance.Status.AgentPoolID == "" {
-				return true
-			}
-			err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)
-			return err == tfc.ErrResourceNotFound
-		}).Should(BeTrue())
+		cleanUpAgentPoolDeployment(instance)
+		cleanUpAgentPool(instance, namespacedName)
 	})
 
 	Context("Autoscaling", func() {
@@ -354,4 +344,38 @@ func TestPendingWorkspaceRuns(t *testing.T) {
 			}
 		})
 	}
+}
+
+func cleanUpAgentPool(instance *appv1alpha2.AgentPool, nn types.NamespacedName) {
+	Eventually(func() bool {
+		err := k8sClient.Delete(ctx, instance)
+		return kerrors.IsNotFound(err) || err == nil
+	}).Should(BeTrue())
+
+	Eventually(func() bool {
+		err := k8sClient.Get(ctx, nn, instance)
+		return kerrors.IsNotFound(err)
+	}).Should(BeTrue())
+
+	Eventually(func() bool {
+		println("[DEBUG] Agent Pool with ID:", instance.Status.AgentPoolID)
+		if instance.Status.AgentPoolID == "" {
+			return true
+		}
+		err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)
+		return err == nil || err == tfc.ErrResourceNotFound
+	}).Should(BeTrue())
+}
+
+func cleanUpAgentPoolDeployment(instance *appv1alpha2.AgentPool) {
+	d := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      agentPoolDeploymentName(instance),
+			Namespace: instance.GetNamespace(),
+		},
+	}
+	Eventually(func() bool {
+		err := k8sClient.Delete(ctx, d)
+		return kerrors.IsNotFound(err)
+	}).Should(BeTrue())
 }
