@@ -95,7 +95,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return true
 			}
 			err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)
-			return err == tfc.ErrResourceNotFound || err == nil
+			return err == tfc.ErrResourceNotFound
 		}).Should(BeTrue())
 	})
 
