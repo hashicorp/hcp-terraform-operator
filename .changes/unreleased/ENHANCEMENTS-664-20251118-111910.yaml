@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: This change provisions autoscaling of agents for speculative plan-only runs. The number of agents is determined by adding plan-only runs and workspace count
-time: 2025-11-18T11:19:10.674727-08:00
-custom:
-    PR: "664"
