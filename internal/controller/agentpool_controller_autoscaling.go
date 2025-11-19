@@ -18,10 +18,6 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-type AgentPoolControllerAutoscaling interface {
-	pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error)
-}
-
 // userInteractionRunStatuses contains run statuses that require user interaction.
 var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
 	tfc.RunCostEstimated:            {},
@@ -67,7 +63,7 @@ func matchWildcardName(wildcard string, str string) bool {
 
 // pendingWorkspaceRuns returns the number pending runs for a given agent pool.
 // This function is compatible with HCP Terraform and TFE version v202409-1 and later.
-func (ap *agentPoolInstance) pendingWorkspaceRuns(ctx context.Context) (int32, error) {
+func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	runs := map[string]struct{}{}
 	awaitingUserInteractionRuns := map[string]int{} // Track runs awaiting user interaction by status for future metrics
 	listOpts := &tfc.RunListForOrganizationOptions{
@@ -113,7 +109,7 @@ func (ap *agentPoolInstance) pendingWorkspaceRuns(ctx context.Context) (int32, e
 
 // computeRequiredAgents is a legacy algorithm that is used to compute the number of agents needed.
 // It is used when the TFE version is less than v202409-1.
-func (ap *agentPoolInstance) computeRequiredAgents(ctx context.Context) (int32, error) {
+func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	required := 0
 	// NOTE:
 	// - Two maps are used here to simplify target workspace searching by ID, name, and wildcard.
@@ -252,7 +248,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 
 	requiredAgents, err := func() (int32, error) {
 		if ap.tfClient.Client.IsCloud() {
-			return ap.pendingWorkspaceRuns(ctx)
+			return pendingWorkspaceRuns(ctx, ap)
 		}
 		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
 		useRunsEndpoint, err := validateTFEVersion(tfeVersion)
@@ -266,10 +262,10 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		// It now allows retrieving a list of runs for the organization.
 		if useRunsEndpoint {
 			ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the new algorithm based on the detected TFE version %s", tfeVersion))
-			return ap.pendingWorkspaceRuns(ctx)
+			return pendingWorkspaceRuns(ctx, ap)
 		}
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the legacy algorithm based to the detected TFE version %s", tfeVersion))
-		return ap.computeRequiredAgents(ctx)
+		return computeRequiredAgents(ctx, ap)
 	}()
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to get agents needed")

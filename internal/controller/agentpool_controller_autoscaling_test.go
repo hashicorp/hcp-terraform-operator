@@ -276,7 +276,7 @@ func TestPendingWorkspaceRuns(t *testing.T) {
 				log: logr.Logger{},
 			}
 
-			count, err := ap.pendingWorkspaceRuns(context.Background())
+			count, err := pendingWorkspaceRuns(context.Background(), ap)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
