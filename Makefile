@@ -96,6 +96,7 @@ help: ## Display this help.
 .PHONY: docs
 docs: crd-ref-docs ## Generate API reference documentation.
 	$(CRD_REF_DOCS) --renderer=markdown \
+		--max-depth=20 \
 		--source-path ./api/v1alpha2/ \
 		--config=./docs/config.yaml \
 		--templates-dir=./docs/templates/markdown \
