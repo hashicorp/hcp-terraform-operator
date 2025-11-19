@@ -25,8 +25,8 @@ import (
 var _ = Describe("Agent Pool controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.AgentPool
-		namespacedName = newNamespacedName()
-		agentPool      = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
+		namespacedName types.NamespacedName
+		agentPool      string
 	)
 
 	BeforeAll(func() {
@@ -36,6 +36,8 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		agentPool = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
 		// Create a new agent pool object for each test
 		instance = &appv1alpha2.AgentPool{
 			TypeMeta: metav1.TypeMeta{
@@ -98,6 +100,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		}).Should(BeTrue())
 
 		Eventually(func() bool {
+			if instance.Status.AgentPoolID == "" {
+				return true
+			}
 			err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)
 			return err == tfc.ErrResourceNotFound
 		}).Should(BeTrue())

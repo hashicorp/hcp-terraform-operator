@@ -17,19 +17,19 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
-	k8sapierrors "k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var _ = Describe("Agent Pool controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.AgentPool
-		namespacedName = newNamespacedName()
-		agentPool      = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
+		namespacedName types.NamespacedName
+		agentPool      string
 		workspace      = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
@@ -40,6 +40,8 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		agentPool = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
 		// Create a new module object for each test
 		instance = &appv1alpha2.AgentPool{
 			TypeMeta: metav1.TypeMeta{
@@ -85,7 +87,15 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 		Eventually(func() bool {
 			err := k8sClient.Get(ctx, namespacedName, instance)
-			return k8sapierrors.IsNotFound(err)
+			return kerrors.IsNotFound(err)
+		}).Should(BeTrue())
+
+		Eventually(func() bool {
+			if instance.Status.AgentPoolID == "" {
+				return true
+			}
+			err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)
+			return err == tfc.ErrResourceNotFound || err == nil
 		}).Should(BeTrue())
 	})
 
