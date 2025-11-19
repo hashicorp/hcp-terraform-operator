@@ -277,7 +277,7 @@ func TestPendingWorkspaceRuns(t *testing.T) {
 			expectError:   false,
 		},
 		{
-			name: "mix of plan-only and apply runs for single workspace",
+			name: "mix of plan-only and apply runs for multiple workspaces",
 			mockRuns: []*tfc.Run{
 				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
 				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
