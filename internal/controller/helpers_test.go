@@ -5,11 +5,11 @@ package controller
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	tfc "github.com/hashicorp/go-tfe"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -24,225 +24,314 @@ func (in *TestObject) DeepCopyObject() runtime.Object {
 	return nil
 }
 
-var _ = Describe("Helpers", Label("Unit"), func() {
-	Context("Returns", func() {
-		It("do not requeue", func() {
-			result, err := doNotRequeue()
-			Expect(result).To(BeEquivalentTo(reconcile.Result{}))
-			Expect(err).To(BeNil())
-		})
-		It("requeue after", func() {
-			duration := 1 * time.Second
-			result, err := requeueAfter(duration)
-			Expect(result).To(BeEquivalentTo(reconcile.Result{Requeue: true, RequeueAfter: duration}))
-			Expect(err).To(BeNil())
-		})
-		It("requeue on error", func() {
-			result, err := requeueOnErr(fmt.Errorf(""))
-			Expect(result).To(BeEquivalentTo(reconcile.Result{}))
-			Expect(err).ToNot(BeNil())
-		})
-	})
+func TestDoNotRequeue(t *testing.T) {
+	result, err := doNotRequeue()
+	assert.Nil(t, err)
+	assert.Equal(t, reconcile.Result{}, result)
+}
 
-	Context("FormatOutput", func() {
-		It("bool", func() {
-			o := &tfc.StateVersionOutput{
+func TestRequeueAfter(t *testing.T) {
+	duration := 1 * time.Second
+	result, err := requeueAfter(duration)
+	assert.Nil(t, err)
+	assert.Equal(t, reconcile.Result{Requeue: true, RequeueAfter: duration}, result)
+}
+
+func TestRequeueOnErr(t *testing.T) {
+	result, err := requeueOnErr(fmt.Errorf(""))
+	assert.NotNil(t, err)
+	assert.Equal(t, reconcile.Result{}, result)
+}
+
+func TestFormatOutput(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    *tfc.StateVersionOutput
+		expected string
+	}{
+		{
+			name: "boolean output",
+			input: &tfc.StateVersionOutput{
 				Type:  "boolean",
 				Value: true,
-			}
-			e := "true"
-			result, err := formatOutput(o)
-			Expect(result).To(BeEquivalentTo(e))
-			Expect(err).To(BeNil())
-		})
-		It("string", func() {
-			o := &tfc.StateVersionOutput{
+			},
+			expected: "true",
+		},
+		{
+			name: "string output",
+			input: &tfc.StateVersionOutput{
 				Type:  "string",
 				Value: "hello",
-			}
-			e := "hello"
-			result, err := formatOutput(o)
-			Expect(result).To(BeEquivalentTo(e))
-			Expect(err).To(BeNil())
-		})
-		It("multilineString", func() {
-			o := &tfc.StateVersionOutput{
+			},
+			expected: "hello",
+		},
+		{
+			name: "multiline string output",
+			input: &tfc.StateVersionOutput{
 				Type:  "string",
 				Value: "hello\nworld",
-			}
-			e := "hello\nworld"
-			result, err := formatOutput(o)
-			Expect(result).To(BeEquivalentTo(e))
-			Expect(err).To(BeNil())
-		})
-		It("number", func() {
-			o := &tfc.StateVersionOutput{
+			},
+			expected: "hello\nworld",
+		},
+		{
+			name: "number output",
+			input: &tfc.StateVersionOutput{
 				Type:  "number",
 				Value: 162,
-			}
-			e := "162"
-			result, err := formatOutput(o)
-			Expect(result).To(BeEquivalentTo(e))
-			Expect(err).To(BeNil())
-		})
-		It("list", func() {
-			o := &tfc.StateVersionOutput{
+			},
+			expected: "162",
+		},
+		{
+			name: "list output",
+			input: &tfc.StateVersionOutput{
 				Type: "array",
 				Value: []any{
 					"one",
 					2,
 				},
-			}
-			e := `["one",2]`
-			result, err := formatOutput(o)
-			Expect(result).To(BeEquivalentTo(e))
-			Expect(err).To(BeNil())
-		})
-		It("map", func() {
-			o := &tfc.StateVersionOutput{
+			},
+			expected: `["one",2]`,
+		},
+		{
+			name: "map output",
+			input: &tfc.StateVersionOutput{
 				Type: "array",
 				Value: map[string]string{
 					"one": "een",
 					"two": "twee",
 				},
+			},
+			expected: `{"one":"een","two":"twee"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel() // run test cases in parallel
+			result, err := formatOutput(tc.input)
+			assert.Equal(t, tc.expected, result)
+			assert.Nil(t, err)
+		})
+	}
+}
+
+func TestFinalizerBehaviors(t *testing.T) {
+	testCases := []struct {
+		name           string
+		hasDeletion    bool
+		hasFinalizer   bool
+		testFunc       func(*TestObject, string) bool
+		expectedResult bool
+	}{
+		{
+			name:           "NeedToAddFinalizer: No deletion timestamp, no finalizer",
+			hasDeletion:    false,
+			hasFinalizer:   false,
+			testFunc:       needToAddFinalizer[*TestObject],
+			expectedResult: true,
+		},
+		{
+			name:           "NeedToAddFinalizer: No deletion timestamp, has finalizer",
+			hasDeletion:    false,
+			hasFinalizer:   true,
+			testFunc:       needToAddFinalizer[*TestObject],
+			expectedResult: false,
+		},
+		{
+			name:           "NeedToAddFinalizer: Has deletion timestamp, no finalizer",
+			hasDeletion:    true,
+			hasFinalizer:   false,
+			testFunc:       needToAddFinalizer[*TestObject],
+			expectedResult: false,
+		},
+		{
+			name:           "NeedToAddFinalizer: Has deletion timestamp, has finalizer",
+			hasDeletion:    true,
+			hasFinalizer:   true,
+			testFunc:       needToAddFinalizer[*TestObject],
+			expectedResult: false,
+		},
+		{
+			name:           "IsDeletionCandidate: No deletion timestamp, no finalizer",
+			hasDeletion:    false,
+			hasFinalizer:   false,
+			testFunc:       isDeletionCandidate[*TestObject],
+			expectedResult: false,
+		},
+		{
+			name:           "IsDeletionCandidate: No deletion timestamp, has finalizer",
+			hasDeletion:    false,
+			hasFinalizer:   true,
+			testFunc:       isDeletionCandidate[*TestObject],
+			expectedResult: false,
+		},
+		{
+			name:           "IsDeletionCandidate: Has deletion timestamp, no finalizer",
+			hasDeletion:    true,
+			hasFinalizer:   false,
+			testFunc:       isDeletionCandidate[*TestObject],
+			expectedResult: false,
+		},
+		{
+			name:           "IsDeletionCandidate: Has deletion timestamp, has finalizer",
+			hasDeletion:    true,
+			hasFinalizer:   true,
+			testFunc:       isDeletionCandidate[*TestObject],
+			expectedResult: true,
+		},
+	}
+
+	testFinalizer := "test.app.terraform.io/finalizer"
+
+	for _, tc := range testCases {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			o := TestObject{}
+			if tc.hasDeletion {
+				o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
 			}
-			e := `{"one":"een","two":"twee"}`
-			result, err := formatOutput(o)
-			Expect(result).To(BeEquivalentTo(e))
-			Expect(err).To(BeNil())
-		})
-	})
+			if tc.hasFinalizer {
+				o.ObjectMeta.Finalizers = []string{testFinalizer}
+			}
 
-	Context("NeedToAddFinalizer", func() {
-		testFinalizer := "test.app.terraform.io/finalizer"
-		o := TestObject{}
-		It("No deletion timestamp and no finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = nil
-			o.ObjectMeta.Finalizers = []string{}
-			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeTrue())
+			result := tc.testFunc(&o, testFinalizer)
+			assert.Equal(t, tc.expectedResult, result)
 		})
-		It("No deletion timestamp and finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = nil
-			o.ObjectMeta.Finalizers = []string{testFinalizer}
-			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeFalse())
-		})
-		It("Deletion timestamp and no finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-			o.ObjectMeta.Finalizers = []string{}
-			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeFalse())
-		})
-		It("Deletion timestamp and finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-			o.ObjectMeta.Finalizers = []string{testFinalizer}
-			Expect(needToAddFinalizer(&o, testFinalizer)).To(BeFalse())
-		})
-	})
+	}
+}
 
-	Context("IsDeletionCandidate", func() {
-		testFinalizer := "test.app.terraform.io/finalizer"
-		o := TestObject{}
-		It("No deletion timestamp and no finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = nil
-			o.ObjectMeta.Finalizers = []string{}
-			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeFalse())
-		})
-		It("No deletion timestamp and finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = nil
-			o.ObjectMeta.Finalizers = []string{testFinalizer}
-			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeFalse())
-		})
-		It("Deletion timestamp and no finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-			o.ObjectMeta.Finalizers = []string{}
-			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeFalse())
-		})
-		It("Deletion timestamp and finalizer", func() {
-			o.ObjectMeta.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-			o.ObjectMeta.Finalizers = []string{testFinalizer}
-			Expect(isDeletionCandidate(&o, testFinalizer)).To(BeTrue())
-		})
-	})
+func TestMatchWildcardName(t *testing.T) {
+	testCases := []struct {
+		name     string
+		wildcard string
+		str      string
+		expected bool
+	}{
+		{
+			name:     "match prefix",
+			wildcard: "*-terraform-workspace",
+			str:      "hcp-terraform-workspace",
+			expected: true,
+		},
+		{
+			name:     "match suffix",
+			wildcard: "hcp-terraform-*",
+			str:      "hcp-terraform-workspace",
+			expected: true,
+		},
+		{
+			name:     "match prefix and suffix",
+			wildcard: "*-terraform-*",
+			str:      "hcp-terraform-workspace",
+			expected: true,
+		},
+		{
+			name:     "match no prefix and no suffix",
+			wildcard: "hcp-terraform-workspace",
+			str:      "hcp-terraform-workspace",
+			expected: true,
+		},
+		{
+			name:     "does not match prefix",
+			wildcard: "*-terraform-workspace",
+			str:      "hcp-tf-workspace",
+			expected: false,
+		},
+		{
+			name:     "does not match suffix",
+			wildcard: "hcp-terraform-*",
+			str:      "hashicorp-tf-workspace",
+			expected: false,
+		},
+		{
+			name:     "does not match prefix and suffix",
+			wildcard: "*-terraform-*",
+			str:      "hcp-tf-workspace",
+			expected: false,
+		},
+		{
+			name:     "does not match no prefix and no suffix",
+			wildcard: "hcp-terraform-workspace",
+			str:      "hcp-tf-workspace",
+			expected: false,
+		},
+	}
 
-	Context("Match wildcard name", func() {
-		// True
-		It("match prefix", func() {
-			result := matchWildcardName("*-terraform-workspace", "hcp-terraform-workspace")
-			Expect(result).To(BeTrue())
+	for _, tc := range testCases {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := matchWildcardName(tc.wildcard, tc.str)
+			assert.Equal(t, tc.expected, result)
 		})
-		It("match suffix", func() {
-			result := matchWildcardName("hcp-terraform-*", "hcp-terraform-workspace")
-			Expect(result).To(BeTrue())
-		})
-		It("match prefix and suffix", func() {
-			result := matchWildcardName("*-terraform-*", "hcp-terraform-workspace")
-			Expect(result).To(BeTrue())
-		})
-		It("match no prefix and no suffix", func() {
-			result := matchWildcardName("hcp-terraform-workspace", "hcp-terraform-workspace")
-			Expect(result).To(BeTrue())
-		})
-		// False
-		It("does not match prefix", func() {
-			result := matchWildcardName("*-terraform-workspace", "hcp-tf-workspace")
-			Expect(result).To(BeFalse())
-		})
-		It("does not match suffix", func() {
-			result := matchWildcardName("hcp-terraform-*", "hashicorp-tf-workspace")
-			Expect(result).To(BeFalse())
-		})
-		It("does not match prefix and suffix", func() {
-			result := matchWildcardName("*-terraform-*", "hcp-tf-workspace")
-			Expect(result).To(BeFalse())
-		})
-		It("does not match no prefix and no suffix", func() {
-			result := matchWildcardName("hcp-terraform-workspace", "hcp-tf-workspace")
-			Expect(result).To(BeFalse())
-		})
-	})
+	}
+}
 
-	Context("ValidateTFEVersion", func() {
-		It("Valid TFE version", func() {
-			version := "v202502-1"
-			answer, err := validateTFEVersion(version)
-			Expect(err).To(Succeed())
-			Expect(answer).To(Equal(true))
-		})
-		It("Invalid TFE version", func() {
-			version := "202502-1"
-			answer, err := validateTFEVersion(version)
-			Expect(err).ToNot(Succeed())
-			Expect(answer).To(Equal(false))
+func TestValidateTFEVersion(t *testing.T) {
+	testCases := []struct {
+		name          string
+		version       string
+		expectedValue bool
+		expectError   bool
+	}{
+		{
+			name:          "Valid TFE version",
+			version:       "v202502-1",
+			expectedValue: true,
+			expectError:   false,
+		},
+		{
+			name:          "Invalid TFE version",
+			version:       "202502-1",
+			expectedValue: false,
+			expectError:   true,
+		},
+		{
+			name:          "Empty TFE version",
+			version:       "",
+			expectedValue: true,
+			expectError:   false,
+		},
+		{
+			name:          "New valid TFE version",
+			version:       "1.0.0",
+			expectedValue: true,
+			expectError:   false,
+		},
+		{
+			name:          "New valid TFE version 2",
+			version:       "v1.0.1",
+			expectedValue: true,
+			expectError:   false,
+		},
+		{
+			name:          "New invalid TFE version",
+			version:       "1.0",
+			expectedValue: false,
+			expectError:   true,
+		},
+		{
+			name:          "New invalid TFE version 2",
+			version:       "v1.0",
+			expectedValue: false,
+			expectError:   true,
+		},
+	}
 
+	for _, tc := range testCases {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			v, err := validateTFEVersion(tc.version)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedValue, v)
+			}
 		})
-		It("Empty TFE version", func() {
-			version := ""
-			answer, err := validateTFEVersion(version)
-			Expect(err).To(Succeed())
-			Expect(answer).To(Equal(true))
-		})
-		It("New valid TFE version", func() {
-			version := "1.0.0"
-			answer, err := validateTFEVersion(version)
-			Expect(err).To(Succeed())
-			Expect(answer).To(Equal(true))
-		})
-		It("New valid TFE version 2", func() {
-			version := "v1.0.1"
-			answer, err := validateTFEVersion(version)
-			Expect(err).To(Succeed())
-			Expect(answer).To(Equal(true))
-		})
-		It("New invalid TFE version", func() {
-			version := "1.0"
-			answer, err := validateTFEVersion(version)
-			Expect(err).ToNot(Succeed())
-			Expect(answer).To(Equal(false))
-		})
-		It("New invalid TFE version 2", func() {
-			version := "v1.0"
-			answer, err := validateTFEVersion(version)
-			Expect(err).ToNot(Succeed())
-			Expect(answer).To(Equal(false))
-		})
-	})
-})
+	}
+}
