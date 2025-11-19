@@ -358,7 +358,6 @@ func cleanUpAgentPool(instance *appv1alpha2.AgentPool, nn types.NamespacedName) 
 	}).Should(BeTrue())
 
 	Eventually(func() bool {
-		println("[DEBUG] Agent Pool with ID:", instance.Status.AgentPoolID)
 		if instance.Status.AgentPoolID == "" {
 			return true
 		}
