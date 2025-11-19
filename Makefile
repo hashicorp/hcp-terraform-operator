@@ -154,7 +154,7 @@ test-unit: fmt vet copywrite ## Run internal/controller tests.
 		-timeout 5m \
 		-count 1 \
 		-v \
-		-run="^Test(DoNotRequeue|RequeueAfter|RequeueOnErr|FormatOutput|FinalizerBehaviors|MatchWildcardName|ValidateTFEVersion)$$"
+		-run="^Test(DoNotRequeue|RequeueAfter|RequeueOnErr|FormatOutput|FinalizerBehaviors|MatchWildcardName|ValidateTFEVersion|PendingWorkspaceRuns)$$"
 
 .PHONY: test-helm
 test-helm: ## Run Helm chart tests.
