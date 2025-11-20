@@ -13,8 +13,11 @@ import (
 	"strconv"
 	"text/template"
 
+	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-slug"
+	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -24,9 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-slug"
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
@@ -75,7 +75,7 @@ func (r *ModuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
-		if errors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) {
 			m.log.Info("Module Controller", "msg", "the instance was removed no further action is required")
 			return doNotRequeue()
 		}

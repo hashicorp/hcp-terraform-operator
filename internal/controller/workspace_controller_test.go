@@ -10,12 +10,12 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -268,7 +268,7 @@ func deleteWorkspace(instance *appv1alpha2.Workspace) {
 	Expect(k8sClient.Delete(ctx, instance)).To(
 		Or(
 			Succeed(),
-			WithTransform(errors.IsNotFound, BeTrue()),
+			WithTransform(kerrors.IsNotFound, BeTrue()),
 		),
 	)
 
@@ -276,7 +276,7 @@ func deleteWorkspace(instance *appv1alpha2.Workspace) {
 	Eventually(func() bool {
 		err := k8sClient.Get(ctx, namespacedName, instance)
 		// The Kubernetes client will return error 'NotFound' on the "Get" operation once the object is deleted
-		return errors.IsNotFound(err)
+		return kerrors.IsNotFound(err)
 	}).Should(BeTrue())
 
 	// Make sure that the HCP Terraform workspace is deleted

@@ -4,7 +4,7 @@
 package v1alpha2
 
 import (
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -18,7 +18,7 @@ func (rc *RunsCollector) ValidateSpec() error {
 		return nil
 	}
 
-	return apierrors.NewInvalid(
+	return kerrors.NewInvalid(
 		schema.GroupKind{Group: "", Kind: "RunsCollector"},
 		rc.Name,
 		allErrs,
