@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -546,7 +546,7 @@ func validateAgentPoolDeploymentDeleted(ctx context.Context, instance *appv1alph
 	}
 	Eventually(func() bool {
 		err := k8sClient.Get(ctx, did, &appsv1.Deployment{})
-		return errors.IsNotFound(err)
+		return kerrors.IsNotFound(err)
 	}).Should(BeTrue())
 }
 

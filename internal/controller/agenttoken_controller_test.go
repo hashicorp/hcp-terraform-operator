@@ -9,15 +9,14 @@ import (
 	"maps"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
@@ -76,7 +75,7 @@ var _ = Describe("AgentToken Controller", Ordered, func() {
 
 		Eventually(func() bool {
 			err := k8sClient.Get(ctx, namespacedName, instance)
-			return errors.IsNotFound(err)
+			return kerrors.IsNotFound(err)
 		}).Should(BeTrue())
 
 		Eventually(func() bool {

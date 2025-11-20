@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -82,7 +82,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, namespacedName, instance)
-				return errors.IsNotFound(err)
+				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
 			Expect(err).Should(Succeed())
@@ -202,7 +202,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, namespacedName, instance)
-				return errors.IsNotFound(err)
+				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
 			Expect(err).To(MatchError(tfc.ErrResourceNotFound))

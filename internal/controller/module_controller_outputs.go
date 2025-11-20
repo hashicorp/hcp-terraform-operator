@@ -7,14 +7,14 @@ import (
 	"context"
 	"fmt"
 
+	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 func moduleOutputObjectName(name string) string {
@@ -33,7 +33,7 @@ func (r *ModuleReconciler) configMapAvailable(ctx context.Context, instance *app
 	o := &corev1.ConfigMap{}
 	err := r.Client.Get(ctx, getModuleNamespacedName(instance), o)
 	if err != nil {
-		return errors.IsNotFound(err)
+		return kerrors.IsNotFound(err)
 	}
 
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
@@ -44,7 +44,7 @@ func (r *ModuleReconciler) secretAvailable(ctx context.Context, instance *appv1a
 	o := &corev1.Secret{}
 	err := r.Client.Get(ctx, getModuleNamespacedName(instance), o)
 	if err != nil {
-		return errors.IsNotFound(err)
+		return kerrors.IsNotFound(err)
 	}
 
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
