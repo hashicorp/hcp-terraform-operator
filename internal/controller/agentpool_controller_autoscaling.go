@@ -61,7 +61,7 @@ func matchWildcardName(wildcard string, str string) bool {
 	}
 }
 
-// pendingWorkspaceRuns returns the number of workspaces with pending runs for a given agent pool.
+// pendingWorkspaceRuns returns the number pending runs for a given agent pool.
 // This function is compatible with HCP Terraform and TFE version v202409-1 and later.
 func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	runs := map[string]struct{}{}
@@ -74,7 +74,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 			PageNumber: initPageNumber,
 		},
 	}
-
+	planOnlyRunCount := 0
 	for {
 		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
 		if err != nil {
@@ -87,6 +87,11 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 				awaitingUserInteractionRuns[string(run.Status)]++
 				continue
 			}
+			// Count plan-only runs separately so agents can scale up and execute runs parallely
+			if run.PlanOnly {
+				planOnlyRunCount++
+				continue
+			}
 			runs[run.Workspace.ID] = struct{}{}
 		}
 		if runsList.NextPage == 0 {
@@ -97,8 +102,9 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 
 	// TODO:
 	// Add metric(s) for runs awaiting user interaction
-
-	return int32(len(runs)), nil
+	totalPendingRuns := len(runs) + planOnlyRunCount
+	ap.log.Info("Runs", "msg", fmt.Sprintf("Workspaces: %+v Plan-only runs: %d Total pending runs: %d", runs, planOnlyRunCount, totalPendingRuns))
+	return int32(totalPendingRuns), nil
 }
 
 // computeRequiredAgents is a legacy algorithm that is used to compute the number of agents needed.
@@ -266,7 +272,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
 		return err
 	}
-	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d workspaces have pending runs", requiredAgents))
+	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d agents are required", requiredAgents))
 
 	currentReplicas, err := r.getAgentDeploymentReplicas(ctx, ap)
 	if err != nil {
