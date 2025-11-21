@@ -100,7 +100,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				Expect(err).Should(Succeed())
 				Expect(ws).ShouldNot(BeNil())
 				// Create a new Run and execute it
-				_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
+				_ = createAndUploadConfigurationVersion(ws.ID, "hoi", true)
 				Eventually(func() bool {
 					ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
 					Expect(err).Should(Succeed())
@@ -155,7 +155,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
 			// New Run
-			_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
+			_ = createAndUploadConfigurationVersion(ws.ID, "hoi", true)
 			Eventually(func() bool {
 				ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
 				Expect(err).Should(Succeed())
