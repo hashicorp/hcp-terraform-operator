@@ -64,6 +64,8 @@ func main() {
 	flag.Var(&watchNamespaces, "namespace", "Namespace to watch")
 	var opVersion bool
 	flag.BoolVar(&opVersion, "version", false, "Print operator version")
+	var metricsList bool
+	flag.BoolVar(&metricsList, "list-metrics", false, "List operator metrics")
 	// AGENT POOL CONTROLLER OPTIONS
 	var agentPoolWorkers int
 	flag.IntVar(&agentPoolWorkers, "agent-pool-workers", 1,
@@ -109,6 +111,14 @@ func main() {
 
 	if opVersion {
 		fmt.Println(version.Version)
+		os.Exit(0)
+	}
+
+	if metricsList {
+		if err := controller.ListHCPTMetrics(); err != nil {
+			fmt.Println("Failed to list metrics:", err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
