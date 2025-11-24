@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -33,7 +33,7 @@ func (r *AgentTokenReconciler) deleteAgentToken(ctx context.Context, t *agentTok
 		}
 		s := &corev1.Secret{}
 		if err := r.Client.Get(ctx, nn, s); err != nil {
-			if apierrors.IsNotFound(err) {
+			if kerrors.IsNotFound(err) {
 				return r.removeFinalizer(ctx, t)
 			}
 			t.log.Error(err, "Reconcile Agent Token", "msg", fmt.Sprintf("failed to get secret=%q namespace=%q", nn.Name, nn.Namespace))

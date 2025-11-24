@@ -14,7 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -90,7 +90,7 @@ func (r *RunsCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil {
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
-		if errors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) {
 			rc.log.Info("Runs Collector Controller", "msg", "the instance was removed no further action is required")
 			return doNotRequeue()
 		}

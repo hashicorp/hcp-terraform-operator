@@ -10,16 +10,17 @@ import (
 	"net/url"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 const (
@@ -41,7 +42,7 @@ func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *
 		// Update existing deployment
 		return r.updateDeployment(ctx, ap, d)
 	}
-	if errors.IsNotFound(err) {
+	if kerrors.IsNotFound(err) {
 		if ap.instance.Spec.AgentDeployment == nil { // Was a deployment configured?
 			ap.log.Info("Reconcile Agent Deployment", "msg",
 				fmt.Sprintf("skipping - no deployment configured in AgentPool %q", ap.instance.GetName()))
@@ -118,7 +119,7 @@ func (r *AgentPoolReconciler) deleteDeployment(ctx context.Context, ap *agentPoo
 		fmt.Sprintf("deleting agent deployment for AgentPool %q", ap.instance.GetName()))
 	derr := r.Client.Delete(ctx, d)
 	if derr != nil {
-		if errors.IsNotFound(derr) {
+		if kerrors.IsNotFound(derr) {
 			return nil
 		}
 		ap.log.Error(derr, "Reconcile Agent Deployment", "msg", fmt.Sprintf("failed to delete agent deployment '%s' for agent pool: %s", d.Name, agentPoolOutputObjectName(ap.instance.Name)))
