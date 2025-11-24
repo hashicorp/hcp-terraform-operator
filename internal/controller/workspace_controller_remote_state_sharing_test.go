@@ -96,6 +96,23 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledGlobalRemoteStateSharing(instance)
 		})
 
+		It("can disable remote state sharing for all workspaces", func() {
+			instance.Spec.RemoteStateSharing = &appv1alpha2.RemoteStateSharing{
+				AllWorkspaces: false,
+			}
+			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
+			createWorkspace(instance)
+			isReconciledGlobalRemoteStateSharing(instance)
+
+			// Manually change Global Remote State Sharing to true
+			_, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
+				GlobalRemoteState: tfc.Bool(true),
+			})
+			Expect(err).Should(Succeed())
+			// Wait for restoration
+			isReconciledGlobalRemoteStateSharing(instance)
+		})
+
 		It("can enable remote state sharing for specific workspaces by name", func() {
 			instance.Spec.RemoteStateSharing = &appv1alpha2.RemoteStateSharing{
 				Workspaces: []*appv1alpha2.ConsumerWorkspace{
@@ -168,7 +185,7 @@ func isReconciledGlobalRemoteStateSharing(instance *appv1alpha2.Workspace) {
 		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		return ws.GlobalRemoteState
+		return ws.GlobalRemoteState == instance.Spec.RemoteStateSharing.AllWorkspaces
 	}).Should(BeTrue())
 }
 
