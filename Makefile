@@ -151,15 +151,11 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 
 .PHONY: test-unit
 test-unit: fmt vet copywrite ## Run internal/controller tests.
-	go test ./internal/controller/... \
-		-timeout 5m \
-		-count 1 \
-		-v \
-		-run="^Test(DoNotRequeue|RequeueAfter|RequeueOnErr|FormatOutput|FinalizerBehaviors|MatchWildcardName|ValidateTFEVersion|PendingWorkspaceRuns)$$"
+	go test -timeout 5m -count 1 -v ./internal/controller/...
 
 .PHONY: test-helm
 test-helm: ## Run Helm chart tests.
-	cd charts/test; go test -timeout 5m -count=1 -v ./...
+	cd charts/test; go test -timeout 5m -count 1 -v ./...
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint
