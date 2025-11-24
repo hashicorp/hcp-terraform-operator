@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
@@ -67,11 +67,11 @@ var _ = Describe("Project controller", Ordered, func() {
 		Expect(k8sClient.Delete(ctx, instance)).To(
 			Or(
 				Succeed(),
-				WithTransform(errors.IsNotFound, BeTrue()),
+				WithTransform(kerrors.IsNotFound, BeTrue()),
 			),
 		)
 		Eventually(func() bool {
-			return errors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
+			return kerrors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 		}).Should(BeTrue())
 
 		Eventually(func() bool {
@@ -91,7 +91,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			createProject(instance)
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
-				return errors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
+				return kerrors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 			}).Should(BeTrue())
 			prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
 			Expect(err).Should(Succeed())
@@ -126,7 +126,7 @@ var _ = Describe("Project controller", Ordered, func() {
 
 			// Wait until the CR is gone
 			Eventually(func() bool {
-				return errors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
+				return kerrors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 			}).Should(BeTrue())
 
 			// Delete the workspace

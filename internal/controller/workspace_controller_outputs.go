@@ -8,12 +8,13 @@ import (
 	"fmt"
 
 	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
 func outputObjectName(name string) string {
@@ -39,7 +40,7 @@ func (r *WorkspaceReconciler) configMapAvailable(ctx context.Context, instance *
 	}
 	err := r.Client.Get(ctx, namespacedName, o)
 	if err != nil {
-		return errors.IsNotFound(err)
+		return kerrors.IsNotFound(err)
 	}
 
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)
@@ -54,7 +55,7 @@ func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *app
 	}
 	err := r.Client.Get(ctx, namespacedName, o)
 	if err != nil {
-		return errors.IsNotFound(err)
+		return kerrors.IsNotFound(err)
 	}
 
 	return containsOwnerReference(o.GetOwnerReferences(), instance.UID)

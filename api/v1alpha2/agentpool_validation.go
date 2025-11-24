@@ -6,7 +6,7 @@ package v1alpha2
 import (
 	"fmt"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -30,7 +30,7 @@ func (ap *AgentPool) ValidateSpec() error {
 		return nil
 	}
 
-	return apierrors.NewInvalid(
+	return kerrors.NewInvalid(
 		schema.GroupKind{Group: "", Kind: "AgentPool"},
 		ap.Name,
 		allErrs,

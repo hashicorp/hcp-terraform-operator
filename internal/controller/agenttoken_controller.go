@@ -14,8 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -62,7 +61,7 @@ func (r *AgentTokenReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err != nil {
 		// 'Not found' error occurs when an object is removed from the Kubernetes
 		// No actions are required in this case
-		if errors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) {
 			t.log.Info("Agent Token Controller", "msg", "the instance was removed no further action is required")
 			return doNotRequeue()
 		}
@@ -333,7 +332,7 @@ func (r *AgentTokenReconciler) removeToken(ctx context.Context, t *agentTokenIns
 			}
 			t.log.Info("Reconcile Agent Token", "msg", fmt.Sprintf("remove key=%q from in secret=%q namespace=%q", id, nn.Name, nn.Namespace))
 			if err := r.Client.Get(ctx, nn, s); err != nil {
-				if apierrors.IsNotFound(err) {
+				if kerrors.IsNotFound(err) {
 					t.instance.Status.AgentTokens = slice.RemoveFromSlice(t.instance.Status.AgentTokens, i)
 					return nil
 				}
