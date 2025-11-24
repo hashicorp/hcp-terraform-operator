@@ -466,10 +466,41 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 	t.Parallel()
 
 	successCases := map[string]Workspace{
-		"HasOnlyAllWorkspaces": {
+		"HasOnlyAllWorkspacesTrue": {
 			Spec: WorkspaceSpec{
 				RemoteStateSharing: &RemoteStateSharing{
 					AllWorkspaces: true,
+				},
+			},
+		},
+		"HasOnlyAllWorkspacesFalse": {
+			Spec: WorkspaceSpec{
+				RemoteStateSharing: &RemoteStateSharing{
+					AllWorkspaces: false,
+				},
+			},
+		},
+		"HasBothAllWorkspacesFalseAndWorkspacesWithName": {
+			Spec: WorkspaceSpec{
+				RemoteStateSharing: &RemoteStateSharing{
+					AllWorkspaces: false,
+					Workspaces: []*ConsumerWorkspace{
+						{
+							Name: "this",
+						},
+					},
+				},
+			},
+		},
+		"HasBothAllWorkspacesFalseAndWorkspacesWithID": {
+			Spec: WorkspaceSpec{
+				RemoteStateSharing: &RemoteStateSharing{
+					AllWorkspaces: false,
+					Workspaces: []*ConsumerWorkspace{
+						{
+							ID: "this",
+						},
+					},
 				},
 			},
 		},
@@ -569,11 +600,6 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 						},
 					},
 				},
-			},
-		},
-		"HasEmptyAllWorkspacesAndWorkspaces": {
-			Spec: WorkspaceSpec{
-				RemoteStateSharing: &RemoteStateSharing{},
 			},
 		},
 		"HasDuplicateWorkspacesName": {
