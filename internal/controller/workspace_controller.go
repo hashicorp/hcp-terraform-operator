@@ -341,7 +341,9 @@ func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceIns
 }
 
 func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
-	updateOptions := tfc.WorkspaceUpdateOptions{}
+	updateOptions := tfc.WorkspaceUpdateOptions{
+		GlobalRemoteState: tfc.Bool(false),
+	}
 	spec := w.instance.Spec
 	status := w.instance.Status
 
@@ -382,8 +384,6 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 
 	if spec.RemoteStateSharing != nil {
 		updateOptions.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
-	} else {
-		updateOptions.GlobalRemoteState = tfc.Bool(false)
 	}
 
 	if spec.TerraformVersion == "" {
