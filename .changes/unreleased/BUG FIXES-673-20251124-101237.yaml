@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`Workspace`: Fix an issue when Remote State Sharing was incorrectly handled and validated. It now correctly defaults to disabled when `spec.remoteStateSharing` is omitted, and no longer fails validation when `spec.remoteStateSharing.allWorkspaces` is set to `false` without specifying workspaces.'
+time: 2025-11-24T10:12:37.896853+01:00
+custom:
+    PR: "673"
