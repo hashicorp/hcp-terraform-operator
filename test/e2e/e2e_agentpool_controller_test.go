@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
@@ -498,7 +499,7 @@ func validateAgentPoolDeployment(ctx context.Context, instance *appv1alpha2.Agen
 
 	agentDeployment := &appsv1.Deployment{}
 	did := types.NamespacedName{
-		Name:      agentPoolDeploymentName(instance),
+		Name:      controller.AgentPoolDeploymentName(instance),
 		Namespace: instance.GetNamespace(),
 	}
 	Eventually(func() error {
@@ -512,8 +513,8 @@ func validateAgentPoolDeployment(ctx context.Context, instance *appv1alpha2.Agen
 	if instance.Spec.AgentDeployment == nil {
 		Expect(*agentDeployment.Spec.Replicas).To(BeNumerically("==", 1))
 		Expect(agentDeployment.Spec.Template.Spec.Containers).To(HaveLen(1))
-		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Name).To(Equal(defaultAgentContainerName))
-		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Image).To(Equal(defaultAgentImage))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Name).To(Equal(controller.DefaultAgentContainerName))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Image).To(Equal(controller.DefaultAgentImage))
 		return
 	}
 	if instance.Spec.AgentDeployment.Replicas == nil {
@@ -523,8 +524,8 @@ func validateAgentPoolDeployment(ctx context.Context, instance *appv1alpha2.Agen
 	}
 	if instance.Spec.AgentDeployment.Spec == nil {
 		Expect(agentDeployment.Spec.Template.Spec.Containers).To(HaveLen(1))
-		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Name).To(Equal(defaultAgentContainerName))
-		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Image).To(Equal(defaultAgentImage))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Name).To(Equal(controller.DefaultAgentContainerName))
+		Expect(agentDeployment.Spec.Template.Spec.Containers[0].Image).To(Equal(controller.DefaultAgentImage))
 		return
 	}
 	Expect(agentDeployment.Spec.Template.Spec.Containers).To(HaveLen(len(instance.Spec.AgentDeployment.Spec.Containers)))
@@ -541,7 +542,7 @@ func validateAgentPoolDeploymentDeleted(ctx context.Context, instance *appv1alph
 	Expect(instance.Spec.AgentDeployment).To(BeNil())
 
 	did := types.NamespacedName{
-		Name:      agentPoolDeploymentName(instance),
+		Name:      controller.AgentPoolDeploymentName(instance),
 		Namespace: instance.GetNamespace(),
 	}
 	Eventually(func() bool {

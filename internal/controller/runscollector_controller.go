@@ -105,7 +105,7 @@ func (r *RunsCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return doNotRequeue()
 	}
 
-	if a, ok := rc.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
+	if a, ok := rc.instance.GetAnnotations()[annotationPaused]; ok && a == MetaTrue {
 		rc.log.Info("Runs Collector Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}
@@ -218,7 +218,7 @@ func (r *RunsCollectorReconciler) getAgentPoolIDByName(ctx context.Context, rc *
 	listOpts := &tfc.AgentPoolListOptions{
 		Query: name,
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {
@@ -286,8 +286,8 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 		AgentPoolNames: rc.instance.Status.AgentPool.Name,
 		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
-			PageSize:   maxPageSize,
-			PageNumber: initPageNumber,
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
 		},
 	}
 
@@ -309,7 +309,7 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 	}
 
 	for _, status := range runStatuses {
-		metricRuns.WithLabelValues(
+		MetricRuns.WithLabelValues(
 			string(status),                    // run_status
 			rc.instance.Status.AgentPool.ID,   // agent_pool_id
 			rc.instance.Status.AgentPool.Name, // agent_pool_name
@@ -317,7 +317,7 @@ func (r *RunsCollectorReconciler) reconcileRuns(ctx context.Context, rc *runsCol
 	}
 
 	rc.log.Info("Reconcile Runs Collector", "msg", fmt.Sprintf("Total Runs: %.0f", runsTotal))
-	metricRunsTotal.WithLabelValues(
+	MetricRunsTotal.WithLabelValues(
 		rc.instance.Status.AgentPool.ID,   // agent_pool_id
 		rc.instance.Status.AgentPool.Name, // agent_pool_name
 	).Set(runsTotal)

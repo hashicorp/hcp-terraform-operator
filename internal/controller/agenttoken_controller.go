@@ -177,7 +177,7 @@ func (r *AgentTokenReconciler) getAgentPoolIDByName(ctx context.Context, t *agen
 	listOpts := &tfc.AgentPoolListOptions{
 		Query: spec,
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

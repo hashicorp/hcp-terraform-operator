@@ -14,10 +14,10 @@ import (
 func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
-	if runNew, ok := w.instance.Annotations[workspaceAnnotationRunNew]; ok && runNew == metaTrue {
+	if runNew, ok := w.instance.Annotations[WorkspaceAnnotationRunNew]; ok && runNew == MetaTrue {
 		w.log.Info("Reconcile Runs", "msg", "trigger a new run")
-		runType := runTypeDefault
-		if rt, ok := w.instance.Annotations[workspaceAnnotationRunType]; ok {
+		runType := RunTypeDefault
+		if rt, ok := w.instance.Annotations[WorkspaceAnnotationRunType]; ok {
 			runType = rt
 		}
 		options := tfc.RunCreateOptions{
@@ -26,16 +26,16 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 		}
 
 		switch runType {
-		case runTypePlan:
+		case RunTypePlan:
 			options.PlanOnly = tfc.Bool(true)
-			if t, ok := w.instance.Annotations[workspaceAnnotationRunTerraformVersion]; ok {
+			if t, ok := w.instance.Annotations[WorkspaceAnnotationRunTerraformVersion]; ok {
 				options.TerraformVersion = tfc.String(t)
 			}
 			return r.triggerPlanRun(ctx, w, options)
-		case runTypeApply:
+		case RunTypeApply:
 			options.PlanOnly = tfc.Bool(false)
 			return r.triggerApplyRun(ctx, w, options)
-		case runTypeRefresh:
+		case RunTypeRefresh:
 			options.RefreshOnly = tfc.Bool(true)
 			return r.triggerApplyRun(ctx, w, options)
 		default:
@@ -119,7 +119,7 @@ func (r *WorkspaceReconciler) triggerApplyRun(ctx context.Context, w *workspaceI
 	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new apply run %s", run.ID))
 
 	// Set annotation `workspace.app.terraform.io/run-new` to false if a new run was successfully triggered.
-	w.instance.Annotations[workspaceAnnotationRunNew] = metaFalse
+	w.instance.Annotations[WorkspaceAnnotationRunNew] = metaFalse
 	err = r.Update(ctx, &w.instance)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to update instance")
@@ -147,7 +147,7 @@ func (r *WorkspaceReconciler) triggerPlanRun(ctx context.Context, w *workspaceIn
 	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new plan run %s", run.ID))
 
 	// Set annotation `workspace.app.terraform.io/run-new` to false if a new run was successfully triggered.
-	w.instance.Annotations[workspaceAnnotationRunNew] = metaFalse
+	w.instance.Annotations[WorkspaceAnnotationRunNew] = metaFalse
 	err = r.Update(ctx, &w.instance)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to update instance")

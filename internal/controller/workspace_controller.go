@@ -78,7 +78,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return doNotRequeue()
 	}
 
-	if a, ok := w.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
+	if a, ok := w.instance.GetAnnotations()[annotationPaused]; ok && a == MetaTrue {
 		w.log.Info("Workspace Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}
@@ -213,15 +213,15 @@ func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Works
 	return false
 }
 
-// applyMethodToBool turns spec.applyMethod field into bool to align with the Workspace AutoApply field
+// ApplyMethodToBool turns spec.applyMethod field into bool to align with the Workspace AutoApply field
 // `spec.applyMethod: auto` is equal to `AutoApply: true`
 // `spec.applyMethod: manual` is equal to `AutoApply: false`
-func applyMethodToBool(applyMethod string) bool {
+func ApplyMethodToBool(applyMethod string) bool {
 	return applyMethod == "auto"
 }
 
 // autoApplyRunTriggerToBool turns spec.autoapplyRunTrigger field into bool
-func applyRunTriggerToBool(applyRunTrigger string) bool {
+func ApplyRunTriggerToBool(applyRunTrigger string) bool {
 	return applyRunTrigger == "auto"
 }
 
@@ -261,8 +261,8 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 	options := tfc.WorkspaceCreateOptions{
 		Name:                tfc.String(spec.Name),
 		AllowDestroyPlan:    tfc.Bool(spec.AllowDestroyPlan),
-		AutoApply:           tfc.Bool(applyMethodToBool(spec.ApplyMethod)),
-		AutoApplyRunTrigger: tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger)),
+		AutoApply:           tfc.Bool(ApplyMethodToBool(spec.ApplyMethod)),
+		AutoApplyRunTrigger: tfc.Bool(ApplyRunTriggerToBool(spec.ApplyRunTrigger)),
 		Description:         tfc.String(spec.Description),
 		ExecutionMode:       tfc.String(spec.ExecutionMode),
 		GlobalRemoteState:   tfc.Bool(false),
@@ -362,12 +362,12 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 		updateOptions.Name = tfc.String(spec.Name)
 	}
 
-	if workspace.AutoApply != applyMethodToBool(spec.ApplyMethod) {
-		updateOptions.AutoApply = tfc.Bool(applyMethodToBool(spec.ApplyMethod))
+	if workspace.AutoApply != ApplyMethodToBool(spec.ApplyMethod) {
+		updateOptions.AutoApply = tfc.Bool(ApplyMethodToBool(spec.ApplyMethod))
 	}
 
-	if workspace.AutoApplyRunTrigger != applyRunTriggerToBool(spec.ApplyRunTrigger) {
-		updateOptions.AutoApplyRunTrigger = tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger))
+	if workspace.AutoApplyRunTrigger != ApplyRunTriggerToBool(spec.ApplyRunTrigger) {
+		updateOptions.AutoApplyRunTrigger = tfc.Bool(ApplyRunTriggerToBool(spec.ApplyRunTrigger))
 	}
 
 	if workspace.AllowDestroyPlan != spec.AllowDestroyPlan {

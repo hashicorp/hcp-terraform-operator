@@ -71,7 +71,7 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) er
 
 	opts := &tfc.StateVersionOutputsListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	var outputs []*tfc.StateVersionOutput

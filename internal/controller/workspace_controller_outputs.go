@@ -17,7 +17,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-func outputObjectName(name string) string {
+func OutputObjectName(name string) string {
 	return fmt.Sprintf("%s-outputs", name)
 }
 
@@ -36,7 +36,7 @@ func (r *WorkspaceReconciler) configMapAvailable(ctx context.Context, instance *
 	o := &corev1.ConfigMap{}
 	namespacedName := types.NamespacedName{
 		Namespace: instance.Namespace,
-		Name:      outputObjectName(instance.Name),
+		Name:      OutputObjectName(instance.Name),
 	}
 	err := r.Client.Get(ctx, namespacedName, o)
 	if err != nil {
@@ -51,7 +51,7 @@ func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *app
 	o := &corev1.Secret{}
 	namespacedName := types.NamespacedName{
 		Namespace: instance.Namespace,
-		Name:      outputObjectName(instance.Name),
+		Name:      OutputObjectName(instance.Name),
 	}
 	err := r.Client.Get(ctx, namespacedName, o)
 	if err != nil {
@@ -73,7 +73,7 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		return fmt.Errorf("current workspace state version is not available")
 	}
 
-	oName := outputObjectName(w.instance.Name)
+	oName := OutputObjectName(w.instance.Name)
 
 	if !r.configMapAvailable(ctx, &w.instance) {
 		return fmt.Errorf("configMap %s is in use by different object thus it cannot be used to store outputs", oName)
@@ -85,7 +85,7 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 
 	opts := &tfc.StateVersionOutputsListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	var outputs []*tfc.StateVersionOutput

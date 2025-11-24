@@ -114,7 +114,7 @@ func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *worksp
 	if hasRunTaskName(w) {
 		listOpts := &tfc.RunTaskListOptions{
 			ListOptions: tfc.ListOptions{
-				PageSize: maxPageSize,
+				PageSize: MaxPageSize,
 			},
 		}
 		for {
@@ -152,7 +152,7 @@ func (r *WorkspaceReconciler) getWorkspaceRunTasks(ctx context.Context, w *works
 
 	listOpts := &tfc.WorkspaceRunTaskListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

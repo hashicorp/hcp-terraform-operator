@@ -137,7 +137,7 @@ copywrite: install-copywrite ## Run copywrite against code.
 
 .PHONY: test
 test: manifests generate fmt vet copywrite envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 1h -v ./internal/controller -coverprofile cover.out ${TESTARGS}
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 1h -v ./test/e2e -coverprofile cover.out ${TESTARGS}
 
 .PHONY: test-api
 test-api: fmt vet copywrite ## Run API tests.
