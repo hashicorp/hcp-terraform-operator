@@ -4,19 +4,12 @@
 package controller
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"testing"
 	"time"
 
-	"github.com/go-logr/logr"
 	tfc "github.com/hashicorp/go-tfe"
-	"github.com/hashicorp/go-tfe/mocks"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
@@ -203,149 +197,6 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 })
 
-func TestPendingWorkspaceRuns(t *testing.T) {
-	tests := []struct {
-		name          string
-		mockRuns      []*tfc.Run
-		mockErr       error
-		expectedCount int32
-		expectError   bool
-	}{
-		{
-			name:          "returns error from client",
-			mockErr:       errors.New("api error"),
-			expectedCount: 0,
-			expectError:   true,
-		},
-		{
-			name: "counts plan-only runs",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-			},
-			expectedCount: 2,
-			expectError:   false,
-		},
-		{
-			name: "skips user interaction runs",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: false, Status: tfc.RunPlanned, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: false, Status: tfc.RunPolicyOverride, Workspace: &tfc.Workspace{ID: "ws2"}},
-			},
-			expectedCount: 0,
-			expectError:   false,
-		},
-		{
-			name: "counts normal pending runs",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-			},
-			expectedCount: 2,
-			expectError:   false,
-		},
-		{
-			name: "mix of plan-only and normal runs",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-			},
-			expectedCount: 2,
-			expectError:   false,
-		},
-		{
-			name: "plan-only runs for single workspace",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-			},
-			expectedCount: 4,
-			expectError:   false,
-		},
-		{
-			name: "single apply and multiple plan-only runs for single workspace",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run5", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-			},
-			expectedCount: 5,
-			expectError:   false,
-		},
-		{
-			name: "mix of plan-only and apply runs for single workspace",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run5", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-			},
-			expectedCount: 4,
-			expectError:   false,
-		},
-		{
-			name: "mix of plan-only and apply runs for multiple workspaces",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws3"}},
-				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run5", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-			},
-			expectedCount: 5,
-			expectError:   false,
-		},
-		{
-			name: "mix of plan-only and apply runs for two workspaces",
-			mockRuns: []*tfc.Run{
-				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
-				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-				{ID: "run5", PlanOnly: false, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
-			},
-			expectedCount: 4,
-			expectError:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockRuns := mocks.NewMockRuns(ctrl)
-			mockRuns.EXPECT().
-				ListForOrganization(gomock.Any(), "test-org", gomock.Any()).
-				Return(&tfc.OrganizationRunList{Items: tt.mockRuns, PaginationNextPrev: &tfc.PaginationNextPrev{NextPage: 0}}, tt.mockErr)
-
-			ap := &agentPoolInstance{
-				tfClient: HCPTerraformClient{Client: &tfc.Client{Runs: mockRuns}},
-				instance: appv1alpha2.AgentPool{
-					Spec: appv1alpha2.AgentPoolSpec{
-						Name:         "test-pool",
-						Organization: "test-org",
-					},
-				},
-				log: logr.Logger{},
-			}
-
-			count, err := pendingWorkspaceRuns(context.Background(), ap)
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedCount, count)
-			}
-		})
-	}
-}
-
 func cleanUpAgentPool(instance *appv1alpha2.AgentPool, nn types.NamespacedName) {
 	Eventually(func() bool {
 		err := k8sClient.Delete(ctx, instance)
@@ -369,7 +220,7 @@ func cleanUpAgentPool(instance *appv1alpha2.AgentPool, nn types.NamespacedName) 
 func cleanUpAgentPoolDeployment(instance *appv1alpha2.AgentPool) {
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      agentPoolDeploymentName(instance),
+			Name:      controller.AgentPoolDeploymentName(instance),
 			Namespace: instance.GetNamespace(),
 		},
 	}

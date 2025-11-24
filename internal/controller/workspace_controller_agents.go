@@ -16,7 +16,7 @@ func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, w *works
 	listOpts := &tfc.AgentPoolListOptions{
 		Query: agentPoolName,
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

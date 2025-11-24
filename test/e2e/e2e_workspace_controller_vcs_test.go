@@ -9,15 +9,15 @@ import (
 	"slices"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -239,8 +239,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("cat trigger a new apply run on creation", func() {
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  metaTrue,
-				workspaceAnnotationRunType: runTypeApply,
+				controller.WorkspaceAnnotationRunNew:  controller.MetaTrue,
+				controller.WorkspaceAnnotationRunType: controller.RunTypeApply,
 			})
 			instance.Spec.ApplyMethod = "auto"
 			instance.Spec.ApplyRunTrigger = "auto"
@@ -249,7 +249,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
+				if instance.Annotations[controller.WorkspaceAnnotationRunNew] == controller.MetaTrue {
 					return false
 				}
 				if instance.Status.Run == nil {
@@ -261,8 +261,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("cat trigger a new plan run on creation", func() {
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  metaTrue,
-				workspaceAnnotationRunType: runTypePlan,
+				controller.WorkspaceAnnotationRunNew:  controller.MetaTrue,
+				controller.WorkspaceAnnotationRunType: controller.RunTypePlan,
 			})
 			instance.Spec.ApplyMethod = "auto"
 			instance.Spec.ApplyRunTrigger = "auto"

@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -137,8 +137,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
-				return ws.AutoApply == applyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
-					ws.AutoApplyRunTrigger == applyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
+				return ws.AutoApply == controller.ApplyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					ws.AutoApplyRunTrigger == controller.ApplyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
 					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
 					ws.Description == instanceCopy.Spec.Description &&
 					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&
@@ -165,8 +165,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
 				Expect(ws).ShouldNot(BeNil())
 				Expect(err).Should(Succeed())
-				return ws.AutoApply == applyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
-					ws.AutoApplyRunTrigger == applyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
+				return ws.AutoApply == controller.ApplyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					ws.AutoApplyRunTrigger == controller.ApplyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
 					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
 					ws.Description == instanceCopy.Spec.Description &&
 					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&

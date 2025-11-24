@@ -20,8 +20,8 @@ func (w *workspaceInstance) getSSHKeyID(ctx context.Context) (string, error) {
 		w.log.Info("Reconcile SSH Key", "msg", "getting SSH key ID by name")
 		listOpts := &tfc.SSHKeyListOptions{
 			ListOptions: tfc.ListOptions{
-				PageNumber: initPageNumber,
-				PageSize:   maxPageSize,
+				PageNumber: InitPageNumber,
+				PageSize:   MaxPageSize,
 			},
 		}
 		for {

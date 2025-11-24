@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"time"
 
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -99,14 +101,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Trigger a new apply run with annotations
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  metaTrue,
-				workspaceAnnotationRunType: runTypeApply,
+				controller.WorkspaceAnnotationRunNew:  controller.MetaTrue,
+				controller.WorkspaceAnnotationRunType: controller.RunTypeApply,
 			})
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
+				if instance.Annotations[controller.WorkspaceAnnotationRunNew] == controller.MetaTrue {
 					return false
 				}
 				if instance.Status.Run == nil {
@@ -119,15 +121,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Trigger a new plan run with annotations
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:              metaTrue,
-				workspaceAnnotationRunType:             runTypePlan,
-				workspaceAnnotationRunTerraformVersion: tf,
+				controller.WorkspaceAnnotationRunNew:              controller.MetaTrue,
+				controller.WorkspaceAnnotationRunType:             controller.RunTypePlan,
+				controller.WorkspaceAnnotationRunTerraformVersion: tf,
 			})
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
+				if instance.Annotations[controller.WorkspaceAnnotationRunNew] == controller.MetaTrue {
 					return false
 				}
 				if instance.Status.Plan == nil {

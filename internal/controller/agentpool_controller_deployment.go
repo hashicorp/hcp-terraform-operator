@@ -26,14 +26,14 @@ import (
 const (
 	poolNameLabel             = "agentpool.app.terraform.io/pool-name"
 	poolIDLabel               = "agentpool.app.terraform.io/pool-id"
-	defaultAgentImage         = "hashicorp/tfc-agent"
-	defaultAgentContainerName = "tfc-agent"
+	DefaultAgentImage         = "hashicorp/tfc-agent"
+	DefaultAgentContainerName = "tfc-agent"
 )
 
 func (r *AgentPoolReconciler) reconcileAgentDeployment(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Deployment", "msg", "new reconciliation event")
 	var d *appsv1.Deployment = &appsv1.Deployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Namespace: ap.instance.Namespace, Name: agentPoolDeploymentName(&ap.instance)}, d)
+	err := r.Client.Get(ctx, types.NamespacedName{Namespace: ap.instance.Namespace, Name: AgentPoolDeploymentName(&ap.instance)}, d)
 	if err == nil {
 		if ap.instance.Spec.AgentDeployment == nil {
 			// Delete the existing deployment
@@ -147,8 +147,8 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	var s corev1.PodSpec = corev1.PodSpec{
 		Containers: []corev1.Container{ // default tfc-agent container if none configured by user
 			{
-				Name:  defaultAgentContainerName,
-				Image: defaultAgentImage,
+				Name:  DefaultAgentContainerName,
+				Image: DefaultAgentImage,
 			},
 		},
 	}
@@ -162,7 +162,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 	}
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      agentPoolDeploymentName(&ap.instance),
+			Name:      AgentPoolDeploymentName(&ap.instance),
 			Namespace: ap.instance.Namespace,
 			Annotations: map[string]string{
 				poolNameLabel: ap.instance.Name,
@@ -233,7 +233,7 @@ func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 	}
 }
 
-func agentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
+func AgentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {
 	return fmt.Sprintf("agents-of-%s", ap.Name)
 }
 
