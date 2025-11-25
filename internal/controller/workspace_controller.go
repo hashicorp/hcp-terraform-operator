@@ -265,6 +265,7 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 		AutoApplyRunTrigger: tfc.Bool(applyRunTriggerToBool(spec.ApplyRunTrigger)),
 		Description:         tfc.String(spec.Description),
 		ExecutionMode:       tfc.String(spec.ExecutionMode),
+		GlobalRemoteState:   tfc.Bool(false),
 		TerraformVersion:    tfc.String(spec.TerraformVersion),
 		WorkingDirectory:    tfc.String(spec.WorkingDirectory),
 	}
@@ -340,7 +341,9 @@ func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceIns
 }
 
 func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
-	updateOptions := tfc.WorkspaceUpdateOptions{}
+	updateOptions := tfc.WorkspaceUpdateOptions{
+		GlobalRemoteState: tfc.Bool(false),
+	}
 	spec := w.instance.Spec
 	status := w.instance.Status
 
@@ -380,9 +383,7 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 	}
 
 	if spec.RemoteStateSharing != nil {
-		if workspace.GlobalRemoteState != spec.RemoteStateSharing.AllWorkspaces {
-			updateOptions.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
-		}
+		updateOptions.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
 	}
 
 	if spec.TerraformVersion == "" {

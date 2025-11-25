@@ -17,7 +17,8 @@ func (r *WorkspaceReconciler) getWorkspaces(ctx context.Context, w *workspaceIns
 
 	listOpts := &tfc.WorkspaceListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize:   maxPageSize,
+			PageNumber: initPageNumber,
 		},
 	}
 	for {
@@ -94,9 +95,10 @@ func (r *WorkspaceReconciler) reconcileRemoteStateSharing(ctx context.Context, w
 	}
 
 	if len(instanceRemoteStateSharing) > 0 {
-		err = w.tfClient.Client.Workspaces.UpdateRemoteStateConsumers(ctx, w.instance.Status.WorkspaceID, tfc.WorkspaceUpdateRemoteStateConsumersOptions{
+		o := tfc.WorkspaceUpdateRemoteStateConsumersOptions{
 			Workspaces: instanceRemoteStateSharing,
-		})
+		}
+		err = w.tfClient.Client.Workspaces.UpdateRemoteStateConsumers(ctx, w.instance.Status.WorkspaceID, o)
 		if err != nil {
 			return err
 		}

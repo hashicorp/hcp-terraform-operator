@@ -263,14 +263,6 @@ func (w *Workspace) validateSpecRemoteStateSharing() field.ErrorList {
 
 	f := field.NewPath("spec").Child("remoteStateSharing")
 
-	if !spec.AllWorkspaces && len(spec.Workspaces) == 0 {
-		allErrs = append(allErrs, field.Invalid(
-			f,
-			"",
-			"one of AllWorkspaces or Workspaces must be set: AllWorkspaces must be true or Workspaces must have at least one item"),
-		)
-	}
-
 	if spec.AllWorkspaces && len(spec.Workspaces) != 0 {
 		allErrs = append(allErrs, field.Invalid(
 			f,
