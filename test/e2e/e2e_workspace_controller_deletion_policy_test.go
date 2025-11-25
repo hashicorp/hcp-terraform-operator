@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -100,8 +101,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
-					PageNumber: initPageNumber,
-					PageSize:   maxPageSize,
+					PageNumber: controller.InitPageNumber,
+					PageSize:   controller.MaxPageSize,
 				}
 				for listOpts.PageNumber != 0 {
 					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
@@ -147,8 +148,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
 				listOpts := tfc.ListOptions{
-					PageNumber: initPageNumber,
-					PageSize:   maxPageSize,
+					PageNumber: controller.InitPageNumber,
+					PageSize:   controller.MaxPageSize,
 				}
 				for listOpts.PageNumber != 0 {
 					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{

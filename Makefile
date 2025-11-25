@@ -137,7 +137,8 @@ copywrite: install-copywrite ## Run copywrite against code.
 
 .PHONY: test
 test: manifests generate fmt vet copywrite envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 1h -v ./internal/controller -coverprofile cover.out ${TESTARGS}
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
+		go test -timeout 1h -v ./test/e2e -coverprofile cover.out ${TESTARGS}
 
 .PHONY: test-api
 test-api: fmt vet copywrite ## Run API tests.
@@ -151,15 +152,11 @@ test-internal: fmt vet copywrite ## Run internal/* tests.
 
 .PHONY: test-unit
 test-unit: fmt vet copywrite ## Run internal/controller tests.
-	go test ./internal/controller/... \
-		-timeout 5m \
-		-count 1 \
-		-v \
-		-run="^Test(DoNotRequeue|RequeueAfter|RequeueOnErr|FormatOutput|FinalizerBehaviors|MatchWildcardName|ValidateTFEVersion|PendingWorkspaceRuns)$$"
+	go test -timeout 5m -count 1 -v ./internal/controller/...
 
 .PHONY: test-helm
 test-helm: ## Run Helm chart tests.
-	cd charts/test; go test -timeout 5m -count=1 -v ./...
+	cd charts/test; go test -timeout 5m -count 1 -v ./...
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter & yamllint

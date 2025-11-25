@@ -33,7 +33,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 	BeforeEach(func() {
 		namespacedName = newNamespacedName()
-		agentPool = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
+		agentPool = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new agent pool custom resource for each test
 		instance = &appv1alpha2.AgentPool{
 			TypeMeta: metav1.TypeMeta{

@@ -70,8 +70,8 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 		AgentPoolNames: ap.instance.Spec.Name,
 		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
-			PageSize:   maxPageSize,
-			PageNumber: initPageNumber,
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
 		},
 	}
 	planOnlyRunCount := 0
@@ -124,8 +124,8 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 			string(tfc.RunPlanning),
 		}, ","),
 		ListOptions: tfc.ListOptions{
-			PageSize:   maxPageSize,
-			PageNumber: initPageNumber,
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
 		},
 	}
 	for {
@@ -185,7 +185,7 @@ func computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas int32) int3
 func getAgentDeploymentNamespacedName(ap *agentPoolInstance) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: ap.instance.Namespace,
-		Name:      agentPoolDeploymentName(&ap.instance),
+		Name:      AgentPoolDeploymentName(&ap.instance),
 	}
 }
 
