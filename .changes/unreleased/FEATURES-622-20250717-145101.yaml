@@ -1,0 +1,5 @@
+kind: FEATURES
+body: Added a new field `allowedWorkspaces` to `AgentPool` to allow to set scope workspace at the Agent Pools level
+time: 2025-07-17T14:51:01.914242+09:00
+custom:
+    PR: "622"
