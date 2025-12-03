@@ -397,7 +397,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			createTestAgentPool(instance)
 
 			workspaceInstance := testWorkspace("test-workspace", "default", instance.Spec.Name)
-			createWorkspace(workspaceInstance)
+			createWorkspaceResource(workspaceInstance)
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			Expect(instance.Spec.AgentDeployment).To(BeNil())

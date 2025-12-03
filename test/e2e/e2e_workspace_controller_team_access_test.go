@@ -79,7 +79,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -111,7 +111,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -135,7 +135,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{
@@ -202,7 +202,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isTeamAccessReconciled(instance)
 
 			wsTeamAccess := buildWorkspaceTeamAccessByName(instance.Status.WorkspaceID, appv1alpha2.CustomPermissions{

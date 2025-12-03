@@ -78,7 +78,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 		It("can retain a workspace", func() {
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyRetain
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			workspaceID := instance.Status.WorkspaceID
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
@@ -95,7 +95,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.AllowDestroyPlan = true
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicySoft
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			workspaceID := instance.Status.WorkspaceID
 
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
@@ -142,7 +142,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.AllowDestroyPlan = true
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyDestroy
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			workspaceID := instance.Status.WorkspaceID
 
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
@@ -198,7 +198,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		})
 		It("can force delete a workspace", func() {
 			instance.Spec.DeletionPolicy = appv1alpha2.DeletionPolicyForce
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			workspaceID := instance.Status.WorkspaceID
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			Eventually(func() bool {

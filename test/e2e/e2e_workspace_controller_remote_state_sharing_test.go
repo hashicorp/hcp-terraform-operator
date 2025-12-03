@@ -40,8 +40,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		wsName = fmt.Sprintf("%v-share", workspace)
 		wsName2 = fmt.Sprintf("%v-2", wsName)
-		wsID = createWorkspaceForTests(wsName)
-		wsID2 = createWorkspaceForTests(wsName2)
+		wsID = createWorkspace(tfc.WorkspaceCreateOptions{
+			Name: &wsName,
+		}).ID
+		wsID2 = createWorkspace(tfc.WorkspaceCreateOptions{
+			Name: &wsName2,
+		}).ID
 
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
@@ -83,7 +87,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				AllWorkspaces: true,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledGlobalRemoteStateSharing(instance)
 
 			// Manually change Global Remote State Sharing to false
@@ -100,7 +104,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				AllWorkspaces: false,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledGlobalRemoteStateSharing(instance)
 
 			// Manually change Global Remote State Sharing to true
@@ -119,7 +123,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually delete the workspace from Remote State Sharing
@@ -150,7 +154,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually delete the workspace from Remote State Sharing
@@ -208,11 +212,10 @@ func isReconciledRemoteStateSharingForWorkspaces(instance *appv1alpha2.Workspace
 	}).Should(BeTrue())
 }
 
-func createWorkspaceForTests(wsName string) string {
-	ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-		Name: &wsName,
-	})
+func createWorkspace(o tfc.WorkspaceCreateOptions) *tfc.Workspace {
+	ws, err := tfClient.Workspaces.Create(ctx, organization, o)
 	Expect(err).Should(Succeed())
 	Expect(ws).ShouldNot(BeNil())
-	return ws.ID
+
+	return ws
 }

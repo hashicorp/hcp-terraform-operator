@@ -85,18 +85,16 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 	Context("Autoscaling", func() {
 		It("fix: can update the status property on the first run", func() {
-			// Create a new Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
 				Name:          &workspace,
 				AutoApply:     tfc.Bool(true),
 				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 			// Create a new Run and execute it
 			_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
 			Eventually(func() bool {
-				ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
+				ws, err := tfClient.Workspaces.ReadByID(ctx, ws.ID)
 				Expect(err).Should(Succeed())
 				Expect(ws).ShouldNot(BeNil())
 				if ws.CurrentRun == nil {
@@ -115,7 +113,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return instance.Status.AgentPoolID != ""
 			}).Should(BeTrue())
 			// Attrach the Workspace to the Agent pool
-			ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
+			ws, err := tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
 				ExecutionMode: pointer.PointerOf("agent"),
 				AgentPoolID:   &instance.Status.AgentPoolID,
 			})
@@ -141,17 +139,16 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 		})
 	})
 	It("can scale up for a speculative plan run", func() {
-		// New Workspace
-		ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-			Name:      &workspace,
-			AutoApply: tfc.Bool(true),
+		// Create a new HCP Terraform Workspace
+		ws := createWorkspace(tfc.WorkspaceCreateOptions{
+			Name:          &workspace,
+			AutoApply:     tfc.Bool(true),
+			ExecutionMode: tfc.String("remote"),
 		})
-		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
 		// New Run
 		_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
 		Eventually(func() bool {
-			ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
+			ws, err := tfClient.Workspaces.ReadByID(ctx, ws.ID)
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
 			if ws.CurrentRun == nil {
@@ -170,7 +167,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			return instance.Status.AgentPoolID != ""
 		}).Should(BeTrue())
 		// Update Workspace
-		ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
+		ws, err := tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
 			ExecutionMode: pointer.PointerOf("agent"),
 			AgentPoolID:   &instance.Status.AgentPoolID,
 		})

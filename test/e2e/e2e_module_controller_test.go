@@ -98,16 +98,15 @@ var _ = Describe("Module Controller", Ordered, func() {
 
 	Context("Can Handle", func() {
 		It("Reference to Workspace by Name", func() {
-			// Create a new TFC Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 
 			// Create TFC Workspace variables
-			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
 				Key:      tfc.String("name"),
 				Value:    tfc.String("Pluto"),
 				HCL:      tfc.Bool(false),
@@ -146,16 +145,15 @@ var _ = Describe("Module Controller", Ordered, func() {
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
 		})
 		It("Reference to Workspace by ID", func() {
-			// Create a new TFC Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 
 			// Create TFC Workspace variables
-			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
 				Key:      tfc.String("name"),
 				Value:    tfc.String("Pluto"),
 				HCL:      tfc.Bool(false),
@@ -195,16 +193,15 @@ var _ = Describe("Module Controller", Ordered, func() {
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
 		})
 		It("External Deletion", func() {
-			// Create a new TFC Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 
 			// Create TFC Workspace variables
-			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
 				Key:      tfc.String("name"),
 				Value:    tfc.String("Pluto"),
 				HCL:      tfc.Bool(false),

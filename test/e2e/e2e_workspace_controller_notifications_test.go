@@ -89,7 +89,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				URL:  webhookURL,
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -109,7 +109,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -124,7 +124,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				URL:  webhookURL,
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -150,7 +150,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -171,7 +171,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -192,7 +192,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailAddresses: []string{"user@example.com"},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})

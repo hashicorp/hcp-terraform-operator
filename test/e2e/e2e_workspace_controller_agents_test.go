@@ -81,7 +81,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle agent pool by name", func() {
 			instance.Spec.AgentPool = &appv1alpha2.AgentPoolRef{Name: agentPoolName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledAgentPoolByName(instance)
 
 			// Update the Agent Pool by Name
@@ -94,7 +94,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle agent pool by id", func() {
 			instance.Spec.AgentPool = &appv1alpha2.AgentPoolRef{ID: agentPoolID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledAgentPoolByID(instance)
 
 			// Update the Agent Pool by ID

@@ -80,7 +80,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can be handled by name", func() {
 			instance.Spec.Project = &appv1alpha2.WorkspaceProject{Name: projectName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledProjectByName(instance)
 
 			// Update the Project by Name
@@ -105,7 +105,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can be handled by ID", func() {
 			instance.Spec.Project = &appv1alpha2.WorkspaceProject{ID: projectID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledProjectByID(instance)
 
 			// Update the Project by ID

@@ -74,7 +74,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	Context("Outputs", func() {
 		It("can handle outputs", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			outputValue := "hoi"
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, outputValue)

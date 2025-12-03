@@ -107,7 +107,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{ID: variableSetID},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledVariableSet(instance)
 
 			// Ada a new empty variable set
@@ -152,7 +152,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: variableSetName},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledVariableSet(instance)
 
 			// Ada a new empty variable set

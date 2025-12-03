@@ -76,12 +76,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	Context("Workspace controller", func() {
 		It("can create and delete a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 		})
 
 		It("can re-create a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			initWorkspaceID := instance.Status.WorkspaceID
 
@@ -100,7 +100,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can clean up a workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			// Delete the HCP Terraform workspace
 			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
@@ -108,7 +108,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can change workspace name", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			// Update the Kubernetes workspace object Name
 			instance.Spec.Name = fmt.Sprintf("%v-new", instance.Spec.Name)
@@ -129,7 +129,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instanceCopy := instance.DeepCopy()
 
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			// Validate that all attributes are set correctly
 			// Do not validate the Terraform version since it will be set to the latest available by default
@@ -178,7 +178,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can keep Terraform version", func() {
 			instance.Spec.TerraformVersion = "1.4.1"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			// Remove TerraformVersion from the 'spec'
 			instance.Spec.TerraformVersion = ""
@@ -202,7 +202,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			instance.Spec.Tags = []appv1alpha2.Tag{"kubernetes-operator"}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Make sure that the TFC Workspace has all desired tags
 			Eventually(func() bool {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
@@ -246,7 +246,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createWorkspace(instance *appv1alpha2.Workspace) {
+func createWorkspaceResource(instance *appv1alpha2.Workspace) {
 	namespacedName := getNamespacedName(instance)
 
 	// Create a new Kubernetes workspace object
