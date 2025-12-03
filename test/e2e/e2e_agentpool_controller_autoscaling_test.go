@@ -84,71 +84,16 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 
 	Context("Autoscaling", func() {
-		Context("Autoscaling", func() {
-			It("fix: can update the status property on the first run", func() {
-				// Create a new Workspace
-				ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-					Name:      &workspace,
-					AutoApply: tfc.Bool(true),
-				})
-				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				// Create a new Run and execute it
-				_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
-				Eventually(func() bool {
-					ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
-					Expect(err).Should(Succeed())
-					Expect(ws).ShouldNot(BeNil())
-					if ws.CurrentRun == nil {
-						return false
-					}
-					run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
-					Expect(err).Should(Succeed())
-					Expect(run).ShouldNot(BeNil())
-					return run.Status == tfc.RunApplied
-				}).Should(BeTrue())
-				// Create a new Agent Pool
-				instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
-				Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
-				Eventually(func() bool {
-					Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-					return instance.Status.AgentPoolID != ""
-				}).Should(BeTrue())
-				// Attrach the Workspace to the Agent pool
-				ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
-					ExecutionMode: pointer.PointerOf("agent"),
-					AgentPoolID:   &instance.Status.AgentPoolID,
-				})
-				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				// Trigger a new run
-				run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-					PlanOnly: pointer.PointerOf(false),
-					Workspace: &tfc.Workspace{
-						ID: ws.ID,
-					},
-				})
-				Expect(err).Should(Succeed())
-				Expect(run).ShouldNot(BeNil())
-				// Ensure it scales up
-				Eventually(func() bool {
-					Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-					if instance.Status.AgentDeploymentAutoscalingStatus == nil {
-						return false
-					}
-					return *instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas == 1
-				}).Should(BeTrue())
-			})
-		})
-		It("can scale up for a speculative plan run", func() {
-			// New Workspace
+		It("fix: can update the status property on the first run", func() {
+			// Create a new Workspace
 			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
-			// New Run
+			// Create a new Run and execute it
 			_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
 			Eventually(func() bool {
 				ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
@@ -162,23 +107,23 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				Expect(run).ShouldNot(BeNil())
 				return run.Status == tfc.RunApplied
 			}).Should(BeTrue())
-			// New Agent Pool
+			// Create a new Agent Pool
 			instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				return instance.Status.AgentPoolID != ""
 			}).Should(BeTrue())
-			// Update Workspace
+			// Attrach the Workspace to the Agent pool
 			ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
 				ExecutionMode: pointer.PointerOf("agent"),
 				AgentPoolID:   &instance.Status.AgentPoolID,
 			})
 			Expect(err).Should(Succeed())
 			Expect(ws).ShouldNot(BeNil())
-			// New Speculative Plan
+			// Trigger a new run
 			run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-				PlanOnly: pointer.PointerOf(true),
+				PlanOnly: pointer.PointerOf(false),
 				Workspace: &tfc.Workspace{
 					ID: ws.ID,
 				},
@@ -194,6 +139,60 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return *instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas == 1
 			}).Should(BeTrue())
 		})
+	})
+	It("can scale up for a speculative plan run", func() {
+		// New Workspace
+		ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
+			Name:      &workspace,
+			AutoApply: tfc.Bool(true),
+		})
+		Expect(err).Should(Succeed())
+		Expect(ws).ShouldNot(BeNil())
+		// New Run
+		_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
+		Eventually(func() bool {
+			ws, err = tfClient.Workspaces.ReadByID(ctx, ws.ID)
+			Expect(err).Should(Succeed())
+			Expect(ws).ShouldNot(BeNil())
+			if ws.CurrentRun == nil {
+				return false
+			}
+			run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+			Expect(err).Should(Succeed())
+			Expect(run).ShouldNot(BeNil())
+			return run.Status == tfc.RunApplied
+		}).Should(BeTrue())
+		// New Agent Pool
+		instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
+		Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
+		Eventually(func() bool {
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			return instance.Status.AgentPoolID != ""
+		}).Should(BeTrue())
+		// Update Workspace
+		ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
+			ExecutionMode: pointer.PointerOf("agent"),
+			AgentPoolID:   &instance.Status.AgentPoolID,
+		})
+		Expect(err).Should(Succeed())
+		Expect(ws).ShouldNot(BeNil())
+		// New Speculative Plan
+		run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
+			PlanOnly: pointer.PointerOf(true),
+			Workspace: &tfc.Workspace{
+				ID: ws.ID,
+			},
+		})
+		Expect(err).Should(Succeed())
+		Expect(run).ShouldNot(BeNil())
+		// Ensure it scales up
+		Eventually(func() bool {
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			if instance.Status.AgentDeploymentAutoscalingStatus == nil {
+				return false
+			}
+			return *instance.Status.AgentDeploymentAutoscalingStatus.DesiredReplicas == 1
+		}).Should(BeTrue())
 	})
 })
 
