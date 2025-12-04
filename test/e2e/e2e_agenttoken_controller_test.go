@@ -21,7 +21,7 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
-var _ = Describe("Agent Token Controller", Ordered, func() {
+var _ = Describe("Agent Token сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.AgentToken
 		namespacedName types.NamespacedName

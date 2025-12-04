@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tfc "github.com/hashicorp/go-tfe"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -35,9 +36,8 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecAgentPool(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecAgentPool()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -70,9 +70,8 @@ func TestValidateWorkspaceSpecAgentPool(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecAgentPool(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecAgentPool()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -101,9 +100,8 @@ func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecExecutionMode(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecExecutionMode()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -117,9 +115,8 @@ func TestValidateWorkspaceSpecExecutionMode(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecExecutionMode(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecExecutionMode()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -256,9 +253,8 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecNotifications(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecNotifications()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -455,9 +451,8 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecNotifications(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecNotifications()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -550,9 +545,8 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRemoteStateSharing(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecRemoteStateSharing()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -634,9 +628,8 @@ func TestValidateWorkspaceSpecRemoteStateSharing(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRemoteStateSharing(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecRemoteStateSharing()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -679,9 +672,8 @@ func TestValidateWorkspaceSpecRunTasks(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRunTasks(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecRunTasks()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -734,9 +726,8 @@ func TestValidateWorkspaceSpecRunTasks(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRunTasks(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecRunTasks()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -779,9 +770,8 @@ func TestValidateWorkspaceSpecRunTriggers(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRunTriggers(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecRunTriggers()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -834,9 +824,8 @@ func TestValidateWorkspaceSpecRunTriggers(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecRunTriggers(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecRunTriggers()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -863,9 +852,8 @@ func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecSSHKey(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecSSHKey()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -887,9 +875,8 @@ func TestValidateWorkspaceSpecSSHKey(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecSSHKey(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecSSHKey()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -921,9 +908,8 @@ func TestValidateWorkspaceSpecProject(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecProject(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecProject()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -945,9 +931,8 @@ func TestValidateWorkspaceSpecProject(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecProject(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecProject()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -984,12 +969,11 @@ func TestValidateWorkspaceSpecVariables(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := validateSpecVariables(f.Child("terraformVariables"), c); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
-			if errs := validateSpecVariables(f.Child("environmentVariables"), c); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := validateSpecVariables(f.Child("terraformVariables"), c)
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
+
+			errs = validateSpecVariables(f.Child("environmentVariables"), c)
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -1067,12 +1051,11 @@ func TestValidateWorkspaceSpecVariables(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := validateSpecVariables(f.Child("terraformVariables"), c); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
-			if errs := validateSpecVariables(f.Child("environmentVariables"), c); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := validateSpecVariables(f.Child("terraformVariables"), c)
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
+
+			errs = validateSpecVariables(f.Child("environmentVariables"), c)
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -1092,7 +1075,7 @@ func TestValidateSpecDeletionPolicy(t *testing.T) {
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
 			if errs := c.validateSpecDeletionPolicy(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
+				assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 			}
 		})
 	}
@@ -1108,9 +1091,8 @@ func TestValidateSpecDeletionPolicy(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecDeletionPolicy(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecDeletionPolicy()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -1133,9 +1115,8 @@ func TestValidateSpecVariableSets(t *testing.T) {
 	// Run Success Test Cases
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecVariableSets(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecVariableSets()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -1166,9 +1147,8 @@ func TestValidateSpecVariableSets(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecVariableSets(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecVariableSets()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -1203,9 +1183,8 @@ func TestValidateSpecVersionControl(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecVersionControl(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecVersionControl()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -1246,9 +1225,8 @@ func TestValidateSpecVersionControl(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecVersionControl(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecVersionControl()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }

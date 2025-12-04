@@ -17,7 +17,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var _ = Describe("Module Controller", Ordered, func() {
+var _ = Describe("Module сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Module
 		namespacedName = newNamespacedName()

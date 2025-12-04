@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
-var _ = Describe("RunsCollector Controller", Ordered, func() {
+var _ = Describe("Runs Collector сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.RunsCollector
 		namespacedName = newNamespacedName()

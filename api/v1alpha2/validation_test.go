@@ -6,83 +6,88 @@ package v1alpha2
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestValidateDeploymentLabels(t *testing.T) {
-	tests := []struct {
-		name    string
-		labels  map[string]string
-		wantErr bool
+	successCases := map[string]struct {
+		labels map[string]string
 	}{
-		{
-			name: "HasValidLabel",
+		"HasValidLabel": {
 			labels: map[string]string{
 				"key": "my-value",
 			},
-			wantErr: false,
-		},
-		{
-			name: "HasEmptyKey",
-			labels: map[string]string{
-				"": "my-value",
-			},
-			wantErr: true,
-		},
-		{
-			name: "HasEmptyValue",
-			labels: map[string]string{
-				"key": "",
-			},
-			wantErr: true,
 		},
 	}
 
-	for _, l := range tests {
-		t.Run(l.name, func(t *testing.T) {
-			errs := validateDeploymentLabels(l.labels, field.NewPath("metadata").Child("labels"))
-			if (len(errs) > 0) != l.wantErr {
-				t.Errorf("validateLabels() error = %v, wantErr %v", errs, l.wantErr)
-			}
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			errs := validateDeploymentLabels(c.labels, field.NewPath("metadata").Child("labels"))
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
+		})
+	}
+
+	errorCases := map[string]struct {
+		labels map[string]string
+	}{
+		"HasEmptyKey": {
+			labels: map[string]string{
+				"": "my-value",
+			},
+		},
+		"HasEmptyValue": {
+			labels: map[string]string{
+				"key": "",
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			errs := validateDeploymentLabels(c.labels, field.NewPath("metadata").Child("labels"))
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
 
 func TestValidateDeploymentAnnotations(t *testing.T) {
-	tests := []struct {
-		name        string
+	successCases := map[string]struct {
 		annotations map[string]string
-		wantErr     bool
 	}{
-		{
-			name: "HasValidAnnotations",
+		"HasValidAnnotations": {
 			annotations: map[string]string{
 				"key": "my-value",
 			},
-			wantErr: false,
-		},
-		{
-			name: "HasEmptyKey",
-			annotations: map[string]string{
-				"": "my-value",
-			},
-			wantErr: true,
-		},
-		{
-			name: "HasEmptyValue",
-			annotations: map[string]string{
-				"key": "",
-			},
-			wantErr: true,
 		},
 	}
 
-	for _, a := range tests {
-		t.Run(a.name, func(t *testing.T) {
-			errs := validateDeploymentAnnotations(a.annotations, field.NewPath("metadata").Child("annotations"))
-			if (len(errs) > 0) != a.wantErr {
-				t.Errorf("validateAnnotations() error = %v, wantErr %v", errs, a.wantErr)
-			}
+	for n, c := range successCases {
+		t.Run(n, func(t *testing.T) {
+			errs := validateDeploymentAnnotations(c.annotations, field.NewPath("metadata").Child("annotations"))
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
+		})
+	}
+
+	errorCases := map[string]struct {
+		annotations map[string]string
+	}{
+		"HasEmptyKeys": {
+			annotations: map[string]string{
+				"": "my-value",
+			},
+		},
+		"HasEmptyValue": {
+			annotations: map[string]string{
+				"key": "",
+			},
+		},
+	}
+
+	for n, c := range errorCases {
+		t.Run(n, func(t *testing.T) {
+			errs := validateDeploymentAnnotations(c.annotations, field.NewPath("metadata").Child("annotations"))
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }

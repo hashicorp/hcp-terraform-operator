@@ -5,6 +5,8 @@ package v1alpha2
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNeedUpdateStatus(t *testing.T) {
@@ -85,9 +87,7 @@ func TestNeedUpdateStatus(t *testing.T) {
 	for n, c := range cases {
 		t.Run(n, func(t *testing.T) {
 			out := c.rc.NeedUpdateStatus()
-			if out != c.expected {
-				t.Fatalf("Error matching output and expected: %#v vs %#v", out, c.expected)
-			}
+			assert.Equalf(t, c.expected, out, "Error matching output and expected: %#v vs %#v", out, c.expected)
 		})
 	}
 }
