@@ -306,7 +306,11 @@ $(HASHICORP_COPYWRITE): $(LOCALBIN)
 		git -C $(HASHICORP_COPYWRITE_DIR) pull; \
 	else \
 		mkdir -p $(LOCALBIN)/copywrite_ibm; \
-		git clone https://github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
+		if [ -n "$$GITHUB_TOKEN" ]; then \
+			git clone https://$$GITHUB_TOKEN@github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
+		else \
+			git clone https://github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
+		fi \
 	fi
 	cd $(HASHICORP_COPYWRITE_DIR); go build -o $(HASHICORP_COPYWRITE) .
 	rm -fr $(HASHICORP_COPYWRITE_DIR)
