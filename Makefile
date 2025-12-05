@@ -132,8 +132,14 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: copywrite
-copywrite: install-copywrite ## Run copywrite against code.
-	$(HASHICORP_COPYWRITE) headers
+copywrite: ## Run copywrite against code.
+	@if ! command -v $(HASHICORP_COPYWRITE) >/dev/null 2>&1; then \
+		echo "$(HASHICORP_COPYWRITE) not found, run 'make install-copywrite' to install it."; \
+		exit 1; \
+	fi
+	$(HASHICORP_COPYWRITE) headers \
+		--year1 `git log --reverse --format=%ad --date=format:%Y | head -n 1` \
+		--year2 `git log -1 --format=%ad --date=format:%Y`
 
 .PHONY: test
 test: manifests generate fmt vet copywrite envtest ## Run tests.
@@ -240,6 +246,9 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+## Tool Dirs
+HASHICORP_COPYWRITE_DIR ?= $(LOCALBIN)/copywrite_ibm
+
 ## Tool Binaries
 KUBECTL ?= kubectl
 KUSTOMIZE ?= $(LOCALBIN)/kustomize-$(KUSTOMIZE_VERSION)
@@ -247,7 +256,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen-$(CONTROLLER_TOOLS_VERSION)
 ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs-$(CRD_REF_DOCS_VERSION)
 HELM_DOCS ?= $(LOCALBIN)/helm-docs-$(HELM_DOCS_VERSION)
-HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite-$(HASHICORP_COPYWRITE_VERSION)
+HASHICORP_COPYWRITE ?= $(LOCALBIN)/copywrite-ibm
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 YQ = $(LOCALBIN)/yq-$(YQ_VERSION)
 
@@ -257,7 +266,6 @@ CONTROLLER_TOOLS_VERSION ?= v0.19.0
 ENVTEST_VERSION ?= release-0.22
 CRD_REF_DOCS_VERSION ?= v0.2.0
 HELM_DOCS_VERSION ?= v1.14.2
-HASHICORP_COPYWRITE_VERSION ?= v0.22.0
 GOLANGCI_LINT_VERSION ?= v2.6.2
 YQ_VERSION ?= v4.49.2
 
@@ -294,7 +302,14 @@ $(HELM_DOCS): $(LOCALBIN)
 .PHONY: install-copywrite
 install-copywrite: $(HASHICORP_COPYWRITE) ## Download HashiCorp copywrite locally if necessary.
 $(HASHICORP_COPYWRITE): $(LOCALBIN)
-	$(call go-install-tool,$(HASHICORP_COPYWRITE),github.com/hashicorp/copywrite,$(HASHICORP_COPYWRITE_VERSION))
+	@if [ -d $(HASHICORP_COPYWRITE_DIR) ]; then \
+		git -C $(HASHICORP_COPYWRITE_DIR) pull; \
+	else \
+		mkdir -p $(LOCALBIN)/copywrite_ibm; \
+		git clone https://github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
+	fi
+	cd $(HASHICORP_COPYWRITE_DIR); go build -o $(HASHICORP_COPYWRITE) .
+	rm -fr $(HASHICORP_COPYWRITE_DIR)
 
 .PHONY: yq
 yq: $(YQ) ## Download yq locally if necessary.
