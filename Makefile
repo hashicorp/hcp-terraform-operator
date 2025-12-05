@@ -117,7 +117,6 @@ manifests: controller-gen docs ## Generate WebhookConfiguration, ClusterRole and
 	  output:crd:artifacts:config=config/crd/bases
 	$(CONTROLLER_GEN) crd paths="./..." \
 	  output:crd:artifacts:config=charts/hcp-terraform-operator/crds
-	$(MAKE) copywrite
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -143,22 +142,22 @@ copywrite: ## Run copywrite against code.
 		--year2 `git log -1 --format=%ad --date=format:%Y`
 
 .PHONY: test
-test: manifests generate fmt vet copywrite envtest ## Run tests.
+test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
 		go test -timeout 1h -v ./test/e2e -coverprofile cover.out ${TESTARGS}
 
 .PHONY: test-api
-test-api: fmt vet copywrite ## Run API tests.
+test-api: fmt vet ## Run API tests.
 	go test -timeout 5m -count 1 -v ./api/v1alpha2
 
 .PHONY: test-internal
-test-internal: fmt vet copywrite ## Run internal/* tests.
+test-internal: fmt vet ## Run internal/* tests.
 	go test -timeout 5m -count 1 -v \
 		./internal/pointer \
 		./internal/slice
 
 .PHONY: test-unit
-test-unit: fmt vet copywrite ## Run internal/controller tests.
+test-unit: fmt vet ## Run internal/controller tests.
 	go test -timeout 5m -count 1 -v ./internal/controller/...
 
 .PHONY: test-helm
@@ -176,11 +175,11 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet copywrite ## Build manager binary.
+build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager ./cmd/main.go
 
 .PHONY: run
-run: manifests generate fmt vet copywrite ## Run a controller from your host.
+run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/main.go
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
