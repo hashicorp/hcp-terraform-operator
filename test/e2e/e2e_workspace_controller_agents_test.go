@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -82,7 +81,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle agent pool by name", func() {
 			instance.Spec.AgentPool = &appv1alpha2.AgentPoolRef{Name: agentPoolName}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledAgentPoolByName(instance)
 
 			// Update the Agent Pool by Name
@@ -95,7 +94,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle agent pool by id", func() {
 			instance.Spec.AgentPool = &appv1alpha2.AgentPoolRef{ID: agentPoolID}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledAgentPoolByID(instance)
 
 			// Update the Agent Pool by ID

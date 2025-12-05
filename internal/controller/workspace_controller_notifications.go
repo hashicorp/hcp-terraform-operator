@@ -35,7 +35,7 @@ func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceIns
 	listOpts := &tfc.OrganizationMembershipListOptions{
 		Emails: emails,
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {
@@ -100,7 +100,7 @@ func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *
 
 	listOpts := &tfc.NotificationConfigurationListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

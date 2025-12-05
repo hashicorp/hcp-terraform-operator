@@ -87,7 +87,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Name: sshKeyName,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 		})
 		It("can be created by ID", func() {
@@ -95,7 +95,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ID: sshKeyID,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 		})
 
@@ -104,7 +104,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Name: sshKeyName,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Delete the SSH key manually and wait until the controller revert this change
 			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
@@ -117,7 +117,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ID: sshKeyID,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Delete the SSH key manually and wait until the controller revert this change
 			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
@@ -131,7 +131,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Name: sshKeyName,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Update the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -146,7 +146,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ID: sshKeyID,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Update the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance))
@@ -162,7 +162,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Name: sshKeyName,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Detach the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance))
@@ -175,7 +175,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				ID: sshKeyID,
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Delete the SSH key
 			Expect(k8sClient.Get(ctx, namespacedName, instance))

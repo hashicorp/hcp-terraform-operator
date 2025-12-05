@@ -5,6 +5,8 @@ package v1alpha2
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateModuleSpecWorkspace(t *testing.T) {
@@ -29,9 +31,8 @@ func TestValidateModuleSpecWorkspace(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecWorkspace(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecWorkspace()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -53,9 +54,8 @@ func TestValidateModuleSpecWorkspace(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecWorkspace(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecWorkspace()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }

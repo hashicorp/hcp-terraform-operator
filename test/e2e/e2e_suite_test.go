@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -34,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 	//+kubebuilder:scaffold:imports
 )
@@ -113,7 +115,7 @@ var _ = BeforeSuite(func() {
 	err = appv1alpha2.AddToScheme(scheme.Scheme)
 	Expect(err).ToNot(HaveOccurred())
 
-	RegisterMetrics()
+	controller.RegisterMetrics()
 
 	//+kubebuilder:scaffold:scheme
 
@@ -174,42 +176,42 @@ var _ = BeforeSuite(func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&AgentPoolReconciler{
+		err = (&controller.AgentPoolReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("AgentPoolController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&AgentTokenReconciler{
+		err = (&controller.AgentTokenReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("AgentTokenController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&ModuleReconciler{
+		err = (&controller.ModuleReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("ModuleController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&ProjectReconciler{
+		err = (&controller.ProjectReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("ProjectController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&RunsCollectorReconciler{
+		err = (&controller.RunsCollectorReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("RunsCollectorController"),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = (&WorkspaceReconciler{
+		err = (&controller.WorkspaceReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor("WorkspaceController"),
@@ -255,6 +257,15 @@ var _ = AfterSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 })
 
+type TestObject struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+}
+
+func (in *TestObject) DeepCopyObject() runtime.Object {
+	return nil
+}
+
 func randomNumber() int32 {
 	GinkgoHelper()
 	return rndm.Int31()
@@ -268,7 +279,7 @@ func newNamespacedName() types.NamespacedName {
 	}
 }
 
-func getNamespacedName[T Object](o T) types.NamespacedName {
+func getNamespacedName[T controller.Object](o T) types.NamespacedName {
 	GinkgoHelper()
 	return types.NamespacedName{
 		Namespace: o.GetNamespace(),

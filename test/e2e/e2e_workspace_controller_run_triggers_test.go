@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -41,8 +40,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		wsName = fmt.Sprintf("kubernetes-operator-source-%v", randomNumber())
 		wsName2 = fmt.Sprintf("kubernetes-operator-source-2-%v", randomNumber())
-		wsID = createWorkspaceForTests(wsName)
-		wsID2 = createWorkspaceForTests(wsName2)
+		wsID = createWorkspace(tfc.WorkspaceCreateOptions{
+			Name: &wsName,
+		}).ID
+		wsID2 = createWorkspace(tfc.WorkspaceCreateOptions{
+			Name: &wsName2,
+		}).ID
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -84,7 +87,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: wsName2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
@@ -102,7 +105,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{ID: wsID2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
@@ -120,7 +123,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: wsName2},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{

@@ -11,11 +11,11 @@ import (
 const (
 	annotationPaused = "app.terraform.io/paused"
 	labelHasChanged  = "app.terraform.io/has-changed"
-	metaTrue         = "true"
+	MetaTrue         = "true"
 	metaFalse        = "false"
 
-	initPageNumber  = 1
-	maxPageSize     = 100
+	InitPageNumber  = 1
+	MaxPageSize     = 100
 	requeueInterval = 15 * time.Second
 	runMessage      = "Triggered by HCP Terraform Operator"
 )
@@ -84,12 +84,12 @@ const (
 	workspaceFinalizerAlpha1 = "finalizer.workspace.app.terraform.io"
 	workspaceFinalizer       = "workspace.app.terraform.io/finalizer"
 
-	workspaceAnnotationRunNew              = "workspace.app.terraform.io/run-new"
-	workspaceAnnotationRunType             = "workspace.app.terraform.io/run-type"
-	workspaceAnnotationRunTerraformVersion = "workspace.app.terraform.io/run-terraform-version"
+	WorkspaceAnnotationRunNew              = "workspace.app.terraform.io/run-new"
+	WorkspaceAnnotationRunType             = "workspace.app.terraform.io/run-type"
+	WorkspaceAnnotationRunTerraformVersion = "workspace.app.terraform.io/run-terraform-version"
 
-	runTypePlan    = "plan"
-	runTypeApply   = "apply"
-	runTypeRefresh = "refresh"
-	runTypeDefault = runTypePlan
+	RunTypePlan    = "plan"
+	RunTypeApply   = "apply"
+	RunTypeRefresh = "refresh"
+	RunTypeDefault = RunTypePlan
 )

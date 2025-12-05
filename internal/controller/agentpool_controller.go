@@ -67,7 +67,7 @@ func (r *AgentPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return requeueAfter(requeueInterval)
 	}
 
-	if a, ok := ap.instance.GetAnnotations()[annotationPaused]; ok && a == metaTrue {
+	if a, ok := ap.instance.GetAnnotations()[annotationPaused]; ok && a == MetaTrue {
 		ap.log.Info("Agent Pool Controller", "msg", "reconciliation is paused for this resource")
 		return doNotRequeue()
 	}

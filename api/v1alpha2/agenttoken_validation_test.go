@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateAgentTokenSpecAgentToken(t *testing.T) {
@@ -38,9 +39,8 @@ func TestValidateAgentTokenSpecAgentToken(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecAgentTokens(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecAgentTokens()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -91,9 +91,8 @@ func TestValidateAgentTokenSpecAgentToken(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecAgentTokens(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecAgentTokens()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }

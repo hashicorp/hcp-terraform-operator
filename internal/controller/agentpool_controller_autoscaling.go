@@ -70,8 +70,8 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 		AgentPoolNames: ap.instance.Spec.Name,
 		StatusGroup:    "non_final",
 		ListOptions: tfc.ListOptions{
-			PageSize:   maxPageSize,
-			PageNumber: initPageNumber,
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
 		},
 	}
 	planOnlyRunCount := 0
@@ -124,8 +124,8 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 			string(tfc.RunPlanning),
 		}, ","),
 		ListOptions: tfc.ListOptions{
-			PageSize:   maxPageSize,
-			PageNumber: initPageNumber,
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
 		},
 	}
 	for {
@@ -185,7 +185,7 @@ func computeDesiredReplicas(requiredAgents, minReplicas, maxReplicas int32) int3
 func getAgentDeploymentNamespacedName(ap *agentPoolInstance) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: ap.instance.Namespace,
-		Name:      agentPoolDeploymentName(&ap.instance),
+		Name:      AgentPoolDeploymentName(&ap.instance),
 	}
 }
 
@@ -251,16 +251,16 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 			return pendingWorkspaceRuns(ctx, ap)
 		}
 		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
-		useRunsEndpoint, err := validateTFEVersion(tfeVersion)
+		runsEndpoint, err := useRunsEndpoint(tfeVersion)
 		if err != nil {
 			// If the TFE version parsing fails, do not return the error here and proceed further.
 			// In this case, a legacy algorithm will be taken.
 			ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to parse TFE version")
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPool", "Failed to parse TFE version: %v", err.Error())
 		}
-		// In TFE version v202409-1, a new API endpoint was introduced.
+		// In TFE version v202409-1, a new Runs API endpoint was introduced.
 		// It now allows retrieving a list of runs for the organization.
-		if useRunsEndpoint {
+		if runsEndpoint {
 			ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the new algorithm based on the detected TFE version %s", tfeVersion))
 			return pendingWorkspaceRuns(ctx, ap)
 		}

@@ -43,7 +43,7 @@ func (r *WorkspaceReconciler) getRunTriggersWorkspace(ctx context.Context, w *wo
 		RunTriggerType: tfc.RunTriggerInbound,
 		Include:        []tfc.RunTriggerIncludeOpt{tfc.RunTriggerSourceable},
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

@@ -17,7 +17,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-var _ = Describe("Module Controller", Ordered, func() {
+var _ = Describe("Module сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Module
 		namespacedName = newNamespacedName()
@@ -37,13 +37,12 @@ var _ = Describe("Module Controller", Ordered, func() {
 	BeforeEach(func() {
 		var err error
 		workspaceName = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
-		// Create a new TFC Workspace
-		workspace, err = tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-			Name:      &workspaceName,
-			AutoApply: tfc.Bool(true),
+		// Create a new HCP Terraform Workspace
+		workspace = createWorkspace(tfc.WorkspaceCreateOptions{
+			Name:          &workspaceName,
+			AutoApply:     tfc.Bool(true),
+			ExecutionMode: tfc.String("remote"),
 		})
-		Expect(err).Should(Succeed())
-		Expect(workspace).ShouldNot(BeNil())
 
 		// Create TFC Workspace variables
 		_, err = tfClient.Variables.Create(ctx, workspace.ID, tfc.VariableCreateOptions{

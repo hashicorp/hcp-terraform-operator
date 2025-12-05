@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tfc "github.com/hashicorp/go-tfe"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateSpecTeamAccess(t *testing.T) {
@@ -39,9 +40,8 @@ func TestValidateSpecTeamAccess(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecTeamAccessCustom(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecTeamAccessCustom()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -72,9 +72,8 @@ func TestValidateSpecTeamAccess(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecTeamAccessCustom(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecTeamAccessCustom()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }
@@ -135,9 +134,8 @@ func TestValidateSpecTeamAccessTeam(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecTeamAccessTeam(); len(errs) != 0 {
-				t.Errorf("Unexpected validation errors: %v", errs)
-			}
+			errs := c.validateSpecTeamAccessTeam()
+			assert.Empty(t, errs, "Unexpected validation errors: %v", errs)
 		})
 	}
 
@@ -199,9 +197,8 @@ func TestValidateSpecTeamAccessTeam(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			if errs := c.validateSpecTeamAccessTeam(); len(errs) == 0 {
-				t.Error("Unexpected failure, at least one error is expected")
-			}
+			errs := c.validateSpecTeamAccessTeam()
+			assert.NotEmpty(t, errs, "Unexpected failure, at least one error is expected")
 		})
 	}
 }

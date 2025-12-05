@@ -142,7 +142,7 @@ func (r *WorkspaceReconciler) getWorkspaceVariables(ctx context.Context, w *work
 	w.log.Info("Reconcile Variables", "msg", "getting workspace variables")
 	listOpts := &tfc.VariableListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

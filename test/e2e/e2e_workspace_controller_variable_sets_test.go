@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -107,7 +107,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{ID: variableSetID},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledVariableSet(instance)
 
 			// Ada a new empty variable set
@@ -152,7 +152,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				{Name: variableSetName},
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isReconciledVariableSet(instance)
 
 			// Ada a new empty variable set
@@ -210,7 +210,7 @@ func isReconciledVariableSet(instance *appv1alpha2.Workspace) {
 	}).Should(BeTrue())
 	variableSets, err := tfClient.VariableSets.List(ctx, instance.Spec.Organization, &tfc.VariableSetListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: controller.MaxPageSize,
 		},
 	})
 	vs := make(map[string]struct{})
