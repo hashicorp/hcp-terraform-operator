@@ -134,7 +134,8 @@ vet: ## Run go vet against code.
 .PHONY: copywrite
 copywrite: ## Run copywrite against code.
 	@if ! command -v $(HASHICORP_COPYWRITE) >/dev/null 2>&1; then \
-		echo "$(HASHICORP_COPYWRITE) not found, run 'make install-copywrite' to install it."; \
+		echo "$(HASHICORP_COPYWRITE) not found!"; \
+		echo "Run 'make install-copywrite' to install it."; \
 		exit 1; \
 	fi
 	$(HASHICORP_COPYWRITE) headers \
@@ -306,11 +307,7 @@ $(HASHICORP_COPYWRITE): $(LOCALBIN)
 		git -C $(HASHICORP_COPYWRITE_DIR) pull; \
 	else \
 		mkdir -p $(LOCALBIN)/copywrite_ibm; \
-		if [ -n "$$GITHUB_TOKEN" ]; then \
-			git clone https://$$GITHUB_TOKEN@github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
-		else \
-			git clone https://github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
-		fi \
+		git clone https://github.com/hashicorp/copywrite_ibm.git $(LOCALBIN)/copywrite_ibm; \
 	fi
 	cd $(HASHICORP_COPYWRITE_DIR); go build -o $(HASHICORP_COPYWRITE) .
 	rm -fr $(HASHICORP_COPYWRITE_DIR)
