@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) HashiCorp, Inc.
+# Copyright IBM Corp. 2022, 2025
 # SPDX-License-Identifier: MPL-2.0
 
 # Ensure that 'yq' is installed in the bin directory by running 'make yq'
