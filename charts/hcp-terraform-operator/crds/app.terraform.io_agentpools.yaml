@@ -8500,6 +8500,13 @@ spec:
                   type: object
                 minItems: 1
                 type: array
+              allowedWorkspaces:
+                description: |-
+                  AllowedWorkspaces is a list of HCP Terraform Workspaces ID which
+                  are scoped to this agent pool.
+                items:
+                  type: string
+                type: array
               autoscaling:
                 description: Agent deployment settings
                 properties:

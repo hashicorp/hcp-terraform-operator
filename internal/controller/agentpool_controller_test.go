@@ -302,7 +302,104 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			// VALIDATE AGENT DEPLOYMENT ATTRIBUTES
 			validateAgentPoolDeployment(ctx, instance)
 		})
+		It("can create an agent pool with allowed workspaces", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+			// VALIDATE AGENT TOKENS
+			validateAgentPoolTestTokens(ctx, instance)
 
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			workspaceInstance := testWorkspace("test-workspace-pool", "default", instance.Spec.Name)
+			createWorkspace(workspaceInstance)
+
+			// ADD AllowedWorkspaces
+			instance.Spec.AllowedWorkspaces = &[]string{workspaceInstance.Status.WorkspaceID}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+
+			agentPoolTestGenerationsMatch(instance)
+
+			Expect(instance.Spec.AllowedWorkspaces).ToNot(BeNil())
+			Expect(*instance.Spec.AllowedWorkspaces).To(HaveLen(1))
+			Expect(instance.Spec.AllowedWorkspaces).To(Equal(&[]string{workspaceInstance.Status.WorkspaceID}))
+
+			// VALIDATE AGENT DEPLOYMENT ATTRIBUTES
+			deleteWorkspace(workspaceInstance)
+		})
+		It("can update an agent pool allowed workspaces", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+
+			// CREATE 2 WORKSPACE
+			workspaceInstance := testWorkspace("test-workspace-dl-pool", "default", instance.Spec.Name)
+			workspaceInstance2 := testWorkspace("test-workspace-dl-pool2", "default", instance.Spec.Name)
+			workspaceInstance2.Spec.AgentPool = nil
+			workspaceInstance2.Spec.ExecutionMode = "remote"
+			createWorkspace(workspaceInstance)
+			createWorkspace(workspaceInstance2)
+
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			instance.Spec.AllowedWorkspaces = &[]string{workspaceInstance.Status.WorkspaceID}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			agentPoolTestGenerationsMatch(instance)
+			// ADD AllowedWorkspaces
+			instance.Spec.AllowedWorkspaces = &[]string{
+				workspaceInstance.Status.WorkspaceID,
+				workspaceInstance2.Status.WorkspaceID,
+			}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			agentPoolTestGenerationsMatch(instance)
+
+			Expect(instance.Spec.AllowedWorkspaces).ToNot(BeNil())
+			Expect(*instance.Spec.AllowedWorkspaces).To(HaveLen(2))
+			Expect(instance.Spec.AllowedWorkspaces).To(Equal(&[]string{
+				workspaceInstance.Status.WorkspaceID,
+				workspaceInstance2.Status.WorkspaceID,
+			}))
+
+			deleteWorkspace(workspaceInstance)
+			deleteWorkspace(workspaceInstance2)
+		})
+		It("can remove from an agent pool allowed workspaces", func() {
+			// CREATE A NEW AGENT POOL
+			createTestAgentPool(instance)
+			// CREATE A WORKSPACE
+			workspaceInstance := testWorkspace("test-workspace-dl-pool", "default", instance.Spec.Name)
+			createWorkspace(workspaceInstance)
+
+			// VALIDATE SPEC AGAINST STATUS
+			validateAgentPoolTestStatus(ctx, instance)
+
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			Expect(instance.Spec.AgentDeployment).To(BeNil())
+
+			instance.Spec.AllowedWorkspaces = &[]string{workspaceInstance.Status.WorkspaceID}
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			agentPoolTestGenerationsMatch(instance)
+			workspaceInstance.Spec.AgentPool = nil
+			workspaceInstance.Spec.ExecutionMode = "remote"
+			updateWorkspace(workspaceInstance)
+			// ADD AllowedWorkspaces
+			instance.Spec.AllowedWorkspaces = nil
+			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
+			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
+			agentPoolTestGenerationsMatch(instance)
+
+			Expect(instance.Spec.AllowedWorkspaces).To(BeNil())
+			deleteWorkspace(workspaceInstance)
+		})
 		It("can delete agent deployments", func() {
 			// CREATE A NEW AGENT POOL
 			createTestAgentPool(instance)
