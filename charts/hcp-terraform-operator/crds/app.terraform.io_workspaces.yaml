@@ -374,6 +374,18 @@ spec:
                     minItems: 1
                     type: array
                 type: object
+              retryPolicy:
+                description: Retry Policy allows you to specify how the operator should
+                  retry failed runs automatically.
+                properties:
+                  backoffLimit:
+                    default: 0
+                    description: |-
+                      Limit is the maximum number of retries for failed runs. If set to a negative number, no limit will be applied.
+                      Default: `0`.
+                    format: int64
+                    type: integer
+                type: object
               runTasks:
                 description: |-
                   Run tasks allow HCP Terraform to interact with external systems at specific points in the HCP Terraform run lifecycle.
@@ -442,7 +454,7 @@ spec:
                       minLength: 1
                       type: string
                   type: object
-                minItems: 1
+                minItems: 2
                 type: array
               sshKey:
                 description: |-
@@ -835,6 +847,15 @@ spec:
                     description: The version of Terraform to use for this run.
                     pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
                     type: string
+                type: object
+              retry:
+                description: Retry status of the latest run on the workspace.
+                properties:
+                  failed:
+                    description: Failed is the number of failed attempts, counting
+                      the initial one.
+                    format: int64
+                    type: integer
                 type: object
               runStatus:
                 description: Workspace Runs status.

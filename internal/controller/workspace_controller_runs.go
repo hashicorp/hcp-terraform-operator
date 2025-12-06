@@ -84,6 +84,21 @@ func (r *WorkspaceReconciler) reconcileCurrentRun(ctx context.Context, w *worksp
 	w.instance.Status.Run.Status = string(run.Status)
 	w.instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
 
+	if isRetryEnabled(w) {
+		if _, ok := runStatusUnsuccessful[run.Status]; ok {
+			w.log.Info("Reconcile Runs", "msg", "ongoing non-speculative run is unsuccessful, retrying it")
+
+			if err = r.retryFailedApplyRun(ctx, w, workspace, run); err != nil {
+				return err
+			}
+		}
+	}
+
+	// when the current run succeeds, we reset the failed counter for a next retry
+	if _, ok := runStatusComplete[run.Status]; ok {
+		r.resetRetryStatus(ctx, w)
+	}
+
 	return nil
 }
 
@@ -133,6 +148,11 @@ func (r *WorkspaceReconciler) triggerApplyRun(ctx context.Context, w *workspaceI
 	w.instance.Status.Run.ID = run.ID
 	w.instance.Status.Run.Status = string(run.Status)
 	w.instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
+
+	// WARNING: there is a race limit here in case the run fails very fast and the initial status returned
+	// by the Runs.Create funtion is Errored. In this case the run is never retried.
+	// TODO: loop back ? I don't like loops so maybe the best would be to change the reconcile runs function to
+	// make sure we didn't miss a retry
 
 	return nil
 }
