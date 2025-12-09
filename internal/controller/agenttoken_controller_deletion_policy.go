@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -51,14 +50,13 @@ func (r *AgentTokenReconciler) deleteAgentToken(ctx context.Context, t *agentTok
 	case appv1alpha2.AgentTokenDeletionPolicyDestroy:
 		if len(t.instance.Status.AgentTokens) > 0 {
 			t.log.Info("Reconcile Agent Token", "msg", "remove tokens")
+			// Make a copy of the token IDs to avoid modifying the status slice while iterating.
+			tid := make([]string, 0, len(t.instance.Status.AgentTokens))
 			for _, token := range t.instance.Status.AgentTokens {
-				err := t.tfClient.Client.AgentTokens.Delete(ctx, token.ID)
-				if err != nil && err != tfc.ErrResourceNotFound {
-					t.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove token %s", token.ID))
-					return err
-				}
-				err = r.removeToken(ctx, t, token.ID)
-				if err != nil {
+				tid = append(tid, token.ID)
+			}
+			for _, id := range tid {
+				if err := r.removeToken(ctx, t, id); err != nil {
 					return err
 				}
 			}
