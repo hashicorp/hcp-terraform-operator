@@ -17,7 +17,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-func TestpendingRuns(t *testing.T) {
+func TestPendingRuns(t *testing.T) {
 	tests := []struct {
 		name          string
 		mockRuns      []*tfc.Run
