@@ -17,7 +17,7 @@ import (
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
-func TestPendingWorkspaceRuns(t *testing.T) {
+func TestpendingRuns(t *testing.T) {
 	tests := []struct {
 		name          string
 		mockRuns      []*tfc.Run
@@ -149,7 +149,7 @@ func TestPendingWorkspaceRuns(t *testing.T) {
 				log: logr.Logger{},
 			}
 
-			count, err := pendingWorkspaceRuns(context.Background(), ap)
+			count, err := pendingRuns(context.Background(), ap)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {

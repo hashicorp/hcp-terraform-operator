@@ -61,10 +61,10 @@ func matchWildcardName(wildcard string, str string) bool {
 	}
 }
 
-// pendingWorkspaceRuns returns the number pending runs for a given agent pool.
+// pendingRuns returns the number pending runs for a given agent pool.
 // This function is compatible with HCP Terraform and TFE version v202409-1 and later.
-func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
-	runs := map[string]struct{}{}
+func pendingRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
+	applyRuns := map[string]struct{}{}
 	awaitingUserInteractionRuns := map[string]int{} // Track runs awaiting user interaction by status for future metrics
 	listOpts := &tfc.RunListForOrganizationOptions{
 		AgentPoolNames: ap.instance.Spec.Name,
@@ -74,7 +74,7 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 			PageNumber: InitPageNumber,
 		},
 	}
-	planOnlyRunCount := 0
+	planOnlyRuns := 0
 	for {
 		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
 		if err != nil {
@@ -89,10 +89,10 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 			}
 			// Count plan-only runs separately so agents can scale up and execute runs parallely
 			if run.PlanOnly {
-				planOnlyRunCount++
+				planOnlyRuns++
 				continue
 			}
-			runs[run.Workspace.ID] = struct{}{}
+			applyRuns[run.Workspace.ID] = struct{}{}
 		}
 		if runsList.NextPage == 0 {
 			break
@@ -102,8 +102,8 @@ func pendingWorkspaceRuns(ctx context.Context, ap *agentPoolInstance) (int32, er
 
 	// TODO:
 	// Add metric(s) for runs awaiting user interaction
-	totalPendingRuns := len(runs) + planOnlyRunCount
-	ap.log.Info("Runs", "msg", fmt.Sprintf("Workspaces: %+v Plan-only runs: %d Total pending runs: %d", runs, planOnlyRunCount, totalPendingRuns))
+	totalPendingRuns := len(applyRuns) + planOnlyRuns
+	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("apply/plan-only runs: %d/%d", len(applyRuns), planOnlyRuns))
 	return int32(totalPendingRuns), nil
 }
 
@@ -248,7 +248,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 
 	requiredAgents, err := func() (int32, error) {
 		if ap.tfClient.Client.IsCloud() {
-			return pendingWorkspaceRuns(ctx, ap)
+			return pendingRuns(ctx, ap)
 		}
 		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
 		runsEndpoint, err := useRunsEndpoint(tfeVersion)
@@ -262,14 +262,14 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 		// It now allows retrieving a list of runs for the organization.
 		if runsEndpoint {
 			ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the new algorithm based on the detected TFE version %s", tfeVersion))
-			return pendingWorkspaceRuns(ctx, ap)
+			return pendingRuns(ctx, ap)
 		}
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("Proceeding with the legacy algorithm based to the detected TFE version %s", tfeVersion))
 		return computeRequiredAgents(ctx, ap)
 	}()
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to get agents needed")
-		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPool", "Failed to get agents needed: %v", err.Error())
 		return err
 	}
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d agents are required", requiredAgents))
@@ -277,7 +277,7 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	currentReplicas, err := r.getAgentDeploymentReplicas(ctx, ap)
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to get current replicas")
-		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPool", "Failed to get current replicas: %v", err.Error())
 		return err
 	}
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", fmt.Sprintf("%d agent replicas are running", currentReplicas))
@@ -294,11 +294,11 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 
 		scalingEvent := fmt.Sprintf("Scaling agent deployment from %v to %v replicas", currentReplicas, desiredReplicas)
 		ap.log.Info("Reconcile Agent Autoscaling", "msg", strings.ToLower(scalingEvent))
-		r.Recorder.Event(&ap.instance, corev1.EventTypeNormal, "AutoscaleAgentPoolDeployment", scalingEvent)
+		r.Recorder.Event(&ap.instance, corev1.EventTypeNormal, "AutoscaleAgentPool", scalingEvent)
 		err := r.scaleAgentDeployment(ctx, ap, &desiredReplicas)
 		if err != nil {
 			ap.log.Error(err, "Reconcile Agent Autoscaling", "msg", "Failed to scale agent deployment")
-			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPoolDeployment", "Autoscaling failed: %v", err.Error())
+			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "AutoscaleAgentPool", "Failed to scale agent deployment: %v", err.Error())
 			return err
 		}
 		ap.instance.Status.AgentDeploymentAutoscalingStatus = &appv1alpha2.AgentDeploymentAutoscalingStatus{
