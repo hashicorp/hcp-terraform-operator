@@ -28,7 +28,7 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("remove finalizer %s", agentPoolFinalizer))
 		return r.removeFinalizer(ctx, ap)
 	case appv1alpha2.AgentPoolDeletionPolicy(appv1alpha2.DeletionPolicyDestroy):
-		// Attempt to delete the agent pool first. If successful, no other actions are required.
+		// Try deleting the agent pool first. If it succeeds (meaning it's not associated with any workspace), nothing else needs to be done.
 		// Otherwise, scale down the agents to 0 and delete all tokens.
 		err := ap.tfClient.Client.AgentPools.Delete(ctx, ap.instance.Status.AgentPoolID)
 		if err != nil {
@@ -66,15 +66,20 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 		// Remove tokens
 		if len(ap.instance.Status.AgentTokens) > 0 {
 			ap.log.Info("Reconcile Agent Pool", "msg", "remove tokens")
-			for _, t := range ap.instance.Status.AgentTokens {
-				err := ap.tfClient.Client.AgentTokens.Delete(ctx, t.ID)
+			// Make a copy of the token IDs to avoid modifying the status slice while iterating.
+			tid := make([]string, 0, len(ap.instance.Status.AgentTokens))
+			for _, token := range ap.instance.Status.AgentTokens {
+				tid = append(tid, token.ID)
+			}
+			for _, id := range tid {
+				err := ap.tfClient.Client.AgentTokens.Delete(ctx, id)
 				if err != nil && err != tfc.ErrResourceNotFound {
-					ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove token %s", t.ID))
+					ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove token %s", id))
 					return err
 				}
-				ap.deleteTokenStatus(t.ID)
+				ap.deleteTokenStatus(id)
 			}
-			ap.log.Info("Reconcile Agent Pool", "msg", "successfully deleted tokens")
+			ap.log.Info("Reconcile Agent Pool", "msg", "successfully removed tokens")
 		}
 	}
 

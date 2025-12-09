@@ -95,7 +95,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(err).Should(Succeed())
 			Expect(ap).NotTo(BeNil())
 		})
-		It("can destroy delete an agent pool", func() {
+		It("can destroy an agent pool", func() {
 			instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
 			Expect(k8sClient.Create(ctx, instance)).To(Succeed())
 			Eventually(func() bool {
