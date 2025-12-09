@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`AgentToken`: Fix an issue where the controller did not remove all managed tokens from the agent pool when the AgentToken custom resource was deleted. The operator now correctly cleans up all generated tokens during AgentToken deletion.'
+time: 2025-12-09T12:46:15.314642+01:00
+custom:
+    PR: "681"
