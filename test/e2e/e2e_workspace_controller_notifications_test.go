@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -89,7 +89,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				URL:  webhookURL,
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -109,7 +109,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -124,7 +124,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				URL:  webhookURL,
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -150,7 +150,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -171,7 +171,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 
@@ -192,7 +192,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				EmailAddresses: []string{"user@example.com"},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			// Validate reconciliation
 			isNotificationsReconciled(instance)
 		})
@@ -206,7 +206,7 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 	memberships := make(map[string]string)
 	listOpts := &tfc.OrganizationMembershipListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: controller.MaxPageSize,
 		},
 		Status: tfc.OrganizationMembershipInvited,
 	}

@@ -17,8 +17,8 @@ func (r *WorkspaceReconciler) getWorkspaces(ctx context.Context, w *workspaceIns
 
 	listOpts := &tfc.WorkspaceListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize:   maxPageSize,
-			PageNumber: initPageNumber,
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
 		},
 	}
 	for {

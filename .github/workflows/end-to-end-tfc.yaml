@@ -1,6 +1,5 @@
 name: E2E on HCP Terraform Operator
 
-
 on:
   schedule:
     - cron: '30 5 * * 0'
@@ -9,6 +8,7 @@ on:
       - main
     paths:
       - 'internal/controller/**'
+      - 'test/e2e/**'
   workflow_dispatch:
   workflow_call:
 

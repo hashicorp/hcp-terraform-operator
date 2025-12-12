@@ -16,7 +16,7 @@ func (w *workspaceInstance) getOrgVariableSets(ctx context.Context) (map[string]
 	variableSets := make(map[string]*tfc.VariableSet)
 	listOpts := &tfc.VariableSetListOptions{
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 

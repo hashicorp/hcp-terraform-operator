@@ -17,9 +17,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
-var _ = Describe("RunsCollector Controller", Ordered, func() {
+var _ = Describe("Runs Collector сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.RunsCollector
 		namespacedName = newNamespacedName()
@@ -61,12 +62,12 @@ var _ = Describe("RunsCollector Controller", Ordered, func() {
 			Status: appv1alpha2.RunsCollectorStatus{},
 		}
 		// Register metrics
-		metricRuns.WithLabelValues(
+		controller.MetricRuns.WithLabelValues(
 			"pink_panther",
 			"apool-pp1963",
 			"pink-shadow",
 		).Set(float64(162))
-		metricRunsTotal.WithLabelValues(
+		controller.MetricRunsTotal.WithLabelValues(
 			"apool-pp1963",
 			"pink-shadow",
 		).Set(float64(2134))

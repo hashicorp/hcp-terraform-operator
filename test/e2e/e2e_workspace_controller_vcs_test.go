@@ -9,15 +9,15 @@ import (
 	"slices"
 	"time"
 
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -86,7 +86,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	Context("VCS", func() {
 		It("can attach VCS to the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -104,7 +104,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can update VCS", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			instance.Spec.VersionControl.Branch = "main"
 			instance.Spec.VersionControl.EnableFileTriggers = true
@@ -127,7 +127,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can revert manual changes VCS", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
 				VCSRepo: &tfc.VCSRepoOptions{
@@ -155,7 +155,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can revert manual detach of VCS from the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			ws, err := tfClient.Workspaces.RemoveVCSConnectionByID(ctx, instance.Status.WorkspaceID)
 			Expect(err).Should(Succeed())
@@ -177,7 +177,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("can detach VCS from the workspace", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			instance.Spec.VersionControl = nil
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
@@ -197,7 +197,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instanceCopy := instance.DeepCopy()
 
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			// Validate that all attributes are set correctly
 			Eventually(func() bool {
@@ -239,17 +239,17 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("cat trigger a new apply run on creation", func() {
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  metaTrue,
-				workspaceAnnotationRunType: runTypeApply,
+				controller.WorkspaceAnnotationRunNew:  controller.MetaTrue,
+				controller.WorkspaceAnnotationRunType: controller.RunTypeApply,
 			})
 			instance.Spec.ApplyMethod = "auto"
 			instance.Spec.ApplyRunTrigger = "auto"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				if instance.Annotations[workspaceAnnotationRunNew] == metaTrue {
+				if instance.Annotations[controller.WorkspaceAnnotationRunNew] == controller.MetaTrue {
 					return false
 				}
 				if instance.Status.Run == nil {
@@ -261,13 +261,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 		It("cat trigger a new plan run on creation", func() {
 			instance.SetAnnotations(map[string]string{
-				workspaceAnnotationRunNew:  metaTrue,
-				workspaceAnnotationRunType: runTypePlan,
+				controller.WorkspaceAnnotationRunNew:  controller.MetaTrue,
+				controller.WorkspaceAnnotationRunType: controller.RunTypePlan,
 			})
 			instance.Spec.ApplyMethod = "auto"
 			instance.Spec.ApplyRunTrigger = "auto"
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -282,7 +282,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.VersionControl.EnableFileTriggers = true
 			instance.Spec.VersionControl.TriggerPatterns = []string{"/modules/", "/variables/"}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -322,7 +322,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.VersionControl.EnableFileTriggers = true
 			instance.Spec.VersionControl.TriggerPrefixes = []string{"/modules/", "/variables/"}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())

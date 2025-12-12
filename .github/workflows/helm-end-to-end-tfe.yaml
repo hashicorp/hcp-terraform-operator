@@ -9,6 +9,7 @@ on:
     paths:
       - 'internal/controller/**'
       - 'charts/hcp-terraform-operator/**'
+      - 'test/e2e/**'
   workflow_dispatch:
   workflow_call:
 

@@ -21,11 +21,11 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
-var _ = Describe("AgentToken Controller", Ordered, func() {
+var _ = Describe("Agent Token сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.AgentToken
-		namespacedName = newNamespacedName()
-		poolName       = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
+		namespacedName types.NamespacedName
+		poolName       string
 	)
 
 	BeforeAll(func() {
@@ -35,6 +35,8 @@ var _ = Describe("AgentToken Controller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		namespacedName = newNamespacedName()
+		poolName = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new agent pool object for each test
 		instance = &appv1alpha2.AgentToken{
 			TypeMeta: metav1.TypeMeta{

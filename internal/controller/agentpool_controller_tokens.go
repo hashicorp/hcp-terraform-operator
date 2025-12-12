@@ -108,7 +108,7 @@ func deleteSecretKey(s *corev1.Secret, key string) {
 	if s.Labels == nil {
 		return
 	}
-	s.Labels[labelHasChanged] = metaTrue
+	s.Labels[labelHasChanged] = MetaTrue
 }
 
 func setSecretKey(s *corev1.Secret, key, value string) {
@@ -116,7 +116,7 @@ func setSecretKey(s *corev1.Secret, key, value string) {
 	if s.Labels == nil {
 		return
 	}
-	s.Labels[labelHasChanged] = metaTrue
+	s.Labels[labelHasChanged] = MetaTrue
 }
 
 func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agentPoolInstance) error {

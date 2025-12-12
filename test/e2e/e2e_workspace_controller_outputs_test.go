@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -73,7 +74,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	Context("Outputs", func() {
 		It("can handle outputs", func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 
 			outputValue := "hoi"
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, outputValue)
@@ -101,7 +102,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			outputsNamespacedName := types.NamespacedName{
-				Name:      outputObjectName(namespacedName.Name),
+				Name:      controller.OutputObjectName(namespacedName.Name),
 				Namespace: namespacedName.Namespace,
 			}
 

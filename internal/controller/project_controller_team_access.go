@@ -67,7 +67,7 @@ func (r *ProjectReconciler) getWorkspaceTeamAccess(ctx context.Context, p *proje
 	listOpts := tfc.TeamProjectAccessListOptions{
 		ProjectID: p.instance.Status.ID,
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {
@@ -99,7 +99,7 @@ func (r *ProjectReconciler) getTeams(ctx context.Context, p *projectInstance) (m
 	listOpts := &tfc.TeamListOptions{
 		Names: fTeams,
 		ListOptions: tfc.ListOptions{
-			PageSize: maxPageSize,
+			PageSize: MaxPageSize,
 		},
 	}
 	for {

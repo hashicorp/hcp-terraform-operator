@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	tfc "github.com/hashicorp/go-tfe"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -98,14 +97,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can create run task by ID", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 		})
 
 		It("can create run task by Name", func() {
 			instance.Spec.RunTasks[0].Name = runTaskName
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 		})
 
@@ -117,14 +116,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				Stage:            "post_plan",
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 		})
 
 		It("can delete run task", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -137,7 +136,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can update run task", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -150,7 +149,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can restore deleted run task", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 
 			deleteWorkspaceRunTasks(instance)
@@ -160,7 +159,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can revert manual changes in run task", func() {
 			instance.Spec.RunTasks[0].ID = runTaskID
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
-			createWorkspace(instance)
+			createWorkspaceResource(instance)
 			isRunTasksReconciled(instance)
 
 			// Make a manual change

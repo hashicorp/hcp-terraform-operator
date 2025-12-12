@@ -10,7 +10,7 @@ import (
 
 // Runs Metrics
 var (
-	metricRuns = prometheus.NewGaugeVec(
+	MetricRuns = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "hcp_tf_runs",
 			Help: "HCP Terraform - Pending runs by statuses",
@@ -24,7 +24,7 @@ var (
 			"agent_pool_name",
 		},
 	)
-	metricRunsTotal = prometheus.NewGaugeVec(
+	MetricRunsTotal = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "hcp_tf_runs_total",
 			Help: "HCP Terraform - Total number of pending Runs by statuses",
@@ -43,7 +43,7 @@ var (
 
 func RegisterMetrics() {
 	metrics.Registry.MustRegister(
-		metricRuns,
-		metricRunsTotal,
+		MetricRuns,
+		MetricRunsTotal,
 	)
 }

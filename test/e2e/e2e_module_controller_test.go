@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
-var _ = Describe("Module Controller", Ordered, func() {
+var _ = Describe("Module сontroller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Module
 		namespacedName = newNamespacedName()
@@ -49,6 +49,7 @@ var _ = Describe("Module Controller", Ordered, func() {
 				Finalizers:        []string{},
 			},
 			Spec: appv1alpha2.ModuleSpec{
+				Name:         "this",
 				Organization: organization,
 				Token: appv1alpha2.Token{
 					SecretKeyRef: &corev1.SecretKeySelector{
@@ -91,23 +92,21 @@ var _ = Describe("Module Controller", Ordered, func() {
 		// Make sure that the HCP Terraform workspace is deleted
 		Eventually(func() bool {
 			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
-			return err == tfc.ErrResourceNotFound || err == nil
+			return err == tfc.ErrResourceNotFound
 		}).Should(BeTrue())
 	})
 
 	Context("Can Handle", func() {
 		It("Reference to Workspace by Name", func() {
-			// Create a new TFC Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 
 			// Create TFC Workspace variables
-			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
 				Key:      tfc.String("name"),
 				Value:    tfc.String("Pluto"),
 				HCL:      tfc.Bool(false),
@@ -146,16 +145,15 @@ var _ = Describe("Module Controller", Ordered, func() {
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
 		})
 		It("Reference to Workspace by ID", func() {
-			// Create a new TFC Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 
 			// Create TFC Workspace variables
-			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
 				Key:      tfc.String("name"),
 				Value:    tfc.String("Pluto"),
 				HCL:      tfc.Bool(false),
@@ -165,7 +163,6 @@ var _ = Describe("Module Controller", Ordered, func() {
 
 			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
 			// Create a new Module
-			instance.Spec.Name = "operator"
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
 			// Make sure a new module is created and executed
@@ -195,16 +192,15 @@ var _ = Describe("Module Controller", Ordered, func() {
 			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
 		})
 		It("External Deletion", func() {
-			// Create a new TFC Workspace
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name:      &workspace,
-				AutoApply: tfc.Bool(true),
+			// Create a new HCP Terraform Workspace
+			ws := createWorkspace(tfc.WorkspaceCreateOptions{
+				Name:          &workspace,
+				AutoApply:     tfc.Bool(true),
+				ExecutionMode: tfc.String("remote"),
 			})
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 
 			// Create TFC Workspace variables
-			_, err = tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
+			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
 				Key:      tfc.String("name"),
 				Value:    tfc.String("Pluto"),
 				HCL:      tfc.Bool(false),
@@ -214,7 +210,6 @@ var _ = Describe("Module Controller", Ordered, func() {
 
 			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
 			// Create a new Module
-			instance.Spec.Name = "operator"
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
 			// Make sure a new module is created and executed
