@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: '`AgentPool`: Fix an issue where the agent pool controller panics during token deletion. The panic occurred when a CR with multiple managed tokens was marked for deletion and the deletion policy was set to `destroy`. The controller now handles this scenario correctly.'
+time: 2025-12-09T13:20:51.541465+01:00
+custom:
+    PR: "680"
