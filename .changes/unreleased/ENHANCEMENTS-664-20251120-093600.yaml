@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: 'AgentPool: This change provisions autoscaling of agents for speculative plan-only runs. The number of agents is determined by adding plan-only runs and workspace count'
-time: 2025-11-20T09:36:00.142836-08:00
-custom:
-    PR: "664"

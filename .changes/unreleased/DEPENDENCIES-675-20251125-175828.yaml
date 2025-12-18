@@ -1,5 +1,0 @@
-kind: DEPENDENCIES
-body: Bump `kube-rbac-proxy` from 0.20.0 to 0.20.1.
-time: 2025-11-25T17:58:28.08284+01:00
-custom:
-    PR: "675"
