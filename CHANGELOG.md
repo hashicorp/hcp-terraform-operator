@@ -1,3 +1,35 @@
+## 2.11.0 (December 18, 2025)
+
+BUG FIXES:
+
+* `Workspace`: Fix an issue when Remote State Sharing was incorrectly handled and validated. It now correctly defaults to disabled when `spec.remoteStateSharing` is omitted, and no longer fails validation when `spec.remoteStateSharing.allWorkspaces` is set to `false` without specifying workspaces. [[GH-673](https://github.com/hashicorp/hcp-terraform-operator/pull/673)]
+* `AgentToken`: Fix an issue where the controller did not remove all managed tokens from the agent pool when the AgentToken custom resource was deleted. The operator now correctly cleans up all generated tokens during AgentToken deletion. [[GH-681](https://github.com/hashicorp/hcp-terraform-operator/pull/681)]
+* `AgentPool`: Fix an issue where the agent pool controller panics during token deletion. The panic occurred when a CR with multiple managed tokens was marked for deletion and the deletion policy was set to `destroy`. The controller now handles this scenario correctly. [[GH-680](https://github.com/hashicorp/hcp-terraform-operator/pull/680)]
+
+ENHANCEMENTS:
+
+* `AgentPool`: Agent autoscaling has been updated to include speculative (plan-only) runs when determining the desired agent count. [[GH-664](https://github.com/hashicorp/hcp-terraform-operator/pull/664)]
+
+DEPENDENCIES:
+
+* Bump `kube-rbac-proxy` from 0.20.0 to 0.20.1. [[GH-675](https://github.com/hashicorp/hcp-terraform-operator/pull/675)]
+* Bump `k8s.io/api` from 0.34.1 to 0.34.3. [[GH-682](https://github.com/hashicorp/hcp-terraform-operator/pull/682)]
+* Bump `k8s.io/apimachinery` from 0.34.1 to 0.34.3. [[GH-682](https://github.com/hashicorp/hcp-terraform-operator/pull/682)]
+* Bump `k8s.io/client-go` from 0.34.1 to 0.34.3. [[GH-682](https://github.com/hashicorp/hcp-terraform-operator/pull/682)]
+* Bump `github.com/hashicorp/go-tfe` from 1.93.0 to 1.97.0. [[GH-678](https://github.com/hashicorp/hcp-terraform-operator/pull/678)]
+* Bump `github.com/hashicorp/go-slug` from 0.16.7 to 0.18.1. [[GH-677](https://github.com/hashicorp/hcp-terraform-operator/pull/677)]
+
+## Community Contributors :raised_hands:
+
+We would like to say THANK YOU one more time to everyone who contributed to this project in 2025 and helped make it better in so many ways. We are looking forward to what the next year will bring and to the great features we will build together thanks to your feedback and contributions.
+
+- @AleksaC
+- @jrindy-iterable
+- @nhomble
+- @munnep
+- @baptman21
+
+Happy holidays! 🎉
 ## 2.10.0 (November 12, 2025)
 
 NOTES:

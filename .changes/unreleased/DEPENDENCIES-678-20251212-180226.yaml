@@ -1,5 +1,0 @@
-kind: DEPENDENCIES
-body: Bump `github.com/hashicorp/go-tfe` from 1.93.0 to 1.97.0.
-time: 2025-12-12T18:02:26.989128+01:00
-custom:
-    PR: "678"
