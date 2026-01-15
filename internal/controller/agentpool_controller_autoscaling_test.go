@@ -126,6 +126,30 @@ func TestPendingRuns(t *testing.T) {
 			expectedCount: 4,
 			expectError:   false,
 		},
+		{
+			name: "plan-only runs that might have a pending status",
+			mockRuns: []*tfc.Run{
+				{ID: "run1", PlanOnly: true, Status: tfc.RunPending, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run2", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run5", PlanOnly: true, Status: tfc.RunPending, Workspace: &tfc.Workspace{ID: "ws2"}},
+			},
+			expectedCount: 3,
+			expectError:   false,
+		},
+		{
+			name: "mix of plan-only and apply runs that might have user interaction statuses",
+			mockRuns: []*tfc.Run{
+				{ID: "run1", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run2", PlanOnly: false, Status: tfc.RunPlanned, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run3", PlanOnly: true, Status: tfc.RunPending, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run4", PlanOnly: false, Status: tfc.RunCostEstimated, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run5", PlanOnly: false, Status: tfc.RunPending, Workspace: &tfc.Workspace{ID: "ws1"}},
+			},
+			expectedCount: 1,
+			expectError:   false,
+		},
 	}
 
 	for _, tt := range tests {

@@ -26,6 +26,7 @@ var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
 	tfc.RunPolicyOverride:           {},
 	tfc.RunPostPlanAwaitingDecision: {},
 	tfc.RunPostPlanCompleted:        {},
+	tfc.RunPending:                  {},
 }
 
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
@@ -80,6 +81,7 @@ func pendingRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 		if err != nil {
 			return 0, err
 		}
+
 		for _, run := range runsList.Items {
 			// Skip runs that require user interaction
 			if _, ok := userInteractionRunStatuses[run.Status]; ok {
