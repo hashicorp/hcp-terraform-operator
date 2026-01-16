@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'PendingRuns: This change fixes the unnecessary agent pods created for pending runs by adding a missing status in the user interaction statuses map'
+time: 2026-01-14T20:30:20.800288-08:00
+custom:
+    PR: "694"
