@@ -79,6 +79,11 @@ const (
 	runsCollectorFinalizer = "runscollector.app.terraform.io/finalizer"
 )
 
+// STACK CONTROLLER'S CONSTANTS
+const (
+	stackFinalizer = "stack.app.terraform.io/finalizer"
+)
+
 // WORKSPACE CONTROLLER'S CONSTANTS
 const (
 	workspaceFinalizerAlpha1 = "finalizer.workspace.app.terraform.io"

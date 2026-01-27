@@ -1,0 +1,62 @@
+apiVersion: app.terraform.io/v1alpha2
+kind: Stack
+metadata:
+  labels:
+    app.kubernetes.io/name: hcp-terraform-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: stack-sample
+spec:
+  # Stack name
+  name: "example-stack"
+  
+  # Organization name where the Stack will be created
+  organization: "my-organization"
+  
+  # API Token reference
+  token:
+    secretKeyRef:
+      name: tfc-operator
+      key: token
+  
+  # Project configuration (optional)
+  project:
+    name: "my-project"
+  
+  # VCS repository configuration (optional)
+  vcsRepo:
+    identifier: "ot-abc123xyz"
+    branch: "main"
+    path: "stacks/example"
+  
+  # Stack description (optional)
+  description: "Example HCP Terraform Stack managed by Kubernetes operator"
+  
+  # Terraform version (optional)
+  terraformVersion: "1.7.0"
+  
+  # Environment variables (optional)
+  environmentVariables:
+    - name: "AWS_REGION"
+      value: "us-west-2"
+    - name: "ENVIRONMENT"
+      value: "production"
+  
+  # Terraform variables (optional)
+  terraformVariables:
+    - name: "instance_count"
+      value: "3"
+      hcl: false
+    - name: "tags"
+      value: '{"Environment": "production", "ManagedBy": "Kubernetes"}'
+      hcl: true
+  
+  # Deployment configuration (optional)
+  deployment:
+    names:
+      - "production"
+      - "staging"
+  
+  # Deletion policy (optional, default: retain)
+  deletionPolicy: "retain"
+
+# Made with Bob

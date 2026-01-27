@@ -13,5 +13,6 @@ var (
 	ModuleSyncPeriod        time.Duration
 	ProjectSyncPeriod       time.Duration
 	RunsCollectorSyncPeriod time.Duration
+	StackSyncPeriod         time.Duration
 	WorkspaceSyncPeriod     time.Duration
 )

@@ -1,0 +1,418 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  labels:
+    app.terraform.io/crd-schema-version: v25.4.0
+  name: stacks.app.terraform.io
+spec:
+  group: app.terraform.io
+  names:
+    kind: Stack
+    listKind: StackList
+    plural: stacks
+    singular: stack
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.stackID
+      name: Stack ID
+      type: string
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Stack manages HCP Terraform Stacks.
+          More information:
+            - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: StackSpec defines the desired state of Stack.
+            properties:
+              deletionPolicy:
+                default: retain
+                description: |-
+                  The Deletion Policy specifies the behavior of the custom resource and its associated stack when the custom resource is deleted.
+                  - `retain`: When you delete the custom resource, the operator does not delete the stack.
+                  - `delete`: The operator will attempt to delete the stack and all its deployments.
+                  Default: `retain`.
+                enum:
+                - retain
+                - delete
+                type: string
+              deployment:
+                description: |-
+                  Deployment configuration for the Stack.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+                properties:
+                  names:
+                    description: Names of the deployments to create.
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
+                required:
+                - names
+                type: object
+              description:
+                description: Stack description.
+                minLength: 1
+                type: string
+              environmentVariables:
+                description: |-
+                  Terraform Environment variables for all deployments in this stack.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+                items:
+                  description: |-
+                    Variables let you customize configurations, modify Terraform's behavior, and store information like provider credentials.
+                    More information:
+                      - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+                  properties:
+                    description:
+                      description: Description of the variable.
+                      minLength: 1
+                      type: string
+                    hcl:
+                      default: false
+                      description: |-
+                        Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
+                        Default: `false`.
+                      type: boolean
+                    name:
+                      description: Name of the variable.
+                      minLength: 1
+                      type: string
+                    sensitive:
+                      default: false
+                      description: |-
+                        Sensitive variables are never shown in the UI or API.
+                        They may appear in Terraform logs if your configuration is designed to output them.
+                        Default: `false`.
+                      type: boolean
+                    value:
+                      description: Value of the variable.
+                      minLength: 1
+                      type: string
+                    valueFrom:
+                      description: Source for the variable's value. Cannot be used
+                        if value is not empty.
+                      properties:
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          description: Selects a key of a Secret.
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                  required:
+                  - name
+                  type: object
+                minItems: 1
+                type: array
+              name:
+                description: Stack name.
+                minLength: 1
+                type: string
+              organization:
+                description: |-
+                  Organization name where the Stack will be created.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations
+                minLength: 1
+                type: string
+              project:
+                description: |-
+                  Project where the Stack will be created.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+                properties:
+                  id:
+                    description: |-
+                      Project ID.
+                      Must match pattern: `^prj-[a-zA-Z0-9]+$`
+                    pattern: ^prj-[a-zA-Z0-9]+$
+                    type: string
+                  name:
+                    description: Project name.
+                    minLength: 1
+                    type: string
+                type: object
+              terraformVariables:
+                description: |-
+                  Terraform variables for all deployments in this stack.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+                items:
+                  description: |-
+                    Variables let you customize configurations, modify Terraform's behavior, and store information like provider credentials.
+                    More information:
+                      - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
+                  properties:
+                    description:
+                      description: Description of the variable.
+                      minLength: 1
+                      type: string
+                    hcl:
+                      default: false
+                      description: |-
+                        Parse this field as HashiCorp Configuration Language (HCL). This allows you to interpolate values at runtime.
+                        Default: `false`.
+                      type: boolean
+                    name:
+                      description: Name of the variable.
+                      minLength: 1
+                      type: string
+                    sensitive:
+                      default: false
+                      description: |-
+                        Sensitive variables are never shown in the UI or API.
+                        They may appear in Terraform logs if your configuration is designed to output them.
+                        Default: `false`.
+                      type: boolean
+                    value:
+                      description: Value of the variable.
+                      minLength: 1
+                      type: string
+                    valueFrom:
+                      description: Source for the variable's value. Cannot be used
+                        if value is not empty.
+                      properties:
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          description: Selects a key of a Secret.
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                  required:
+                  - name
+                  type: object
+                minItems: 1
+                type: array
+              terraformVersion:
+                description: |-
+                  Terraform version to use for this stack.
+                  If not specified, the latest available version will be used.
+                  Must match pattern: `^\d{1}\.\d{1,2}\.\d{1,2}$`
+                pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
+                type: string
+              token:
+                description: API Token to be used for API calls.
+                properties:
+                  secretKeyRef:
+                    description: Selects a key of a secret in the workspace's namespace
+                    properties:
+                      key:
+                        description: The key of the secret to select from.  Must be
+                          a valid secret key.
+                        type: string
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                      optional:
+                        description: Specify whether the Secret or its key must be
+                          defined
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
+                required:
+                - secretKeyRef
+                type: object
+              vcsRepo:
+                description: |-
+                  VCS repository configuration for the Stack.
+                  More information:
+                    - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+                properties:
+                  branch:
+                    description: The repository branch that Stack will execute from.
+                    minLength: 1
+                    type: string
+                  ghaInstallationId:
+                    description: GitHub App installation ID. Required for GitHub App
+                      connections.
+                    type: string
+                  identifier:
+                    description: |-
+                      The VCS Connection (OAuth Connection + Token) to use.
+                      Must match pattern: `^ot-[a-zA-Z0-9]+$`
+                    pattern: ^ot-[a-zA-Z0-9]+$
+                    type: string
+                  path:
+                    description: The path to the Stack configuration file in the repository.
+                    minLength: 1
+                    type: string
+                required:
+                - identifier
+                type: object
+            required:
+            - name
+            - organization
+            - token
+            type: object
+          status:
+            description: StackStatus defines the observed state of Stack.
+            properties:
+              defaultProjectID:
+                description: Default organization project ID.
+                type: string
+              deployments:
+                description: Deployments status.
+                items:
+                  description: DeploymentStatus defines the status of a Stack deployment.
+                  properties:
+                    id:
+                      description: Deployment ID.
+                      type: string
+                    name:
+                      description: Deployment name.
+                      type: string
+                    status:
+                      description: Deployment status.
+                      type: string
+                    updatedAt:
+                      description: Last updated timestamp.
+                      format: int64
+                      type: integer
+                  required:
+                  - id
+                  - name
+                  - status
+                  type: object
+                type: array
+              observedGeneration:
+                description: Real world state generation.
+                format: int64
+                type: integer
+              stackID:
+                description: Stack ID that is managed by the controller.
+                type: string
+              terraformVersion:
+                description: Stack Terraform version.
+                pattern: ^\d{1}\.\d{1,2}\.\d{1,2}$
+                type: string
+              updatedAt:
+                description: Stack last update timestamp.
+                format: int64
+                type: integer
+            required:
+            - stackID
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

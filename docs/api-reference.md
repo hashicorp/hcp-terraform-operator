@@ -14,6 +14,8 @@ Package v1alpha2 contains API Schema definitions for the app v1alpha2 API group
 - [Module](#module)
 - [Project](#project)
 - [RunsCollector](#runscollector)
+- [Stack](#stack)
+- [StackList](#stacklist)
 - [Workspace](#workspace)
 
 
@@ -356,6 +358,22 @@ You must use one of the following values:
 _Appears in:_
 - [WorkspaceSpec](#workspacespec)
 
+
+
+#### DeploymentStatus
+
+
+
+DeploymentStatus defines the status of a Stack deployment.
+
+_Appears in:_
+- [StackStatus](#stackstatus)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Deployment name. |
+| `id` _string_ | Deployment ID. |
+| `updatedAt` _integer_ | Last updated timestamp. |
 
 
 #### Module
@@ -736,6 +754,140 @@ _Appears in:_
 | `name` _string_ | SSH key name. |
 
 
+#### Stack
+
+
+
+Stack manages HCP Terraform Stacks.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+
+_Appears in:_
+- [StackList](#stacklist)
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `Stack`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[StackSpec](#stackspec)_ |  |
+
+
+#### StackDeletionPolicy
+
+_Underlying type:_ _string_
+
+StackDeletionPolicy defines the strategy the Kubernetes operator uses when you delete a stack, either manually or by a system event.
+
+You must use one of the following values:
+- `retain`: When you delete the custom resource, the operator does not delete the stack.
+- `delete`: The operator will attempt to delete the stack and all its deployments.
+
+_Appears in:_
+- [StackSpec](#stackspec)
+
+
+
+#### StackDeployment
+
+
+
+StackDeployment defines deployment configuration for the Stack.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+
+_Appears in:_
+- [StackSpec](#stackspec)
+
+| Field | Description |
+| --- | --- |
+| `names` _string array_ | Names of the deployments to create. |
+
+
+#### StackList
+
+
+
+StackList contains a list of Stack
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `app.terraform.io/v1alpha2`
+| `kind` _string_ | `StackList`
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `items` _[Stack](#stack) array_ |  |
+
+
+#### StackProject
+
+
+
+StackProject defines the project where the Stack will be created.
+Only one of the fields `ID` or `Name` is allowed.
+At least one of the fields `ID` or `Name` is mandatory.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+
+_Appears in:_
+- [StackSpec](#stackspec)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | Project ID.<br />Must match pattern: `^prj-[a-zA-Z0-9]+$` |
+| `name` _string_ | Project name. |
+
+
+#### StackSpec
+
+
+
+StackSpec defines the desired state of Stack.
+
+_Appears in:_
+- [Stack](#stack)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Stack name. |
+| `organization` _string_ | Organization name where the Stack will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/organizations |
+| `token` _[Token](#token)_ | API Token to be used for API calls. |
+| `project` _[StackProject](#stackproject)_ | Project where the Stack will be created.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/stacks |
+| `vcsRepo` _[StackVCSRepo](#stackvcsrepo)_ | VCS repository configuration for the Stack.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/stacks |
+| `description` _string_ | Stack description. |
+| `terraformVersion` _string_ | Terraform version to use for this stack.<br />If not specified, the latest available version will be used.<br />Must match pattern: `^\d\{1\}\.\d\{1,2\}\.\d\{1,2\}$` |
+| `environmentVariables` _[Variable](#variable) array_ | Terraform Environment variables for all deployments in this stack.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/stacks |
+| `terraformVariables` _[Variable](#variable) array_ | Terraform variables for all deployments in this stack.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/stacks |
+| `deployment` _[StackDeployment](#stackdeployment)_ | Deployment configuration for the Stack.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/stacks |
+| `deletionPolicy` _[StackDeletionPolicy](#stackdeletionpolicy)_ | The Deletion Policy specifies the behavior of the custom resource and its associated stack when the custom resource is deleted.<br />- `retain`: When you delete the custom resource, the operator does not delete the stack.<br />- `delete`: The operator will attempt to delete the stack and all its deployments.<br />Default: `retain`. |
+
+
+
+
+#### StackVCSRepo
+
+
+
+StackVCSRepo defines the VCS repository configuration for the Stack.
+More information:
+  - https://developer.hashicorp.com/terraform/cloud-docs/stacks
+
+_Appears in:_
+- [StackSpec](#stackspec)
+
+| Field | Description |
+| --- | --- |
+| `identifier` _string_ | The VCS Connection (OAuth Connection + Token) to use.<br />Must match pattern: `^ot-[a-zA-Z0-9]+$` |
+| `branch` _string_ | The repository branch that Stack will execute from. |
+| `path` _string_ | The path to the Stack configuration file in the repository. |
+| `ghaInstallationId` _string_ | GitHub App installation ID. Required for GitHub App connections. |
+
+
 #### Tag
 
 _Underlying type:_ _string_
@@ -819,6 +971,7 @@ _Appears in:_
 - [ModuleSpec](#modulespec)
 - [ProjectSpec](#projectspec)
 - [RunsCollectorSpec](#runscollectorspec)
+- [StackSpec](#stackspec)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |
@@ -851,6 +1004,7 @@ More information:
   - https://developer.hashicorp.com/terraform/cloud-docs/workspaces/variables
 
 _Appears in:_
+- [StackSpec](#stackspec)
 - [WorkspaceSpec](#workspacespec)
 
 | Field | Description |

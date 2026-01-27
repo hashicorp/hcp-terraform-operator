@@ -6,4 +6,5 @@ resources:
 - app_v1alpha2_project.yaml
 - app_v1alpha2_agenttoken.yaml
 - app_v1alpha2_runscollector.yaml
+- app_v1alpha2_stack.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
