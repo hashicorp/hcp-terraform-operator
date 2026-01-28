@@ -1,3 +1,9 @@
+## 2.11.1 (January 27, 2026)
+
+BUG FIXES:
+
+* `PendingRuns`: This change fixes the unnecessary agent pods created for pending runs by adding a missing status in the user interaction statuses map [[GH-694](https://github.com/hashicorp/hcp-terraform-operator/pull/694)]
+
 ## 2.11.0 (December 18, 2025)
 
 BUG FIXES:
