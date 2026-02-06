@@ -1,3 +1,5 @@
+## 2.11.2 (February 05, 2026)
+
 ## 2.11.1 (January 27, 2026)
 
 BUG FIXES:
