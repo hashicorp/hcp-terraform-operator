@@ -1,5 +1,13 @@
 ## 2.11.2 (February 05, 2026)
 
+NOTES:
+
+* Due to technical issues, release 2.11.1 was not published; instead, release 2.11.2 replaces it.
+
+BUG FIXES:
+
+* `AgentPool`: Fixed an issue that could cause unnecessary agent scaling when runs were pending in specific scenarios. [[GH-694](https://github.com/hashicorp/hcp-terraform-operator/pull/694)]
+
 ## 2.11.1 (January 27, 2026)
 
 BUG FIXES:
@@ -38,6 +46,7 @@ We would like to say THANK YOU one more time to everyone who contributed to this
 - @baptman21
 
 Happy holidays! 🎉
+
 ## 2.10.0 (November 12, 2025)
 
 NOTES:
