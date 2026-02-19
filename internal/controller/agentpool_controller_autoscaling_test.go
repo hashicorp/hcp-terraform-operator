@@ -150,6 +150,18 @@ func TestPendingRuns(t *testing.T) {
 			expectedCount: 1,
 			expectError:   false,
 		},
+		{
+			name: "plan and apply runs that might have user interaction status PolicyChecked",
+			mockRuns: []*tfc.Run{
+				{ID: "run1", PlanOnly: true, Status: tfc.RunPending, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run2", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run3", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run4", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run5", PlanOnly: true, Status: tfc.RunPolicyChecked, Workspace: &tfc.Workspace{ID: "ws2"}},
+			},
+			expectedCount: 3,
+			expectError:   false,
+		},
 	}
 
 	for _, tt := range tests {
