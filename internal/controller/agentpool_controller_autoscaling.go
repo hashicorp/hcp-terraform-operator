@@ -27,6 +27,7 @@ var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
 	tfc.RunPostPlanAwaitingDecision: {},
 	tfc.RunPostPlanCompleted:        {},
 	tfc.RunPending:                  {},
+	tfc.RunPolicyChecked:            {},
 }
 
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
