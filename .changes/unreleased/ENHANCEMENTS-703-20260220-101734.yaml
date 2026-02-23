@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: Support for PolicyChecked run status to help right  agent scale down
-time: 2026-02-20T10:17:34.39567-08:00
-custom:
-    PR: "703"
