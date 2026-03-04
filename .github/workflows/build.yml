@@ -109,9 +109,12 @@ jobs:
             docker.io/${{ env.DOCKER_HUB_DEV_REPO }}:${{ env.VERSION }}-${{ github.sha }}
 
   build-docker-ubi:
-    name: Docker build UBI
+    name: Docker ${{ matrix.arch }} build UBI
     needs: [build, set-product-version]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: ["amd64", "arm64"]
 
     steps:
       - name: Checkout repository
@@ -125,7 +128,7 @@ jobs:
           version: ${{ env.VERSION }}
           bin_name: ${{ vars.BIN_NAME }}
           target: release-ubi
-          arch: amd64
+          arch: ${{ matrix.arch }}
           tags: |
             docker.io/${{ env.DOCKER_HUB_REPO }}:${{ env.VERSION }}-ubi
           dev_tags: |
