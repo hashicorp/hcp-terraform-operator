@@ -1,3 +1,9 @@
+## 2.11.3 (February 23, 2026)
+
+ENHANCEMENTS:
+
+* Support for PolicyChecked run status to help right  agent scale down [[GH-703](https://github.com/hashicorp/hcp-terraform-operator/pull/703)]
+
 ## 2.11.2 (February 05, 2026)
 
 NOTES:
@@ -7,7 +13,6 @@ NOTES:
 BUG FIXES:
 
 * `AgentPool`: Fixed an issue that could cause unnecessary agent scaling when runs were pending in specific scenarios. [[GH-694](https://github.com/hashicorp/hcp-terraform-operator/pull/694)]
-
 ## 2.11.1 (January 27, 2026)
 
 BUG FIXES:
@@ -46,7 +51,6 @@ We would like to say THANK YOU one more time to everyone who contributed to this
 - @baptman21
 
 Happy holidays! 🎉
-
 ## 2.10.0 (November 12, 2025)
 
 NOTES:
