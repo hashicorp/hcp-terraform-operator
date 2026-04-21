@@ -196,8 +196,21 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 }
 
 func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
-	envs := []corev1.EnvVar{
-		{
+	// Set TFE_ADDRESS on agent Pod if differnet than default TFC endpoint
+	bURL := ap.tfClient.Client.BaseURL()
+	setCustomTFEAddress := false
+	if defURL, perr := url.Parse(tfc.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
+		setCustomTFEAddress = true
+	}
+
+	// Inject required environment vars into each container, preserving user-supplied values.
+	for ci := range d.Spec.Template.Spec.Containers {
+		envs := d.Spec.Template.Spec.Containers[ci].Env
+		envs = appendEnvVarIfMissing(envs, corev1.EnvVar{
+			Name:  "TFC_AGENT_AUTO_UPDATE",
+			Value: "disabled",
+		})
+		envs = appendEnvVarIfMissing(envs, corev1.EnvVar{
 			Name: "TFC_AGENT_TOKEN",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
@@ -205,32 +218,41 @@ func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 					Key:                  ap.instance.Status.AgentTokens[0].Name,
 				},
 			},
-		},
-		{
+		})
+		envs = appendEnvVarIfMissing(envs, corev1.EnvVar{
 			Name: "TFC_AGENT_NAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "metadata.name",
 				},
 			},
-		},
-		{
-			Name:  "TFC_AGENT_AUTO_UPDATE",
-			Value: "disabled",
-		},
-	}
-	// Set TFE_ADDRESS on agent Pod if differnet than default TFC endpoint.
-	bURL := ap.tfClient.Client.BaseURL()
-	if defURL, perr := url.Parse(tfc.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
-		envs = append(envs, corev1.EnvVar{
-			Name:  "TFC_ADDRESS",
-			Value: bURL.String(),
 		})
+		if setCustomTFEAddress {
+			envs = appendEnvVarIfMissing(envs, corev1.EnvVar{
+				Name:  "TFC_ADDRESS",
+				Value: bURL.String(),
+			})
+		}
+
+		d.Spec.Template.Spec.Containers[ci].Env = envs
 	}
-	// Inject agent specific environment vars to each container in the Deployment.
-	for ci := range d.Spec.Template.Spec.Containers {
-		d.Spec.Template.Spec.Containers[ci].Env = append(d.Spec.Template.Spec.Containers[ci].Env, envs...)
+}
+
+func appendEnvVarIfMissing(envs []corev1.EnvVar, env corev1.EnvVar) []corev1.EnvVar {
+	if envVarExists(envs, env.Name) {
+		return envs
 	}
+
+	return append(envs, env)
+}
+
+func envVarExists(envs []corev1.EnvVar, name string) bool {
+	for _, env := range envs {
+		if env.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func AgentPoolDeploymentName(ap *appv1alpha2.AgentPool) string {

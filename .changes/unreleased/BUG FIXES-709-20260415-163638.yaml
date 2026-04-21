@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Fix issue with spec container env vars getting overridden by defaults
+time: 2026-04-15T16:36:38.942638-07:00
+custom:
+    PR: "709"
