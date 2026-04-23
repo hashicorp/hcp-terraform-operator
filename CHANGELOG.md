@@ -1,3 +1,9 @@
+## 2.11.4 (April 22, 2026)
+
+BUG FIXES:
+
+* Fix issue with spec container env vars getting overridden by defaults [[GH-709](https://github.com/hashicorp/hcp-terraform-operator/pull/709)]
+
 ## 2.11.3 (February 23, 2026)
 
 ENHANCEMENTS:
