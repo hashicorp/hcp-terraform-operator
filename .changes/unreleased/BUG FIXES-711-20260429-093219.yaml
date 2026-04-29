@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Add configuration version when creating a new run for Module Conroller to avoid unnecessary runs
+time: 2026-04-29T09:32:19.051817-07:00
+custom:
+    PR: "711"
