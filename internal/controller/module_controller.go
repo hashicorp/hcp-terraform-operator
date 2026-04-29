@@ -403,8 +403,9 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	if needNewRun(&m.instance) {
 		m.log.Info("Reconcile Run", "msg", "create a new run")
 		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			Message:   tfc.String(runMessage),
-			Workspace: workspace,
+			Message:              tfc.String(runMessage),
+			Workspace:            workspace,
+			ConfigurationVersion: &tfc.ConfigurationVersion{ID: m.instance.Status.ConfigurationVersion.ID},
 		})
 		if err != nil {
 			m.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")
