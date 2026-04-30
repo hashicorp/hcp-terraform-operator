@@ -1,3 +1,9 @@
+## 2.11.5 (April 29, 2026)
+
+BUG FIXES:
+
+* Add configuration version when creating a new run for Module Conroller to avoid unnecessary runs [[GH-711](https://github.com/hashicorp/hcp-terraform-operator/pull/711)]
+
 ## 2.11.4 (April 22, 2026)
 
 BUG FIXES:
