@@ -4,6 +4,9 @@
 package controller
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
@@ -46,4 +49,26 @@ func RegisterMetrics() {
 		MetricRuns,
 		MetricRunsTotal,
 	)
+	// Initialize all run status metrics to 0.
+	for _, s := range runStatuses {
+		metricRuns.WithLabelValues(string(s)).Set(0)
+	}
+	// Initialize total runs metric to 0.
+	metricRunsTotal.WithLabelValues().Set(0)
+}
+
+func ListHCPTMetrics() error {
+	mfs, err := metrics.Registry.Gather()
+	if err != nil {
+		return err
+	}
+	for _, mf := range mfs {
+		name := mf.GetName()
+		if strings.HasPrefix(name, "hcp_tf") {
+			fmt.Printf("# HELP %s %s\n", name, mf.GetHelp())
+			fmt.Printf("# TYPE %s %s\n", name, mf.Type.String())
+		}
+	}
+
+	return nil
 }
