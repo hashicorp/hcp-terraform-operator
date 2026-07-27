@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Use new go-tfe API to reference a full list of agent pool tokens and delete+recreate tokens only if absent
+time: 2026-07-27T15:13:38.679955-07:00
+custom:
+    PR: "714"
