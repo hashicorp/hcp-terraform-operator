@@ -179,6 +179,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			}
 			// Safe to delete since error is ErrResourceNotFound
 			// Token is genuinely not present so delet and recreate it
+			ap.log.Info("Reconcile Agent Tokens", "msg", "token not found, deleting and recreating it..")
 			deleteSecretKey(s, token.Name)
 			ap.deleteTokenStatus(id)
 		}
