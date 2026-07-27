@@ -20,16 +20,27 @@ import (
 )
 
 func (ap *agentPoolInstance) getTokens(ctx context.Context) (map[string]string, error) {
-	agentTokens, err := ap.tfClient.Client.AgentTokens.List(ctx, ap.instance.Status.AgentPoolID)
-	if err != nil {
-		return nil, err
-	}
-
 	tokens := make(map[string]string)
-	for _, token := range agentTokens.Items {
-		tokens[token.ID] = token.Description
+	listOpts := &tfc.AgentTokenListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
+		},
 	}
-
+	// Check all pages from the response to avoid orphaning tokens
+	for {
+		agentTokens, err := ap.tfClient.Client.AgentTokens.ListWithOptions(ctx, ap.instance.Status.AgentPoolID, listOpts)
+		if err != nil {
+			return nil, err
+		}
+		for _, token := range agentTokens.Items {
+			tokens[token.ID] = token.Description
+		}
+		if agentTokens.NextPage == 0 {
+			break
+		}
+		listOpts.PageNumber = agentTokens.NextPage
+	}
 	return tokens, nil
 }
 
