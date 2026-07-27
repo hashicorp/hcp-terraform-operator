@@ -20,16 +20,27 @@ import (
 )
 
 func (ap *agentPoolInstance) getTokens(ctx context.Context) (map[string]string, error) {
-	agentTokens, err := ap.tfClient.Client.AgentTokens.List(ctx, ap.instance.Status.AgentPoolID)
-	if err != nil {
-		return nil, err
-	}
-
 	tokens := make(map[string]string)
-	for _, token := range agentTokens.Items {
-		tokens[token.ID] = token.Description
+	listOpts := &tfc.AgentTokenListOptions{
+		ListOptions: tfc.ListOptions{
+			PageSize:   MaxPageSize,
+			PageNumber: InitPageNumber,
+		},
 	}
-
+	// Check all pages from the response to avoid orphaning tokens
+	for {
+		agentTokens, err := ap.tfClient.Client.AgentTokens.ListWithOptions(ctx, ap.instance.Status.AgentPoolID, listOpts)
+		if err != nil {
+			return nil, err
+		}
+		for _, token := range agentTokens.Items {
+			tokens[token.ID] = token.Description
+		}
+		if agentTokens.NextPage == 0 {
+			break
+		}
+		listOpts.PageNumber = agentTokens.NextPage
+	}
 	return tokens, nil
 }
 
@@ -152,6 +163,23 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 				delete(agentTokens, id)
 				continue
 			}
+			// We need to check here if TFC has the token before assuming it was deleted.
+			// This is because the paginated response from getTokens may not include all tokens
+			// One page contains only 20 tokens that too not in order.
+			_, err := ap.tfClient.Client.AgentTokens.Read(ctx, id)
+			if err == nil {
+				// Token exists in TFC since the list was incomplete
+				continue
+			}
+			if err != tfc.ErrResourceNotFound {
+				// This means Read failed due to a temporary error like API timeout, network issues etc.
+				// The token is not necessarily absent
+				// We need to let the controller requeue and retry in the next cycle
+				return err
+			}
+			// Safe to delete since error is ErrResourceNotFound
+			// Token is genuinely not present so delet and recreate it
+			ap.log.Info("Reconcile Agent Tokens", "msg", "token not found, deleting and recreating it..")
 			deleteSecretKey(s, token.Name)
 			ap.deleteTokenStatus(id)
 		}
