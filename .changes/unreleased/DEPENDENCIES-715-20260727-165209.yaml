@@ -1,5 +1,0 @@
-kind: DEPENDENCIES
-body: Bump dependencies and go version
-time: 2026-07-27T16:52:09.104135-07:00
-custom:
-    PR: "715"
