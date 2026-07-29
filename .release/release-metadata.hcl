@@ -1,4 +1,4 @@
-# Copyright (c) HashiCorp, Inc.
+# Copyright IBM Corp. 2022, 2026
 # SPDX-License-Identifier: MPL-2.0
 
 url_docker_registry_dockerhub = "https://hub.docker.com/r/hashicorp/hcp-terraform-operator"
