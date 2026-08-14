@@ -30,6 +30,17 @@ var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
 	tfc.RunPolicyChecked:            {},
 }
 
+// terminalRunStatuses contains run statuses that represent a terminal plan-only run.
+// These are used to skip plan-only runs that have reached a terminal state
+// but may still be returned under status_group=non_final due to missing
+// terminal timestamps on the HCP Terraform API side.
+var terminalRunStatuses = map[tfc.RunStatus]struct{}{
+	tfc.RunPlannedAndFinished: {},
+	tfc.RunErrored:            {},
+	tfc.RunCanceled:           {},
+	tfc.RunDiscarded:          {},
+}
+
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
 // The wildcard pattern can contain '*' at the beginning and/or end to match any sequence of characters.
 // If the pattern contains '*' at both ends, the function checks if the substring exists within the string.
@@ -92,6 +103,11 @@ func pendingRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 			}
 			// Count plan-only runs separately so agents can scale up and execute runs parallely
 			if run.PlanOnly {
+				// Skip terminal plan-only runs. The API may return them under
+				// status_group=non_final when their finish timestamp is missing
+				if _, ok := terminalRunStatuses[run.Status]; ok {
+					continue
+				}
 				planOnlyRuns++
 				continue
 			}
