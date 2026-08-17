@@ -162,6 +162,27 @@ func TestPendingRuns(t *testing.T) {
 			expectedCount: 3,
 			expectError:   false,
 		},
+		{
+			name: "skips terminal plan-only runs (planned_and_finished)",
+			mockRuns: []*tfc.Run{
+				{ID: "run1", PlanOnly: true, Status: tfc.RunPlannedAndFinished, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run2", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws2"}},
+			},
+			expectedCount: 1, // only the active run counts
+		},
+		{
+			name: "skips all terminal plan-only run statuses",
+			mockRuns: []*tfc.Run{
+				{ID: "run1", PlanOnly: true, Status: tfc.RunPlannedAndFinished, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run2", PlanOnly: true, Status: tfc.RunErrored, Workspace: &tfc.Workspace{ID: "ws2"}},
+				{ID: "run3", PlanOnly: true, Status: tfc.RunCanceled, Workspace: &tfc.Workspace{ID: "ws3"}},
+				{ID: "run4", PlanOnly: true, Status: tfc.RunDiscarded, Workspace: &tfc.Workspace{ID: "ws4"}},
+				{ID: "run5", PlanOnly: true, Status: tfc.RunPlanning, Workspace: &tfc.Workspace{ID: "ws5"}},
+				{ID: "run6", PlanOnly: false, Status: tfc.RunCostEstimated, Workspace: &tfc.Workspace{ID: "ws1"}},
+				{ID: "run7", PlanOnly: false, Status: tfc.RunPending, Workspace: &tfc.Workspace{ID: "ws1"}},
+			},
+			expectedCount: 1, // only the active run counts
+		},
 	}
 
 	for _, tt := range tests {
