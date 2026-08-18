@@ -1,3 +1,9 @@
+## 2.12.1 (August 18, 2026)
+
+BUG FIXES:
+
+* Fix issue with terminal plan only runs [[GH-718](https://github.com/hashicorp/hcp-terraform-operator/pull/718)]
+
 ## 2.12.0 (July 28, 2026)
 
 BUG FIXES:
