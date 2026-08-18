@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: Fix issue with terminal plan only runs
+time: 2026-08-18T10:39:04.591977-07:00
+custom:
+    PR: "718"
