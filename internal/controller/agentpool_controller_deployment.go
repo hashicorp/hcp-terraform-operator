@@ -9,6 +9,7 @@ import (
 	"maps"
 	"net/url"
 
+	"github.com/google/go-cmp/cmp"
 	tfc "github.com/hashicorp/go-tfe"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -85,7 +86,7 @@ func (r *AgentPoolReconciler) createDeployment(ctx context.Context, ap *agentPoo
 }
 
 func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoolInstance, d *appsv1.Deployment) error {
-	ap.log.Info("Reconcile Agent Deployment", "mgs", "performing Deployment update")
+	ap.log.Info("Reconcile Agent Deployment", "msg", "reconciling Deployment update")
 	nd := agentPoolDeployment(ap)
 
 	err := controllerutil.SetControllerReference(&ap.instance, nd, r.Scheme)
@@ -103,14 +104,27 @@ func (r *AgentPoolReconciler) updateDeployment(ctx context.Context, ap *agentPoo
 		nd.Spec.Replicas = d.Spec.Replicas
 	}
 
-	// TODO:
-	// - Add logic to update the deployment only when it has changed
-	uerr := r.Client.Update(ctx, nd, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
+	// Save current state for comparison
+	oldSpec := d.Spec
+	oldAnnotations := d.Annotations
+
+	// Apply desired state onto existing deployment (preserves ResourceVersion and other server-managed fields)
+	d.Spec = nd.Spec
+	d.Annotations = nd.Annotations
+
+	// Only update if something actually changed
+	if cmp.Equal(oldSpec, d.Spec) && cmp.Equal(oldAnnotations, d.Annotations) {
+		ap.log.Info("Reconcile Agent Deployment", "msg", "no changes detected, skipping update")
+		return nil
+	}
+
+	uerr := r.Client.Update(ctx, d, &client.UpdateOptions{FieldManager: "hcp-terraform-operator"})
 	if uerr != nil {
 		ap.log.Error(uerr, "Reconcile Agent Deployment", "msg", "Failed to update agent deployment")
 		r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "Deployment update failed", uerr.Error())
 		return uerr
 	}
+	ap.log.Info("Reconcile Agent Deployment", "msg", "successfully updated agent deployment")
 	return nil
 }
 
