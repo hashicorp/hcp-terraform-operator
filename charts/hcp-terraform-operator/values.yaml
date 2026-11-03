@@ -7,6 +7,9 @@ imagePullSecrets: []
 # -- Additional labels to add to the Operator pods.
 podLabels: {}
 
+# -- Additional annotations to add to the Operator pods.
+podAnnotations: {}
+
 # -- The number of Operator replicas.
 replicaCount: 2
 

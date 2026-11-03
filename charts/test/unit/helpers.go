@@ -59,6 +59,7 @@ var (
 		"app.kubernetes.io/name":     helmChartName,
 		"control-plane":              fmt.Sprintf("%s-controller-manager", helmReleaseName),
 	}
+	defaultDeploymentPodAnnotations = map[string]string(nil)
 	defaultDeploymentTerminationGracePeriodSeconds = int64(10)
 
 	// RBAC variables.

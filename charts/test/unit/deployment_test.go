@@ -34,6 +34,7 @@ func defaultDeployment() appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: defaultDeploymentSelectorLabels,
+					Annotations: defaultDeploymentPodAnnotations,
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName:            defaultServiceAccountName,
@@ -205,6 +206,22 @@ func TestDeploymentPodLabels(t *testing.T) {
 	labels := dd.Spec.Template.DeepCopy().Labels
 	labels["this"] = "this"
 	dd.Spec.Template.Labels = labels
+
+	assert.Equal(t, dd, deployment)
+}
+
+func TestDeploymentPodAnnotations(t *testing.T) {
+	options := &helm.Options{
+		SetValues: map[string]string{
+			"podAnnotations.this": "this",
+		},
+		Version: helmChartVersion,
+	}
+	deployment := renderDeploymentManifest(t, options)
+	dd := defaultDeployment()
+	dd.Spec.Template.Annotations = map[string]string{
+		"this": "this",
+	}
 
 	assert.Equal(t, dd, deployment)
 }
