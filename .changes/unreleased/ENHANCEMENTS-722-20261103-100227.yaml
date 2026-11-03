@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: Add support for configuring pod annotations on the operator deployment.
+time: 2026-11-03T10:02:27.825336196Z
+custom:
+    PR: "722"
