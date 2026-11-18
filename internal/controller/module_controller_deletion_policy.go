@@ -7,9 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func (r *ModuleReconciler) deleteModule(ctx context.Context, m *moduleInstance) error {
@@ -60,57 +61,72 @@ func (r *ModuleReconciler) destroyModule(ctx context.Context, m *moduleInstance)
 	// update the status with the run status. Otherwise, execute a new 'Destroy' run.
 	if m.instance.Status.DestroyRunID == "" {
 		m.log.Info("Delete Module", "msg", "get workspace")
-		ws, err := m.tfClient.Client.Workspaces.ReadByID(ctx, m.instance.Status.WorkspaceID)
+		wsResp, err := m.tfClient.Client.API.Workspaces().ByWorkspace_id(m.instance.Status.WorkspaceID).Get(ctx, nil)
 		if err != nil {
 			m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get workspace: %s", m.instance.Status.WorkspaceID))
 			return err
 		}
+		ws := wsResp.GetData()
 		m.log.Info("Delete Module", "msg", "successfully got workspace")
-		if ws.CurrentRun != nil {
+		if cr := ws.GetRelationships().GetCurrentRun(); cr != nil && cr.GetData() != nil && pointer.ValueOf(cr.GetData().GetId()) != "" {
+			currentRunID := pointer.ValueOf(cr.GetData().GetId())
 			m.log.Info("Delete Module", "msg", "get current run")
 			// Have to read the individual run here, since the one associated with workspace doesn't contain the necessary info
-			cr, err := m.tfClient.Client.Runs.Read(ctx, ws.CurrentRun.ID)
+			crResp, err := m.tfClient.Client.API.Runs().ById(currentRunID).Get(ctx, nil)
 			if err != nil {
-				m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get current run: %s", ws.CurrentRun.ID))
+				m.log.Info("Delete Module", "msg", fmt.Sprintf("failed to get current run: %s", currentRunID))
 				return err
 			}
-			if cr.IsDestroy {
-				m.log.Info("Delete Module", "msg", fmt.Sprintf("current run %s is destroy", cr.ID))
-				if _, ok := runStatusComplete[cr.Status]; ok {
+			cur := crResp.GetData()
+			if pointer.ValueOf(cur.GetAttributes().GetIsDestroy()) {
+				m.log.Info("Delete Module", "msg", fmt.Sprintf("current run %s is destroy", currentRunID))
+				if _, ok := runStatusComplete[runAttributesStatus(cur.GetAttributes())]; ok {
 					m.log.Info("Delete Module", "msg", "current destroy run finished")
 					return r.removeFinalizer(ctx, m)
 				}
-				return r.updateStatusDestroy(ctx, &m.instance, cr)
+				return r.updateStatusDestroy(ctx, &m.instance, cur)
 			}
 			m.log.Info("Delete Module", "msg", "current run is not destroy")
 		}
 
 		m.log.Info("Delete Module", "msg", "destroy on deletion, create a new destroy run")
-		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			IsDestroy: tfc.Bool(true),
-			Message:   tfc.String(runMessage),
-			Workspace: &tfc.Workspace{
-				ID: m.instance.Status.WorkspaceID,
-			},
-		})
+		attrs := models.NewRuns_attributes()
+		attrs.SetIsDestroy(new(true))
+		attrs.SetMessage(new(runMessage))
+		wsData := models.NewWorkspacesHasOne_data()
+		wsData.SetId(new(m.instance.Status.WorkspaceID))
+		wsData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+		wsRel := models.NewWorkspacesHasOne()
+		wsRel.SetData(wsData)
+		rels := models.NewRuns_relationships()
+		rels.SetWorkspace(wsRel)
+		data := models.NewRuns()
+		data.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+		data.SetAttributes(attrs)
+		data.SetRelationships(rels)
+		body := models.NewRunsEnvelope()
+		body.SetData(data)
+		resp, err := m.tfClient.Client.API.Runs().Post(ctx, body, nil)
 		if err != nil {
 			m.log.Error(err, "Delete Module", "msg", "failed to create a new destroy run")
 			return err
 		}
+		run := resp.GetData()
 		m.log.Info("Delete Module", "msg", "successfully created a new destroy run")
 		return r.updateStatusDestroy(ctx, &m.instance, run)
 	}
 
 	if waitRunToComplete(m.instance.Status.Run) {
 		m.log.Info("Delete Module", "msg", "get destroy run status")
-		run, err := m.tfClient.Client.Runs.Read(ctx, m.instance.Status.Run.ID)
+		resp, err := m.tfClient.Client.API.Runs().ById(m.instance.Status.Run.ID).Get(ctx, nil)
 		if err != nil {
 			m.log.Error(err, "Delete Module", "msg", "failed to get destroy run status")
 			return err
 		}
-		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", run.Status))
+		run := resp.GetData()
+		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got destroy run status: %s", runAttributesStatus(run.GetAttributes())))
 
-		if _, ok := runStatusComplete[run.Status]; ok {
+		if _, ok := runStatusComplete[runAttributesStatus(run.GetAttributes())]; ok {
 			m.log.Info("Delete Module", "msg", "destroy run finished")
 			return r.removeFinalizer(ctx, m)
 		}

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -104,7 +104,8 @@ func TestDecorateDeployment_MixedContainerEnvSets(t *testing.T) {
 	assert.Equal(t, 1, countEnvVar(container1.Env, "TFC_AGENT_NAME"))
 	assert.Equal(t, "custom-agent-name", mustFindEnvVar(t, container1.Env, "TFC_AGENT_NAME").Value)
 	assert.Equal(t, 1, countEnvVar(container1.Env, "TFC_ADDRESS"))
-	assert.Equal(t, customURL.String(), mustFindEnvVar(t, container1.Env, "TFC_ADDRESS").Value)
+	// go-tfe v1 BaseURL() had a trailing slash; TFC_ADDRESS must keep it.
+	assert.Equal(t, customURL.String()+"/", mustFindEnvVar(t, container1.Env, "TFC_ADDRESS").Value)
 }
 
 func mustFindEnvVar(t *testing.T, envs []corev1.EnvVar, name string) corev1.EnvVar {

@@ -6,51 +6,51 @@ package v1alpha2
 import (
 	"testing"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 )
 
-var runStatuses = map[tfc.RunStatus]struct{}{
-	tfc.RunApplied:                  {},
-	tfc.RunApplying:                 {},
-	tfc.RunApplyQueued:              {},
-	tfc.RunCanceled:                 {},
-	tfc.RunConfirmed:                {},
-	tfc.RunCostEstimated:            {},
-	tfc.RunCostEstimating:           {},
-	tfc.RunDiscarded:                {},
-	tfc.RunErrored:                  {},
-	tfc.RunFetching:                 {},
-	tfc.RunFetchingCompleted:        {},
-	tfc.RunPending:                  {},
-	tfc.RunPlanned:                  {},
-	tfc.RunPlannedAndFinished:       {},
-	tfc.RunPlannedAndSaved:          {},
-	tfc.RunPlanning:                 {},
-	tfc.RunPlanQueued:               {},
-	tfc.RunPolicyChecked:            {},
-	tfc.RunPolicyChecking:           {},
-	tfc.RunPolicyOverride:           {},
-	tfc.RunPolicySoftFailed:         {},
-	tfc.RunPostPlanAwaitingDecision: {},
-	tfc.RunPostPlanCompleted:        {},
-	tfc.RunPostPlanRunning:          {},
-	tfc.RunPreApplyRunning:          {},
-	tfc.RunPreApplyCompleted:        {},
-	tfc.RunPrePlanCompleted:         {},
-	tfc.RunPrePlanRunning:           {},
-	tfc.RunQueuing:                  {},
-	tfc.RunQueuingApply:             {},
+var runStatuses = map[string]struct{}{
+	models.APPLIED_RUNS_ATTRIBUTES_STATUS.String():              {},
+	models.APPLYING_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.APPLY_QUEUED_RUNS_ATTRIBUTES_STATUS.String():         {},
+	models.CANCELED_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.CONFIRMED_RUNS_ATTRIBUTES_STATUS.String():            {},
+	models.COST_ESTIMATED_RUNS_ATTRIBUTES_STATUS.String():       {},
+	models.COST_ESTIMATING_RUNS_ATTRIBUTES_STATUS.String():      {},
+	models.DISCARDED_RUNS_ATTRIBUTES_STATUS.String():            {},
+	models.ERRORED_RUNS_ATTRIBUTES_STATUS.String():              {},
+	models.FETCHING_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.FETCHING_COMPLETED_RUNS_ATTRIBUTES_STATUS.String():   {},
+	models.PENDING_RUNS_ATTRIBUTES_STATUS.String():              {},
+	models.PLANNED_RUNS_ATTRIBUTES_STATUS.String():              {},
+	models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String(): {},
+	models.PLANNED_AND_SAVED_RUNS_ATTRIBUTES_STATUS.String():    {},
+	models.PLANNING_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.PLAN_QUEUED_RUNS_ATTRIBUTES_STATUS.String():          {},
+	models.POLICY_CHECKED_RUNS_ATTRIBUTES_STATUS.String():       {},
+	models.POLICY_CHECKING_RUNS_ATTRIBUTES_STATUS.String():      {},
+	models.POLICY_OVERRIDE_RUNS_ATTRIBUTES_STATUS.String():      {},
+	models.POLICY_SOFT_FAILED_RUNS_ATTRIBUTES_STATUS.String():   {},
+	RunPostPlanAwaitingDecision:                                 {},
+	models.POST_PLAN_COMPLETED_RUNS_ATTRIBUTES_STATUS.String():  {},
+	models.POST_PLAN_RUNNING_RUNS_ATTRIBUTES_STATUS.String():    {},
+	models.PRE_APPLY_RUNNING_RUNS_ATTRIBUTES_STATUS.String():    {},
+	models.PRE_APPLY_COMPLETED_RUNS_ATTRIBUTES_STATUS.String():  {},
+	models.PRE_PLAN_COMPLETED_RUNS_ATTRIBUTES_STATUS.String():   {},
+	models.PRE_PLAN_RUNNING_RUNS_ATTRIBUTES_STATUS.String():     {},
+	models.QUEUING_RUNS_ATTRIBUTES_STATUS.String():              {},
+	models.QUEUING_APPLY_RUNS_ATTRIBUTES_STATUS.String():        {},
 }
 
 func TestRunCompleted(t *testing.T) {
 	t.Parallel()
 
-	trueCases := map[tfc.RunStatus]struct{}{
-		tfc.RunApplied:            {},
-		tfc.RunCanceled:           {},
-		tfc.RunDiscarded:          {},
-		tfc.RunErrored:            {},
-		tfc.RunPlannedAndFinished: {},
+	trueCases := map[string]struct{}{
+		models.APPLIED_RUNS_ATTRIBUTES_STATUS.String():              {},
+		models.CANCELED_RUNS_ATTRIBUTES_STATUS.String():             {},
+		models.DISCARDED_RUNS_ATTRIBUTES_STATUS.String():            {},
+		models.ERRORED_RUNS_ATTRIBUTES_STATUS.String():              {},
+		models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String(): {},
 	}
 
 	for n := range runStatuses {
@@ -67,9 +67,9 @@ func TestRunCompleted(t *testing.T) {
 func TestRunApplied(t *testing.T) {
 	t.Parallel()
 
-	trueCases := map[tfc.RunStatus]struct{}{
-		tfc.RunApplied:            {},
-		tfc.RunPlannedAndFinished: {},
+	trueCases := map[string]struct{}{
+		models.APPLIED_RUNS_ATTRIBUTES_STATUS.String():              {},
+		models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String(): {},
 	}
 
 	for n := range runStatuses {

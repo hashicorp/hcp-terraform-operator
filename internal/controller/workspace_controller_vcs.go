@@ -4,7 +4,8 @@
 package controller
 
 import (
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 )
 
@@ -26,14 +27,15 @@ func getTriggerPatterns(instance *appv1alpha2.Workspace) map[string]struct{} {
 
 // getWorkspaceTriggerPatterns return a map that maps consist of all trigger patterns assigned to workspace
 // and values 'true' to simulate the Set structure.
-func getWorkspaceTriggerPatterns(workspace *tfc.Workspace) map[string]struct{} {
+func getWorkspaceTriggerPatterns(workspace models.Workspacesable) map[string]struct{} {
 	patterns := make(map[string]struct{})
 
-	if len(workspace.TriggerPatterns) == 0 {
+	triggerPatterns := workspace.GetAttributes().GetTriggerPatterns()
+	if len(triggerPatterns) == 0 {
 		return patterns
 	}
 
-	for _, t := range workspace.TriggerPatterns {
+	for _, t := range triggerPatterns {
 		patterns[t] = struct{}{}
 	}
 
@@ -58,14 +60,15 @@ func getTriggerPrefixes(instance *appv1alpha2.Workspace) map[string]struct{} {
 
 // getWorkspaceTriggerPrefixes return a map that maps consist of all trigger prefixes assigned to workspace
 // and values 'true' to simulate the Set structure.
-func getWorkspaceTriggerPrefixes(workspace *tfc.Workspace) map[string]struct{} {
+func getWorkspaceTriggerPrefixes(workspace models.Workspacesable) map[string]struct{} {
 	prefixes := make(map[string]struct{})
 
-	if len(workspace.TriggerPrefixes) == 0 {
+	triggerPrefixes := workspace.GetAttributes().GetTriggerPrefixes()
+	if len(triggerPrefixes) == 0 {
 		return prefixes
 	}
 
-	for _, t := range workspace.TriggerPrefixes {
+	for _, t := range triggerPrefixes {
 		prefixes[t] = struct{}{}
 	}
 

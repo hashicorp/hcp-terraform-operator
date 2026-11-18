@@ -6,13 +6,15 @@ package controller
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/go-logr/logr"
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
@@ -124,7 +127,6 @@ func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectIn
 		return err
 	}
 
-	httpClient := tfc.DefaultConfig().HTTPClient
 	insecure := false
 
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
@@ -138,11 +140,16 @@ func (r *ProjectReconciler) getTerraformClient(ctx context.Context, p *projectIn
 		p.log.Info("Reconcile Project", "msg", "client configured to skip TLS certificate verifications")
 	}
 
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 
 	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
+		Address:           os.Getenv("TFE_ADDRESS"),
+		Token:             token,
+		HTTPTransport:     newRunStatusTransport(transport),
+		RetryRateLimited:  true,
+		RetryServerErrors: false,
+		RetryMaxRetries:   30,
 		Headers: http.Header{
 			"User-Agent": []string{version.UserAgent},
 		},
@@ -160,10 +167,10 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *ProjectReconciler) updateStatus(ctx context.Context, p *projectInstance, project *tfc.Project) error {
+func (r *ProjectReconciler) updateStatus(ctx context.Context, p *projectInstance, project models.Projectsable) error {
 	p.instance.Status.ObservedGeneration = p.instance.Generation
-	p.instance.Status.ID = project.ID
-	p.instance.Status.Name = project.Name
+	p.instance.Status.ID = pointer.ValueOf(project.GetId())
+	p.instance.Status.Name = pointer.ValueOf(project.GetAttributes().GetName())
 
 	return r.Status().Update(ctx, &p.instance)
 }
@@ -180,59 +187,82 @@ func (r *ProjectReconciler) removeFinalizer(ctx context.Context, p *projectInsta
 	return err
 }
 
-func needToUpdateProject(instance *appv1alpha2.Project, project *tfc.Project) bool {
+func needToUpdateProject(instance *appv1alpha2.Project, project models.Projectsable) bool {
 	// generation changed
 	if instance.Generation != instance.Status.ObservedGeneration {
 		return true
 	}
 
 	// name changed
-	if instance.Spec.Name != project.Name {
+	if instance.Spec.Name != pointer.ValueOf(project.GetAttributes().GetName()) {
 		return true
 	}
 
 	return false
 }
 
-func (r *ProjectReconciler) createProject(ctx context.Context, p *projectInstance) (*tfc.Project, error) {
+func (r *ProjectReconciler) createProject(ctx context.Context, p *projectInstance) (models.Projectsable, error) {
 	spec := p.instance.Spec
-	options := tfc.ProjectCreateOptions{
-		Name: spec.Name,
-	}
+	attrs := models.NewProjects_attributes()
+	attrs.SetName(new(spec.Name))
 
-	project, err := p.tfClient.Client.Projects.Create(ctx, spec.Organization, options)
+	data := models.NewProjects()
+	data.SetTypeEscaped(new(models.PROJECTS_PROJECTS_TYPE))
+	data.SetAttributes(attrs)
+
+	body := models.NewProjectsEnvelope()
+	body.SetData(data)
+
+	resp, err := p.tfClient.Client.API.Organizations().ByOrganization_name(spec.Organization).Projects().Post(ctx, body, nil)
 	if err != nil {
 		p.log.Error(err, "Reconcile Project", "msg", "failed to create a new project")
 		r.Recorder.Event(&p.instance, corev1.EventTypeWarning, "ReconcileProject", "Failed to create a new project")
 		return nil, err
 	}
+	project := resp.GetData()
 
 	p.instance.Status = appv1alpha2.ProjectStatus{
-		ID: project.ID,
+		ID: pointer.ValueOf(project.GetId()),
 	}
 
 	return project, nil
 }
 
-func (r *ProjectReconciler) readProject(ctx context.Context, p *projectInstance) (*tfc.Project, error) {
-	return p.tfClient.Client.Projects.Read(ctx, p.instance.Status.ID)
+func (r *ProjectReconciler) readProject(ctx context.Context, p *projectInstance) (models.Projectsable, error) {
+	resp, err := p.tfClient.Client.API.Projects().ByProject_id(p.instance.Status.ID).Get(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
-func (r *ProjectReconciler) updateProject(ctx context.Context, p *projectInstance, project *tfc.Project) (*tfc.Project, error) {
-	updateOptions := tfc.ProjectUpdateOptions{}
+func (r *ProjectReconciler) updateProject(ctx context.Context, p *projectInstance, project models.Projectsable) (models.Projectsable, error) {
 	spec := p.instance.Spec
 
-	if project.Name != spec.Name {
-		updateOptions.Name = tfc.String(spec.Name)
+	attrs := models.NewProjects_attributes()
+	if pointer.ValueOf(project.GetAttributes().GetName()) != spec.Name {
+		attrs.SetName(new(spec.Name))
 	}
 
-	return p.tfClient.Client.Projects.Update(ctx, p.instance.Status.ID, updateOptions)
+	data := models.NewProjects()
+	data.SetTypeEscaped(new(models.PROJECTS_PROJECTS_TYPE))
+	data.SetId(new(p.instance.Status.ID))
+	data.SetAttributes(attrs)
+
+	body := models.NewProjectsEnvelope()
+	body.SetData(data)
+
+	resp, err := p.tfClient.Client.API.Projects().ByProject_id(p.instance.Status.ID).Patch(ctx, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
 func (r *ProjectReconciler) reconcileProject(ctx context.Context, p *projectInstance) error {
 	p.log.Info("Reconcile Project", "msg", "reconciling project")
 
-	var project *tfc.Project
+	var project models.Projectsable
 	var err error
 
 	defer func() {
@@ -249,8 +279,8 @@ func (r *ProjectReconciler) reconcileProject(ctx context.Context, p *projectInst
 		// - Use conditions(https://maelvls.dev/kubernetes-conditions/)
 		// - Let Objects update their own status conditions
 		// - Simplify updateStatus method in a way it could be called anytime
-		if project != nil && project.ID != "" {
-			p.instance.Status.ID = project.ID
+		if project != nil && pointer.ValueOf(project.GetId()) != "" {
+			p.instance.Status.ID = pointer.ValueOf(project.GetId())
 			err = r.Status().Update(ctx, &p.instance)
 			if err != nil {
 				p.log.Error(err, "Project Controller", "msg", "update status with project ID")
@@ -285,7 +315,7 @@ func (r *ProjectReconciler) reconcileProject(ctx context.Context, p *projectInst
 	project, err = r.readProject(ctx, p)
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud project was removed from the TF Cloud bypass the operator
-		if err == tfc.ErrResourceNotFound {
+		if errors.Is(err, tfc.ErrNotFound) {
 			p.log.Info("Reconcile Project", "msg", "project not found, creating a new project")
 			r.Recorder.Eventf(&p.instance, corev1.EventTypeWarning, "ReconcileProject", "Project ID %s not found, creating a new project", p.instance.Status.ID)
 			project, err = r.createProject(ctx, p)

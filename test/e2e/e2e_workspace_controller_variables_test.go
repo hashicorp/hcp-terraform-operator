@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -94,7 +95,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
-			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryTerraform)
+			expectVariables := workspaceVariableToTFC(instance, "terraform")
 			// Make sure that the TFC Workspace has all desired Terraform variables
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -111,7 +112,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					Sensitive:   false,
 				},
 			}
-			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
+			expectVariables = workspaceVariableToTFC(instance, "terraform")
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
@@ -122,7 +123,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Delete all workspace variables manually and wait until the controller re-create it
 			variables := listWorkspaceVars(instance.Status.WorkspaceID)
 			for _, v := range variables {
-				tfClient.Variables.Delete(ctx, instance.Status.WorkspaceID, v.ID)
+				tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Vars().ById(v.ID).Delete(ctx, nil)
 			}
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -132,7 +133,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Update workspace variable manually and wait until the controller reconcile it
 			variables = listWorkspaceVars(instance.Status.WorkspaceID)
 			for _, v := range variables {
-				tfClient.Variables.Update(ctx, instance.Status.WorkspaceID, v.ID, tfc.VariableUpdateOptions{Value: tfc.String("newnwenew")})
+				attrs := models.NewVars_attributes()
+				attrs.SetValue(new("newnwenew"))
+				data := models.NewVars()
+				data.SetTypeEscaped(new(models.VARS_VARS_TYPE))
+				data.SetId(&v.ID)
+				data.SetAttributes(attrs)
+				body := models.NewVarsEnvelope()
+				body.SetData(data)
+				tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Vars().ById(v.ID).Patch(ctx, body, nil)
 			}
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -152,7 +161,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
-			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryTerraform)
+			expectVariables := workspaceVariableToTFC(instance, "terraform")
 			// Make sure that the TFC Workspace has all desired Terraform variables
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -169,7 +178,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					Sensitive:   true,
 				},
 			}
-			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
+			expectVariables = workspaceVariableToTFC(instance, "terraform")
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
@@ -190,7 +199,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
-			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryTerraform)
+			expectVariables := workspaceVariableToTFC(instance, "terraform")
 			// Make sure that the TFC Workspace has all desired Terraform variables
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -207,7 +216,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					Sensitive:   false,
 				},
 			}
-			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryTerraform)
+			expectVariables = workspaceVariableToTFC(instance, "terraform")
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
@@ -230,7 +239,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
-			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryEnv)
+			expectVariables := workspaceVariableToTFC(instance, "env")
 			// Make sure that the TFC Workspace has all desired Environment variables
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -247,7 +256,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					Sensitive:   false,
 				},
 			}
-			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
+			expectVariables = workspaceVariableToTFC(instance, "env")
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
@@ -258,7 +267,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Delete all workspace variables manually and wait until the controller re-create it
 			variables := listWorkspaceVars(instance.Status.WorkspaceID)
 			for _, v := range variables {
-				tfClient.Variables.Delete(ctx, instance.Status.WorkspaceID, v.ID)
+				tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Vars().ById(v.ID).Delete(ctx, nil)
 			}
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -268,7 +277,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Update workspace variable manually and wait until the controller reconcile it
 			variables = listWorkspaceVars(instance.Status.WorkspaceID)
 			for _, v := range variables {
-				tfClient.Variables.Update(ctx, instance.Status.WorkspaceID, v.ID, tfc.VariableUpdateOptions{Value: tfc.String("newnwenew")})
+				attrs := models.NewVars_attributes()
+				attrs.SetValue(new("newnwenew"))
+				data := models.NewVars()
+				data.SetTypeEscaped(new(models.VARS_VARS_TYPE))
+				data.SetId(&v.ID)
+				data.SetAttributes(attrs)
+				body := models.NewVarsEnvelope()
+				body.SetData(data)
+				tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Vars().ById(v.ID).Patch(ctx, body, nil)
 			}
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -288,7 +305,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
-			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryEnv)
+			expectVariables := workspaceVariableToTFC(instance, "env")
 			// Make sure that the TFC Workspace has all desired environment variables
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -305,7 +322,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					Sensitive:   true,
 				},
 			}
-			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
+			expectVariables = workspaceVariableToTFC(instance, "env")
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
@@ -326,7 +343,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
-			expectVariables := workspaceVariableToTFC(instance, tfc.CategoryEnv)
+			expectVariables := workspaceVariableToTFC(instance, "env")
 			// Make sure that the TFC Workspace has all desired environment variables
 			Eventually(func() bool {
 				variables := listWorkspaceVars(instance.Status.WorkspaceID)
@@ -343,7 +360,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					Sensitive:   false,
 				},
 			}
-			expectVariables = workspaceVariableToTFC(instance, tfc.CategoryEnv)
+			expectVariables = workspaceVariableToTFC(instance, "env")
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 			// Wait until the controller updates HCP Terraform workspace correcly
 			Eventually(func() bool {
@@ -354,46 +371,68 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
+// variable is a workspace variable, a flat replacement for the former tfc.Variable.
+type variable struct {
+	ID          string
+	Key         string
+	Value       string
+	Description string
+	Category    string
+	HCL         bool
+	Sensitive   bool
+}
+
 // compareVars compares two slices of variables and returns 'true' if they are equal and 'false' otherwise. It ignores field 'ID'.
-func compareVars(aVars, bVars []tfc.Variable) bool {
+func compareVars(aVars, bVars []variable) bool {
 	if len(aVars) != len(bVars) {
 		return false
 	}
 
-	return cmp.Equal(aVars, bVars, cmpopts.IgnoreFields(tfc.Variable{}, "ID", "VersionID", "Workspace"))
+	return cmp.Equal(aVars, bVars, cmpopts.IgnoreFields(variable{}, "ID"))
 }
 
 // listWorkspaceVars returns a list of all variables assigned to the workspace
-func listWorkspaceVars(workspaceID string) []tfc.Variable {
-	wsVars, err := tfClient.Variables.List(ctx, workspaceID, &tfc.VariableListOptions{})
+func listWorkspaceVars(workspaceID string) []variable {
+	wsVars, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Vars().Get(ctx, nil)
 	Expect(wsVars).ShouldNot(BeNil())
 	Expect(err).Should(Succeed())
-	var variables []tfc.Variable
-	for _, v := range wsVars.Items {
-		variables = append(variables, *v)
+	var variables []variable
+	for _, v := range wsVars.GetData() {
+		bv := variable{ID: pointer.ValueOf(v.GetId())}
+		if a := v.GetAttributes(); a != nil {
+			bv.Key = pointer.ValueOf(a.GetKey())
+			bv.Value = pointer.ValueOf(a.GetValue())
+			bv.Description = pointer.ValueOf(a.GetDescription())
+			bv.HCL = pointer.ValueOf(a.GetHcl())
+			bv.Sensitive = pointer.ValueOf(a.GetSensitive())
+			if c := a.GetCategory(); c != nil {
+				bv.Category = c.String()
+			}
+		}
+		variables = append(variables, bv)
 	}
 
 	return variables
 }
 
-func workspaceVariableToTFC(instance *appv1alpha2.Workspace, category tfc.CategoryType) []tfc.Variable {
+func workspaceVariableToTFC(instance *appv1alpha2.Workspace, category string) []variable {
 	instanceVariables := []appv1alpha2.Variable{}
 
 	switch category {
-	case tfc.CategoryEnv:
+	case "env":
 		instanceVariables = instance.Spec.EnvironmentVariables
-	case tfc.CategoryTerraform:
+	case "terraform":
 		instanceVariables = instance.Spec.TerraformVariables
 	}
 
-	variables := make([]tfc.Variable, len(instanceVariables))
+	variables := make([]variable, len(instanceVariables))
 
 	for i, v := range instanceVariables {
 		value := v.Value
 		if v.Sensitive {
 			value = ""
 		}
-		variables[i] = tfc.Variable{
+		variables[i] = variable{
 			Key:         v.Name,
 			Description: v.Description,
 			Value:       value,

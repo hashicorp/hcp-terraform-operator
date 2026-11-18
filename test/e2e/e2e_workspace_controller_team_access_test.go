@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/teamworkspaces"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -22,7 +26,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		instance       *appv1alpha2.Workspace
 		namespacedName types.NamespacedName
 		workspace      string
-		team           *tfc.Team
+		team           models.Teamsable
 	)
 
 	BeforeAll(func() {
@@ -65,7 +69,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.Teams.Delete(ctx, team.ID)).Should(Succeed())
+		Expect(tfClient.API.Teams().ById(pointer.ValueOf(team.GetId())).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Team Access", func() {
@@ -73,7 +77,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.TeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						Name: team.Name,
+						Name: pointer.ValueOf(team.GetAttributes().GetName()),
 					},
 					Access: "admin",
 				},
@@ -97,7 +101,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.TeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						Name: team.Name,
+						Name: pointer.ValueOf(team.GetAttributes().GetName()),
 					},
 					Access: "custom",
 					Custom: appv1alpha2.CustomPermissions{
@@ -129,7 +133,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.TeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						Name: team.Name,
+						Name: pointer.ValueOf(team.GetAttributes().GetName()),
 					},
 					Access: "admin",
 				},
@@ -153,7 +157,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.TeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						ID: team.ID,
+						ID: pointer.ValueOf(team.GetId()),
 					},
 					Access: "custom",
 					Custom: appv1alpha2.CustomPermissions{
@@ -189,7 +193,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		It("can handle update from custom to pre-set team access", func() {
 			instance.Spec.TeamAccess = append(instance.Spec.TeamAccess, &appv1alpha2.TeamAccess{
 				Team: appv1alpha2.Team{
-					Name: team.Name,
+					Name: pointer.ValueOf(team.GetAttributes().GetName()),
 				},
 				Access: "custom",
 				Custom: appv1alpha2.CustomPermissions{
@@ -220,7 +224,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.TeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						ID: team.ID,
+						ID: pointer.ValueOf(team.GetId()),
 					},
 					Access: "admin",
 				},
@@ -246,14 +250,22 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createTeam(teamName string) *tfc.Team {
-	t, err := tfClient.Teams.Create(ctx, organization, tfc.TeamCreateOptions{
-		Name:       tfc.String(teamName),
-		Visibility: tfc.String("organization"),
-	})
+func createTeam(teamName string) models.Teamsable {
+	visibility, err := models.ParseTeams_attributes_visibility("organization")
 	Expect(err).Should(Succeed())
-	Expect(t).ShouldNot(BeNil())
-	return t
+	attrs := models.NewTeams_attributes()
+	attrs.SetName(&teamName)
+	attrs.SetVisibility(visibility.(*models.Teams_attributes_visibility))
+	data := models.NewTeams()
+	data.SetTypeEscaped(new(models.TEAMS_TEAMS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewTeamsEnvelope()
+	body.SetData(data)
+	resp, err := tfClient.API.Organizations().ByOrganization_name(organization).Teams().Post(ctx, body, nil)
+	Expect(err).Should(Succeed())
+	Expect(resp).ShouldNot(BeNil())
+	Expect(resp.GetData()).ShouldNot(BeNil())
+	return resp.GetData()
 }
 
 func isTeamAccessReconciled(instance *appv1alpha2.Workspace) {
@@ -263,11 +275,16 @@ func isTeamAccessReconciled(instance *appv1alpha2.Workspace) {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		Expect(instance.Spec.TeamAccess).ShouldNot(BeNil())
 
-		teamAccesses, err := tfClient.TeamAccess.List(ctx, &tfc.TeamAccessListOptions{WorkspaceID: instance.Status.WorkspaceID})
+		teamAccesses, err := tfClient.API.TeamWorkspaces().Get(ctx, &abstractions.RequestConfiguration[teamworkspaces.TeamWorkspacesRequestBuilderGetQueryParameters]{
+			QueryParameters: &teamworkspaces.TeamWorkspacesRequestBuilderGetQueryParameters{
+				Filterworkspaceid: &instance.Status.WorkspaceID,
+				Pagesize:          new(int32(controller.MaxPageSize)),
+			},
+		})
 		Expect(err).Should(Succeed())
 		Expect(teamAccesses).ShouldNot(BeNil())
 
-		return len(teamAccesses.Items) == len(instance.Spec.TeamAccess)
+		return len(teamAccesses.GetData()) == len(instance.Spec.TeamAccess)
 	}).Should(BeTrue())
 }
 
@@ -280,25 +297,41 @@ func buildWorkspaceTeamAccessByID(wsID string, custom appv1alpha2.CustomPermissi
 }
 
 func buildWorkspaceTeamAccess(wsID string, withTeamName bool, custom appv1alpha2.CustomPermissions) []*appv1alpha2.TeamAccess {
-	teamAccesses, err := tfClient.TeamAccess.List(ctx, &tfc.TeamAccessListOptions{WorkspaceID: wsID})
+	teamAccesses, err := tfClient.API.TeamWorkspaces().Get(ctx, &abstractions.RequestConfiguration[teamworkspaces.TeamWorkspacesRequestBuilderGetQueryParameters]{
+		QueryParameters: &teamworkspaces.TeamWorkspacesRequestBuilderGetQueryParameters{
+			Filterworkspaceid: &wsID,
+			Pagesize:          new(int32(controller.MaxPageSize)),
+		},
+	})
 	Expect(err).Should(Succeed())
 	Expect(teamAccesses).ShouldNot(BeNil())
 
-	wsTeamAccess := make([]*appv1alpha2.TeamAccess, len(teamAccesses.Items))
+	wsTeamAccess := make([]*appv1alpha2.TeamAccess, len(teamAccesses.GetData()))
 
-	for i, teamAccess := range teamAccesses.Items {
-		t, err := tfClient.Teams.Read(ctx, teamAccess.Team.ID)
+	for i, teamAccess := range teamAccesses.GetData() {
+		Expect(teamAccess.GetRelationships()).ShouldNot(BeNil())
+		Expect(teamAccess.GetRelationships().GetTeam()).ShouldNot(BeNil())
+		Expect(teamAccess.GetRelationships().GetTeam().GetData()).ShouldNot(BeNil())
+		teamID := pointer.ValueOf(teamAccess.GetRelationships().GetTeam().GetData().GetId())
+		t, err := tfClient.API.Teams().ById(teamID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(t).ShouldNot(BeNil())
+		Expect(t.GetData()).ShouldNot(BeNil())
 		team := appv1alpha2.Team{}
 		if withTeamName {
-			team.Name = t.Name
+			Expect(t.GetData().GetAttributes()).ShouldNot(BeNil())
+			team.Name = pointer.ValueOf(t.GetData().GetAttributes().GetName())
 		} else {
-			team.ID = t.ID
+			team.ID = pointer.ValueOf(t.GetData().GetId())
+		}
+		Expect(teamAccess.GetAttributes()).ShouldNot(BeNil())
+		access := ""
+		if a := teamAccess.GetAttributes().GetAccess(); a != nil {
+			access = a.String()
 		}
 		wsTeamAccess[i] = &appv1alpha2.TeamAccess{
 			Team:   team,
-			Access: string(teamAccess.Access),
+			Access: access,
 			Custom: custom,
 		}
 	}

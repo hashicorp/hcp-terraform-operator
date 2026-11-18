@@ -6,39 +6,46 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 // userInteractionRunStatuses contains run statuses that require user interaction.
-var userInteractionRunStatuses = map[tfc.RunStatus]struct{}{
-	tfc.RunCostEstimated:            {},
-	tfc.RunPlanned:                  {},
-	tfc.RunPlannedAndSaved:          {},
-	tfc.RunPolicyOverride:           {},
-	tfc.RunPostPlanAwaitingDecision: {},
-	tfc.RunPostPlanCompleted:        {},
-	tfc.RunPending:                  {},
-	tfc.RunPolicyChecked:            {},
+var userInteractionRunStatuses = map[string]struct{}{
+	models.COST_ESTIMATED_RUNS_ATTRIBUTES_STATUS.String():      {},
+	models.PLANNED_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.PLANNED_AND_SAVED_RUNS_ATTRIBUTES_STATUS.String():   {},
+	models.POLICY_OVERRIDE_RUNS_ATTRIBUTES_STATUS.String():     {},
+	appv1alpha2.RunPostPlanAwaitingDecision:                    {},
+	models.POST_PLAN_COMPLETED_RUNS_ATTRIBUTES_STATUS.String(): {},
+	models.PENDING_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.POLICY_CHECKED_RUNS_ATTRIBUTES_STATUS.String():      {},
 }
 
 // terminalRunStatuses contains run statuses that represent a terminal plan-only run.
 // These are used to skip plan-only runs that have reached a terminal state
 // but may still be returned under status_group=non_final due to missing
 // terminal timestamps on the HCP Terraform API side.
-var terminalRunStatuses = map[tfc.RunStatus]struct{}{
-	tfc.RunPlannedAndFinished: {},
-	tfc.RunErrored:            {},
-	tfc.RunCanceled:           {},
-	tfc.RunDiscarded:          {},
+var terminalRunStatuses = map[string]struct{}{
+	models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String(): {},
+	models.ERRORED_RUNS_ATTRIBUTES_STATUS.String():              {},
+	models.CANCELED_RUNS_ATTRIBUTES_STATUS.String():             {},
+	models.DISCARDED_RUNS_ATTRIBUTES_STATUS.String():            {},
 }
 
 // matchWildcardName checks if a given string matches a specified wildcard pattern.
@@ -79,44 +86,54 @@ func matchWildcardName(wildcard string, str string) bool {
 func pendingRuns(ctx context.Context, ap *agentPoolInstance) (int32, error) {
 	applyRuns := map[string]struct{}{}
 	awaitingUserInteractionRuns := map[string]int{} // Track runs awaiting user interaction by status for future metrics
-	listOpts := &tfc.RunListForOrganizationOptions{
-		AgentPoolNames: ap.instance.Spec.Name,
-		StatusGroup:    "non_final",
-		ListOptions: tfc.ListOptions{
-			PageSize:   MaxPageSize,
-			PageNumber: InitPageNumber,
-		},
-	}
+	pageNumber := InitPageNumber
 	planOnlyRuns := 0
 	for {
-		runsList, err := ap.tfClient.Client.Runs.ListForOrganization(ctx, ap.instance.Spec.Organization, listOpts)
+		// go-tfe v2 does not expose the agent pool and status group filters, so the URL is built manually.
+		baseURL := ap.tfClient.Client.BaseURL()
+		runsURL := baseURL.JoinPath("organizations", ap.instance.Spec.Organization, "runs")
+		runsURL.RawQuery = url.Values{
+			"filter[agent_pool_names]": []string{ap.instance.Spec.Name},
+			"filter[status_group]":     []string{"non_final"},
+			"page[size]":               []string{strconv.Itoa(MaxPageSize)},
+			"page[number]":             []string{strconv.Itoa(pageNumber)},
+		}.Encode()
+		runsList, err := ap.tfClient.Client.API.Organizations().ByOrganization_name(ap.instance.Spec.Organization).Runs().
+			WithUrl(runsURL.String()).
+			Get(ctx, nil)
 		if err != nil {
 			return 0, err
 		}
 
-		for _, run := range runsList.Items {
+		for _, run := range runsList.GetData() {
+			status := runAttributesStatus(run.GetAttributes())
 			// Skip runs that require user interaction
-			if _, ok := userInteractionRunStatuses[run.Status]; ok {
+			if _, ok := userInteractionRunStatuses[status]; ok {
 				// Save the user interactable run statuses for future metrics with count split by status
-				awaitingUserInteractionRuns[string(run.Status)]++
+				awaitingUserInteractionRuns[string(status)]++
 				continue
 			}
 			// Count plan-only runs separately so agents can scale up and execute runs parallely
-			if run.PlanOnly {
+			if run.GetAttributes() != nil && pointer.ValueOf(run.GetAttributes().GetPlanOnly()) {
 				// Skip terminal plan-only runs. The API may return them under
 				// status_group=non_final when their finish timestamp is missing
-				if _, ok := terminalRunStatuses[run.Status]; ok {
+				if _, ok := terminalRunStatuses[status]; ok {
 					continue
 				}
 				planOnlyRuns++
 				continue
 			}
-			applyRuns[run.Workspace.ID] = struct{}{}
+			var wsID string
+			if r := run.GetRelationships(); r != nil && r.GetWorkspace() != nil && r.GetWorkspace().GetData() != nil {
+				wsID = pointer.ValueOf(r.GetWorkspace().GetData().GetId())
+			}
+			applyRuns[wsID] = struct{}{}
 		}
-		if runsList.NextPage == 0 {
+		next := nextPage(runsList.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = runsList.NextPage
+		pageNumber = int(next)
 	}
 
 	// TODO:
@@ -135,33 +152,41 @@ func computeRequiredAgents(ctx context.Context, ap *agentPoolInstance) (int32, e
 	workspaceNames := map[string]struct{}{}
 	workspaceIDs := map[string]struct{}{}
 
-	listOpts := &tfc.WorkspaceListOptions{
-		CurrentRunStatus: strings.Join([]string{
-			string(tfc.RunPlanQueued),
-			string(tfc.RunApplyQueued),
-			string(tfc.RunApplying),
-			string(tfc.RunPlanning),
-		}, ","),
-		ListOptions: tfc.ListOptions{
-			PageSize:   MaxPageSize,
-			PageNumber: InitPageNumber,
-		},
-	}
+	currentRunStatus := strings.Join([]string{
+		string(models.PLAN_QUEUED_RUNS_ATTRIBUTES_STATUS.String()),
+		string(models.APPLY_QUEUED_RUNS_ATTRIBUTES_STATUS.String()),
+		string(models.APPLYING_RUNS_ATTRIBUTES_STATUS.String()),
+		string(models.PLANNING_RUNS_ATTRIBUTES_STATUS.String()),
+	}, ",")
+	pageSize := int32(MaxPageSize)
+	pageNumber := int32(InitPageNumber)
 	for {
-		workspaceList, err := ap.tfClient.Client.Workspaces.List(ctx, ap.instance.Spec.Organization, listOpts)
+		cfg := &abstractions.RequestConfiguration[organizations.ItemWorkspacesRequestBuilderGetQueryParameters]{
+			QueryParameters: &organizations.ItemWorkspacesRequestBuilderGetQueryParameters{
+				FiltercurrentRunstatus: &currentRunStatus,
+				Pagesize:               &pageSize,
+				Pagenumber:             &pageNumber,
+			},
+		}
+		workspaceList, err := ap.tfClient.Client.API.Organizations().ByOrganization_name(ap.instance.Spec.Organization).Workspaces().Get(ctx, cfg)
 		if err != nil {
 			return 0, err
 		}
-		for _, ws := range workspaceList.Items {
-			if ws.AgentPool != nil && ws.AgentPool.ID == ap.instance.Status.AgentPoolID {
-				workspaceNames[ws.Name] = struct{}{}
-				workspaceIDs[ws.ID] = struct{}{}
+		for _, ws := range workspaceList.GetData() {
+			var poolID string
+			if r := ws.GetRelationships(); r != nil && r.GetAgentPool() != nil && r.GetAgentPool().GetData() != nil {
+				poolID = pointer.ValueOf(r.GetAgentPool().GetData().GetId())
+			}
+			if poolID != "" && poolID == ap.instance.Status.AgentPoolID {
+				workspaceNames[pointer.ValueOf(ws.GetAttributes().GetName())] = struct{}{}
+				workspaceIDs[pointer.ValueOf(ws.GetId())] = struct{}{}
 			}
 		}
-		if workspaceList.NextPage == 0 {
+		next := nextPage(workspaceList.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = workspaceList.NextPage
+		pageNumber = next
 	}
 
 	if ap.instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces == nil {
@@ -266,10 +291,18 @@ func (r *AgentPoolReconciler) reconcileAgentAutoscaling(ctx context.Context, ap 
 	ap.log.Info("Reconcile Agent Autoscaling", "msg", "new reconciliation event")
 
 	requiredAgents, err := func() (int32, error) {
-		if ap.tfClient.Client.IsCloud() {
+		// go-tfe v2 no longer exposes the remote type and TFE version, read them from the ping response headers.
+		// An unreachable ping endpoint is treated as non-cloud with an empty version, as go-tfe v1 did.
+		var isCloud bool
+		var tfeVersion string
+		if resp, perr := ap.tfClient.Client.GetStream(ctx, "/api/v2/ping", http.Header{"Accept": []string{tfc.ContentTypeJSONAPI}}); perr == nil {
+			isCloud = resp.Header.Get("TFP-AppName") == "HCP Terraform"
+			tfeVersion = resp.Header.Get("X-TFE-Version")
+			_ = resp.Body.Close()
+		}
+		if isCloud {
 			return pendingRuns(ctx, ap)
 		}
-		tfeVersion := ap.tfClient.Client.RemoteTFEVersion()
 		runsEndpoint, err := useRunsEndpoint(tfeVersion)
 		if err != nil {
 			// If the TFE version parsing fails, do not return the error here and proceed further.

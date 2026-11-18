@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -16,6 +18,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -58,11 +61,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		// Add variable set to the project
 		projectName = fmt.Sprintf("project-variable-set-%v", randomNumber())
 		projectID = createTestProject(projectName)
-		tfClient.VariableSets.ApplyToProjects(ctx, variableSetProjectID, tfc.VariableSetApplyToProjectsOptions{
-			Projects: []*tfc.Project{
-				{ID: projectID},
-			},
-		})
+		prjData := models.NewProjectsIdentifierArrayDocument_data()
+		prjData.SetId(&projectID)
+		prjData.SetTypeEscaped(new(models.PROJECTS_PROJECTSIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+		prjBody := models.NewProjectsIdentifierArrayDocument()
+		prjBody.SetData([]models.ProjectsIdentifierArrayDocument_dataable{prjData})
+		tfClient.API.Varsets().ByVarset_id(variableSetProjectID).Relationships().Projects().Post(ctx, prjBody, nil)
 
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
@@ -94,11 +98,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.VariableSets.Delete(ctx, variableSetID)).Should(Succeed())
-		Expect(tfClient.VariableSets.Delete(ctx, variableSetID2)).Should(Succeed())
-		Expect(tfClient.VariableSets.Delete(ctx, variableSetGlobalID)).Should(Succeed())
-		Expect(tfClient.Projects.Delete(ctx, projectID)).Should(Succeed())
-		Expect(tfClient.VariableSets.Delete(ctx, variableSetProjectID)).Should(Succeed())
+		Expect(tfClient.API.Varsets().ByVarset_id(variableSetID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Varsets().ByVarset_id(variableSetID2).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Varsets().ByVarset_id(variableSetGlobalID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Projects().ByProject_id(projectID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Varsets().ByVarset_id(variableSetProjectID).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("VariableSet", func() {
@@ -117,11 +121,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledVariableSet(instance)
 
 			// Manually remove variable set from the workspace
-			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetID2, &tfc.VariableSetRemoveFromWorkspacesOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: instance.Status.WorkspaceID},
-				},
-			})).Should(Succeed())
+			removeWs := models.NewWorkspacesIdentifierArrayDocument_data()
+			removeWs.SetId(&instance.Status.WorkspaceID)
+			removeWs.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+			removeBody := models.NewWorkspacesIdentifierArrayDocument()
+			removeBody.SetData([]models.WorkspacesIdentifierArrayDocument_dataable{removeWs})
+			Expect(tfClient.API.Varsets().ByVarset_id(variableSetID2).Relationships().Workspaces().Delete(ctx, removeBody, nil)).Should(Succeed())
 			isReconciledVariableSet(instance)
 
 			// Add a new global variable set
@@ -137,11 +142,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledVariableSet(instance)
 
 			// Manually remove different project variable set from the workspace
-			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetProjectID, &tfc.VariableSetRemoveFromWorkspacesOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: instance.Status.WorkspaceID},
-				},
-			})).Should(Succeed())
+			removeWs2 := models.NewWorkspacesIdentifierArrayDocument_data()
+			removeWs2.SetId(&instance.Status.WorkspaceID)
+			removeWs2.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+			removeBody2 := models.NewWorkspacesIdentifierArrayDocument()
+			removeBody2.SetData([]models.WorkspacesIdentifierArrayDocument_dataable{removeWs2})
+			Expect(tfClient.API.Varsets().ByVarset_id(variableSetProjectID).Relationships().Workspaces().Delete(ctx, removeBody2, nil)).Should(Succeed())
 			isReconciledVariableSet(instance)
 		})
 	})
@@ -162,11 +168,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledVariableSet(instance)
 
 			// Manually remove variable set from the workspace
-			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetID2, &tfc.VariableSetRemoveFromWorkspacesOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: instance.Status.WorkspaceID},
-				},
-			})).Should(Succeed())
+			removeWs := models.NewWorkspacesIdentifierArrayDocument_data()
+			removeWs.SetId(&instance.Status.WorkspaceID)
+			removeWs.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+			removeBody := models.NewWorkspacesIdentifierArrayDocument()
+			removeBody.SetData([]models.WorkspacesIdentifierArrayDocument_dataable{removeWs})
+			Expect(tfClient.API.Varsets().ByVarset_id(variableSetID2).Relationships().Workspaces().Delete(ctx, removeBody, nil)).Should(Succeed())
 			isReconciledVariableSet(instance)
 
 			// Add a new global variable set
@@ -182,24 +189,31 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledVariableSet(instance)
 
 			// Manually remove different project variable set from the workspace
-			Expect(tfClient.VariableSets.RemoveFromWorkspaces(ctx, variableSetProjectID, &tfc.VariableSetRemoveFromWorkspacesOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: instance.Status.WorkspaceID},
-				},
-			})).Should(Succeed())
+			removeWs2 := models.NewWorkspacesIdentifierArrayDocument_data()
+			removeWs2.SetId(&instance.Status.WorkspaceID)
+			removeWs2.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+			removeBody2 := models.NewWorkspacesIdentifierArrayDocument()
+			removeBody2.SetData([]models.WorkspacesIdentifierArrayDocument_dataable{removeWs2})
+			Expect(tfClient.API.Varsets().ByVarset_id(variableSetProjectID).Relationships().Workspaces().Delete(ctx, removeBody2, nil)).Should(Succeed())
 			isReconciledVariableSet(instance)
 		})
 	})
 })
 
 func createVariableSet(name string, global bool) string {
-	vs, err := tfClient.VariableSets.Create(ctx, organization, &tfc.VariableSetCreateOptions{
-		Name:   &name,
-		Global: tfc.Bool(global),
-	})
+	attrs := models.NewVarsets_attributes()
+	attrs.SetName(&name)
+	attrs.SetGlobal(&global)
+	data := models.NewVarsets()
+	data.SetTypeEscaped(new(models.VARSETS_VARSETS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewVarsetsEnvelope()
+	body.SetData(data)
+	vs, err := tfClient.API.Organizations().ByOrganization_name(organization).Varsets().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
 	Expect(vs).ShouldNot(BeNil())
-	return vs.ID
+	Expect(vs.GetData()).ShouldNot(BeNil())
+	return pointer.ValueOf(vs.GetData().GetId())
 }
 
 func isReconciledVariableSet(instance *appv1alpha2.Workspace) {
@@ -208,16 +222,18 @@ func isReconciledVariableSet(instance *appv1alpha2.Workspace) {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		return instance.Generation == instance.Status.ObservedGeneration
 	}).Should(BeTrue())
-	variableSets, err := tfClient.VariableSets.List(ctx, instance.Spec.Organization, &tfc.VariableSetListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: controller.MaxPageSize,
-		},
-	})
-	vs := make(map[string]struct{})
-	for _, v := range variableSets.Items {
-		vs[v.ID] = struct{}{}
-	}
+	variableSets, err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).Varsets().Get(ctx,
+		&abstractions.RequestConfiguration[organizations.ItemVarsetsRequestBuilderGetQueryParameters]{
+			QueryParameters: &organizations.ItemVarsetsRequestBuilderGetQueryParameters{
+				Pagesize: new(int32(controller.MaxPageSize)),
+			},
+		})
 	Expect(err).Should(Succeed())
+	Expect(variableSets).ShouldNot(BeNil())
+	vs := make(map[string]struct{})
+	for _, v := range variableSets.GetData() {
+		vs[pointer.ValueOf(v.GetId())] = struct{}{}
+	}
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		for _, v := range instance.Status.VariableSets {

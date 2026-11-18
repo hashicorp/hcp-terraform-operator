@@ -5,10 +5,14 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/agentpools"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,46 +25,56 @@ import (
 
 func (ap *agentPoolInstance) getTokens(ctx context.Context) (map[string]string, error) {
 	tokens := make(map[string]string)
-	listOpts := &tfc.AgentTokenListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize:   MaxPageSize,
-			PageNumber: InitPageNumber,
-		},
-	}
+	pageSize := int32(MaxPageSize)
+	pageNumber := int32(InitPageNumber)
 	// Check all pages from the response to avoid orphaning tokens
 	for {
-		agentTokens, err := ap.tfClient.Client.AgentTokens.ListWithOptions(ctx, ap.instance.Status.AgentPoolID, listOpts)
+		cfg := &abstractions.RequestConfiguration[agentpools.ItemAuthenticationTokensRequestBuilderGetQueryParameters]{
+			QueryParameters: &agentpools.ItemAuthenticationTokensRequestBuilderGetQueryParameters{
+				Pagesize:   &pageSize,
+				Pagenumber: &pageNumber,
+			},
+		}
+		agentTokens, err := ap.tfClient.Client.API.AgentPools().ByAgent_pool_id(ap.instance.Status.AgentPoolID).AuthenticationTokens().Get(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-		for _, token := range agentTokens.Items {
-			tokens[token.ID] = token.Description
+		for _, token := range agentTokens.GetData() {
+			tokens[pointer.ValueOf(token.GetId())] = pointer.ValueOf(token.GetAttributes().GetDescription())
 		}
-		if agentTokens.NextPage == 0 {
+		next := nextPage(agentTokens.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = agentTokens.NextPage
+		pageNumber = next
 	}
 	return tokens, nil
 }
 
-func (r *AgentPoolReconciler) createToken(ctx context.Context, ap *agentPoolInstance, token string) (*tfc.AgentToken, error) {
+func (r *AgentPoolReconciler) createToken(ctx context.Context, ap *agentPoolInstance, token string) (models.AuthenticationTokensable, error) {
 	// nn := getAgentPoolNamespacedName(&ap.instance)
 	ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("creating a new agent token %q", token))
-	t, err := ap.tfClient.Client.AgentTokens.Create(ctx, ap.instance.Status.AgentPoolID, tfc.AgentTokenCreateOptions{
-		Description: &token,
-	})
+	attrs := models.NewAuthenticationTokens_attributes()
+	attrs.SetDescription(&token)
+	data := models.NewAuthenticationTokens()
+	data.SetTypeEscaped(new(models.AUTHENTICATIONTOKENS_AUTHENTICATIONTOKENS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewAuthenticationTokensEnvelope()
+	body.SetData(data)
+	resp, err := ap.tfClient.Client.API.AgentPools().ByAgent_pool_id(ap.instance.Status.AgentPoolID).AuthenticationTokens().Post(ctx, body, nil)
 	if err != nil {
 		ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to create a new token %q", token))
 		return nil, err
 	}
-	ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new agent token %q %q", token, t.ID))
+	t := resp.GetData()
+	ta := t.GetAttributes()
+	ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("successfully created a new agent token %q %q", token, pointer.ValueOf(t.GetId())))
 
 	ap.instance.Status.AgentTokens = append(ap.instance.Status.AgentTokens, &appv1alpha2.AgentAPIToken{
-		Name:       t.Description,
-		ID:         t.ID,
-		CreatedAt:  pointer.PointerOf(t.CreatedAt.Unix()),
-		LastUsedAt: pointer.PointerOf(t.LastUsedAt.Unix()),
+		Name:       pointer.ValueOf(ta.GetDescription()),
+		ID:         pointer.ValueOf(t.GetId()),
+		CreatedAt:  new(pointer.ValueOf(ta.GetCreatedAt()).Unix()),
+		LastUsedAt: new(pointer.ValueOf(ta.GetLastUsedAt()).Unix()),
 	})
 
 	return t, nil
@@ -166,12 +180,12 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 			// We need to check here if TFC has the token before assuming it was deleted.
 			// This is because the paginated response from getTokens may not include all tokens
 			// One page contains only 20 tokens that too not in order.
-			_, err := ap.tfClient.Client.AgentTokens.Read(ctx, id)
+			_, err := ap.tfClient.Client.API.AuthenticationTokens().ById(id).Get(ctx, nil)
 			if err == nil {
 				// Token exists in TFC since the list was incomplete
 				continue
 			}
-			if err != tfc.ErrResourceNotFound {
+			if !errors.Is(err, tfc.ErrNotFound) {
 				// This means Read failed due to a temporary error like API timeout, network issues etc.
 				// The token is not necessarily absent
 				// We need to let the controller requeue and retry in the next cycle
@@ -187,7 +201,7 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 		if err != nil {
 			return err
 		}
-		setSecretKey(s, t.Description, t.Token)
+		setSecretKey(s, pointer.ValueOf(t.GetAttributes().GetDescription()), pointer.ValueOf(t.GetAttributes().GetToken()))
 	}
 
 	// Clean up.
@@ -198,8 +212,8 @@ func (r *AgentPoolReconciler) reconcileAgentTokens(ctx context.Context, ap *agen
 
 	for id, name := range agentTokens {
 		ap.log.Info("Reconcile Agent Tokens", "msg", fmt.Sprintf("removing agent token name=%q id=%q", name, id))
-		err := ap.tfClient.Client.AgentTokens.Delete(ctx, id)
-		if err != nil && err != tfc.ErrResourceNotFound {
+		err := ap.tfClient.Client.API.AuthenticationTokens().ById(id).Delete(ctx, nil)
+		if err != nil && !errors.Is(err, tfc.ErrNotFound) {
 			ap.log.Error(err, "Reconcile Agent Tokens", "msg", fmt.Sprintf("failed to remove agent token name=%q id=%q", name, id))
 			return err
 		}

@@ -5,11 +5,14 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
@@ -84,8 +88,8 @@ var _ = Describe("Agent Token сontroller", Ordered, func() {
 			if instance.Status.AgentPool == nil {
 				return true
 			}
-			err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPool.ID)
-			return err == tfc.ErrResourceNotFound
+			err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPool.ID).Delete(ctx, nil)
+			return errors.Is(err, tfc.ErrNotFound)
 		}).Should(BeTrue())
 	})
 
@@ -95,7 +99,7 @@ var _ = Describe("Agent Token сontroller", Ordered, func() {
 			pool := createAgentPoolWithToken(poolName)
 			// CREATE KUBERNETES ITEM
 			instance.Spec.AgentPool = appv1alpha2.AgentPoolRef{
-				ID: pool.ID,
+				ID: pointer.ValueOf(pool.GetId()),
 			}
 			instance.Spec.SecretName = string(appv1alpha2.AgentTokenManagementPolicyMerge)
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
@@ -120,7 +124,7 @@ var _ = Describe("Agent Token сontroller", Ordered, func() {
 			validateTokensPolicyMerge(ctx, instance)
 			validateTokensSecretSync(ctx, instance)
 			// CAN RESTORE TOKEN
-			Expect(tfClient.AgentTokens.Delete(ctx, instance.Status.AgentTokens[0].ID)).Should(Succeed())
+			Expect(tfClient.API.AuthenticationTokens().ById(instance.Status.AgentTokens[0].ID).Delete(ctx, nil)).Should(Succeed())
 			validateTokensPolicyMerge(ctx, instance)
 			validateTokensSecretSync(ctx, instance)
 		})
@@ -129,7 +133,7 @@ var _ = Describe("Agent Token сontroller", Ordered, func() {
 			pool := createAgentPoolWithToken(poolName)
 			// CREATE KUBERNETES ITEM
 			instance.Spec.AgentPool = appv1alpha2.AgentPoolRef{
-				ID: pool.ID,
+				ID: pointer.ValueOf(pool.GetId()),
 			}
 			instance.Spec.ManagementPolicy = appv1alpha2.AgentTokenManagementPolicyOwner
 			instance.Spec.SecretName = string(appv1alpha2.AgentTokenManagementPolicyOwner)
@@ -155,7 +159,7 @@ var _ = Describe("Agent Token сontroller", Ordered, func() {
 			validateTokensPolicyOwner(ctx, instance)
 			validateTokensSecretSync(ctx, instance)
 			// CAN RESTORE TOKEN
-			Expect(tfClient.AgentTokens.Delete(ctx, instance.Status.AgentTokens[0].ID)).Should(Succeed())
+			Expect(tfClient.API.AuthenticationTokens().ById(instance.Status.AgentTokens[0].ID).Delete(ctx, nil)).Should(Succeed())
 			validateTokensPolicyOwner(ctx, instance)
 			validateTokensSecretSync(ctx, instance)
 		})
@@ -193,13 +197,13 @@ func validateTokensPolicyOwner(ctx context.Context, instance *appv1alpha2.AgentT
 		if instance.Generation != instance.Status.ObservedGeneration {
 			return false
 		}
-		at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPool.ID)
+		at, err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPool.ID).AuthenticationTokens().Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(at).ShouldNot(BeNil())
 
-		ct := make(map[string]struct{}, len(at.Items))
-		for _, t := range at.Items {
-			ct[t.ID] = struct{}{}
+		ct := make(map[string]struct{}, len(at.GetData()))
+		for _, t := range at.GetData() {
+			ct[pointer.ValueOf(t.GetId())] = struct{}{}
 		}
 
 		kt := make(map[string]struct{}, len(instance.Status.AgentTokens))
@@ -218,16 +222,16 @@ func validateTokensPolicyMerge(ctx context.Context, instance *appv1alpha2.AgentT
 		if instance.Generation != instance.Status.ObservedGeneration {
 			return false
 		}
-		at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPool.ID)
+		at, err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPool.ID).AuthenticationTokens().Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(at).ShouldNot(BeNil())
-		if len(at.Items) != len(instance.Spec.AgentTokens)+1 {
+		if len(at.GetData()) != len(instance.Spec.AgentTokens)+1 {
 			return false
 		}
 
-		tokens := make(map[string]struct{}, len(at.Items))
-		for _, t := range at.Items {
-			tokens[t.ID] = struct{}{}
+		tokens := make(map[string]struct{}, len(at.GetData()))
+		for _, t := range at.GetData() {
+			tokens[pointer.ValueOf(t.GetId())] = struct{}{}
 		}
 
 		for _, t := range instance.Status.AgentTokens {
@@ -239,16 +243,25 @@ func validateTokensPolicyMerge(ctx context.Context, instance *appv1alpha2.AgentT
 	}).Should(BeTrue())
 }
 
-func createAgentPoolWithToken(name string) *tfc.AgentPool {
+func createAgentPoolWithToken(name string) models.AgentPoolsable {
 	// CREATE AGENT POOL
-	pool, err := tfClient.AgentPools.Create(ctx, organization, tfc.AgentPoolCreateOptions{
-		Name: tfc.String(name),
-	})
+	poolAttrs := models.NewAgentPools_attributes()
+	poolAttrs.SetName(&name)
+	poolData := models.NewAgentPools()
+	poolData.SetAttributes(poolAttrs)
+	poolBody := models.NewAgentPoolsEnvelope()
+	poolBody.SetData(poolData)
+	resp, err := tfClient.API.Organizations().ByOrganization_name(organization).AgentPools().Post(ctx, poolBody, nil)
 	Expect(err).Should(Succeed())
+	pool := resp.GetData()
 	// CREATE AGENT TOKEN
-	_, err = tfClient.AgentTokens.Create(ctx, pool.ID, tfc.AgentTokenCreateOptions{
-		Description: tfc.String("token"),
-	})
+	tokenAttrs := models.NewAuthenticationTokens_attributes()
+	tokenAttrs.SetDescription(new("token"))
+	tokenData := models.NewAuthenticationTokens()
+	tokenData.SetAttributes(tokenAttrs)
+	tokenBody := models.NewAuthenticationTokensEnvelope()
+	tokenBody.SetData(tokenData)
+	_, err = tfClient.API.AgentPools().ByAgent_pool_id(pointer.ValueOf(pool.GetId())).AuthenticationTokens().Post(ctx, tokenBody, nil)
 	Expect(err).Should(Succeed())
 
 	return pool

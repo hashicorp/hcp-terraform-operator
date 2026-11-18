@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces/item/runtriggers"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -40,12 +45,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		wsName = fmt.Sprintf("kubernetes-operator-source-%v", randomNumber())
 		wsName2 = fmt.Sprintf("kubernetes-operator-source-2-%v", randomNumber())
-		wsID = createWorkspace(tfc.WorkspaceCreateOptions{
-			Name: &wsName,
-		}).ID
-		wsID2 = createWorkspace(tfc.WorkspaceCreateOptions{
-			Name: &wsName2,
-		}).ID
+		wsAttrs := models.NewWorkspaces_attributes()
+		wsAttrs.SetName(&wsName)
+		wsID = pointer.ValueOf(createWorkspace(wsAttrs).GetId())
+		wsAttrs2 := models.NewWorkspaces_attributes()
+		wsAttrs2.SetName(&wsName2)
+		wsID2 = pointer.ValueOf(createWorkspace(wsAttrs2).GetId())
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
 			TypeMeta: metav1.TypeMeta{
@@ -76,8 +81,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID)).Should(Succeed())
-		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID2)).Should(Succeed())
+		Expect(tfClient.API.Workspaces().ByWorkspace_id(wsID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Workspaces().ByWorkspace_id(wsID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Run Triggers", func() {
@@ -90,12 +95,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
-				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
-					RunTriggerType: tfc.RunTriggerInbound,
-				})
-				Expect(rt).ShouldNot(BeNil())
-				Expect(err).Should(Succeed())
-				return hasWorkspaceSource(wsID, rt) && hasWorkspaceSource(wsID2, rt)
+				sources := listInboundRunTriggerSources(instance.Status.WorkspaceID)
+				return sources[wsID] && sources[wsID2]
 			}).Should(BeTrue())
 		})
 
@@ -108,12 +109,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
-				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
-					RunTriggerType: tfc.RunTriggerInbound,
-				})
-				Expect(rt).ShouldNot(BeNil())
-				Expect(err).Should(Succeed())
-				return hasWorkspaceSource(wsID, rt) && hasWorkspaceSource(wsID2, rt)
+				sources := listInboundRunTriggerSources(instance.Status.WorkspaceID)
+				return sources[wsID] && sources[wsID2]
 			}).Should(BeTrue())
 		})
 
@@ -126,23 +123,37 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 
 			Eventually(func() bool {
-				rt, err := tfClient.RunTriggers.List(ctx, instance.Status.WorkspaceID, &tfc.RunTriggerListOptions{
-					RunTriggerType: tfc.RunTriggerInbound,
-				})
-				Expect(rt).ShouldNot(BeNil())
-				Expect(err).Should(Succeed())
-				return hasWorkspaceSource(wsID, rt) && hasWorkspaceSource(wsID2, rt)
+				sources := listInboundRunTriggerSources(instance.Status.WorkspaceID)
+				return sources[wsID] && sources[wsID2]
 			}).Should(BeTrue())
 		})
 	})
 })
 
-func hasWorkspaceSource(workspaceID string, runTriggerList *tfc.RunTriggerList) bool {
-	for _, v := range runTriggerList.Items {
-		if workspaceID == v.Sourceable.ID {
-			return true
-		}
+// listInboundRunTriggerSources returns a set of IDs of the source workspaces of the inbound run triggers of a given workspace.
+func listInboundRunTriggerSources(workspaceID string) map[string]bool {
+	GinkgoHelper()
+	sources := make(map[string]bool)
+	query := &workspaces.ItemRunTriggersRequestBuilderGetQueryParameters{
+		FilterrunTriggertype: new(runtriggers.INBOUND_GETFILTERRUNTRIGGERTYPEQUERYPARAMETERTYPE),
+		Pagesize:             new(int32(controller.MaxPageSize)),
 	}
-
-	return false
+	for {
+		rt, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).RunTriggers().Get(ctx,
+			&abstractions.RequestConfiguration[workspaces.ItemRunTriggersRequestBuilderGetQueryParameters]{QueryParameters: query})
+		Expect(err).Should(Succeed())
+		Expect(rt).ShouldNot(BeNil())
+		for _, v := range rt.GetData() {
+			if v.GetRelationships() == nil || v.GetRelationships().GetSourceable() == nil || v.GetRelationships().GetSourceable().GetData() == nil {
+				continue
+			}
+			sources[pointer.ValueOf(v.GetRelationships().GetSourceable().GetData().GetId())] = true
+		}
+		next := nextPage(rt.GetMeta())
+		if next == 0 {
+			break
+		}
+		query.Pagenumber = &next
+	}
+	return sources
 }

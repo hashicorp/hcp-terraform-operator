@@ -7,11 +7,12 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -77,8 +79,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.SSHKeys.Delete(ctx, sshKeyID)).Should(Succeed())
-		Expect(tfClient.SSHKeys.Delete(ctx, sshKeyID2)).Should(Succeed())
+		Expect(tfClient.API.SshKeys().BySsh_key_id(sshKeyID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.SshKeys().BySsh_key_id(sshKeyID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("SSH Key", func() {
@@ -107,9 +109,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Delete the SSH key manually and wait until the controller revert this change
-			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
+			unassignSSHKey(instance.Status.WorkspaceID)
 			isReconciledSSHKey(instance)
 		})
 		It("can be restored by ID", func() {
@@ -120,9 +120,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 			isReconciledSSHKey(instance)
 			// Delete the SSH key manually and wait until the controller revert this change
-			ws, err := tfClient.Workspaces.UnassignSSHKey(ctx, instance.Status.WorkspaceID)
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
+			unassignSSHKey(instance.Status.WorkspaceID)
 			isReconciledSSHKey(instance)
 		})
 
@@ -194,13 +192,16 @@ func isReconciledSSHKey(instance *appv1alpha2.Workspace) {
 		if instance.Status.SSHKeyID == "" {
 			return false
 		}
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
-		if ws.SSHKey == nil {
+		wsSSHKeyID := ""
+		if r := ws.GetData().GetRelationships().GetSshKey(); r != nil && r.GetData() != nil {
+			wsSSHKeyID = pointer.ValueOf(r.GetData().GetId())
+		}
+		if wsSSHKeyID == "" {
 			return false
 		}
-		return ws.SSHKey.ID == instance.Status.SSHKeyID
+		return wsSSHKeyID == instance.Status.SSHKeyID
 	}).Should(BeTrue())
 }
 
@@ -212,10 +213,13 @@ func isSSHKeyEmpty(instance *appv1alpha2.Workspace) {
 		if instance.Status.SSHKeyID != "" {
 			return false
 		}
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
-		return ws.SSHKey == nil && instance.Spec.SSHKey == nil
+		wsSSHKeyID := ""
+		if r := ws.GetData().GetRelationships().GetSshKey(); r != nil && r.GetData() != nil {
+			wsSSHKeyID = pointer.ValueOf(r.GetData().GetId())
+		}
+		return wsSSHKeyID == "" && instance.Spec.SSHKey == nil
 	}).Should(BeTrue())
 }
 
@@ -230,12 +234,39 @@ func createSSHKey(sshKeyName string) string {
 	}
 	privateSSHKey := pem.EncodeToMemory(privateKeyBlock)
 	Expect(privateSSHKey).ShouldNot(BeNil())
-	sshKey, err := tfClient.SSHKeys.Create(ctx, organization, tfc.SSHKeyCreateOptions{
-		Name:  tfc.String(sshKeyName),
-		Value: tfc.String(string(privateSSHKey)),
-	})
+	attrs := models.NewSshKeys_attributes()
+	attrs.SetName(&sshKeyName)
+	attrs.SetValue(new(string(privateSSHKey)))
+	data := models.NewSshKeys()
+	data.SetTypeEscaped(new(models.SSHKEYS_SSHKEYS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewSshKeysEnvelope()
+	body.SetData(data)
+	sshKey, err := tfClient.API.Organizations().ByOrganization_name(organization).SshKeys().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
 	Expect(sshKey).ShouldNot(BeNil())
+	Expect(sshKey.GetData()).ShouldNot(BeNil())
 
-	return sshKey.ID
+	return pointer.ValueOf(sshKey.GetData().GetId())
+}
+
+// unassignSSHKey unassigns the SSH key from a workspace.
+// The generated models cannot express explicit JSON nulls, so the payload is hand-made.
+func unassignSSHKey(workspaceID string) {
+	builder := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Relationships().SshKey()
+	ri, err := builder.ToPatchRequestInformation(ctx, models.NewSshKeysNullableIdentifierDocument(), nil)
+	Expect(err).Should(Succeed())
+	b, err := json.Marshal(map[string]any{
+		"data": map[string]any{
+			"type": "workspaces",
+			"attributes": map[string]any{
+				"id": nil,
+			},
+		},
+	})
+	Expect(err).Should(Succeed())
+	ri.SetStreamContentAndContentType(b, "application/vnd.api+json")
+	res, err := builder.RequestAdapter.Send(ctx, ri, models.CreateWorkspacesEnvelopeFromDiscriminatorValue, nil)
+	Expect(err).Should(Succeed())
+	Expect(res).ShouldNot(BeNil())
 }

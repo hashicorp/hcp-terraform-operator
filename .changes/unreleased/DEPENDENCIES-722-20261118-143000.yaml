@@ -1,0 +1,5 @@
+kind: DEPENDENCIES
+body: Upgrade `go-tfe` to v2
+time: 2026-11-18T14:30:00.000000-05:00
+custom:
+    PR: "722"

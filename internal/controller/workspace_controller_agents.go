@@ -7,32 +7,37 @@ import (
 	"context"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, w *workspaceInstance) (string, error) {
 	agentPoolName := w.instance.Spec.AgentPool.Name
-
-	listOpts := &tfc.AgentPoolListOptions{
-		Query: agentPoolName,
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &organizations.ItemAgentPoolsRequestBuilderGetQueryParameters{
+		Q:        &agentPoolName,
+		Pagesize: new(int32(MaxPageSize)),
 	}
+
 	for {
-		agentPoolIDs, err := w.tfClient.Client.AgentPools.List(ctx, w.instance.Spec.Organization, listOpts)
+		agentPools, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).AgentPools().Get(ctx,
+			&abstractions.RequestConfiguration[organizations.ItemAgentPoolsRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return "", err
 		}
-		for _, a := range agentPoolIDs.Items {
-			if a.Name == agentPoolName {
-				return a.ID, nil
+
+		for _, a := range agentPools.GetData() {
+			if a.GetAttributes() != nil && pointer.ValueOf(a.GetAttributes().GetName()) == agentPoolName {
+				return pointer.ValueOf(a.GetId()), nil
 			}
 		}
-		if agentPoolIDs.NextPage == 0 {
+
+		next := nextPage(agentPools.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = agentPoolIDs.NextPage
+		query.Pagenumber = &next
 	}
 
 	return "", fmt.Errorf("agent pool ID not found for agent pool name %q", agentPoolName)
@@ -40,7 +45,6 @@ func (r *WorkspaceReconciler) getAgentPoolIDByName(ctx context.Context, w *works
 
 func (r *WorkspaceReconciler) getAgentPoolID(ctx context.Context, w *workspaceInstance) (string, error) {
 	specAgentPool := w.instance.Spec.AgentPool
-
 	if specAgentPool == nil {
 		return "", fmt.Errorf("'spec.agentPool' is not set")
 	}

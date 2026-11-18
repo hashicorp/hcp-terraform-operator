@@ -4,10 +4,15 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +22,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -85,7 +91,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				err := k8sClient.Get(ctx, namespacedName, instance)
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
-			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+			workspace, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
 			Expect(workspace).NotTo(BeNil())
 		})
@@ -100,40 +106,51 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
-				listOpts := tfc.ListOptions{
-					PageNumber: controller.InitPageNumber,
-					PageSize:   controller.MaxPageSize,
-				}
-				for listOpts.PageNumber != 0 {
-					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
-						ListOptions: listOpts,
+				pageSize := int32(controller.MaxPageSize)
+				pageNumber := int32(controller.InitPageNumber)
+				for pageNumber != 0 {
+					runs, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Runs().Get(ctx, &abstractions.RequestConfiguration[workspaces.ItemRunsRequestBuilderGetQueryParameters]{
+						QueryParameters: &workspaces.ItemRunsRequestBuilderGetQueryParameters{
+							Pagesize:   &pageSize,
+							Pagenumber: &pageNumber,
+						},
 					})
 					Expect(err).To(Succeed())
-					for _, r := range runs.Items {
-						if r.ConfigurationVersion.ID == cv.ID {
-							return r.Status == tfc.RunApplied
+					for _, r := range runs.GetData() {
+						if pointer.ValueOf(r.GetRelationships().GetConfigurationVersion().GetData().GetId()) == cv {
+							return pointer.ValueOf(r.GetAttributes().GetStatus()).String() == "applied"
 						}
 					}
-					listOpts.PageNumber = runs.NextPage
+					pageNumber = nextPage(runs.GetMeta())
 				}
 				return false
 			}).Should(BeTrue())
 
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 
-			run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-				IsDestroy: tfc.Bool(true),
-				Workspace: &tfc.Workspace{
-					ID: workspaceID,
-				},
-				AutoApply: tfc.Bool(true),
-			})
+			runAttrs := models.NewRuns_attributes()
+			runAttrs.SetIsDestroy(new(true))
+			runAttrs.SetAutoApply(new(true))
+			runRels := models.NewRuns_relationships()
+			runWorkspace := models.NewWorkspacesIdentifier()
+			runWorkspace.SetId(&workspaceID)
+			runWorkspace.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+			runWorkspaceRel := models.NewWorkspacesHasOne()
+			runWorkspaceRel.SetData(runWorkspace)
+			runRels.SetWorkspace(runWorkspaceRel)
+			runData := models.NewRuns()
+			runData.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+			runData.SetAttributes(runAttrs)
+			runData.SetRelationships(runRels)
+			runBody := models.NewRunsEnvelope()
+			runBody.SetData(runData)
+			run, err := tfClient.API.Runs().Post(ctx, runBody, nil)
 			Expect(err).To(Succeed())
 			Expect(run).ToNot(BeNil())
 
 			Eventually(func() bool {
-				_, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
-				return err == tfc.ErrResourceNotFound
+				_, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
+				return errors.Is(err, tfc.ErrNotFound)
 			}).Should(BeTrue())
 		})
 		It("can destroy delete a workspace", func() {
@@ -147,21 +164,22 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, "hoi")
 			Eventually(func() bool {
-				listOpts := tfc.ListOptions{
-					PageNumber: controller.InitPageNumber,
-					PageSize:   controller.MaxPageSize,
-				}
-				for listOpts.PageNumber != 0 {
-					runs, err := tfClient.Runs.List(ctx, workspaceID, &tfc.RunListOptions{
-						ListOptions: listOpts,
+				pageSize := int32(controller.MaxPageSize)
+				pageNumber := int32(controller.InitPageNumber)
+				for pageNumber != 0 {
+					runs, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Runs().Get(ctx, &abstractions.RequestConfiguration[workspaces.ItemRunsRequestBuilderGetQueryParameters]{
+						QueryParameters: &workspaces.ItemRunsRequestBuilderGetQueryParameters{
+							Pagesize:   &pageSize,
+							Pagenumber: &pageNumber,
+						},
 					})
 					Expect(err).To(Succeed())
-					for _, r := range runs.Items {
-						if r.ConfigurationVersion.ID == cv.ID {
-							return r.Status == tfc.RunApplied
+					for _, r := range runs.GetData() {
+						if pointer.ValueOf(r.GetRelationships().GetConfigurationVersion().GetData().GetId()) == cv {
+							return pointer.ValueOf(r.GetAttributes().GetStatus()).String() == "applied"
 						}
 					}
-					listOpts.PageNumber = runs.NextPage
+					pageNumber = nextPage(runs.GetMeta())
 				}
 				return false
 			}).Should(BeTrue())
@@ -170,21 +188,27 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			var destroyRunID string
 			Eventually(func() bool {
-				ws, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
+				ws, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 				Expect(err).To(Succeed())
 				Expect(ws).ToNot(BeNil())
-				Expect(ws.CurrentRun).ToNot(BeNil())
-				run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+				currentRunID := pointer.ValueOf(ws.GetData().GetRelationships().GetCurrentRun().GetData().GetId())
+				Expect(currentRunID).ToNot(BeEmpty())
+				resp, err := tfClient.API.Runs().ById(currentRunID).Get(ctx, nil)
 				Expect(err).To(Succeed())
+				Expect(resp).ToNot(BeNil())
+				run := resp.GetData()
 				Expect(run).ToNot(BeNil())
-				destroyRunID = run.ID
+				destroyRunID = pointer.ValueOf(run.GetId())
 
-				return run.IsDestroy
+				return run.GetAttributes() != nil && pointer.ValueOf(run.GetAttributes().GetIsDestroy())
 			}).Should(BeTrue())
 
 			Eventually(func() bool {
-				run, err := tfClient.Runs.Read(ctx, destroyRunID)
-				if err == tfc.ErrResourceNotFound || run.Status == tfc.RunApplied {
+				resp, err := tfClient.API.Runs().ById(destroyRunID).Get(ctx, nil)
+				if errors.Is(err, tfc.ErrNotFound) {
+					return true
+				}
+				if err == nil && resp != nil && pointer.ValueOf(resp.GetData().GetAttributes().GetStatus()).String() == "applied" {
 					return true
 				}
 
@@ -192,8 +216,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			Eventually(func() bool {
-				_, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
-				return err == tfc.ErrResourceNotFound
+				_, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
+				return errors.Is(err, tfc.ErrNotFound)
 			}).Should(BeTrue())
 		})
 		It("can force delete a workspace", func() {
@@ -205,8 +229,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 				err := k8sClient.Get(ctx, namespacedName, instance)
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
-			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
-			Expect(err).To(MatchError(tfc.ErrResourceNotFound))
+			workspace, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
+			Expect(errors.Is(err, tfc.ErrNotFound)).To(BeTrue())
 			Expect(workspace).To(BeNil())
 		})
 	})

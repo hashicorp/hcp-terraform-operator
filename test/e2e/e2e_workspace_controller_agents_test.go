@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -73,8 +74,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.AgentPools.Delete(ctx, agentPoolID)).Should(Succeed())
-		Expect(tfClient.AgentPools.Delete(ctx, agentPoolID2)).Should(Succeed())
+		Expect(tfClient.API.AgentPools().ByAgent_pool_id(agentPoolID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.AgentPools().ByAgent_pool_id(agentPoolID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Agent Execution Mode", func() {
@@ -107,12 +108,17 @@ var _ = Describe("Workspace controller", Ordered, func() {
 })
 
 func createAgentPool(agentPoolName string) string {
-	ap, err := tfClient.AgentPools.Create(ctx, organization, tfc.AgentPoolCreateOptions{
-		Name: tfc.String(agentPoolName),
-	})
+	attrs := models.NewAgentPools_attributes()
+	attrs.SetName(&agentPoolName)
+	data := models.NewAgentPools()
+	data.SetAttributes(attrs)
+	body := models.NewAgentPoolsEnvelope()
+	body.SetData(data)
+	ap, err := tfClient.API.Organizations().ByOrganization_name(organization).AgentPools().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
 	Expect(ap).ShouldNot(BeNil())
-	return ap.ID
+	Expect(ap.GetData()).ShouldNot(BeNil())
+	return pointer.ValueOf(ap.GetData().GetId())
 }
 
 func isReconciledAgentPoolByID(instance *appv1alpha2.Workspace) {
@@ -120,10 +126,11 @@ func isReconciledAgentPoolByID(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		Expect(ws).ShouldNot(BeNil())
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
-		return ws.AgentPool.ID == instance.Spec.AgentPool.ID
+		Expect(ws).ShouldNot(BeNil())
+		Expect(ws.GetData()).ShouldNot(BeNil())
+		return pointer.ValueOf(ws.GetData().GetRelationships().GetAgentPool().GetData().GetId()) == instance.Spec.AgentPool.ID
 	}).Should(BeTrue())
 }
 
@@ -132,12 +139,15 @@ func isReconciledAgentPoolByName(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-		Expect(ws).ShouldNot(BeNil())
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
-		ap, err := tfClient.AgentPools.Read(ctx, ws.AgentPool.ID)
+		Expect(ws).ShouldNot(BeNil())
+		Expect(ws.GetData()).ShouldNot(BeNil())
+		ap, err := tfClient.API.AgentPools().ByAgent_pool_id(pointer.ValueOf(ws.GetData().GetRelationships().GetAgentPool().GetData().GetId())).Get(ctx, nil)
 		Expect(ap).ShouldNot(BeNil())
 		Expect(err).Should(Succeed())
-		return ap.Name == instance.Spec.AgentPool.Name
+		Expect(ap.GetData()).ShouldNot(BeNil())
+		Expect(ap.GetData().GetAttributes()).ShouldNot(BeNil())
+		return pointer.ValueOf(ap.GetData().GetAttributes().GetName()) == instance.Spec.AgentPool.Name
 	}).Should(BeTrue())
 }

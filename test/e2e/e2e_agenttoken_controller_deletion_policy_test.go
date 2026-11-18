@@ -4,8 +4,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
+
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -14,8 +18,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	tfc "github.com/hashicorp/go-tfe"
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Agent Token controller", Ordered, func() {
@@ -35,16 +39,16 @@ var _ = Describe("Agent Token controller", Ordered, func() {
 	BeforeEach(func() {
 		// Create an agent pool to associate with the agent token
 		agentPoolName = fmt.Sprintf("kubernetes-operator-agent-pool-%v", randomNumber())
-		ap, err := tfClient.AgentPools.Create(ctx, organization, tfc.AgentPoolCreateOptions{
-			Name: &agentPoolName,
-		})
-		Expect(err).Should(Succeed())
-		Expect(ap).NotTo(BeNil())
-		agentPoolID = ap.ID
+		agentPoolID = createAgentPool(agentPoolName)
+		Expect(agentPoolID).NotTo(BeEmpty())
 		for i := range 3 {
-			tfClient.AgentTokens.Create(ctx, agentPoolID, tfc.AgentTokenCreateOptions{
-				Description: tfc.String(fmt.Sprintf("token-%d", i)),
-			})
+			tokenAttrs := models.NewAuthenticationTokens_attributes()
+			tokenAttrs.SetDescription(new(fmt.Sprintf("token-%d", i)))
+			tokenData := models.NewAuthenticationTokens()
+			tokenData.SetAttributes(tokenAttrs)
+			tokenBody := models.NewAuthenticationTokensEnvelope()
+			tokenBody.SetData(tokenData)
+			_, _ = tfClient.API.AgentPools().ByAgent_pool_id(agentPoolID).AuthenticationTokens().Post(ctx, tokenBody, nil)
 		}
 		// Create a new agent token custom resource for each test
 		namespacedName = newNamespacedName()
@@ -85,8 +89,8 @@ var _ = Describe("Agent Token controller", Ordered, func() {
 
 	AfterEach(func() {
 		Eventually(func() bool {
-			err := tfClient.AgentPools.Delete(ctx, agentPoolID)
-			return err == nil || err == tfc.ErrResourceNotFound
+			err := tfClient.API.AgentPools().ByAgent_pool_id(agentPoolID).Delete(ctx, nil)
+			return err == nil || errors.Is(err, tfc.ErrNotFound)
 		}).Should(BeTrue())
 	})
 
@@ -111,13 +115,13 @@ var _ = Describe("Agent Token controller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			at, err := tfClient.AgentTokens.List(ctx, agentPoolID)
+			at, err := tfClient.API.AgentPools().ByAgent_pool_id(agentPoolID).AuthenticationTokens().Get(ctx, nil)
 			Expect(err).Should(Succeed())
 			Expect(at).NotTo(BeNil())
 
-			for _, t := range at.Items {
-				_, exists := tid[t.ID]
-				Expect(exists).To(BeFalse(), fmt.Sprintf("token ID %s should have been deleted", t.ID))
+			for _, t := range at.GetData() {
+				_, exists := tid[pointer.ValueOf(t.GetId())]
+				Expect(exists).To(BeFalse(), fmt.Sprintf("token ID %s should have been deleted", pointer.ValueOf(t.GetId())))
 			}
 		})
 	})

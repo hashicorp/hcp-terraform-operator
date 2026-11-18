@@ -5,9 +5,16 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces/item/runtriggers"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
@@ -24,14 +31,14 @@ func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, w *work
 	}
 
 	for _, workspaceName := range runTriggersNames {
-		ws, err := w.tfClient.Client.Workspaces.Read(ctx, w.instance.Spec.Organization, workspaceName)
-		if err == tfc.ErrResourceNotFound {
+		ws, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).Workspaces().ByWorkspace_name(workspaceName).Get(ctx, nil)
+		if errors.Is(err, tfc.ErrNotFound) {
 			return nil, fmt.Errorf("cannot find ID for Workspace %s", workspaceName)
 		}
 		if err != nil {
 			return nil, err
 		}
-		runTriggersIDs[ws.ID] = ""
+		runTriggersIDs[pointer.ValueOf(ws.GetData().GetId())] = ""
 	}
 
 	return runTriggersIDs, nil
@@ -39,26 +46,31 @@ func (r *WorkspaceReconciler) getRunTriggersSources(ctx context.Context, w *work
 
 func (r *WorkspaceReconciler) getRunTriggersWorkspace(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
 	rrt := make(map[string]string)
-	listOpts := &tfc.RunTriggerListOptions{
-		RunTriggerType: tfc.RunTriggerInbound,
-		Include:        []tfc.RunTriggerIncludeOpt{tfc.RunTriggerSourceable},
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &workspaces.ItemRunTriggersRequestBuilderGetQueryParameters{
+		FilterrunTriggertype: new(runtriggers.INBOUND_GETFILTERRUNTRIGGERTYPEQUERYPARAMETERTYPE),
+		Pagesize:             new(int32(MaxPageSize)),
 	}
+
 	for {
-		runTriggers, err := w.tfClient.Client.RunTriggers.List(ctx, w.instance.Status.WorkspaceID, listOpts)
+		runTriggers, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).RunTriggers().Get(ctx,
+			&abstractions.RequestConfiguration[workspaces.ItemRunTriggersRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return nil, err
 		}
-		for _, rt := range runTriggers.Items {
-			// Sourceable.ID is an ID of the sourceable Workspace
-			rrt[rt.Sourceable.ID] = rt.ID
+
+		for _, rt := range runTriggers.GetData() {
+			// Sourceable ID is an ID of the sourceable Workspace
+			if rt.GetRelationships() == nil || rt.GetRelationships().GetSourceable() == nil || rt.GetRelationships().GetSourceable().GetData() == nil {
+				continue
+			}
+			rrt[pointer.ValueOf(rt.GetRelationships().GetSourceable().GetData().GetId())] = pointer.ValueOf(rt.GetId())
 		}
-		if runTriggers.NextPage == 0 {
+
+		next := nextPage(runTriggers.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = runTriggers.NextPage
+		query.Pagenumber = &next
 	}
 
 	return rrt, nil
@@ -90,9 +102,20 @@ func (r *WorkspaceReconciler) addRunTriggers(ctx context.Context, w *workspaceIn
 	}
 
 	for workspace := range workspaces {
-		_, err := w.tfClient.Client.RunTriggers.Create(ctx, w.instance.Status.WorkspaceID, tfc.RunTriggerCreateOptions{
-			Sourceable: &tfc.Workspace{ID: workspace},
-		})
+		source := models.NewWorkspacesHasOne_data()
+		source.SetId(new(workspace))
+		source.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+		sourceRel := models.NewWorkspacesHasOne()
+		sourceRel.SetData(source)
+		rels := models.NewRunTriggers_relationships()
+		rels.SetSourceable(sourceRel)
+		data := models.NewRunTriggers()
+		data.SetTypeEscaped(new(models.RUNTRIGGERS_RUNTRIGGERS_TYPE))
+		data.SetRelationships(rels)
+		body := models.NewRunTriggersEnvelope()
+		body.SetData(data)
+
+		_, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).RunTriggers().Post(ctx, body, nil)
 		if err != nil {
 			return err
 		}
@@ -107,7 +130,7 @@ func (r *WorkspaceReconciler) removeRunTriggers(ctx context.Context, w *workspac
 	}
 
 	for _, workspace := range workspaces {
-		err := w.tfClient.Client.RunTriggers.Delete(ctx, workspace)
+		err := w.tfClient.Client.API.RunTriggers().ById(workspace).Delete(ctx, nil)
 		if err != nil {
 			return err
 		}

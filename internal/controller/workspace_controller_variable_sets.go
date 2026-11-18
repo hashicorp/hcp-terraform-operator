@@ -8,59 +8,71 @@ import (
 	"fmt"
 	"slices"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
-func (w *workspaceInstance) getOrgVariableSets(ctx context.Context) (map[string]*tfc.VariableSet, error) {
-	variableSets := make(map[string]*tfc.VariableSet)
-	listOpts := &tfc.VariableSetListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+func (w *workspaceInstance) getOrgVariableSets(ctx context.Context) (map[string]models.Varsetsable, error) {
+	variableSets := make(map[string]models.Varsetsable)
+	query := &organizations.ItemVarsetsRequestBuilderGetQueryParameters{
+		Pagesize: new(int32(MaxPageSize)),
 	}
 
 	for {
-		v, err := w.tfClient.Client.VariableSets.List(ctx, w.instance.Spec.Organization, listOpts)
+		v, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).Varsets().Get(ctx,
+			&abstractions.RequestConfiguration[organizations.ItemVarsetsRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			w.log.Error(err, "Reconcile Variable Sets", "msg", "failed to get variable sets")
 			return nil, err
 		}
 
-		for _, vs := range v.Items {
-			variableSets[vs.ID] = vs
+		for _, vs := range v.GetData() {
+			variableSets[pointer.ValueOf(vs.GetId())] = vs
 		}
 
-		if v.NextPage == 0 {
+		next := nextPage(v.GetMeta())
+		if next == 0 {
 			break
 		}
-
-		listOpts.PageNumber = v.NextPage
+		query.Pagenumber = &next
 	}
 
 	return variableSets, nil
 }
 
-func (w *workspaceInstance) removeVariableSetFromWorkspace(ctx context.Context, vs *tfc.VariableSet) error {
-	if vs.Global {
-		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("skipping global variable set %s", vs.ID))
+func (w *workspaceInstance) removeVariableSetFromWorkspace(ctx context.Context, vs models.Varsetsable) error {
+	id := pointer.ValueOf(vs.GetId())
+	if pointer.ValueOf(vs.GetAttributes().GetGlobal()) {
+		w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("skipping global variable set %s", id))
 		return nil
 	}
-	w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("removing variable set %s from workspace", vs.ID))
-	return w.tfClient.Client.VariableSets.RemoveFromWorkspaces(ctx, vs.ID, &tfc.VariableSetRemoveFromWorkspacesOptions{
-		Workspaces: []*tfc.Workspace{{ID: w.instance.Status.WorkspaceID}},
-	})
+
+	w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("removing variable set %s from workspace", id))
+	ws := models.NewWorkspacesIdentifierArrayDocument_data()
+	ws.SetId(new(w.instance.Status.WorkspaceID))
+	ws.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+	body := models.NewWorkspacesIdentifierArrayDocument()
+	body.SetData([]models.WorkspacesIdentifierArrayDocument_dataable{ws})
+	return w.tfClient.Client.API.Varsets().ByVarset_id(id).Relationships().Workspaces().Delete(ctx, body, nil)
 }
 
-func (w *workspaceInstance) applyVariableSetsToWorkspace(ctx context.Context, vs *tfc.VariableSet) error {
-	if vs.Global {
+func (w *workspaceInstance) applyVariableSetsToWorkspace(ctx context.Context, vs models.Varsetsable) error {
+	id := pointer.ValueOf(vs.GetId())
+	if pointer.ValueOf(vs.GetAttributes().GetGlobal()) {
 		return nil
 	}
-	w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("applying missing variable set %s to workspace", vs.ID))
-	return w.tfClient.Client.VariableSets.ApplyToWorkspaces(ctx, vs.ID, &tfc.VariableSetApplyToWorkspacesOptions{
-		Workspaces: []*tfc.Workspace{{ID: w.instance.Status.WorkspaceID}},
-	})
 
+	w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("applying missing variable set %s to workspace", id))
+	ws := models.NewWorkspacesIdentifierArrayDocument_data()
+	ws.SetId(new(w.instance.Status.WorkspaceID))
+	ws.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+	body := models.NewWorkspacesIdentifierArrayDocument()
+	body.SetData([]models.WorkspacesIdentifierArrayDocument_dataable{ws})
+	return w.tfClient.Client.API.Varsets().ByVarset_id(id).Relationships().Workspaces().Post(ctx, body, nil)
 }
 
 func (w *workspaceInstance) addOrUpdateVariableSetsStatus(vs appv1alpha2.VariableSetStatus) {
@@ -90,15 +102,15 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 		return err
 	}
 
-	specVariableSets := make(map[string]*tfc.VariableSet)
+	specVariableSets := make(map[string]models.Varsetsable)
 	statusVariableSets := make(map[string]struct{})
 
 	for _, vs := range w.instance.Spec.VariableSets {
 		if vs.Name != "" {
 			f := false
 			for _, wvs := range workspaceVariableSets {
-				if vs.Name == wvs.Name {
-					specVariableSets[wvs.ID] = wvs
+				if vs.Name == pointer.ValueOf(wvs.GetAttributes().GetName()) {
+					specVariableSets[pointer.ValueOf(wvs.GetId())] = wvs
 					f = true
 				}
 			}
@@ -121,8 +133,8 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 
 	for id, vs := range specVariableSets {
 		if _, ok := statusVariableSets[id]; ok {
-			if slices.ContainsFunc(vs.Workspaces, func(ws *tfc.Workspace) bool {
-				return ws.ID == w.instance.Status.WorkspaceID
+			if vs.GetRelationships() != nil && vs.GetRelationships().GetWorkspaces() != nil && slices.ContainsFunc(vs.GetRelationships().GetWorkspaces().GetData(), func(ws models.WorkspacesIdentifierable) bool {
+				return pointer.ValueOf(ws.GetId()) == w.instance.Status.WorkspaceID
 			}) {
 				delete(statusVariableSets, id)
 				continue
@@ -133,7 +145,7 @@ func (r *WorkspaceReconciler) reconcileVariableSets(ctx context.Context, w *work
 			w.log.Info("Reconcile Variable Sets", "msg", fmt.Sprintf("failed to apply variable set %s", id))
 			return err
 		}
-		w.addOrUpdateVariableSetsStatus(appv1alpha2.VariableSetStatus{ID: vs.ID, Name: vs.Name})
+		w.addOrUpdateVariableSetsStatus(appv1alpha2.VariableSetStatus{ID: pointer.ValueOf(vs.GetId()), Name: pointer.ValueOf(vs.GetAttributes().GetName())})
 		delete(statusVariableSets, id)
 	}
 

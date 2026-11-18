@@ -4,10 +4,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Project controller", Ordered, func() {
@@ -26,7 +29,7 @@ var _ = Describe("Project controller", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		if tfClient.IsEnterprise() {
+		if isEnterprise() {
 			Skip("Does not run against Terraform Enterprise, skip this test")
 		}
 		// Set default Eventually timers
@@ -75,13 +78,13 @@ var _ = Describe("Project controller", Ordered, func() {
 		}).Should(BeTrue())
 
 		Eventually(func() bool {
-			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
-			return err == tfc.ErrResourceNotFound || err == nil
+			err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Delete(ctx, nil)
+			return errors.Is(err, tfc.ErrNotFound) || err == nil
 		}).Should(BeTrue())
 
 		Eventually(func() bool {
-			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-			return err == tfc.ErrResourceNotFound || err == nil
+			err := tfClient.API.Organizations().ByOrganization_name(organization).Workspaces().ByWorkspace_name(workspace).Delete(ctx, nil)
+			return errors.Is(err, tfc.ErrNotFound) || err == nil
 		}).Should(BeTrue())
 	})
 
@@ -93,36 +96,55 @@ var _ = Describe("Project controller", Ordered, func() {
 			Eventually(func() bool {
 				return kerrors.IsNotFound(k8sClient.Get(ctx, namespacedName, instance))
 			}).Should(BeTrue())
-			prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
+			prj, err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(prj).NotTo(BeNil())
+			Expect(pointer.ValueOf(prj.GetData().GetAttributes().GetName())).NotTo(BeEmpty())
 		})
 
 		It("can soft delete a project", func() {
 			instance.Spec.DeletionPolicy = appv1alpha2.ProjectDeletionPolicySoft
 			createProject(instance)
 			// Create a workspace and assign it to a newley created project
-			ws, err := tfClient.Workspaces.Create(ctx, organization, tfc.WorkspaceCreateOptions{
-				Name: &workspace,
-				Project: &tfc.Project{
-					ID: instance.Status.ID,
-				},
-			})
+			wsAttrs := models.NewWorkspaces_attributes()
+			wsAttrs.SetName(&workspace)
+			wsAttrs.SetAutoApply(new(false))
+			wsPrj := models.NewProjectsHasOne_data()
+			wsPrj.SetId(&instance.Status.ID)
+			wsPrj.SetTypeEscaped(new(models.PROJECTS_PROJECTSIDENTIFIER_TYPE))
+			wsPrjRel := models.NewProjectsHasOne()
+			wsPrjRel.SetData(wsPrj)
+			wsRels := models.NewWorkspaces_relationships()
+			wsRels.SetProject(wsPrjRel)
+			wsData := models.NewWorkspaces()
+			wsData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			wsData.SetAttributes(wsAttrs)
+			wsData.SetRelationships(wsRels)
+			wsBody := models.NewWorkspacesEnvelope()
+			wsBody.SetData(wsData)
+			ws, err := tfClient.API.Organizations().ByOrganization_name(organization).Workspaces().Post(ctx, wsBody, nil)
 			Expect(err).Should(Succeed())
-			Expect(ws).NotTo(BeNil())
+			wsID := pointer.ValueOf(ws.GetData().GetId())
+			Expect(wsID).NotTo(BeEmpty())
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 
 			// Attach the workspace to the default project
-			org, err := tfClient.Organizations.Read(ctx, instance.Spec.Organization)
+			org, err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(org).NotTo(BeNil())
-			ws, err = tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
-				Project: &tfc.Project{
-					ID: org.DefaultProject.ID,
-				},
-			})
+			defPrj := models.NewProjectsHasOne_data()
+			defPrj.SetId(org.GetData().GetRelationships().GetDefaultProject().GetData().GetId())
+			defPrj.SetTypeEscaped(new(models.PROJECTS_PROJECTSIDENTIFIER_TYPE))
+			defPrjRel := models.NewProjectsHasOne()
+			defPrjRel.SetData(defPrj)
+			updRels := models.NewWorkspaces_relationships()
+			updRels.SetProject(defPrjRel)
+			updData := models.NewWorkspaces()
+			updData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			updData.SetId(&wsID)
+			updData.SetRelationships(updRels)
+			updBody := models.NewWorkspacesEnvelope()
+			updBody.SetData(updData)
+			_, err = tfClient.API.Workspaces().ByWorkspace_id(wsID).Patch(ctx, updBody, nil)
 			Expect(err).Should(Succeed())
-			Expect(ws).NotTo(BeNil())
 
 			// Wait until the CR is gone
 			Eventually(func() bool {
@@ -130,7 +152,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			// Delete the workspace
-			Expect(tfClient.Workspaces.DeleteByID(ctx, ws.ID)).Should(Succeed())
+			Expect(tfClient.API.Workspaces().ByWorkspace_id(wsID).Delete(ctx, nil)).Should(Succeed())
 		})
 
 	})

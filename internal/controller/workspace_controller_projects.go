@@ -7,32 +7,37 @@ import (
 	"context"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func (w *workspaceInstance) getProjectIDByName(ctx context.Context) (string, error) {
 	projectName := w.instance.Spec.Project.Name
-
-	listOpts := &tfc.ProjectListOptions{
-		Name: projectName,
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &organizations.ItemProjectsRequestBuilderGetQueryParameters{
+		Filternames: &projectName,
+		Pagesize:    new(int32(MaxPageSize)),
 	}
+
 	for {
-		projectIDs, err := w.tfClient.Client.Projects.List(ctx, w.instance.Spec.Organization, listOpts)
+		projects, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).Projects().Get(ctx,
+			&abstractions.RequestConfiguration[organizations.ItemProjectsRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return "", err
 		}
-		for _, p := range projectIDs.Items {
-			if p.Name == projectName {
-				return p.ID, nil
+
+		for _, p := range projects.GetData() {
+			if p.GetAttributes() != nil && pointer.ValueOf(p.GetAttributes().GetName()) == projectName {
+				return pointer.ValueOf(p.GetId()), nil
 			}
 		}
-		if projectIDs.NextPage == 0 {
+
+		next := nextPage(projects.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = projectIDs.NextPage
+		query.Pagenumber = &next
 	}
 
 	return "", fmt.Errorf("project ID not found for project name %q", projectName)
@@ -40,7 +45,6 @@ func (w *workspaceInstance) getProjectIDByName(ctx context.Context) (string, err
 
 func (w *workspaceInstance) getProjectID(ctx context.Context) (string, error) {
 	specProject := w.instance.Spec.Project
-
 	if specProject == nil {
 		return "", fmt.Errorf("'spec.Project' is not set")
 	}

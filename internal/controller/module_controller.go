@@ -8,14 +8,18 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"text/template"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-slug"
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
@@ -43,20 +48,81 @@ type moduleInstance struct {
 
 	log      logr.Logger
 	tfClient HCPTerraformClient
+
+	// token and httpClient are used to upload configuration versions,
+	// which is not covered by the generated API client.
+	token      string
+	httpClient *http.Client
 }
 
 var (
-	runStatusComplete = map[tfc.RunStatus]struct{}{
-		tfc.RunApplied:            {},
-		tfc.RunPlannedAndFinished: {},
+	runStatusComplete = map[string]struct{}{
+		models.APPLIED_RUNS_ATTRIBUTES_STATUS.String():              {},
+		models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String(): {},
 	}
 
-	runStatusUnsuccessful = map[tfc.RunStatus]struct{}{
-		tfc.RunCanceled:  {},
-		tfc.RunDiscarded: {},
-		tfc.RunErrored:   {},
+	runStatusUnsuccessful = map[string]struct{}{
+		models.CANCELED_RUNS_ATTRIBUTES_STATUS.String():  {},
+		models.DISCARDED_RUNS_ATTRIBUTES_STATUS.String(): {},
+		models.ERRORED_RUNS_ATTRIBUTES_STATUS.String():   {},
 	}
 )
+
+const (
+	configurationVersionUploaded = "uploaded"
+	configurationVersionErrored  = "errored"
+)
+
+// uploadConfigurationVersion packs a given directory and uploads it to a given upload URL.
+// Same as go-tfe v1, rate limited (429) responses are retried.
+func (m *moduleInstance) uploadConfigurationVersion(ctx context.Context, uploadURL, path string) error {
+	body := bytes.NewBuffer(nil)
+	if _, err := slug.Pack(path, body, true); err != nil {
+		return err
+	}
+	payload := body.Bytes()
+
+	// The upload URL is pre-signed (archivist). The token is sent only to the API host.
+	sendToken := false
+	base := m.tfClient.Client.BaseURL()
+	if u, err := url.Parse(uploadURL); err == nil && u.Host == base.Host {
+		sendToken = true
+	}
+
+	const maxRetries = 30
+	for attempt := 0; ; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadURL, bytes.NewReader(payload))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/octet-stream")
+		if sendToken {
+			req.Header.Set("Authorization", "Bearer "+m.token)
+		}
+		req.Header.Set("User-Agent", version.UserAgent)
+
+		resp, err := m.httpClient.Do(req)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode == http.StatusTooManyRequests && attempt < maxRetries {
+			_ = resp.Body.Close()
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(400 * time.Millisecond):
+			}
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+			return fmt.Errorf("failed to upload configuration version: %s: %s", resp.Status, string(b))
+		}
+		return nil
+	}
+}
 
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=app.terraform.io,resources=modules/finalizers,verbs=update
@@ -149,13 +215,17 @@ func (r *ModuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace, cv *tfc.ConfigurationVersion) error {
-	instance.Status.WorkspaceID = workspace.ID
+func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1alpha2.Module, workspace models.Workspacesable, cv models.ConfigurationVersionsable) error {
+	instance.Status.WorkspaceID = pointer.ValueOf(workspace.GetId())
 	instance.Status.ObservedGeneration = instance.Generation
 	if cv != nil {
+		var status string
+		if s := cv.GetAttributes().GetStatus(); s != nil {
+			status = s.String()
+		}
 		instance.Status.ConfigurationVersion = &appv1alpha2.ConfigurationVersionStatus{
-			ID:     cv.ID,
-			Status: string(cv.Status),
+			ID:     pointer.ValueOf(cv.GetId()),
+			Status: status,
 		}
 		// Erase the run status since we proceeding with a new config version
 		instance.Status.Run = nil
@@ -164,32 +234,40 @@ func (r *ModuleReconciler) updateStatusCV(ctx context.Context, instance *appv1al
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace, run *tfc.Run) error {
-	instance.Status.WorkspaceID = workspace.ID
+func (r *ModuleReconciler) updateStatusRun(ctx context.Context, instance *appv1alpha2.Module, workspace models.Workspacesable, run models.Runsable) error {
+	var cvID string
+	if cv := run.GetRelationships().GetConfigurationVersion(); cv != nil && cv.GetData() != nil {
+		cvID = pointer.ValueOf(cv.GetData().GetId())
+	}
+	instance.Status.WorkspaceID = pointer.ValueOf(workspace.GetId())
 	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.Run = &appv1alpha2.RunStatus{
-		ID:                   run.ID,
-		Status:               string(run.Status),
-		ConfigurationVersion: run.ConfigurationVersion.ID,
+		ID:                   pointer.ValueOf(run.GetId()),
+		Status:               runAttributesStatus(run.GetAttributes()),
+		ConfigurationVersion: cvID,
 	}
 
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) updateStatusOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace *tfc.Workspace) error {
-	instance.Status.WorkspaceID = workspace.ID
+func (r *ModuleReconciler) updateStatusOutputs(ctx context.Context, instance *appv1alpha2.Module, workspace models.Workspacesable) error {
+	instance.Status.WorkspaceID = pointer.ValueOf(workspace.GetId())
 	instance.Status.ObservedGeneration = instance.Generation
 
 	return r.Status().Update(ctx, instance)
 }
 
-func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *appv1alpha2.Module, run *tfc.Run) error {
-	instance.Status.DestroyRunID = run.ID
+func (r *ModuleReconciler) updateStatusDestroy(ctx context.Context, instance *appv1alpha2.Module, run models.Runsable) error {
+	var cvID string
+	if cv := run.GetRelationships().GetConfigurationVersion(); cv != nil && cv.GetData() != nil {
+		cvID = pointer.ValueOf(cv.GetData().GetId())
+	}
+	instance.Status.DestroyRunID = pointer.ValueOf(run.GetId())
 	instance.Status.ObservedGeneration = instance.Generation
 	instance.Status.Run = &appv1alpha2.RunStatus{
-		ID:                   run.ID,
-		Status:               string(run.Status),
-		ConfigurationVersion: run.ConfigurationVersion.ID,
+		ID:                   pointer.ValueOf(run.GetId()),
+		Status:               runAttributesStatus(run.GetAttributes()),
+		ConfigurationVersion: cvID,
 	}
 
 	return r.Status().Update(ctx, instance)
@@ -205,7 +283,6 @@ func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInst
 		return err
 	}
 
-	httpClient := tfc.DefaultConfig().HTTPClient
 	insecure := false
 
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
@@ -219,16 +296,25 @@ func (r *ModuleReconciler) getTerraformClient(ctx context.Context, m *moduleInst
 		m.log.Info("Reconcile Module", "msg", "client configured to skip TLS certificate verifications")
 	}
 
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 
 	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
+		Address:           os.Getenv("TFE_ADDRESS"),
+		Token:             token,
+		HTTPTransport:     newRunStatusTransport(transport),
+		RetryRateLimited:  true,
+		RetryServerErrors: false,
+		RetryMaxRetries:   30,
 		Headers: http.Header{
 			"User-Agent": []string{version.UserAgent},
 		},
 	}
 	m.tfClient.Client, err = tfc.NewClient(config)
+
+	// The configuration version upload is not covered by the API client
+	m.token = token
+	m.httpClient = &http.Client{Transport: transport}
 
 	return err
 }
@@ -291,9 +377,9 @@ func waitForUploadModule(instance *appv1alpha2.Module) bool {
 	}
 
 	switch instance.Status.ConfigurationVersion.Status {
-	case string(tfc.ConfigurationUploaded):
+	case configurationVersionUploaded:
 		return false
-	case string(tfc.ConfigurationErrored):
+	case configurationVersionErrored:
 		return false
 
 	}
@@ -306,7 +392,7 @@ func needNewRun(instance *appv1alpha2.Module) bool {
 		return false
 	}
 
-	if instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationErrored) {
+	if instance.Status.ConfigurationVersion.Status == configurationVersionErrored {
 		return false
 	}
 
@@ -348,7 +434,7 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 		r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileModule", "Failed to get workspace")
 		return err
 	}
-	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully got workspace ID %s", workspace.ID))
+	m.log.Info("Reconcile Module Workspace", "msg", fmt.Sprintf("successfully got workspace ID %s", pointer.ValueOf(workspace.GetId())))
 
 	// checks if a new version of the CV needs to be uploaded
 	if needToUploadModule(&m.instance) {
@@ -362,17 +448,23 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 		m.log.Info("Reconcile Configuration Version", "msg", "successfully generated a new module code")
 
 		m.log.Info("Reconcile Configuration Version", "msg", "create a new configuration versions")
-		cv, err := m.tfClient.Client.ConfigurationVersions.Create(ctx, workspace.ID, tfc.ConfigurationVersionCreateOptions{
-			AutoQueueRuns: tfc.Bool(false),
-		})
+		cvAttrs := models.NewConfigurationVersions_attributes()
+		cvAttrs.SetAutoQueueRuns(new(false))
+		cvData := models.NewConfigurationVersions()
+		cvData.SetTypeEscaped(new(models.CONFIGURATIONVERSIONS_CONFIGURATIONVERSIONS_TYPE))
+		cvData.SetAttributes(cvAttrs)
+		cvBody := models.NewConfigurationVersionsEnvelope()
+		cvBody.SetData(cvData)
+		cvResp, err := m.tfClient.Client.API.Workspaces().ByWorkspace_id(pointer.ValueOf(workspace.GetId())).ConfigurationVersions().Post(ctx, cvBody, nil)
 		if err != nil {
 			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to create a new configuration versions")
 			return err
 		}
+		cv := cvResp.GetData()
 		m.log.Info("Reconcile Configuration Version", "msg", "successfully created new config version")
 
 		m.log.Info("Reconcile Configuration Version", "msg", "upload a new config version")
-		err = m.tfClient.Client.ConfigurationVersions.Upload(ctx, cv.UploadURL, path)
+		err = m.uploadConfigurationVersion(ctx, pointer.ValueOf(cv.GetAttributes().GetUploadUrl()), path)
 		if err != nil {
 			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to upload a new config version")
 			return err
@@ -388,12 +480,13 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	// checks if a new version of the CV is uploaded
 	if waitForUploadModule(&m.instance) {
 		m.log.Info("Reconcile Configuration Version", "msg", "check the upload status")
-		cv, err := m.tfClient.Client.ConfigurationVersions.Read(ctx, m.instance.Status.ConfigurationVersion.ID)
+		cvResp, err := m.tfClient.Client.API.ConfigurationVersions().ByConfiguration_version_id(m.instance.Status.ConfigurationVersion.ID).Get(ctx, nil)
 		if err != nil {
 			m.log.Error(err, "Reconcile Configuration Version", "msg", "failed to get the upload status")
 			return err
 		}
-		m.log.Info("Reconcile Configuration Version", "msg", fmt.Sprintf("successfully got the upload status: %s", cv.Status))
+		cv := cvResp.GetData()
+		m.log.Info("Reconcile Configuration Version", "msg", fmt.Sprintf("successfully got the upload status: %s", cv.GetAttributes().GetStatus()))
 		if err := r.updateStatusCV(ctx, &m.instance, workspace, cv); err != nil {
 			return err
 		}
@@ -402,15 +495,33 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	// checks if a new Run needs to be initialized
 	if needNewRun(&m.instance) {
 		m.log.Info("Reconcile Run", "msg", "create a new run")
-		run, err := m.tfClient.Client.Runs.Create(ctx, tfc.RunCreateOptions{
-			Message:              tfc.String(runMessage),
-			Workspace:            workspace,
-			ConfigurationVersion: &tfc.ConfigurationVersion{ID: m.instance.Status.ConfigurationVersion.ID},
-		})
+		attrs := models.NewRuns_attributes()
+		attrs.SetMessage(new(runMessage))
+		wsData := models.NewWorkspacesHasOne_data()
+		wsData.SetId(workspace.GetId())
+		wsData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+		wsRel := models.NewWorkspacesHasOne()
+		wsRel.SetData(wsData)
+		cvData := models.NewConfigurationVersionsHasOne_data()
+		cvData.SetId(new(m.instance.Status.ConfigurationVersion.ID))
+		cvData.SetTypeEscaped(new(models.CONFIGURATIONVERSIONS_CONFIGURATIONVERSIONSIDENTIFIER_TYPE))
+		cvRel := models.NewConfigurationVersionsHasOne()
+		cvRel.SetData(cvData)
+		rels := models.NewRuns_relationships()
+		rels.SetWorkspace(wsRel)
+		rels.SetConfigurationVersion(cvRel)
+		data := models.NewRuns()
+		data.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+		data.SetAttributes(attrs)
+		data.SetRelationships(rels)
+		body := models.NewRunsEnvelope()
+		body.SetData(data)
+		resp, err := m.tfClient.Client.API.Runs().Post(ctx, body, nil)
 		if err != nil {
 			m.log.Error(err, "Reconcile Run", "msg", "failed to create a new run")
 			return err
 		}
+		run := resp.GetData()
 		m.log.Info("Reconcile Run", "msg", "successfully created a new run")
 
 		// It can take a while to proceed with a new run
@@ -422,12 +533,13 @@ func (r *ModuleReconciler) reconcileModule(ctx context.Context, m *moduleInstanc
 	// checks if a new version of the Run is finished
 	if waitRunToComplete(m.instance.Status.Run) {
 		m.log.Info("Reconcile Run", "msg", "check the run status")
-		run, err := m.tfClient.Client.Runs.Read(ctx, m.instance.Status.Run.ID)
+		resp, err := m.tfClient.Client.API.Runs().ById(m.instance.Status.Run.ID).Get(ctx, nil)
 		if err != nil {
 			m.log.Error(err, "Reconcile Run", "msg", "failed to get run status")
 			return err
 		}
-		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", run.Status))
+		run := resp.GetData()
+		m.log.Info("Reconcile Run", "msg", fmt.Sprintf("successfully got the run status: %s", runAttributesStatus(run.GetAttributes())))
 		if err := r.updateStatusRun(ctx, &m.instance, workspace, run); err != nil {
 			return err
 		}

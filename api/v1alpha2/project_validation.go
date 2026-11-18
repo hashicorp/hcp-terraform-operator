@@ -6,7 +6,8 @@ package v1alpha2
 import (
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -42,11 +43,11 @@ func (p *Project) validateSpecTeamAccessCustom() field.ErrorList {
 
 	for i, ta := range p.Spec.TeamAccess {
 		f := field.NewPath("spec").Child(fmt.Sprintf("[%d]", i))
-		if ta.Access == tfc.TeamProjectAccessCustom {
+		if ta.Access == models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String() {
 			if ta.Custom == nil {
 				allErrs = append(allErrs, field.Required(
 					f,
-					fmt.Sprintf("'spec.teamAccess.custom' must be set when 'spec.teamAccess' is set to %q", tfc.TeamProjectAccessCustom),
+					fmt.Sprintf("'spec.teamAccess.custom' must be set when 'spec.teamAccess' is set to %q", models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String()),
 				))
 			}
 		} else {

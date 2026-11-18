@@ -4,10 +4,16 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
+	tfc "github.com/hashicorp/go-tfe/v2"
+
+	"github.com/hashicorp/go-tfe/v2/api/teamprojects"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,13 +21,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Project controller", Ordered, func() {
 	var (
 		instance       *appv1alpha2.Project
 		namespacedName = newNamespacedName()
-		team           *tfc.Team
+		teamName       string
+		teamID         string
 		project        = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 	)
 
@@ -31,11 +39,12 @@ var _ = Describe("Project controller", Ordered, func() {
 		SetDefaultEventuallyPollingInterval(2 * time.Second)
 
 		// Create new teams
-		team = createTeam(fmt.Sprintf("%s-team", project))
+		teamName = fmt.Sprintf("%s-team", project)
+		teamID = pointer.ValueOf(createTeam(teamName).GetId())
 	})
 
 	AfterAll(func() {
-		err := tfClient.Teams.Delete(ctx, team.ID)
+		err := tfClient.API.Teams().ById(teamID).Delete(ctx, nil)
 		Expect(err).Should(Succeed())
 	})
 
@@ -79,9 +88,9 @@ var _ = Describe("Project controller", Ordered, func() {
 
 		// Make sure that the HCP Terraform project is deleted
 		Eventually(func() bool {
-			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
+			err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Delete(ctx, nil)
 			// The HCP Terraform client will return the error 'ResourceNotFound' once the project does not exist
-			return err == tfc.ErrResourceNotFound || err == nil
+			return errors.Is(err, tfc.ErrNotFound) || err == nil
 		}).Should(BeTrue())
 	})
 
@@ -90,9 +99,9 @@ var _ = Describe("Project controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.ProjectTeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						Name: team.Name,
+						Name: teamName,
 					},
-					Access: tfc.TeamProjectAccessAdmin,
+					Access: models.ADMIN_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 				},
 			}
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
@@ -107,11 +116,11 @@ var _ = Describe("Project controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.ProjectTeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						Name: team.Name,
+						Name: teamName,
 					},
-					Access: tfc.TeamProjectAccessCustom,
+					Access: models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 					Custom: &appv1alpha2.CustomProjectPermissions{
-						ProjectAccess: tfc.ProjectSettingsPermissionRead,
+						ProjectAccess: models.READ_TEAMPROJECTS_ATTRIBUTES_PROJECTACCESS_SETTINGS.String(),
 					},
 				},
 			}
@@ -120,7 +129,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			isProjectTeamAccessReconciled(instance)
 
 			prjTeamAccess := buildProjectTeamAccessByName(instance.Status.ID, &appv1alpha2.CustomProjectPermissions{
-				ProjectAccess:   tfc.ProjectSettingsPermissionRead,
+				ProjectAccess:   models.READ_TEAMPROJECTS_ATTRIBUTES_PROJECTACCESS_SETTINGS.String(),
 				TeamManagement:  "none",
 				CreateWorkspace: false,
 				DeleteWorkspace: false,
@@ -139,9 +148,9 @@ var _ = Describe("Project controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.ProjectTeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						Name: team.Name,
+						Name: teamName,
 					},
-					Access: tfc.TeamProjectAccessAdmin,
+					Access: models.ADMIN_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 				},
 			}
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
@@ -156,11 +165,11 @@ var _ = Describe("Project controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.ProjectTeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						ID: team.ID,
+						ID: teamID,
 					},
-					Access: tfc.TeamProjectAccessCustom,
+					Access: models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 					Custom: &appv1alpha2.CustomProjectPermissions{
-						ProjectAccess: tfc.ProjectSettingsPermissionRead,
+						ProjectAccess: models.READ_TEAMPROJECTS_ATTRIBUTES_PROJECTACCESS_SETTINGS.String(),
 					},
 				},
 			}
@@ -173,7 +182,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			prjTeamAccess = buildProjectTeamAccessByID(instance.Status.ID, &appv1alpha2.CustomProjectPermissions{
-				ProjectAccess:   tfc.ProjectSettingsPermissionRead,
+				ProjectAccess:   models.READ_TEAMPROJECTS_ATTRIBUTES_PROJECTACCESS_SETTINGS.String(),
 				TeamManagement:  "none",
 				CreateWorkspace: false,
 				DeleteWorkspace: false,
@@ -191,11 +200,11 @@ var _ = Describe("Project controller", Ordered, func() {
 		It("can handle update from custom to pre-set team access", func() {
 			instance.Spec.TeamAccess = append(instance.Spec.TeamAccess, &appv1alpha2.ProjectTeamAccess{
 				Team: appv1alpha2.Team{
-					Name: team.Name,
+					Name: teamName,
 				},
-				Access: tfc.TeamProjectAccessCustom,
+				Access: models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 				Custom: &appv1alpha2.CustomProjectPermissions{
-					ProjectAccess: tfc.ProjectSettingsPermissionRead,
+					ProjectAccess: models.READ_TEAMPROJECTS_ATTRIBUTES_PROJECTACCESS_SETTINGS.String(),
 				},
 			})
 			// Create a new Kubernetes project object and wait until the controller finishes the reconciliation
@@ -203,7 +212,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			isProjectTeamAccessReconciled(instance)
 
 			prjTeamAccess := buildProjectTeamAccessByName(instance.Status.ID, &appv1alpha2.CustomProjectPermissions{
-				ProjectAccess:   tfc.ProjectSettingsPermissionRead,
+				ProjectAccess:   models.READ_TEAMPROJECTS_ATTRIBUTES_PROJECTACCESS_SETTINGS.String(),
 				TeamManagement:  "none",
 				CreateWorkspace: false,
 				DeleteWorkspace: false,
@@ -222,9 +231,9 @@ var _ = Describe("Project controller", Ordered, func() {
 			instance.Spec.TeamAccess = []*appv1alpha2.ProjectTeamAccess{
 				{
 					Team: appv1alpha2.Team{
-						ID: team.ID,
+						ID: teamID,
 					},
-					Access: tfc.TeamProjectAccessAdmin,
+					Access: models.ADMIN_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 				},
 			}
 
@@ -248,11 +257,14 @@ func isProjectTeamAccessReconciled(instance *appv1alpha2.Project) {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 		Expect(instance.Spec.TeamAccess).ShouldNot(BeNil())
 
-		teamAccesses, err := tfClient.TeamProjectAccess.List(ctx, tfc.TeamProjectAccessListOptions{ProjectID: instance.Status.ID})
+		teamAccesses, err := tfClient.API.TeamProjects().Get(ctx, &abstractions.RequestConfiguration[teamprojects.TeamProjectsRequestBuilderGetQueryParameters]{
+			QueryParameters: &teamprojects.TeamProjectsRequestBuilderGetQueryParameters{
+				Filterprojectid: &instance.Status.ID,
+			},
+		})
 		Expect(err).Should(Succeed())
-		Expect(teamAccesses).ShouldNot(BeNil())
 
-		return len(teamAccesses.Items) == len(instance.Spec.TeamAccess)
+		return len(teamAccesses.GetData()) == len(instance.Spec.TeamAccess)
 	}).Should(BeTrue())
 }
 
@@ -265,25 +277,29 @@ func buildProjectTeamAccessByID(ID string, custom *appv1alpha2.CustomProjectPerm
 }
 
 func buildProjectTeamAccess(ID string, withTeamName bool, custom *appv1alpha2.CustomProjectPermissions) []*appv1alpha2.ProjectTeamAccess {
-	teamAccesses, err := tfClient.TeamProjectAccess.List(ctx, tfc.TeamProjectAccessListOptions{ProjectID: ID})
+	teamAccesses, err := tfClient.API.TeamProjects().Get(ctx, &abstractions.RequestConfiguration[teamprojects.TeamProjectsRequestBuilderGetQueryParameters]{
+		QueryParameters: &teamprojects.TeamProjectsRequestBuilderGetQueryParameters{
+			Filterprojectid: &ID,
+		},
+	})
 	Expect(err).Should(Succeed())
-	Expect(teamAccesses).ShouldNot(BeNil())
 
-	prjTeamAccess := make([]*appv1alpha2.ProjectTeamAccess, len(teamAccesses.Items))
+	prjTeamAccess := make([]*appv1alpha2.ProjectTeamAccess, len(teamAccesses.GetData()))
 
-	for i, teamAccess := range teamAccesses.Items {
-		t, err := tfClient.Teams.Read(ctx, teamAccess.Team.ID)
+	for i, teamAccess := range teamAccesses.GetData() {
+		teamID := pointer.ValueOf(teamAccess.GetRelationships().GetTeam().GetData().GetId())
+		t, err := tfClient.API.Teams().ById(teamID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(t).ShouldNot(BeNil())
 		team := appv1alpha2.Team{}
 		if withTeamName {
-			team.Name = t.Name
+			team.Name = pointer.ValueOf(t.GetData().GetAttributes().GetName())
 		} else {
-			team.ID = t.ID
+			team.ID = pointer.ValueOf(t.GetData().GetId())
 		}
 		prjTeamAccess[i] = &appv1alpha2.ProjectTeamAccess{
 			Team:   team,
-			Access: teamAccess.Access,
+			Access: string(teamAccess.GetAttributes().GetAccess().String()),
 			Custom: custom,
 		}
 	}

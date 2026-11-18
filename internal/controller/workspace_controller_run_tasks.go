@@ -9,11 +9,23 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
-func runTasksDifference(a, b map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
-	d := make(map[string]*tfc.WorkspaceRunTask)
+type runTask struct {
+	ID               string
+	RunTaskID        string
+	EnforcementLevel string
+	Stage            string
+}
+
+func runTasksDifference(a, b map[string]*runTask) map[string]*runTask {
+	d := make(map[string]*runTask)
 
 	for k, v := range a {
 		if _, ok := b[k]; !ok {
@@ -24,12 +36,12 @@ func runTasksDifference(a, b map[string]*tfc.WorkspaceRunTask) map[string]*tfc.W
 	return d
 }
 
-func getRunTasksToCreate(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+func getRunTasksToCreate(spec, ws map[string]*runTask) map[string]*runTask {
 	return runTasksDifference(spec, ws)
 }
 
-func getRunTasksToUpdate(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
-	o := make(map[string]*tfc.WorkspaceRunTask)
+func getRunTasksToUpdate(spec, ws map[string]*runTask) map[string]*runTask {
+	o := make(map[string]*runTask)
 
 	if len(spec) == 0 || len(ws) == 0 {
 		return o
@@ -38,7 +50,7 @@ func getRunTasksToUpdate(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*
 	for ik, iv := range spec {
 		if wv, ok := ws[ik]; ok {
 			iv.ID = wv.ID
-			if !cmp.Equal(iv, wv, cmpopts.IgnoreFields(tfc.WorkspaceRunTask{}, "Workspace")) {
+			if !cmp.Equal(iv, wv, cmpopts.IgnoreFields(runTask{}, "ID")) {
 				o[ik] = iv
 			}
 		}
@@ -47,18 +59,39 @@ func getRunTasksToUpdate(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*
 	return o
 }
 
-func getRunTasksToDelete(spec, ws map[string]*tfc.WorkspaceRunTask) map[string]*tfc.WorkspaceRunTask {
+func getRunTasksToDelete(spec, ws map[string]*runTask) map[string]*runTask {
 	return runTasksDifference(ws, spec)
 }
 
-func (r *WorkspaceReconciler) createRunTasks(ctx context.Context, w *workspaceInstance, create map[string]*tfc.WorkspaceRunTask) error {
+func (r *WorkspaceReconciler) createRunTasks(ctx context.Context, w *workspaceInstance, create map[string]*runTask) error {
 	for _, rt := range create {
-		_, err := w.tfClient.Client.WorkspaceRunTasks.Create(ctx, w.instance.Status.WorkspaceID, tfc.WorkspaceRunTaskCreateOptions{
-			Type:             "workspace-task",
-			EnforcementLevel: rt.EnforcementLevel,
-			RunTask:          rt.RunTask,
-			Stage:            &rt.Stage,
-		})
+		taskData := models.NewTasksIdentifier()
+		taskData.SetId(new(rt.RunTaskID))
+		taskData.SetTypeEscaped(new(models.TASKS_TASKSIDENTIFIER_TYPE))
+		task := models.NewTasksHasOne()
+		task.SetData(taskData)
+
+		rels := models.NewWorkspaceTasks_relationships()
+		rels.SetTask(task)
+
+		attrs := models.NewWorkspaceTasks_attributes()
+		// go-tfe v1 sent the enforcement level as is (even when empty) and left the validation to the API.
+		// An unknown (or empty) value is sent as a raw attribute since the generated enum cannot hold it.
+		if lv, err := models.ParseWorkspaceTasks_attributes_enforcementLevel(rt.EnforcementLevel); err == nil && lv != nil {
+			attrs.SetEnforcementLevel(lv.(*models.WorkspaceTasks_attributes_enforcementLevel))
+		} else {
+			attrs.SetAdditionalData(map[string]any{"enforcement-level": rt.EnforcementLevel})
+		}
+		attrs.SetStage(new(rt.Stage))
+
+		data := models.NewWorkspaceTasks()
+		data.SetTypeEscaped(new(models.WORKSPACETASKS_WORKSPACETASKS_TYPE))
+		data.SetAttributes(attrs)
+		data.SetRelationships(rels)
+		body := models.NewWorkspaceTasksEnvelope()
+		body.SetData(data)
+
+		_, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Tasks().Post(ctx, body, nil)
 		if err != nil {
 			w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to create a new run task")
 			return err
@@ -68,14 +101,25 @@ func (r *WorkspaceReconciler) createRunTasks(ctx context.Context, w *workspaceIn
 	return nil
 }
 
-func (r *WorkspaceReconciler) updateRunTasks(ctx context.Context, w *workspaceInstance, update map[string]*tfc.WorkspaceRunTask) error {
+func (r *WorkspaceReconciler) updateRunTasks(ctx context.Context, w *workspaceInstance, update map[string]*runTask) error {
 	for _, v := range update {
 		w.log.Info("Reconcile Run Tasks", "msg", "updating run task")
-		_, err := w.tfClient.Client.WorkspaceRunTasks.Update(ctx, w.instance.Status.WorkspaceID, v.ID, tfc.WorkspaceRunTaskUpdateOptions{
-			Type:             "workspace-task",
-			EnforcementLevel: v.EnforcementLevel,
-			Stage:            &v.Stage,
-		})
+		attrs := models.NewWorkspaceTasks_attributes()
+		// go-tfe v1 omitted the enforcement level when empty on update.
+		if lv, err := models.ParseWorkspaceTasks_attributes_enforcementLevel(v.EnforcementLevel); err == nil && lv != nil {
+			attrs.SetEnforcementLevel(lv.(*models.WorkspaceTasks_attributes_enforcementLevel))
+		} else if v.EnforcementLevel != "" {
+			attrs.SetAdditionalData(map[string]any{"enforcement-level": v.EnforcementLevel})
+		}
+		attrs.SetStage(new(v.Stage))
+
+		data := models.NewWorkspaceTasks()
+		data.SetTypeEscaped(new(models.WORKSPACETASKS_WORKSPACETASKS_TYPE))
+		data.SetAttributes(attrs)
+		body := models.NewWorkspaceTasksEnvelope()
+		body.SetData(data)
+
+		_, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Tasks().ById(v.ID).Patch(ctx, body, nil)
 		if err != nil {
 			w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to update run task")
 			return err
@@ -85,9 +129,9 @@ func (r *WorkspaceReconciler) updateRunTasks(ctx context.Context, w *workspaceIn
 	return nil
 }
 
-func (r *WorkspaceReconciler) deleteRunTasks(ctx context.Context, w *workspaceInstance, delete map[string]*tfc.WorkspaceRunTask) error {
+func (r *WorkspaceReconciler) deleteRunTasks(ctx context.Context, w *workspaceInstance, delete map[string]*runTask) error {
 	for _, d := range delete {
-		err := w.tfClient.Client.WorkspaceRunTasks.Delete(ctx, w.instance.Status.WorkspaceID, d.ID)
+		err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Tasks().ById(d.ID).Delete(ctx, nil)
 		if err != nil {
 			w.log.Error(err, "Reconcile Run Tasks", "msg", "failed to delete run task")
 			return err
@@ -107,28 +151,32 @@ func hasRunTaskName(w *workspaceInstance) bool {
 	return false
 }
 
-func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *workspaceInstance) (map[string]*tfc.WorkspaceRunTask, error) {
-	o := map[string]*tfc.WorkspaceRunTask{}
+func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *workspaceInstance) (map[string]*runTask, error) {
+	o := map[string]*runTask{}
 
 	rl := make(map[string]string)
 	if hasRunTaskName(w) {
-		listOpts := &tfc.RunTaskListOptions{
-			ListOptions: tfc.ListOptions{
-				PageSize: MaxPageSize,
-			},
+		query := &organizations.ItemTasksRequestBuilderGetQueryParameters{
+			Pagesize:   new(int32(MaxPageSize)),
+			Pagenumber: new(int32(InitPageNumber)),
 		}
 		for {
-			rt, err := w.tfClient.Client.RunTasks.List(ctx, w.instance.Spec.Organization, listOpts)
+			rt, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).Tasks().Get(ctx,
+				&abstractions.RequestConfiguration[organizations.ItemTasksRequestBuilderGetQueryParameters]{QueryParameters: query})
 			if err != nil {
 				return o, err
 			}
-			for _, t := range rt.Items {
-				rl[t.Name] = t.ID
+			for _, t := range rt.GetData() {
+				if t.GetAttributes() == nil {
+					continue
+				}
+				rl[pointer.ValueOf(t.GetAttributes().GetName())] = pointer.ValueOf(t.GetId())
 			}
-			if rt.NextPage == 0 {
+			next := nextPage(rt.GetMeta())
+			if next == 0 {
 				break
 			}
-			listOpts.PageNumber = rt.NextPage
+			query.Pagenumber = &next
 		}
 	}
 
@@ -137,41 +185,47 @@ func (r *WorkspaceReconciler) getInstanceRunTasks(ctx context.Context, w *worksp
 		if rt.Name != "" {
 			id = rl[rt.Name]
 		}
-		o[id] = &tfc.WorkspaceRunTask{
-			EnforcementLevel: tfc.TaskEnforcementLevel(rt.EnforcementLevel),
-			Stage:            tfc.Stage(rt.Stage),
-			RunTask:          &tfc.RunTask{ID: id},
+		o[id] = &runTask{
+			EnforcementLevel: rt.EnforcementLevel,
+			Stage:            rt.Stage,
+			RunTaskID:        id,
 		}
 	}
 
 	return o, nil
 }
 
-func (r *WorkspaceReconciler) getWorkspaceRunTasks(ctx context.Context, w *workspaceInstance) (map[string]*tfc.WorkspaceRunTask, error) {
-	o := map[string]*tfc.WorkspaceRunTask{}
+func (r *WorkspaceReconciler) getWorkspaceRunTasks(ctx context.Context, w *workspaceInstance) (map[string]*runTask, error) {
+	o := map[string]*runTask{}
 
-	listOpts := &tfc.WorkspaceRunTaskListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &workspaces.ItemTasksRequestBuilderGetQueryParameters{
+		Pagesize:   new(int32(MaxPageSize)),
+		Pagenumber: new(int32(InitPageNumber)),
 	}
 	for {
-		wrt, err := w.tfClient.Client.WorkspaceRunTasks.List(ctx, w.instance.Status.WorkspaceID, listOpts)
+		wrt, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Tasks().Get(ctx,
+			&abstractions.RequestConfiguration[workspaces.ItemTasksRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return o, err
 		}
-		for _, rt := range wrt.Items {
-			o[rt.RunTask.ID] = &tfc.WorkspaceRunTask{
-				ID:               rt.ID,
-				EnforcementLevel: rt.EnforcementLevel,
-				Stage:            rt.Stage,
-				RunTask:          &tfc.RunTask{ID: rt.RunTask.ID},
+		for _, rt := range wrt.GetData() {
+			t := &runTask{ID: pointer.ValueOf(rt.GetId())}
+			if rel := rt.GetRelationships(); rel != nil && rel.GetTask() != nil && rel.GetTask().GetData() != nil {
+				t.RunTaskID = pointer.ValueOf(rel.GetTask().GetData().GetId())
 			}
+			if attrs := rt.GetAttributes(); attrs != nil {
+				if v := attrs.GetEnforcementLevel(); v != nil {
+					t.EnforcementLevel = v.String()
+				}
+				t.Stage = pointer.ValueOf(attrs.GetStage())
+			}
+			o[t.RunTaskID] = t
 		}
-		if wrt.NextPage == 0 {
+		next := nextPage(wrt.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = wrt.NextPage
+		query.Pagenumber = &next
 	}
 
 	return o, nil

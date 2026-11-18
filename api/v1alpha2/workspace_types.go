@@ -4,7 +4,6 @@
 package v1alpha2
 
 import (
-	tfc "github.com/hashicorp/go-tfe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -388,7 +387,7 @@ type Notification struct {
 	// Must be one of the following values: `email`, `generic`, `microsoft-teams`, `slack`.
 	//
 	//+kubebuilder:validation:Enum:=email;generic;microsoft-teams;slack
-	Type tfc.NotificationDestinationType `json:"type"`
+	Type string `json:"type"`
 	// Whether the notification configuration should be enabled or not.
 	// Default: `true`.
 	//

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,39 +48,39 @@ func TestRequeueOnErr(t *testing.T) {
 func TestFormatOutput(t *testing.T) {
 	t.Parallel()
 	successCases := map[string]struct {
-		input    *tfc.StateVersionOutput
+		input    *stateVersionOutput
 		expected string
 	}{
 		"Boolean": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type:  "boolean",
 				Value: true,
 			},
 			expected: "true",
 		},
 		"String": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type:  "string",
 				Value: "hello",
 			},
 			expected: "hello",
 		},
 		"MultilineString": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type:  "string",
 				Value: "hello\nworld",
 			},
 			expected: "hello\nworld",
 		},
 		"Number": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type:  "number",
 				Value: 162,
 			},
 			expected: "162",
 		},
 		"List": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type: "array",
 				Value: []any{
 					"one",
@@ -91,7 +90,7 @@ func TestFormatOutput(t *testing.T) {
 			expected: `["one",2]`,
 		},
 		"Map": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type: "map",
 				Value: map[string]string{
 					"one": "een",
@@ -104,18 +103,18 @@ func TestFormatOutput(t *testing.T) {
 
 	for n, c := range successCases {
 		t.Run(n, func(t *testing.T) {
-			result, err := formatOutput(c.input)
+			result, err := formatOutputValue(c.input.Value)
 			assert.NoError(t, err)
 			assert.Equal(t, c.expected, result)
 		})
 	}
 
 	errorCases := map[string]struct {
-		input    *tfc.StateVersionOutput
+		input    *stateVersionOutput
 		expected string
 	}{
 		"MalformedJSON": {
-			input: &tfc.StateVersionOutput{
+			input: &stateVersionOutput{
 				Type: "map",
 				Value: map[string]any{
 					"one":  "een",
@@ -128,7 +127,7 @@ func TestFormatOutput(t *testing.T) {
 
 	for n, c := range errorCases {
 		t.Run(n, func(t *testing.T) {
-			result, err := formatOutput(c.input)
+			result, err := formatOutputValue(c.input.Value)
 			assert.Error(t, err)
 			assert.Equal(t, c.expected, result)
 		})
@@ -331,4 +330,10 @@ func TestUseRunsEndpoint(t *testing.T) {
 			assert.Equal(t, c.expected, v)
 		})
 	}
+}
+
+// stateVersionOutput is a minimal stand-in for a state version output used by TestFormatOutput.
+type stateVersionOutput struct {
+	Type  string
+	Value any
 }
