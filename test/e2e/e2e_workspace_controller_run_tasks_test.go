@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -16,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -89,8 +92,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.RunTasks.Delete(ctx, runTaskID)).Should(Succeed())
-		Expect(tfClient.RunTasks.Delete(ctx, runTaskID2)).Should(Succeed())
+		Expect(tfClient.API.Tasks().ById(runTaskID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Tasks().ById(runTaskID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Run Tasks", func() {
@@ -163,15 +166,22 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isRunTasksReconciled(instance)
 
 			// Make a manual change
-			runTasksList, err := tfClient.WorkspaceRunTasks.List(ctx, instance.Status.WorkspaceID, &tfc.WorkspaceRunTaskListOptions{})
+			runTasksList, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Tasks().Get(ctx, nil)
 			Expect(err).Should(Succeed())
 			Expect(runTasksList).ShouldNot(BeNil())
-			Expect(runTasksList.Items).Should(HaveLen(1))
-			runTasks := runTasksList.Items
-			_, err = tfClient.WorkspaceRunTasks.Update(ctx, instance.Status.WorkspaceID, runTasks[0].ID, tfc.WorkspaceRunTaskUpdateOptions{
-				EnforcementLevel: "mandatory",                          // was "advisory"
-				Stage:            (*tfc.Stage)(tfc.String("pre_plan")), // was "post_plan"
-			})
+			Expect(runTasksList.GetData()).Should(HaveLen(1))
+			runTasks := runTasksList.GetData()
+			level, err := models.ParseWorkspaceTasks_attributes_enforcementLevel("mandatory") // was "advisory"
+			Expect(err).Should(Succeed())
+			attrs := models.NewWorkspaceTasks_attributes()
+			attrs.SetEnforcementLevel(level.(*models.WorkspaceTasks_attributes_enforcementLevel))
+			attrs.SetStage(new("pre_plan")) // was "post_plan"
+			data := models.NewWorkspaceTasks()
+			data.SetTypeEscaped(new(models.WORKSPACETASKS_WORKSPACETASKS_TYPE))
+			data.SetAttributes(attrs)
+			body := models.NewWorkspaceTasksEnvelope()
+			body.SetData(data)
+			_, err = tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Tasks().ById(pointer.ValueOf(runTasks[0].GetId())).Patch(ctx, body, nil)
 			Expect(err).Should(Succeed())
 			isRunTasksReconciled(instance)
 		})
@@ -179,20 +189,20 @@ var _ = Describe("Workspace controller", Ordered, func() {
 })
 
 func deleteWorkspaceRunTasks(instance *appv1alpha2.Workspace) {
-	rtList, err := tfClient.WorkspaceRunTasks.List(ctx, instance.Status.WorkspaceID, &tfc.WorkspaceRunTaskListOptions{})
+	rtList, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Tasks().Get(ctx, nil)
 	Expect(err).Should(Succeed())
 	Expect(rtList).ShouldNot(BeNil())
 
-	for _, rt := range rtList.Items {
-		err := tfClient.WorkspaceRunTasks.Delete(ctx, instance.Status.WorkspaceID, rt.ID)
+	for _, rt := range rtList.GetData() {
+		err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Tasks().ById(pointer.ValueOf(rt.GetId())).Delete(ctx, nil)
 		Expect(err).Should(Succeed())
 	}
 
 	Eventually(func() bool {
-		rtList, err = tfClient.WorkspaceRunTasks.List(ctx, instance.Status.WorkspaceID, &tfc.WorkspaceRunTaskListOptions{})
+		rtList, err = tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Tasks().Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(rtList).ShouldNot(BeNil())
-		return len(rtList.Items) == 0
+		return len(rtList.GetData()) == 0
 	}).Should(BeTrue())
 }
 
@@ -205,15 +215,20 @@ func isRunTasksReconciled(instance *appv1alpha2.Workspace) {
 		s := make(map[string][]string)
 		// This hendle the case when Spec.RunTasks is empty, so we can do less API calls.
 		if len(instance.Spec.RunTasks) > 0 {
-			runTasksList, err := tfClient.RunTasks.List(ctx, instance.Spec.Organization, &tfc.RunTaskListOptions{})
+			runTasksList, err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).Tasks().Get(ctx,
+				&abstractions.RequestConfiguration[organizations.ItemTasksRequestBuilderGetQueryParameters]{
+					QueryParameters: &organizations.ItemTasksRequestBuilderGetQueryParameters{
+						Pagesize: new(int32(100)),
+					},
+				})
 			Expect(err).Should(Succeed())
 			Expect(runTasksList).ShouldNot(BeNil())
 			for _, r := range instance.Spec.RunTasks {
 				id := r.ID
 				if r.Name != "" {
-					for _, rt := range runTasksList.Items {
-						if rt.Name == r.Name {
-							id = rt.ID
+					for _, rt := range runTasksList.GetData() {
+						if rt.GetAttributes() != nil && pointer.ValueOf(rt.GetAttributes().GetName()) == r.Name {
+							id = pointer.ValueOf(rt.GetId())
 						}
 					}
 				}
@@ -222,12 +237,19 @@ func isRunTasksReconciled(instance *appv1alpha2.Workspace) {
 		}
 
 		// Get a slice of all Run Tasks that are assigned to the Workspace
-		runTasks, err := tfClient.WorkspaceRunTasks.List(ctx, instance.Status.WorkspaceID, &tfc.WorkspaceRunTaskListOptions{})
+		runTasks, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Tasks().Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(runTasks).ShouldNot(BeNil())
 		w := make(map[string][]string)
-		for _, r := range runTasks.Items {
-			w[r.RunTask.ID] = []string{string(r.EnforcementLevel), string(r.Stage)}
+		for _, r := range runTasks.GetData() {
+			if r.GetAttributes() == nil || r.GetRelationships() == nil || r.GetRelationships().GetTask() == nil || r.GetRelationships().GetTask().GetData() == nil {
+				continue
+			}
+			level := ""
+			if r.GetAttributes().GetEnforcementLevel() != nil {
+				level = r.GetAttributes().GetEnforcementLevel().String()
+			}
+			w[pointer.ValueOf(r.GetRelationships().GetTask().GetData().GetId())] = []string{level, pointer.ValueOf(r.GetAttributes().GetStage())}
 		}
 
 		return cmp.Equal(s, w)
@@ -235,13 +257,19 @@ func isRunTasksReconciled(instance *appv1alpha2.Workspace) {
 }
 
 func createRunTaskForTest(name string) string {
-	rt, err := tfClient.RunTasks.Create(ctx, organization, tfc.RunTaskCreateOptions{
-		Name:     name,
-		URL:      webhookURL,
-		Category: "task", // MUST BE "task"
-		Enabled:  tfc.Bool(true),
-	})
+	attrs := models.NewTasks_attributes()
+	attrs.SetName(&name)
+	attrs.SetUrl(new(webhookURL))
+	attrs.SetCategory(new("task")) // MUST BE "task"
+	attrs.SetEnabled(new(true))
+	data := models.NewTasks()
+	data.SetTypeEscaped(new(models.TASKS_TASKS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewTasksEnvelope()
+	body.SetData(data)
+	rt, err := tfClient.API.Organizations().ByOrganization_name(organization).Tasks().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
 	Expect(rt).ShouldNot(BeNil())
-	return rt.ID
+	Expect(rt.GetData()).ShouldNot(BeNil())
+	return pointer.ValueOf(rt.GetData().GetId())
 }

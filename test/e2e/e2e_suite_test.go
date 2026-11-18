@@ -4,9 +4,14 @@
 package controller
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -16,7 +21,8 @@ import (
 	"testing"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -36,6 +42,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 	//+kubebuilder:scaffold:imports
 )
@@ -126,7 +133,6 @@ var _ = BeforeSuite(func() {
 		Fail("Environment variable TFC_TOKEN is required, but either not set or empty")
 	}
 	// HCP Terraform Client
-	httpClient := tfc.DefaultConfig().HTTPClient
 	insecure := false
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
 		insecure, err = strconv.ParseBool(v)
@@ -135,13 +141,18 @@ var _ = BeforeSuite(func() {
 		}
 	}
 	fmt.Fprintf(GinkgoWriter, "TFC_TLS_SKIP_VERIFY: %v", insecure)
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 	tfcConfig := &tfc.Config{
-		Token:      os.Getenv("TFC_TOKEN"),
-		HTTPClient: httpClient,
+		Token:         os.Getenv("TFC_TOKEN"),
+		HTTPTransport: transport,
 		Headers: http.Header{
 			"User-Agent": []string{version.UserAgent},
 		},
+	}
+	// The v2 default config does not read TFE_ADDRESS from the environment.
+	if v, ok := os.LookupEnv("TFE_ADDRESS"); ok && v != "" {
+		tfcConfig.Address = v
 	}
 	tfClient, err = tfc.NewClient(tfcConfig)
 	Expect(err).Should(Succeed())
@@ -285,4 +296,129 @@ func getNamespacedName[T controller.Object](o T) types.NamespacedName {
 		Namespace: o.GetNamespace(),
 		Name:      o.GetName(),
 	}
+}
+
+// isEnterprise reports whether the remote is Terraform Enterprise (not HCP Terraform).
+// go-tfe v2 does not expose this, so it is read from the headers of the ping endpoint.
+func isEnterprise() bool {
+	GinkgoHelper()
+	resp, err := tfClient.GetStream(ctx, "/api/v2/ping", http.Header{"Accept": []string{tfc.ContentTypeJSONAPI}})
+	Expect(err).Should(Succeed())
+	defer resp.Body.Close() //nolint:errcheck
+	return resp.Header.Get("TFP-AppName") != "HCP Terraform"
+}
+
+// nextPage returns the next page number of a paginated response using its 'meta' object,
+// or zero if there are no more pages.
+func nextPage(meta any) int32 {
+	switch m := meta.(type) {
+	case interface{ GetPagination() models.Paginationable }:
+		if p := m.GetPagination(); p != nil {
+			return pointer.ValueOf(p.GetNextPage())
+		}
+	case interface {
+		GetPagination() models.PaginationWithoutTotalsable
+	}:
+		if p := m.GetPagination(); p != nil {
+			return pointer.ValueOf(p.GetNextPage())
+		}
+	}
+	return 0
+}
+
+// patchWorkspaceRaw patches a workspace with a hand-made JSON:API payload.
+// The generated models cannot express explicit JSON nulls.
+func patchWorkspaceRaw(id string, attributes map[string]any) {
+	GinkgoHelper()
+	builder := tfClient.API.Workspaces().ByWorkspace_id(id)
+	ri, err := builder.ToPatchRequestInformation(ctx, models.NewWorkspacesEnvelope(), nil)
+	Expect(err).Should(Succeed())
+	b, err := json.Marshal(map[string]any{
+		"data": map[string]any{
+			"type":       "workspaces",
+			"attributes": attributes,
+		},
+	})
+	Expect(err).Should(Succeed())
+	ri.SetStreamContentAndContentType(b, "application/vnd.api+json")
+	res, err := builder.RequestAdapter.Send(ctx, ri, models.CreateWorkspacesEnvelopeFromDiscriminatorValue, nil)
+	Expect(err).Should(Succeed())
+	Expect(res).ShouldNot(BeNil())
+}
+
+// tarGz packs the regular files of a directory into an in-memory tar.gz archive.
+func tarGz(dir string) (*bytes.Buffer, error) {
+	buf := &bytes.Buffer{}
+	gz := gzip.NewWriter(buf)
+	tw := tar.NewWriter(gz)
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
+		hdr, err := tar.FileInfoHeader(info, "")
+		if err != nil {
+			return err
+		}
+		hdr.Name = filepath.ToSlash(rel)
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close() //nolint:errcheck
+		_, err = io.Copy(tw, f)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := tw.Close(); err != nil {
+		return nil, err
+	}
+	if err := gz.Close(); err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
+// uploadConfigurationVersion uploads the content of a directory to a given configuration version upload URL.
+// go-tfe v2 does not provide an upload helper.
+func uploadConfigurationVersion(uploadURL, dir string) error {
+	archive, err := tarGz(dir)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadURL, archive)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+
+	insecure := false
+	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
+		insecure, _ = strconv.ParseBool(v)
+	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure} //nolint:gosec
+	resp, err := (&http.Client{Transport: transport}).Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return fmt.Errorf("configuration version upload failed with status %d", resp.StatusCode)
+	}
+	return nil
 }

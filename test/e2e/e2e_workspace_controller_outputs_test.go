@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +17,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -77,7 +78,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 
 			outputValue := "hoi"
-			cv := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, outputValue)
+			cvID := createAndUploadConfigurationVersion(instance.Status.WorkspaceID, outputValue)
 
 			By("Validating configuration version and workspace run")
 			Eventually(func() bool {
@@ -86,15 +87,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 					return false
 				}
 
-				runs, err := tfClient.Runs.List(ctx, instance.Status.WorkspaceID, &tfc.RunListOptions{})
+				runs, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Runs().Get(ctx, nil)
 				Expect(err).Should(Succeed())
 				Expect(runs).ShouldNot(BeNil())
 
-				for _, r := range runs.Items {
+				for _, r := range runs.GetData() {
 					if instance.Status.Run == nil {
 						return false
 					}
-					if r.ConfigurationVersion.ID == cv.ID && r.ID == instance.Status.Run.OutputRunID {
+					if pointer.ValueOf(r.GetRelationships().GetConfigurationVersion().GetData().GetId()) == cvID && pointer.ValueOf(r.GetId()) == instance.Status.Run.OutputRunID {
 						return true
 					}
 				}
@@ -133,7 +134,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	})
 })
 
-func createAndUploadConfigurationVersion(workspaceID string, outputValue string) *tfc.ConfigurationVersion {
+// createAndUploadConfigurationVersion creates a configuration version, uploads Terraform code to it, and returns its ID.
+func createAndUploadConfigurationVersion(workspaceID string, outputValue string) string {
 	GinkgoHelper()
 	// Create a temporary dir in the current one
 	cd, err := os.Getwd()
@@ -159,25 +161,31 @@ func createAndUploadConfigurationVersion(workspaceID string, outputValue string)
 	_, err = f.WriteString(tf)
 	Expect(err).Should(Succeed())
 
-	cv, err := tfClient.ConfigurationVersions.Create(ctx, workspaceID, tfc.ConfigurationVersionCreateOptions{
-		AutoQueueRuns: tfc.Bool(true),
-		Speculative:   tfc.Bool(false),
-	})
+	cvAttrs := models.NewConfigurationVersions_attributes()
+	cvAttrs.SetAutoQueueRuns(new(true))
+	cvAttrs.SetSpeculative(new(false))
+	cvData := models.NewConfigurationVersions()
+	cvData.SetTypeEscaped(new(models.CONFIGURATIONVERSIONS_CONFIGURATIONVERSIONS_TYPE))
+	cvData.SetAttributes(cvAttrs)
+	cvBody := models.NewConfigurationVersionsEnvelope()
+	cvBody.SetData(cvData)
+	cvResp, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).ConfigurationVersions().Post(ctx, cvBody, nil)
 	Expect(err).Should(Succeed())
+	Expect(cvResp).ShouldNot(BeNil())
+	cv := cvResp.GetData()
 	Expect(cv).ShouldNot(BeNil())
+	Expect(cv.GetAttributes()).ShouldNot(BeNil())
+	cvID := pointer.ValueOf(cv.GetId())
 
-	Expect(tfClient.ConfigurationVersions.Upload(ctx, cv.UploadURL, td)).Should(Succeed())
+	Expect(uploadConfigurationVersion(pointer.ValueOf(cv.GetAttributes().GetUploadUrl()), td)).Should(Succeed())
 
 	Eventually(func() bool {
-		c, err := tfClient.ConfigurationVersions.Read(ctx, cv.ID)
-		if err != nil {
+		c, err := tfClient.API.ConfigurationVersions().ByConfiguration_version_id(cvID).Get(ctx, nil)
+		if err != nil || c == nil || c.GetData() == nil || c.GetData().GetAttributes() == nil || c.GetData().GetAttributes().GetStatus() == nil {
 			return false
 		}
-		if c.Status == tfc.ConfigurationUploaded {
-			return true
-		}
-		return false
+		return c.GetData().GetAttributes().GetStatus().String() == "uploaded"
 	}).Should(BeTrue())
 
-	return cv
+	return cvID
 }

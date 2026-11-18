@@ -5,9 +5,10 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
 	corev1 "k8s.io/api/core/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
@@ -26,9 +27,9 @@ func (r *ProjectReconciler) deleteProject(ctx context.Context, p *projectInstanc
 		p.log.Info("Reconcile Project", "msg", fmt.Sprintf("remove finalizer %s", projectFinalizer))
 		return r.removeFinalizer(ctx, p)
 	case appv1alpha2.ProjectDeletionPolicySoft:
-		err := p.tfClient.Client.Projects.Delete(ctx, p.instance.Status.ID)
+		err := p.tfClient.Client.API.Projects().ByProject_id(p.instance.Status.ID).Delete(ctx, nil)
 		if err != nil {
-			if err == tfc.ErrResourceNotFound {
+			if errors.Is(err, tfc.ErrNotFound) {
 				p.log.Info("Reconcile Project", "msg", "Project was not found, remove finalizer")
 				return r.removeFinalizer(ctx, p)
 			}

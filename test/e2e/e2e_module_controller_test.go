@@ -4,16 +4,20 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/hashicorp/go-tfe/v2/api/models"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
@@ -91,30 +95,35 @@ var _ = Describe("Module сontroller", Ordered, func() {
 
 		// Make sure that the HCP Terraform workspace is deleted
 		Eventually(func() bool {
-			err := tfClient.Workspaces.Delete(ctx, organization, workspace)
-			return err == tfc.ErrResourceNotFound
+			err := tfClient.API.Organizations().ByOrganization_name(organization).Workspaces().ByWorkspace_name(workspace).Delete(ctx, nil)
+			return errors.Is(err, tfc.ErrNotFound)
 		}).Should(BeTrue())
 	})
 
 	Context("Can Handle", func() {
 		It("Reference to Workspace by Name", func() {
 			// Create a new HCP Terraform Workspace
-			ws := createWorkspace(tfc.WorkspaceCreateOptions{
-				Name:          &workspace,
-				AutoApply:     tfc.Bool(true),
-				ExecutionMode: tfc.String("remote"),
-			})
+			wsAttrs := models.NewWorkspaces_attributes()
+			wsAttrs.SetName(&workspace)
+			wsAttrs.SetAutoApply(new(true))
+			wsAttrs.SetExecutionMode(new(models.REMOTE_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+			wsID := pointer.ValueOf(createWorkspace(wsAttrs).GetId())
 
 			// Create TFC Workspace variables
-			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
-				Key:      tfc.String("name"),
-				Value:    tfc.String("Pluto"),
-				HCL:      tfc.Bool(false),
-				Category: tfc.Category(tfc.CategoryTerraform),
-			})
+			varAttrs := models.NewVars_attributes()
+			varAttrs.SetKey(new("name"))
+			varAttrs.SetValue(new("Pluto"))
+			varAttrs.SetHcl(new(false))
+			varAttrs.SetCategory(new(models.TERRAFORM_VARS_ATTRIBUTES_CATEGORY))
+			varData := models.NewVars()
+			varData.SetTypeEscaped(new(models.VARS_VARS_TYPE))
+			varData.SetAttributes(varAttrs)
+			varBody := models.NewVarsEnvelope()
+			varBody.SetData(varData)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Vars().Post(ctx, varBody, nil)
 			Expect(err).Should(Succeed())
 
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{Name: ws.Name}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{Name: workspace}
 			// Create a new Module
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
@@ -129,39 +138,44 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				if instance.Status.ConfigurationVersion == nil {
 					return false
 				}
-				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded)
+				return instance.Status.ConfigurationVersion.Status == "uploaded"
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo(string(tfc.ConfigurationErrored)))
+			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo("errored"))
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				if instance.Status.Run == nil {
 					return false
 				}
-				return instance.Status.Run.Status == string(tfc.RunApplied)
+				return instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
+			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(models.ERRORED_RUNS_ATTRIBUTES_STATUS.String())))
 		})
 		It("Reference to Workspace by ID", func() {
 			// Create a new HCP Terraform Workspace
-			ws := createWorkspace(tfc.WorkspaceCreateOptions{
-				Name:          &workspace,
-				AutoApply:     tfc.Bool(true),
-				ExecutionMode: tfc.String("remote"),
-			})
+			wsAttrs := models.NewWorkspaces_attributes()
+			wsAttrs.SetName(&workspace)
+			wsAttrs.SetAutoApply(new(true))
+			wsAttrs.SetExecutionMode(new(models.REMOTE_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+			wsID := pointer.ValueOf(createWorkspace(wsAttrs).GetId())
 
 			// Create TFC Workspace variables
-			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
-				Key:      tfc.String("name"),
-				Value:    tfc.String("Pluto"),
-				HCL:      tfc.Bool(false),
-				Category: tfc.Category(tfc.CategoryTerraform),
-			})
+			varAttrs := models.NewVars_attributes()
+			varAttrs.SetKey(new("name"))
+			varAttrs.SetValue(new("Pluto"))
+			varAttrs.SetHcl(new(false))
+			varAttrs.SetCategory(new(models.TERRAFORM_VARS_ATTRIBUTES_CATEGORY))
+			varData := models.NewVars()
+			varData.SetTypeEscaped(new(models.VARS_VARS_TYPE))
+			varData.SetAttributes(varAttrs)
+			varBody := models.NewVarsEnvelope()
+			varBody.SetData(varData)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Vars().Post(ctx, varBody, nil)
 			Expect(err).Should(Succeed())
 
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: wsID}
 			// Create a new Module
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
@@ -176,39 +190,44 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				if instance.Status.ConfigurationVersion == nil {
 					return false
 				}
-				return instance.Status.ConfigurationVersion.Status == string(tfc.ConfigurationUploaded)
+				return instance.Status.ConfigurationVersion.Status == "uploaded"
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo(string(tfc.ConfigurationErrored)))
+			Expect(instance.Status.ConfigurationVersion.Status).NotTo(BeEquivalentTo("errored"))
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 				if instance.Status.Run == nil {
 					return false
 				}
-				return instance.Status.Run.Status == string(tfc.RunApplied)
+				return instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
+			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(models.ERRORED_RUNS_ATTRIBUTES_STATUS.String())))
 		})
 		It("External Deletion", func() {
 			// Create a new HCP Terraform Workspace
-			ws := createWorkspace(tfc.WorkspaceCreateOptions{
-				Name:          &workspace,
-				AutoApply:     tfc.Bool(true),
-				ExecutionMode: tfc.String("remote"),
-			})
+			wsAttrs := models.NewWorkspaces_attributes()
+			wsAttrs.SetName(&workspace)
+			wsAttrs.SetAutoApply(new(true))
+			wsAttrs.SetExecutionMode(new(models.REMOTE_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+			wsID := pointer.ValueOf(createWorkspace(wsAttrs).GetId())
 
 			// Create TFC Workspace variables
-			_, err := tfClient.Variables.Create(ctx, ws.ID, tfc.VariableCreateOptions{
-				Key:      tfc.String("name"),
-				Value:    tfc.String("Pluto"),
-				HCL:      tfc.Bool(false),
-				Category: tfc.Category(tfc.CategoryTerraform),
-			})
+			varAttrs := models.NewVars_attributes()
+			varAttrs.SetKey(new("name"))
+			varAttrs.SetValue(new("Pluto"))
+			varAttrs.SetHcl(new(false))
+			varAttrs.SetCategory(new(models.TERRAFORM_VARS_ATTRIBUTES_CATEGORY))
+			varData := models.NewVars()
+			varData.SetTypeEscaped(new(models.VARS_VARS_TYPE))
+			varData.SetAttributes(varAttrs)
+			varBody := models.NewVarsEnvelope()
+			varBody.SetData(varData)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Vars().Post(ctx, varBody, nil)
 			Expect(err).Should(Succeed())
 
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: ws.ID}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: wsID}
 			// Create a new Module
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
 
@@ -223,20 +242,31 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				if instance.Status.Run == nil {
 					return false
 				}
-				return instance.Status.Run.Status == string(tfc.RunApplied)
+				return instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(tfc.RunErrored)))
+			Expect(instance.Status.Run.Status).NotTo(BeEquivalentTo(string(models.ERRORED_RUNS_ATTRIBUTES_STATUS.String())))
 
 			// Manually run destrory
-			dr, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-				IsDestroy: tfc.Bool(true),
-				Workspace: &tfc.Workspace{
-					ID: instance.Status.WorkspaceID,
-				},
-			})
+			runAttrs := models.NewRuns_attributes()
+			runAttrs.SetIsDestroy(new(true))
+			runWsData := models.NewWorkspacesHasOne_data()
+			runWsData.SetId(&instance.Status.WorkspaceID)
+			runWsData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+			runWs := models.NewWorkspacesHasOne()
+			runWs.SetData(runWsData)
+			runRels := models.NewRuns_relationships()
+			runRels.SetWorkspace(runWs)
+			runData := models.NewRuns()
+			runData.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+			runData.SetAttributes(runAttrs)
+			runData.SetRelationships(runRels)
+			runBody := models.NewRunsEnvelope()
+			runBody.SetData(runData)
+			run, err := tfClient.API.Runs().Post(ctx, runBody, nil)
 			Expect(err).Should(Succeed())
-			Expect(dr).ShouldNot(BeNil())
+			drID := pointer.ValueOf(run.GetData().GetId())
+			Expect(drID).ShouldNot(BeEmpty())
 
 			Expect(k8sClient.Delete(ctx, instance, &client.DeleteOptions{
 				PropagationPolicy: pointer.PointerOf(metav1.DeletePropagationBackground),
@@ -245,7 +275,7 @@ var _ = Describe("Module сontroller", Ordered, func() {
 			// Make sure the destroy run ID is the same as the manual one
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				return instance.Status.DestroyRunID == dr.ID
+				return instance.Status.DestroyRunID == drID
 			}).Should(BeTrue())
 		})
 	})

@@ -7,37 +7,39 @@ import (
 	"context"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
-func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceInstance, workspace models.Workspacesable) error {
 	w.log.Info("Reconcile Runs", "msg", "new reconciliation event")
 
 	if runNew, ok := w.instance.Annotations[WorkspaceAnnotationRunNew]; ok && runNew == MetaTrue {
 		w.log.Info("Reconcile Runs", "msg", "trigger a new run")
+
 		runType := RunTypeDefault
 		if rt, ok := w.instance.Annotations[WorkspaceAnnotationRunType]; ok {
 			runType = rt
 		}
-		options := tfc.RunCreateOptions{
-			Message:   tfc.String(runMessage),
-			Workspace: workspace,
-		}
+
+		options := models.NewRuns_attributes()
+		options.SetMessage(new(runMessage))
 
 		switch runType {
 		case RunTypePlan:
-			options.PlanOnly = tfc.Bool(true)
+			options.SetPlanOnly(new(true))
 			if t, ok := w.instance.Annotations[WorkspaceAnnotationRunTerraformVersion]; ok {
-				options.TerraformVersion = tfc.String(t)
+				options.SetTerraformVersion(new(t))
 			}
-			return r.triggerPlanRun(ctx, w, options)
+			return r.triggerPlanRun(ctx, w, pointer.ValueOf(workspace.GetId()), options)
 		case RunTypeApply:
-			options.PlanOnly = tfc.Bool(false)
-			return r.triggerApplyRun(ctx, w, options)
+			options.SetPlanOnly(new(false))
+			return r.triggerApplyRun(ctx, w, pointer.ValueOf(workspace.GetId()), options)
 		case RunTypeRefresh:
-			options.RefreshOnly = tfc.Bool(true)
-			return r.triggerApplyRun(ctx, w, options)
+			options.SetRefreshOnly(new(true))
+			return r.triggerApplyRun(ctx, w, pointer.ValueOf(workspace.GetId()), options)
 		default:
 			// Throw an error message here but don't return.
 			w.log.Error(fmt.Errorf("run type %q is not valid", runType), "Reconcile Runs", "msg", "no new run will be triggered")
@@ -55,34 +57,34 @@ func (r *WorkspaceReconciler) reconcileRuns(ctx context.Context, w *workspaceIns
 	return nil
 }
 
-func (r *WorkspaceReconciler) reconcileCurrentRun(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
-	if workspace.CurrentRun == nil {
+func (r *WorkspaceReconciler) reconcileCurrentRun(ctx context.Context, w *workspaceInstance, workspace models.Workspacesable) error {
+	var currentRunID string
+	if cr := workspace.GetRelationships().GetCurrentRun(); cr != nil && cr.GetData() != nil {
+		currentRunID = pointer.ValueOf(cr.GetData().GetId())
+	}
+	if currentRunID == "" {
 		w.log.Info("Reconcile Runs", "msg", "there are no ongoing non-speculative runs")
 		return nil
 	}
 
 	if w.instance.Status.Run != nil {
-		if workspace.CurrentRun.ID == w.instance.Status.Run.ID && w.instance.Status.Run.RunCompleted() {
-			w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("the run %s status is synchronized no actions is required", workspace.CurrentRun.ID))
+		if currentRunID == w.instance.Status.Run.ID && w.instance.Status.Run.RunCompleted() {
+			w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("the run %s status is synchronized no actions is required", currentRunID))
 			return nil
 		}
 	}
 
 	w.log.Info("Reconcile Runs", "msg", "get the ongoing non-speculative run status")
-	run, err := w.tfClient.Client.Runs.Read(ctx, workspace.CurrentRun.ID)
+	resp, err := w.tfClient.Client.API.Runs().ById(currentRunID).Get(ctx, nil)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to get the ongoing non-speculative run status")
 		return err
 	}
-	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the ongoing non-speculative run status %s", run.Status))
+	run := resp.GetData()
 
-	if w.instance.Status.Run == nil {
-		w.instance.Status.Run = &appv1alpha2.RunStatus{}
-	}
+	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the ongoing non-speculative run status %s", runAttributesStatus(run.GetAttributes())))
 
-	w.instance.Status.Run.ID = run.ID
-	w.instance.Status.Run.Status = string(run.Status)
-	w.instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
+	w.updateWorkspaceStatusRun(run)
 
 	return nil
 }
@@ -95,28 +97,47 @@ func (r *WorkspaceReconciler) reconcilePlanRun(ctx context.Context, w *workspace
 
 	if !w.instance.Status.Plan.RunCompleted() {
 		w.log.Info("Reconcile Runs", "msg", "get the speculative run status")
-		run, err := w.tfClient.Client.Runs.Read(ctx, w.instance.Status.Plan.ID)
+		resp, err := w.tfClient.Client.API.Runs().ById(w.instance.Status.Plan.ID).Get(ctx, nil)
 		if err != nil {
 			w.log.Error(err, "Reconcile Runs", "msg", "failed to get the speculative run status")
 			return err
 		}
-		w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the speculative run status %s", run.Status))
-		w.instance.Status.Plan.ID = run.ID
-		w.instance.Status.Plan.Status = string(run.Status)
+		run := resp.GetData()
+
+		w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully got the speculative run status %s", runAttributesStatus(run.GetAttributes())))
+
+		w.instance.Status.Plan.ID = pointer.ValueOf(run.GetId())
+		w.instance.Status.Plan.Status = runAttributesStatus(run.GetAttributes())
 	}
 
 	return nil
 }
 
-func (r *WorkspaceReconciler) triggerApplyRun(ctx context.Context, w *workspaceInstance, options tfc.RunCreateOptions) error {
+func (r *WorkspaceReconciler) triggerApplyRun(ctx context.Context, w *workspaceInstance, workspaceID string, options models.Runs_attributesable) error {
 	w.log.Info("Reconcile Runs", "msg", "create a new apply run")
 
-	run, err := w.tfClient.Client.Runs.Create(ctx, options)
+	ws := models.NewWorkspacesHasOne_data()
+	ws.SetId(new(workspaceID))
+	ws.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+	wsRel := models.NewWorkspacesHasOne()
+	wsRel.SetData(ws)
+	rels := models.NewRuns_relationships()
+	rels.SetWorkspace(wsRel)
+	data := models.NewRuns()
+	data.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+	data.SetAttributes(options)
+	data.SetRelationships(rels)
+	body := models.NewRunsEnvelope()
+	body.SetData(data)
+
+	resp, err := w.tfClient.Client.API.Runs().Post(ctx, body, nil)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to create a apply new run")
 		return err
 	}
-	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new apply run %s", run.ID))
+	run := resp.GetData()
+
+	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new apply run %s", pointer.ValueOf(run.GetId())))
 
 	// Set annotation `workspace.app.terraform.io/run-new` to false if a new run was successfully triggered.
 	w.instance.Annotations[WorkspaceAnnotationRunNew] = metaFalse
@@ -127,24 +148,36 @@ func (r *WorkspaceReconciler) triggerApplyRun(ctx context.Context, w *workspaceI
 	}
 
 	// Update status
-	if w.instance.Status.Run == nil {
-		w.instance.Status.Run = &appv1alpha2.RunStatus{}
-	}
-	w.instance.Status.Run.ID = run.ID
-	w.instance.Status.Run.Status = string(run.Status)
-	w.instance.Status.Run.ConfigurationVersion = run.ConfigurationVersion.ID
+	w.updateWorkspaceStatusRun(run)
 
 	return nil
 }
 
-func (r *WorkspaceReconciler) triggerPlanRun(ctx context.Context, w *workspaceInstance, options tfc.RunCreateOptions) error {
+func (r *WorkspaceReconciler) triggerPlanRun(ctx context.Context, w *workspaceInstance, workspaceID string, options models.Runs_attributesable) error {
 	w.log.Info("Reconcile Runs", "msg", "create a new plan run")
-	run, err := w.tfClient.Client.Runs.Create(ctx, options)
+
+	ws := models.NewWorkspacesHasOne_data()
+	ws.SetId(new(workspaceID))
+	ws.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+	wsRel := models.NewWorkspacesHasOne()
+	wsRel.SetData(ws)
+	rels := models.NewRuns_relationships()
+	rels.SetWorkspace(wsRel)
+	data := models.NewRuns()
+	data.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+	data.SetAttributes(options)
+	data.SetRelationships(rels)
+	body := models.NewRunsEnvelope()
+	body.SetData(data)
+
+	resp, err := w.tfClient.Client.API.Runs().Post(ctx, body, nil)
 	if err != nil {
 		w.log.Error(err, "Reconcile Runs", "msg", "failed to create a new plan run")
 		return err
 	}
-	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new plan run %s", run.ID))
+	run := resp.GetData()
+
+	w.log.Info("Reconcile Runs", "msg", fmt.Sprintf("successfully created a new plan run %s", pointer.ValueOf(run.GetId())))
 
 	// Set annotation `workspace.app.terraform.io/run-new` to false if a new run was successfully triggered.
 	w.instance.Annotations[WorkspaceAnnotationRunNew] = metaFalse
@@ -156,9 +189,9 @@ func (r *WorkspaceReconciler) triggerPlanRun(ctx context.Context, w *workspaceIn
 
 	// Update status
 	w.instance.Status.Plan = &appv1alpha2.PlanStatus{
-		ID:               run.ID,
-		Status:           string(run.Status),
-		TerraformVersion: run.TerraformVersion,
+		ID:               pointer.ValueOf(run.GetId()),
+		Status:           runAttributesStatus(run.GetAttributes()),
+		TerraformVersion: pointer.ValueOf(run.GetAttributes().GetTerraformVersion()),
 	}
 
 	return nil

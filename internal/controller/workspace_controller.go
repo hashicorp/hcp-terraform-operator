@@ -6,13 +6,18 @@ package controller
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/go-logr/logr"
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
@@ -155,7 +161,6 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 		return err
 	}
 
-	httpClient := tfc.DefaultConfig().HTTPClient
 	insecure := false
 
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
@@ -169,11 +174,16 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 		w.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
 	}
 
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 
 	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
+		Address:           os.Getenv("TFE_ADDRESS"),
+		Token:             token,
+		HTTPTransport:     newRunStatusTransport(transport),
+		RetryRateLimited:  true,
+		RetryServerErrors: false,
+		RetryMaxRetries:   30,
 		Headers: http.Header{
 			"User-Agent": []string{version.UserAgent},
 		},
@@ -183,29 +193,73 @@ func (r *WorkspaceReconciler) getTerraformClient(ctx context.Context, w *workspa
 	return err
 }
 
-func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace *tfc.Workspace) bool {
+// attributesWithAgentPool adds the 'agent-pool-id' attribute to the serialized workspace attributes.
+// go-tfe v1 set the agent pool of a workspace this way, and the generated attributes model does not have this field.
+type attributesWithAgentPool struct {
+	models.Workspaces_attributesable
+	agentPoolID string
+}
+
+// Serialize writes the attributes and the 'agent-pool-id' attribute.
+func (a *attributesWithAgentPool) Serialize(writer serialization.SerializationWriter) error {
+	if err := a.Workspaces_attributesable.Serialize(writer); err != nil {
+		return err
+	}
+	return writer.WriteStringValue("agent-pool-id", &a.agentPoolID)
+}
+
+// withAgentPoolID returns the attributes with the 'agent-pool-id' attribute, or the attributes as is when the ID is nil.
+func withAgentPoolID(attrs models.Workspaces_attributesable, id *string) models.Workspaces_attributesable {
+	if id == nil {
+		return attrs
+	}
+	return &attributesWithAgentPool{Workspaces_attributesable: attrs, agentPoolID: *id}
+}
+
+// sendRawJSON sends a request with a hand-made JSON:API payload and returns the workspace envelope from the response.
+// The generated models cannot express explicit JSON nulls (for example, 'vcs-repo' or an SSH key ID set to null),
+// which the HCP Terraform API requires to detach or unassign a related object.
+func sendRawJSON(ctx context.Context, adapter abstractions.RequestAdapter, ri *abstractions.RequestInformation, payload any) (models.WorkspacesEnvelopeable, error) {
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	ri.SetStreamContentAndContentType(b, "application/vnd.api+json")
+	res, err := adapter.Send(ctx, ri, models.CreateWorkspacesEnvelopeFromDiscriminatorValue, nil)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	env, _ := res.(models.WorkspacesEnvelopeable)
+	return env, nil
+}
+
+func needToUpdateWorkspace(instance *appv1alpha2.Workspace, workspace models.Workspacesable) bool {
+	attrs := workspace.GetAttributes()
 	// generation changed
 	if instance.Generation != instance.Status.ObservedGeneration {
 		return true
 	}
 	// timestamp changed
-	if workspace.UpdatedAt.Unix() != instance.Status.UpdateAt {
+	if pointer.ValueOf(attrs.GetUpdatedAt()).Unix() != instance.Status.UpdateAt {
 		return true
 	}
 	// agent pool added
-	if instance.Spec.AgentPool != nil && workspace.AgentPool == nil {
+	if ap := workspace.GetRelationships().GetAgentPool(); instance.Spec.AgentPool != nil && (ap == nil || ap.GetData() == nil || pointer.ValueOf(ap.GetData().GetId()) == "") {
 		return true
 	}
 	// The TFC API VCS behavior is inconsistent:
 	//   - once a VCS is attached to a Workspace, the 'UpdateAt' attribute is updated
 	//   - once attached to a Workspace VCS is updated, for instance, change a branch name, the 'UpdateAt' attribute is updated
 	//   - once a VCS is detached from a Workspace, the 'UpdateAt' attribute is not updated, because of that we have to have this condition here
-	if instance.Spec.VersionControl != nil && workspace.VCSRepo == nil {
+	if instance.Spec.VersionControl != nil && attrs.GetVcsRepo() == nil {
 		return true
 	}
 	// Terraform version
 	if instance.Spec.TerraformVersion == "" {
-		if instance.Status.TerraformVersion != workspace.TerraformVersion {
+		if instance.Status.TerraformVersion != pointer.ValueOf(attrs.GetTerraformVersion()) {
 			return true
 		}
 	}
@@ -247,28 +301,50 @@ func (r *WorkspaceReconciler) removeFinalizer(ctx context.Context, w *workspaceI
 // STATUS
 // TODO need to update this to update the spec with default values from TFC API
 // change this function to updateObject?
-func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
+func (r *WorkspaceReconciler) updateStatus(ctx context.Context, w *workspaceInstance, workspace models.Workspacesable) error {
+	attrs := workspace.GetAttributes()
 	w.instance.Status.ObservedGeneration = w.instance.Generation
-	w.instance.Status.UpdateAt = workspace.UpdatedAt.Unix()
-	w.instance.Status.TerraformVersion = workspace.TerraformVersion
+	w.instance.Status.UpdateAt = pointer.ValueOf(attrs.GetUpdatedAt()).Unix()
+	w.instance.Status.TerraformVersion = pointer.ValueOf(attrs.GetTerraformVersion())
 
 	return r.Status().Update(ctx, &w.instance)
 }
 
 // WORKSPACES
-func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
-	spec := w.instance.Spec
-	options := tfc.WorkspaceCreateOptions{
-		Name:                tfc.String(spec.Name),
-		AllowDestroyPlan:    tfc.Bool(spec.AllowDestroyPlan),
-		AutoApply:           tfc.Bool(ApplyMethodToBool(spec.ApplyMethod)),
-		AutoApplyRunTrigger: tfc.Bool(ApplyRunTriggerToBool(spec.ApplyRunTrigger)),
-		Description:         tfc.String(spec.Description),
-		ExecutionMode:       tfc.String(spec.ExecutionMode),
-		GlobalRemoteState:   tfc.Bool(false),
-		TerraformVersion:    tfc.String(spec.TerraformVersion),
-		WorkingDirectory:    tfc.String(spec.WorkingDirectory),
+
+// readOrganizationDefaultProjectID reads the organization and returns the ID of its default project.
+// An empty string is returned when the organization does not have the default project.
+func (w *workspaceInstance) readOrganizationDefaultProjectID(ctx context.Context) (string, error) {
+	org, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).Get(ctx, nil)
+	if err != nil {
+		return "", err
 	}
+	if org == nil || org.GetData() == nil || org.GetData().GetRelationships() == nil {
+		return "", nil
+	}
+	if p := org.GetData().GetRelationships().GetDefaultProject(); p != nil && p.GetData() != nil {
+		return pointer.ValueOf(p.GetData().GetId()), nil
+	}
+	return "", nil
+}
+
+func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceInstance) (models.Workspacesable, error) {
+	spec := w.instance.Spec
+	attrs := models.NewWorkspaces_attributes()
+	attrs.SetName(new(spec.Name))
+	attrs.SetAllowDestroyPlan(new(spec.AllowDestroyPlan))
+	attrs.SetAutoApply(new(ApplyMethodToBool(spec.ApplyMethod)))
+	attrs.SetAutoApplyRunTrigger(new(ApplyRunTriggerToBool(spec.ApplyRunTrigger)))
+	attrs.SetDescription(new(spec.Description))
+	if mode, err := models.ParseWorkspaces_attributes_executionMode(spec.ExecutionMode); err == nil && mode != nil {
+		attrs.SetExecutionMode(mode.(*models.Workspaces_attributes_executionMode))
+	}
+	attrs.SetGlobalRemoteState(new(false))
+	attrs.SetTerraformVersion(new(spec.TerraformVersion))
+	attrs.SetWorkingDirectory(new(spec.WorkingDirectory))
+
+	rels := models.NewWorkspaces_relationships()
+	var agentPoolAttr *string
 
 	if spec.ExecutionMode == "agent" {
 		agentPoolID, err := r.getAgentPoolID(ctx, w)
@@ -278,27 +354,26 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			return nil, err
 		}
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
-		options.AgentPoolID = tfc.String(agentPoolID)
+		agentPoolAttr = new(agentPoolID)
 	}
 
 	if spec.VersionControl != nil {
-		options.VCSRepo = &tfc.VCSRepoOptions{
-			OAuthTokenID: tfc.String(spec.VersionControl.OAuthTokenID),
-			Identifier:   tfc.String(spec.VersionControl.Repository),
-			Branch:       tfc.String(spec.VersionControl.Branch),
-		}
-		options.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
-		options.FileTriggersEnabled = tfc.Bool(spec.VersionControl.EnableFileTriggers)
-		options.TriggerPatterns = spec.VersionControl.TriggerPatterns
-		options.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
-
+		vcs := models.NewWorkspaces_attributes_vcsRepo()
+		vcs.SetOauthTokenId(new(spec.VersionControl.OAuthTokenID))
+		vcs.SetIdentifier(new(spec.VersionControl.Repository))
+		vcs.SetBranch(new(spec.VersionControl.Branch))
+		attrs.SetVcsRepo(vcs)
+		attrs.SetSpeculativeEnabled(new(spec.VersionControl.SpeculativePlans))
+		attrs.SetFileTriggersEnabled(new(spec.VersionControl.EnableFileTriggers))
+		attrs.SetTriggerPatterns(spec.VersionControl.TriggerPatterns)
+		attrs.SetTriggerPrefixes(spec.VersionControl.TriggerPrefixes)
 	}
 
 	if spec.RemoteStateSharing != nil {
-		options.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
+		attrs.SetGlobalRemoteState(new(spec.RemoteStateSharing.AllWorkspaces))
 	}
 
-	org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
+	defaultProjectID, err := w.readOrganizationDefaultProjectID(ctx)
 	if err != nil {
 		w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
@@ -313,19 +388,38 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 			return nil, err
 		}
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("project ID %s will be used", prjID))
-		options.Project = &tfc.Project{ID: prjID}
+		project := models.NewProjectsHasOne_data()
+		project.SetId(new(prjID))
+		project.SetTypeEscaped(new(models.PROJECTS_PROJECTSIDENTIFIER_TYPE))
+		projectRel := models.NewProjectsHasOne()
+		projectRel.SetData(project)
+		rels.SetProject(projectRel)
 	}
 
-	workspace, err := w.tfClient.Client.Workspaces.Create(ctx, spec.Organization, options)
+	data := models.NewWorkspaces()
+	data.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+	data.SetAttributes(withAgentPoolID(attrs, agentPoolAttr))
+	// go-tfe v1 omitted the relationships when none was set.
+	if rels.GetProject() != nil {
+		data.SetRelationships(rels)
+	}
+	body := models.NewWorkspacesEnvelope()
+	body.SetData(data)
+
+	resp, err := w.tfClient.Client.API.Organizations().ByOrganization_name(spec.Organization).Workspaces().Post(ctx, body, nil)
 	if err != nil {
 		return nil, err
 	}
+	if resp == nil || resp.GetData() == nil {
+		return nil, fmt.Errorf("workspace creation returned an empty response")
+	}
+	workspace := resp.GetData()
 
 	patch := client.MergeFrom(w.instance.DeepCopy())
-	if org != nil && org.DefaultProject != nil {
-		w.instance.Status.DefaultProjectID = org.DefaultProject.ID
+	if defaultProjectID != "" {
+		w.instance.Status.DefaultProjectID = defaultProjectID
 	}
-	w.instance.Status.WorkspaceID = workspace.ID
+	w.instance.Status.WorkspaceID = pointer.ValueOf(workspace.GetId())
 	if err = r.Status().Patch(ctx, &w.instance, patch); err != nil {
 		w.log.Error(err, "Reconcile Workspace", "msg", "failed to update status with workspace ID")
 		r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
@@ -336,14 +430,43 @@ func (r *WorkspaceReconciler) createWorkspace(ctx context.Context, w *workspaceI
 	return workspace, nil
 }
 
-func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceInstance) (*tfc.Workspace, error) {
-	return w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
+func (r *WorkspaceReconciler) readWorkspace(ctx context.Context, w *workspaceInstance) (models.Workspacesable, error) {
+	resp, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Get(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, nil
+	}
+	return resp.GetData(), nil
 }
 
-func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) (*tfc.Workspace, error) {
-	updateOptions := tfc.WorkspaceUpdateOptions{
-		GlobalRemoteState: tfc.Bool(false),
+// removeWorkspaceVCSConnection detaches the VCS repository from the workspace.
+func (w *workspaceInstance) removeWorkspaceVCSConnection(ctx context.Context, workspaceID string) error {
+	builder := w.tfClient.Client.API.Workspaces().ByWorkspace_id(workspaceID)
+	ri, err := builder.ToPatchRequestInformation(ctx, models.NewWorkspacesEnvelope(), nil)
+	if err != nil {
+		return err
 	}
+	// The VCS repository is detached by setting the 'vcs-repo' attribute to null.
+	_, err = sendRawJSON(ctx, builder.RequestAdapter, ri, map[string]any{
+		"data": map[string]any{
+			"type": "workspaces",
+			"attributes": map[string]any{
+				"vcs-repo": nil,
+			},
+		},
+	})
+	return err
+}
+
+func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceInstance, workspace models.Workspacesable) (models.Workspacesable, error) {
+	attrs := models.NewWorkspaces_attributes()
+	attrs.SetGlobalRemoteState(new(false))
+	rels := models.NewWorkspaces_relationships()
+	var agentPoolAttr *string
+	wsa := workspace.GetAttributes()
+
 	spec := w.instance.Spec
 	status := w.instance.Status
 
@@ -355,89 +478,87 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			return nil, err
 		}
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("agent pool ID %s will be used", agentPoolID))
-		updateOptions.AgentPoolID = tfc.String(agentPoolID)
+		agentPoolAttr = new(agentPoolID)
 	}
 
-	if workspace.Name != spec.Name {
-		updateOptions.Name = tfc.String(spec.Name)
+	if pointer.ValueOf(wsa.GetName()) != spec.Name {
+		attrs.SetName(new(spec.Name))
 	}
 
-	if workspace.AutoApply != ApplyMethodToBool(spec.ApplyMethod) {
-		updateOptions.AutoApply = tfc.Bool(ApplyMethodToBool(spec.ApplyMethod))
+	if pointer.ValueOf(wsa.GetAutoApply()) != ApplyMethodToBool(spec.ApplyMethod) {
+		attrs.SetAutoApply(new(ApplyMethodToBool(spec.ApplyMethod)))
 	}
 
-	if workspace.AutoApplyRunTrigger != ApplyRunTriggerToBool(spec.ApplyRunTrigger) {
-		updateOptions.AutoApplyRunTrigger = tfc.Bool(ApplyRunTriggerToBool(spec.ApplyRunTrigger))
+	if pointer.ValueOf(wsa.GetAutoApplyRunTrigger()) != ApplyRunTriggerToBool(spec.ApplyRunTrigger) {
+		attrs.SetAutoApplyRunTrigger(new(ApplyRunTriggerToBool(spec.ApplyRunTrigger)))
 	}
 
-	if workspace.AllowDestroyPlan != spec.AllowDestroyPlan {
-		updateOptions.AllowDestroyPlan = tfc.Bool(spec.AllowDestroyPlan)
+	if pointer.ValueOf(wsa.GetAllowDestroyPlan()) != spec.AllowDestroyPlan {
+		attrs.SetAllowDestroyPlan(new(spec.AllowDestroyPlan))
 	}
 
-	if workspace.Description != spec.Description {
-		updateOptions.Description = tfc.String(spec.Description)
+	if pointer.ValueOf(wsa.GetDescription()) != spec.Description {
+		attrs.SetDescription(new(spec.Description))
 	}
 
-	if workspace.ExecutionMode != spec.ExecutionMode {
-		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
+	if wsa.GetExecutionMode() == nil || wsa.GetExecutionMode().String() != spec.ExecutionMode {
+		if mode, err := models.ParseWorkspaces_attributes_executionMode(spec.ExecutionMode); err == nil && mode != nil {
+			attrs.SetExecutionMode(mode.(*models.Workspaces_attributes_executionMode))
+		}
 	}
 
 	if spec.RemoteStateSharing != nil {
-		updateOptions.GlobalRemoteState = tfc.Bool(spec.RemoteStateSharing.AllWorkspaces)
+		attrs.SetGlobalRemoteState(new(spec.RemoteStateSharing.AllWorkspaces))
 	}
 
 	if spec.TerraformVersion == "" {
-		if workspace.TerraformVersion != status.TerraformVersion {
-			updateOptions.TerraformVersion = tfc.String(status.TerraformVersion)
+		if pointer.ValueOf(wsa.GetTerraformVersion()) != status.TerraformVersion {
+			attrs.SetTerraformVersion(new(status.TerraformVersion))
 		}
 	} else {
-		if workspace.TerraformVersion != spec.TerraformVersion {
-			updateOptions.TerraformVersion = tfc.String(spec.TerraformVersion)
+		if pointer.ValueOf(wsa.GetTerraformVersion()) != spec.TerraformVersion {
+			attrs.SetTerraformVersion(new(spec.TerraformVersion))
 		}
 	}
 
-	if workspace.WorkingDirectory != spec.WorkingDirectory {
-		updateOptions.WorkingDirectory = tfc.String(spec.WorkingDirectory)
-		updateOptions.Name = tfc.String(spec.Name)
+	if pointer.ValueOf(wsa.GetWorkingDirectory()) != spec.WorkingDirectory {
+		attrs.SetWorkingDirectory(new(spec.WorkingDirectory))
+		attrs.SetName(new(spec.Name))
 	}
 
-	if workspace.ExecutionMode != spec.ExecutionMode {
-		updateOptions.ExecutionMode = tfc.String(spec.ExecutionMode)
-	}
-
-	if spec.VersionControl == nil && workspace.VCSRepo != nil {
-		ws, err := w.tfClient.Client.Workspaces.RemoveVCSConnectionByID(ctx, workspace.ID)
-		if err != nil {
-			return ws, err
+	if spec.VersionControl == nil && wsa.GetVcsRepo() != nil {
+		if err := w.removeWorkspaceVCSConnection(ctx, pointer.ValueOf(workspace.GetId())); err != nil {
+			return workspace, err
 		}
 	}
 
 	if spec.VersionControl != nil {
-		updateOptions.VCSRepo = &tfc.VCSRepoOptions{
-			OAuthTokenID: tfc.String(spec.VersionControl.OAuthTokenID),
-			Identifier:   tfc.String(spec.VersionControl.Repository),
-			Branch:       tfc.String(spec.VersionControl.Branch),
+		vcs := models.NewWorkspaces_attributes_vcsRepo()
+		vcs.SetOauthTokenId(new(spec.VersionControl.OAuthTokenID))
+		vcs.SetIdentifier(new(spec.VersionControl.Repository))
+		vcs.SetBranch(new(spec.VersionControl.Branch))
+		attrs.SetVcsRepo(vcs)
+
+		if pointer.ValueOf(wsa.GetSpeculativeEnabled()) != spec.VersionControl.SpeculativePlans {
+			attrs.SetSpeculativeEnabled(new(spec.VersionControl.SpeculativePlans))
 		}
 
-		if workspace.SpeculativeEnabled != spec.VersionControl.SpeculativePlans {
-			updateOptions.SpeculativeEnabled = tfc.Bool(spec.VersionControl.SpeculativePlans)
-		}
-
-		if workspace.FileTriggersEnabled != spec.VersionControl.EnableFileTriggers {
-			updateOptions.FileTriggersEnabled = tfc.Bool(spec.VersionControl.EnableFileTriggers)
+		if pointer.ValueOf(wsa.GetFileTriggersEnabled()) != spec.VersionControl.EnableFileTriggers {
+			attrs.SetFileTriggersEnabled(new(spec.VersionControl.EnableFileTriggers))
 		}
 
 		triggerPatternsDiff := vcsTriggersDifference(getWorkspaceTriggerPatterns(workspace), getTriggerPatterns(&w.instance))
 		if len(triggerPatternsDiff) != 0 {
-			updateOptions.TriggerPatterns = spec.VersionControl.TriggerPatterns
+			attrs.SetTriggerPatterns(spec.VersionControl.TriggerPatterns)
 		}
 
 		triggerPrefixesDiff := vcsTriggersDifference(getWorkspaceTriggerPrefixes(workspace), getTriggerPrefixes(&w.instance))
 		if len(triggerPrefixesDiff) != 0 {
-			updateOptions.TriggerPrefixes = spec.VersionControl.TriggerPrefixes
+			attrs.SetTriggerPrefixes(spec.VersionControl.TriggerPrefixes)
 		}
 	}
 
+	var projectID string
 	if spec.Project != nil {
 		prjID, err := w.getProjectID(ctx)
 		if err != nil {
@@ -446,32 +567,58 @@ func (r *WorkspaceReconciler) updateWorkspace(ctx context.Context, w *workspaceI
 			return nil, err
 		}
 		w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("project ID %s will be used", prjID))
-		updateOptions.Project = &tfc.Project{ID: prjID}
+		projectID = prjID
 	} else {
 		if w.instance.Status.DefaultProjectID != "" {
-			updateOptions.Project = &tfc.Project{ID: w.instance.Status.DefaultProjectID}
+			projectID = w.instance.Status.DefaultProjectID
 			w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", w.instance.Status.DefaultProjectID))
 		} else {
-			org, err := w.tfClient.Client.Organizations.Read(ctx, w.instance.Spec.Organization)
+			defaultProjectID, err := w.readOrganizationDefaultProjectID(ctx)
 			if err != nil {
 				w.log.Error(err, "Reconcile Workspace", "msg", "failed to get organization")
 				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to get organization")
 				return nil, err
 			}
-			if org != nil && org.DefaultProject != nil {
-				w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", org.DefaultProject.ID))
-				updateOptions.Project = &tfc.Project{ID: org.DefaultProject.ID}
+			if defaultProjectID != "" {
+				w.log.Info("Reconcile Workspace", "msg", fmt.Sprintf("default project ID %s will be used", defaultProjectID))
+				projectID = defaultProjectID
 			}
 		}
 	}
 
-	return w.tfClient.Client.Workspaces.UpdateByID(ctx, w.instance.Status.WorkspaceID, updateOptions)
+	if projectID != "" {
+		project := models.NewProjectsHasOne_data()
+		project.SetId(new(projectID))
+		project.SetTypeEscaped(new(models.PROJECTS_PROJECTSIDENTIFIER_TYPE))
+		projectRel := models.NewProjectsHasOne()
+		projectRel.SetData(project)
+		rels.SetProject(projectRel)
+	}
+
+	data := models.NewWorkspaces()
+	data.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+	data.SetAttributes(withAgentPoolID(attrs, agentPoolAttr))
+	// go-tfe v1 omitted the relationships when none was set.
+	if rels.GetProject() != nil {
+		data.SetRelationships(rels)
+	}
+	body := models.NewWorkspacesEnvelope()
+	body.SetData(data)
+
+	resp, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Patch(ctx, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, nil
+	}
+	return resp.GetData(), nil
 }
 
 func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspaceInstance) error {
 	w.log.Info("Reconcile Workspace", "msg", "reconciling workspace")
 
-	var workspace *tfc.Workspace
+	var workspace models.Workspacesable
 	var err error
 
 	defer func() {
@@ -488,9 +635,9 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 		// - Use conditions(https://maelvls.dev/kubernetes-conditions/)
 		// - Let Objects update their own status conditions
 		// - Simplify updateStatus method in a way it could be called anytime
-		if workspace != nil && workspace.ID != "" {
+		if workspace != nil && pointer.ValueOf(workspace.GetId()) != "" {
 			patch := client.MergeFrom(w.instance.DeepCopy())
-			w.instance.Status.WorkspaceID = workspace.ID
+			w.instance.Status.WorkspaceID = pointer.ValueOf(workspace.GetId())
 			if err := r.Status().Patch(ctx, &w.instance, patch); err != nil {
 				w.log.Error(err, "Workspace Controller", "msg", "failed to update status with workspace ID")
 				r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Failed to update status with workspace ID")
@@ -525,7 +672,7 @@ func (r *WorkspaceReconciler) reconcileWorkspace(ctx context.Context, w *workspa
 	workspace, err = r.readWorkspace(ctx, w)
 	if err != nil {
 		// 'ResourceNotFound' means that the TF Cloud workspace was removed from the TF Cloud bypass the operator
-		if err == tfc.ErrResourceNotFound {
+		if errors.Is(err, tfc.ErrNotFound) {
 			w.log.Info("Reconcile Workspace", "msg", "workspace not found, creating a new workspace")
 			r.Recorder.Eventf(&w.instance, corev1.EventTypeWarning, "ReconcileWorkspace", "Workspace ID %s not found, creating a new workspace", w.instance.Status.WorkspaceID)
 			workspace, err = r.createWorkspace(ctx, w)

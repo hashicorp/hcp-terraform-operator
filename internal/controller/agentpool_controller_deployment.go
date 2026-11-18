@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"strings"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
-	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 const (
@@ -134,7 +134,7 @@ func (r *AgentPoolReconciler) deleteDeployment(ctx context.Context, ap *agentPoo
 var agentTerminationGracePeriod int64 = 900 // 15 minutes
 
 func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
-	r := pointer.PointerOf(int32(1)) // default to one replica if not otherwise configured
+	r := new(int32(1)) // default to one replica if not otherwise configured
 	matchLabels := agentPodMatchLabels(&ap.instance)
 
 	if ap.instance.Spec.AgentDeployment.Replicas != nil {
@@ -179,7 +179,7 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 				RollingUpdate: &appsv1.RollingUpdateDeployment{
 					// this is important to ensure the number of pods does not temporarily
 					// shoot over the max agents allowed when rolling the deployment.
-					MaxSurge: pointer.PointerOf(intstr.FromInt(0)),
+					MaxSurge: new(intstr.FromInt(0)),
 				},
 			},
 			Template: corev1.PodTemplateSpec{
@@ -198,6 +198,11 @@ func agentPoolDeployment(ap *agentPoolInstance) *appsv1.Deployment {
 func decorateDeployment(ap *agentPoolInstance, d *appsv1.Deployment) {
 	// Set TFE_ADDRESS on agent Pod if differnet than default TFC endpoint
 	bURL := ap.tfClient.Client.BaseURL()
+	// go-tfe v1 returned a base URL with a trailing slash (e.g. https://host/api/v2/),
+	// keep the TFC_ADDRESS value byte-identical.
+	if !strings.HasSuffix(bURL.Path, "/") {
+		bURL.Path += "/"
+	}
 	setCustomTFEAddress := false
 	if defURL, perr := url.Parse(tfc.DefaultAddress); perr == nil && defURL.Host != bURL.Host {
 		setCustomTFEAddress = true

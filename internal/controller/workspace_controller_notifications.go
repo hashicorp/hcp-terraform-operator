@@ -6,15 +6,32 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/internal/slice"
 )
 
-func hasNotificationItem(notifications []tfc.NotificationConfiguration, notification tfc.NotificationConfiguration) (int, bool) {
+type notificationConfiguration struct {
+	ID              string
+	Name            string
+	DestinationType string
+	URL             string
+	Enabled         bool
+	Token           string
+	Triggers        []string
+	EmailAddresses  []string
+	EmailUsers      []string // user IDs
+}
+
+func hasNotificationItem(notifications []notificationConfiguration, notification notificationConfiguration) (int, bool) {
 	for i, n := range notifications {
 		if notification.Name == n.Name && notification.DestinationType == n.DestinationType {
 			return i, true
@@ -23,8 +40,9 @@ func hasNotificationItem(notifications []tfc.NotificationConfiguration, notifica
 	return -1, false
 }
 
-func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceInstance) (map[string]*tfc.User, error) {
-	emailUsers := make(map[string]*tfc.User)
+// getOrgMembers returns a map of user email -> user ID.
+func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
+	emailUsers := make(map[string]string)
 	emails := make([]string, 0)
 	for _, n := range w.instance.Spec.Notifications {
 		emails = append(emails, n.EmailUsers...)
@@ -32,57 +50,61 @@ func (r *WorkspaceReconciler) getOrgMembers(ctx context.Context, w *workspaceIns
 	if len(emails) == 0 {
 		return emailUsers, nil
 	}
-	listOpts := &tfc.OrganizationMembershipListOptions{
-		Emails: emails,
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &organizations.ItemOrganizationMembershipsRequestBuilderGetQueryParameters{
+		Filteremail: new(strings.Join(emails, ",")),
+		Pagesize:    new(int32(MaxPageSize)),
+		Pagenumber:  new(int32(InitPageNumber)),
 	}
 	for {
-		members, err := w.tfClient.Client.OrganizationMemberships.List(ctx, w.instance.Spec.Organization, listOpts)
+		members, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).OrganizationMemberships().Get(ctx,
+			&abstractions.RequestConfiguration[organizations.ItemOrganizationMembershipsRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return nil, err
 		}
-		for _, m := range members.Items {
-			emailUsers[m.Email] = &tfc.User{ID: m.User.ID}
+		for _, m := range members.GetData() {
+			if m.GetAttributes() == nil || m.GetRelationships() == nil || m.GetRelationships().GetUser() == nil || m.GetRelationships().GetUser().GetData() == nil {
+				continue
+			}
+			emailUsers[pointer.ValueOf(m.GetAttributes().GetEmail())] = pointer.ValueOf(m.GetRelationships().GetUser().GetData().GetId())
 		}
-		if members.NextPage == 0 {
+		next := nextPage(members.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = members.NextPage
+		query.Pagenumber = &next
 	}
 	return emailUsers, nil
 }
 
-func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *workspaceInstance) ([]tfc.NotificationConfiguration, error) {
+func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *workspaceInstance) ([]notificationConfiguration, error) {
 	if len(w.instance.Spec.Notifications) == 0 {
-		return []tfc.NotificationConfiguration{}, nil
+		return []notificationConfiguration{}, nil
 	}
 
 	orgEmailUsers, err := r.getOrgMembers(ctx, w)
 	if err != nil {
-		return []tfc.NotificationConfiguration{}, err
+		return []notificationConfiguration{}, err
 	}
 
-	notifications := make([]tfc.NotificationConfiguration, len(w.instance.Spec.Notifications))
+	notifications := make([]notificationConfiguration, len(w.instance.Spec.Notifications))
 
 	for i, notification := range w.instance.Spec.Notifications {
-		var emailUsers []*tfc.User
+		var emailUsers []string
 		for _, emailUser := range notification.EmailUsers {
 			if v, ok := orgEmailUsers[emailUser]; ok {
 				emailUsers = append(emailUsers, v)
 			} else {
 				w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("user %s was not found", emailUser))
-				return []tfc.NotificationConfiguration{}, fmt.Errorf("user %s was not found", emailUser)
+				return []notificationConfiguration{}, fmt.Errorf("user %s was not found", emailUser)
 			}
 		}
 		triggers := make([]string, len(notification.Triggers))
 		for i, t := range notification.Triggers {
 			triggers[i] = string(t)
 		}
-		notifications[i] = tfc.NotificationConfiguration{
+		notifications[i] = notificationConfiguration{
 			Name:            notification.Name,
-			DestinationType: notification.Type,
+			DestinationType: string(notification.Type),
 			URL:             notification.URL,
 			Enabled:         notification.Enabled,
 			Token:           notification.Token,
@@ -95,57 +117,89 @@ func (r *WorkspaceReconciler) getInstanceNotifications(ctx context.Context, w *w
 	return notifications, nil
 }
 
-func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *workspaceInstance) ([]tfc.NotificationConfiguration, error) {
-	var notifications []tfc.NotificationConfiguration
+func (r *WorkspaceReconciler) getWorkspaceNotifications(ctx context.Context, w *workspaceInstance) ([]notificationConfiguration, error) {
+	var notifications []notificationConfiguration
 
-	listOpts := &tfc.NotificationConfigurationListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &workspaces.ItemNotificationConfigurationsRequestBuilderGetQueryParameters{
+		Pagesize:   new(int32(MaxPageSize)),
+		Pagenumber: new(int32(InitPageNumber)),
 	}
 	for {
-		wn, err := w.tfClient.Client.NotificationConfigurations.List(ctx, w.instance.Status.WorkspaceID, listOpts)
+		wn, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).NotificationConfigurations().Get(ctx,
+			&abstractions.RequestConfiguration[workspaces.ItemNotificationConfigurationsRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return nil, err
 		}
-		for _, notification := range wn.Items {
-			notifications = append(notifications, tfc.NotificationConfiguration{
-				ID:              notification.ID,
-				Name:            notification.Name,
-				DestinationType: notification.DestinationType,
-				URL:             notification.URL,
-				Enabled:         notification.Enabled,
-				Token:           notification.Token,
-				Triggers:        notification.Triggers,
-				EmailAddresses:  notification.EmailAddresses,
-				EmailUsers:      notification.EmailUsers,
-			})
+		for _, d := range wn.GetData() {
+			n := notificationConfiguration{ID: pointer.ValueOf(d.GetId())}
+			if a := d.GetAttributes(); a != nil {
+				n.Name = pointer.ValueOf(a.GetName())
+				if v := a.GetDestinationType(); v != nil {
+					n.DestinationType = v.String()
+				}
+				n.URL = pointer.ValueOf(a.GetUrl())
+				n.Enabled = pointer.ValueOf(a.GetEnabled())
+				n.Token = pointer.ValueOf(a.GetToken())
+				n.Triggers = a.GetTriggers()
+				n.EmailAddresses = a.GetEmailAddresses()
+			}
+			if rel := d.GetRelationships(); rel != nil && rel.GetUsers() != nil {
+				for _, u := range rel.GetUsers().GetData() {
+					n.EmailUsers = append(n.EmailUsers, pointer.ValueOf(u.GetId()))
+				}
+			}
+			notifications = append(notifications, n)
 		}
-		if wn.NextPage == 0 {
+		next := nextPage(wn.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = wn.NextPage
+		query.Pagenumber = &next
 	}
 
 	return notifications, nil
 }
 
-func (w *workspaceInstance) createNotification(ctx context.Context, notification tfc.NotificationConfiguration) error {
+func (w *workspaceInstance) createNotification(ctx context.Context, notification notificationConfiguration) error {
 	w.log.Info("Reconcile Notifications", "msg", "creating notification")
-	nt := make([]tfc.NotificationTriggerType, len(notification.Triggers))
-	for i, t := range notification.Triggers {
-		nt[i] = tfc.NotificationTriggerType(t)
+
+	attrs := models.NewNotificationConfigurations_attributes()
+	attrs.SetName(new(notification.Name))
+	// go-tfe v1 sent the destination type as is and left the validation to the API.
+	if dt, perr := models.ParseNotificationConfigurations_attributes_destinationType(notification.DestinationType); perr == nil && dt != nil {
+		attrs.SetDestinationType(dt.(*models.NotificationConfigurations_attributes_destinationType))
+	} else {
+		attrs.SetAdditionalData(map[string]any{"destination-type": notification.DestinationType})
 	}
-	_, err := w.tfClient.Client.NotificationConfigurations.Create(ctx, w.instance.Status.WorkspaceID, tfc.NotificationConfigurationCreateOptions{
-		Name:            &notification.Name,
-		DestinationType: &notification.DestinationType,
-		URL:             &notification.URL,
-		Enabled:         &notification.Enabled,
-		Token:           &notification.Token,
-		Triggers:        nt,
-		EmailUsers:      notification.EmailUsers,
-		EmailAddresses:  notification.EmailAddresses,
-	})
+	attrs.SetUrl(new(notification.URL))
+	attrs.SetEnabled(new(notification.Enabled))
+	attrs.SetToken(new(notification.Token))
+	attrs.SetTriggers(notification.Triggers)
+	attrs.SetEmailAddresses(notification.EmailAddresses)
+
+	rels := models.NewNotificationConfigurations_relationships()
+	// go-tfe v1 omitted the 'users' relationship when there are no users to send.
+	if len(notification.EmailUsers) > 0 {
+		users := make([]models.UsersIdentifierable, 0, len(notification.EmailUsers))
+		for _, id := range notification.EmailUsers {
+			user := models.NewUsersIdentifier()
+			user.SetId(new(id))
+			user.SetTypeEscaped(new(models.USERS_USERSIDENTIFIER_TYPE))
+			users = append(users, user)
+		}
+		usersRel := models.NewUsersHasMany()
+		usersRel.SetData(users)
+		rels.SetUsers(usersRel)
+	}
+
+	data := models.NewNotificationConfigurations()
+	data.SetTypeEscaped(new(models.NOTIFICATIONCONFIGURATIONS_NOTIFICATIONCONFIGURATIONS_TYPE))
+	data.SetAttributes(attrs)
+	data.SetRelationships(rels)
+	body := models.NewNotificationConfigurationsEnvelope()
+	body.SetData(data)
+
+	_, err := w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).NotificationConfigurations().Post(ctx, body, nil)
 	if err != nil {
 		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to create a new notification %q", notification.ID))
 		return err
@@ -154,22 +208,41 @@ func (w *workspaceInstance) createNotification(ctx context.Context, notification
 	return nil
 }
 
-func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.NotificationConfiguration) error {
-	if !cmp.Equal(sn, wn, cmpopts.IgnoreFields(tfc.NotificationConfiguration{}, "ID", "CreatedAt", "DeliveryResponses", "UpdatedAt", "Subscribable")) {
+func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn notificationConfiguration) error {
+	if !cmp.Equal(sn, wn, cmpopts.IgnoreFields(notificationConfiguration{}, "ID")) {
 		w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("updating notification %q", wn.ID))
-		triggers := make([]tfc.NotificationTriggerType, len(sn.Triggers))
-		for i, t := range sn.Triggers {
-			triggers[i] = tfc.NotificationTriggerType(t)
+
+		attrs := models.NewNotificationConfigurations_attributes()
+		attrs.SetName(new(sn.Name))
+		attrs.SetUrl(new(sn.URL))
+		attrs.SetEnabled(new(sn.Enabled))
+		attrs.SetToken(new(sn.Token))
+		attrs.SetTriggers(sn.Triggers)
+		attrs.SetEmailAddresses(sn.EmailAddresses)
+
+		rels := models.NewNotificationConfigurations_relationships()
+		// go-tfe v1 omitted the 'users' relationship when there are no users to send.
+		if len(sn.EmailUsers) > 0 {
+			users := make([]models.UsersIdentifierable, 0, len(sn.EmailUsers))
+			for _, id := range sn.EmailUsers {
+				user := models.NewUsersIdentifier()
+				user.SetId(new(id))
+				user.SetTypeEscaped(new(models.USERS_USERSIDENTIFIER_TYPE))
+				users = append(users, user)
+			}
+			usersRel := models.NewUsersHasMany()
+			usersRel.SetData(users)
+			rels.SetUsers(usersRel)
 		}
-		_, err := w.tfClient.Client.NotificationConfigurations.Update(ctx, wn.ID, tfc.NotificationConfigurationUpdateOptions{
-			Name:           &sn.Name,
-			URL:            &sn.URL,
-			Enabled:        &sn.Enabled,
-			Token:          &sn.Token,
-			Triggers:       triggers,
-			EmailAddresses: sn.EmailAddresses,
-			EmailUsers:     sn.EmailUsers,
-		})
+
+		data := models.NewNotificationConfigurations()
+		data.SetTypeEscaped(new(models.NOTIFICATIONCONFIGURATIONS_NOTIFICATIONCONFIGURATIONS_TYPE))
+		data.SetAttributes(attrs)
+		data.SetRelationships(rels)
+		body := models.NewNotificationConfigurationsEnvelope()
+		body.SetData(data)
+
+		_, err := w.tfClient.Client.API.NotificationConfigurations().ByNotification_configuration_id(wn.ID).Patch(ctx, body, nil)
 		if err != nil {
 			w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to update notification %q", wn.ID))
 			return err
@@ -179,9 +252,9 @@ func (w *workspaceInstance) updateNotification(ctx context.Context, sn, wn tfc.N
 	return nil
 }
 
-func (w *workspaceInstance) deleteNotification(ctx context.Context, notification tfc.NotificationConfiguration) error {
+func (w *workspaceInstance) deleteNotification(ctx context.Context, notification notificationConfiguration) error {
 	w.log.Info("Reconcile Notifications", "msg", fmt.Sprintf("deleting notification %q", notification.ID))
-	if err := w.tfClient.Client.NotificationConfigurations.Delete(ctx, notification.ID); err != nil {
+	if err := w.tfClient.Client.API.NotificationConfigurations().ByNotification_configuration_id(notification.ID).Delete(ctx, nil); err != nil {
 		w.log.Error(err, "Reconcile Notifications", "msg", fmt.Sprintf("failed to delete notification %q", notification.ID))
 		return err
 	}

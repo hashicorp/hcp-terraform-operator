@@ -4,10 +4,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,6 +17,8 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/hashicorp/go-tfe/v2/api/models"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
@@ -65,12 +69,12 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 					{Name: "token"},
 				},
 				AgentDeployment: &appv1alpha2.AgentDeployment{
-					Replicas: pointer.PointerOf(int32(0)),
+					Replicas: new(int32(0)),
 				},
 				AgentDeploymentAutoscaling: &appv1alpha2.AgentDeploymentAutoscaling{
-					MinReplicas:           pointer.PointerOf(int32(0)),
-					MaxReplicas:           pointer.PointerOf(int32(1)),
-					CooldownPeriodSeconds: pointer.PointerOf(int32(5)),
+					MinReplicas:           new(int32(0)),
+					MaxReplicas:           new(int32(1)),
+					CooldownPeriodSeconds: new(int32(5)),
 				},
 			},
 			Status: appv1alpha2.AgentPoolStatus{},
@@ -78,7 +82,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 
 	AfterEach(func() {
-		Expect(tfClient.Workspaces.Delete(ctx, organization, workspace)).To(Succeed())
+		Expect(tfClient.API.Organizations().ByOrganization_name(organization).Workspaces().ByWorkspace_name(workspace).Delete(ctx, nil)).To(Succeed())
 		cleanUpAgentPoolDeployment(instance)
 		cleanUpAgentPool(instance, namespacedName)
 	})
@@ -86,24 +90,23 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	Context("Autoscaling", func() {
 		It("fix: can update the status property on the first run", func() {
 			// Create a new HCP Terraform Workspace
-			ws := createWorkspace(tfc.WorkspaceCreateOptions{
-				Name:          &workspace,
-				AutoApply:     tfc.Bool(true),
-				ExecutionMode: tfc.String("remote"),
-			})
+			wsAttrs := models.NewWorkspaces_attributes()
+			wsAttrs.SetName(&workspace)
+			wsAttrs.SetAutoApply(new(true))
+			wsAttrs.SetExecutionMode(new(models.REMOTE_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+			wsID := pointer.ValueOf(createWorkspace(wsAttrs).GetId())
 			// Create a new Run and execute it
-			_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
+			_ = createAndUploadConfigurationVersion(wsID, "hoi")
 			Eventually(func() bool {
-				ws, err := tfClient.Workspaces.ReadByID(ctx, ws.ID)
+				ws, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.CurrentRun == nil {
+				rels := ws.GetData().GetRelationships()
+				if rels == nil || rels.GetCurrentRun() == nil || rels.GetCurrentRun().GetData() == nil {
 					return false
 				}
-				run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+				run, err := tfClient.API.Runs().ById(pointer.ValueOf(rels.GetCurrentRun().GetData().GetId())).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(run).ShouldNot(BeNil())
-				return run.Status == tfc.RunApplied
+				return run.GetData().GetAttributes().GetStatus().String() == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 			// Create a new Agent Pool
 			instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
@@ -113,21 +116,43 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return instance.Status.AgentPoolID != ""
 			}).Should(BeTrue())
 			// Attrach the Workspace to the Agent pool
-			ws, err := tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
-				ExecutionMode: pointer.PointerOf("agent"),
-				AgentPoolID:   &instance.Status.AgentPoolID,
-			})
+			apData := models.NewAgentPoolsHasOne_data()
+			apData.SetId(&instance.Status.AgentPoolID)
+			apData.SetTypeEscaped(new(models.AGENTPOOLS_AGENTPOOLSIDENTIFIER_TYPE))
+			apRel := models.NewAgentPoolsHasOne()
+			apRel.SetData(apData)
+			wsRels := models.NewWorkspaces_relationships()
+			wsRels.SetAgentPool(apRel)
+			wsUpdAttrs := models.NewWorkspaces_attributes()
+			wsUpdAttrs.SetExecutionMode(new(models.AGENT_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+			wsUpd := models.NewWorkspaces()
+			wsUpd.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			wsUpd.SetId(&wsID)
+			wsUpd.SetAttributes(wsUpdAttrs)
+			wsUpd.SetRelationships(wsRels)
+			wsUpdBody := models.NewWorkspacesEnvelope()
+			wsUpdBody.SetData(wsUpd)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Patch(ctx, wsUpdBody, nil)
 			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
 			// Trigger a new run
-			run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-				PlanOnly: pointer.PointerOf(false),
-				Workspace: &tfc.Workspace{
-					ID: ws.ID,
-				},
-			})
+			runAttrs := models.NewRuns_attributes()
+			runAttrs.SetPlanOnly(new(false))
+			runWsData := models.NewWorkspacesHasOne_data()
+			runWsData.SetId(&wsID)
+			runWsData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+			runWs := models.NewWorkspacesHasOne()
+			runWs.SetData(runWsData)
+			runRels := models.NewRuns_relationships()
+			runRels.SetWorkspace(runWs)
+			runData := models.NewRuns()
+			runData.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+			runData.SetAttributes(runAttrs)
+			runData.SetRelationships(runRels)
+			runBody := models.NewRunsEnvelope()
+			runBody.SetData(runData)
+			run, err := tfClient.API.Runs().Post(ctx, runBody, nil)
 			Expect(err).Should(Succeed())
-			Expect(run).ShouldNot(BeNil())
+			Expect(run.GetData().GetId()).ShouldNot(BeNil())
 			// Ensure it scales up
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -140,24 +165,23 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 	})
 	It("can scale up for a speculative plan run", func() {
 		// Create a new HCP Terraform Workspace
-		ws := createWorkspace(tfc.WorkspaceCreateOptions{
-			Name:          &workspace,
-			AutoApply:     tfc.Bool(true),
-			ExecutionMode: tfc.String("remote"),
-		})
+		wsAttrs := models.NewWorkspaces_attributes()
+		wsAttrs.SetName(&workspace)
+		wsAttrs.SetAutoApply(new(true))
+		wsAttrs.SetExecutionMode(new(models.REMOTE_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+		wsID := pointer.ValueOf(createWorkspace(wsAttrs).GetId())
 		// New Run
-		_ = createAndUploadConfigurationVersion(ws.ID, "hoi")
+		_ = createAndUploadConfigurationVersion(wsID, "hoi")
 		Eventually(func() bool {
-			ws, err := tfClient.Workspaces.ReadByID(ctx, ws.ID)
+			ws, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
-			if ws.CurrentRun == nil {
+			rels := ws.GetData().GetRelationships()
+			if rels == nil || rels.GetCurrentRun() == nil || rels.GetCurrentRun().GetData() == nil {
 				return false
 			}
-			run, err := tfClient.Runs.Read(ctx, ws.CurrentRun.ID)
+			run, err := tfClient.API.Runs().ById(pointer.ValueOf(rels.GetCurrentRun().GetData().GetId())).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(run).ShouldNot(BeNil())
-			return run.Status == tfc.RunApplied
+			return run.GetData().GetAttributes().GetStatus().String() == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 		}).Should(BeTrue())
 		// New Agent Pool
 		instance.Spec.DeletionPolicy = appv1alpha2.AgentPoolDeletionPolicyDestroy
@@ -167,21 +191,43 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			return instance.Status.AgentPoolID != ""
 		}).Should(BeTrue())
 		// Update Workspace
-		ws, err := tfClient.Workspaces.UpdateByID(ctx, ws.ID, tfc.WorkspaceUpdateOptions{
-			ExecutionMode: pointer.PointerOf("agent"),
-			AgentPoolID:   &instance.Status.AgentPoolID,
-		})
+		apData := models.NewAgentPoolsHasOne_data()
+		apData.SetId(&instance.Status.AgentPoolID)
+		apData.SetTypeEscaped(new(models.AGENTPOOLS_AGENTPOOLSIDENTIFIER_TYPE))
+		apRel := models.NewAgentPoolsHasOne()
+		apRel.SetData(apData)
+		wsRels := models.NewWorkspaces_relationships()
+		wsRels.SetAgentPool(apRel)
+		wsUpdAttrs := models.NewWorkspaces_attributes()
+		wsUpdAttrs.SetExecutionMode(new(models.AGENT_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+		wsUpd := models.NewWorkspaces()
+		wsUpd.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+		wsUpd.SetId(&wsID)
+		wsUpd.SetAttributes(wsUpdAttrs)
+		wsUpd.SetRelationships(wsRels)
+		wsUpdBody := models.NewWorkspacesEnvelope()
+		wsUpdBody.SetData(wsUpd)
+		_, err := tfClient.API.Workspaces().ByWorkspace_id(wsID).Patch(ctx, wsUpdBody, nil)
 		Expect(err).Should(Succeed())
-		Expect(ws).ShouldNot(BeNil())
 		// New Speculative Plan
-		run, err := tfClient.Runs.Create(ctx, tfc.RunCreateOptions{
-			PlanOnly: pointer.PointerOf(true),
-			Workspace: &tfc.Workspace{
-				ID: ws.ID,
-			},
-		})
+		runAttrs := models.NewRuns_attributes()
+		runAttrs.SetPlanOnly(new(true))
+		runWsData := models.NewWorkspacesHasOne_data()
+		runWsData.SetId(&wsID)
+		runWsData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIER_TYPE))
+		runWs := models.NewWorkspacesHasOne()
+		runWs.SetData(runWsData)
+		runRels := models.NewRuns_relationships()
+		runRels.SetWorkspace(runWs)
+		runData := models.NewRuns()
+		runData.SetTypeEscaped(new(models.RUNS_RUNS_TYPE))
+		runData.SetAttributes(runAttrs)
+		runData.SetRelationships(runRels)
+		runBody := models.NewRunsEnvelope()
+		runBody.SetData(runData)
+		run, err := tfClient.API.Runs().Post(ctx, runBody, nil)
 		Expect(err).Should(Succeed())
-		Expect(run).ShouldNot(BeNil())
+		Expect(run.GetData().GetId()).ShouldNot(BeNil())
 		// Ensure it scales up
 		Eventually(func() bool {
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -208,8 +254,8 @@ func cleanUpAgentPool(instance *appv1alpha2.AgentPool, nn types.NamespacedName) 
 		if instance.Status.AgentPoolID == "" {
 			return true
 		}
-		err := tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)
-		return err == nil || err == tfc.ErrResourceNotFound
+		err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).Delete(ctx, nil)
+		return err == nil || errors.Is(err, tfc.ErrNotFound)
 	}).Should(BeTrue())
 }
 

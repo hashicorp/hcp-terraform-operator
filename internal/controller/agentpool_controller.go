@@ -6,13 +6,18 @@ package controller
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/go-logr/logr"
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/agentpools"
+	agentpoolsitem "github.com/hashicorp/go-tfe/v2/api/agentpools/item"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 	"github.com/hashicorp/hcp-terraform-operator/version"
 )
 
@@ -132,7 +138,6 @@ func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentP
 		return err
 	}
 
-	httpClient := tfc.DefaultConfig().HTTPClient
 	insecure := false
 
 	if v, ok := os.LookupEnv("TFC_TLS_SKIP_VERIFY"); ok {
@@ -146,11 +151,16 @@ func (r *AgentPoolReconciler) getTerraformClient(ctx context.Context, ap *agentP
 		ap.log.Info("Reconcile Workspace", "msg", "client configured to skip TLS certificate verifications")
 	}
 
-	httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecure}
 
 	config := &tfc.Config{
-		Token:      token,
-		HTTPClient: httpClient,
+		Address:           os.Getenv("TFE_ADDRESS"),
+		Token:             token,
+		HTTPTransport:     newRunStatusTransport(transport),
+		RetryRateLimited:  true,
+		RetryServerErrors: false,
+		RetryMaxRetries:   30,
 		Headers: http.Header{
 			"User-Agent": []string{version.UserAgent},
 		},
@@ -178,51 +188,67 @@ func (r *AgentPoolReconciler) removeFinalizer(ctx context.Context, ap *agentPool
 	return err
 }
 
-func (r *AgentPoolReconciler) updateStatus(ctx context.Context, ap *agentPoolInstance, agentPool *tfc.AgentPool) error {
+func (r *AgentPoolReconciler) updateStatus(ctx context.Context, ap *agentPoolInstance, agentPool models.AgentPoolsable) error {
 	if ap != nil {
 		ap.instance.Status.ObservedGeneration = ap.instance.Generation
 	}
 	if agentPool != nil {
-		ap.instance.Status.AgentPoolID = agentPool.ID
+		ap.instance.Status.AgentPoolID = pointer.ValueOf(agentPool.GetId())
 	}
 	return r.Status().Update(ctx, &ap.instance)
 }
 
-func (r *AgentPoolReconciler) createAgentPool(ctx context.Context, ap *agentPoolInstance) (*tfc.AgentPool, error) {
-	options := tfc.AgentPoolCreateOptions{
-		Name: &ap.instance.Spec.Name,
-	}
-	agentPool, err := ap.tfClient.Client.AgentPools.Create(ctx, ap.instance.Spec.Organization, options)
+func (r *AgentPoolReconciler) createAgentPool(ctx context.Context, ap *agentPoolInstance) (models.AgentPoolsable, error) {
+	attrs := models.NewAgentPools_attributes()
+	attrs.SetName(&ap.instance.Spec.Name)
+	data := models.NewAgentPools()
+	data.SetTypeEscaped(new(models.AGENTPOOLS_AGENTPOOLS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewAgentPoolsEnvelope()
+	body.SetData(data)
+
+	resp, err := ap.tfClient.Client.API.Organizations().ByOrganization_name(ap.instance.Spec.Organization).AgentPools().Post(ctx, body, nil)
 	if err != nil {
 		return nil, err
 	}
+	agentPool := resp.GetData()
 
 	ap.instance.Status = appv1alpha2.AgentPoolStatus{
-		AgentPoolID: agentPool.ID,
+		AgentPoolID: pointer.ValueOf(agentPool.GetId()),
 	}
 
 	return agentPool, nil
 }
 
-func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPoolInstance, agentPool *tfc.AgentPool) (*tfc.AgentPool, error) {
-	options := tfc.AgentPoolUpdateOptions{
-		Name: tfc.String(ap.instance.Spec.Name),
-	}
+func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPoolInstance, agentPool models.AgentPoolsable) (models.AgentPoolsable, error) {
 	spec := ap.instance.Spec
 
-	if agentPool.Name != spec.Name {
-		options.Name = tfc.String(spec.Name)
-	}
+	attrs := models.NewAgentPools_attributes()
+	attrs.SetName(&spec.Name)
+	data := models.NewAgentPools()
+	data.SetTypeEscaped(new(models.AGENTPOOLS_AGENTPOOLS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewAgentPoolsEnvelope()
+	body.SetData(data)
 
-	return ap.tfClient.Client.AgentPools.Update(ctx, ap.instance.Status.AgentPoolID, options)
+	resp, err := ap.tfClient.Client.API.AgentPools().ByAgent_pool_id(ap.instance.Status.AgentPoolID).Patch(ctx, body, nil)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
-func (r *AgentPoolReconciler) readAgentPool(ctx context.Context, ap *agentPoolInstance) (*tfc.AgentPool, error) {
-	return ap.tfClient.Client.AgentPools.ReadWithOptions(ctx, ap.instance.Status.AgentPoolID, &tfc.AgentPoolReadOptions{
-		Include: []tfc.AgentPoolIncludeOpt{
-			tfc.AgentPoolWorkspaces,
+func (r *AgentPoolReconciler) readAgentPool(ctx context.Context, ap *agentPoolInstance) (models.AgentPoolsable, error) {
+	cfg := &abstractions.RequestConfiguration[agentpools.WithAgent_pool_ItemRequestBuilderGetQueryParameters]{
+		QueryParameters: &agentpools.WithAgent_pool_ItemRequestBuilderGetQueryParameters{
+			Include: []agentpoolsitem.GetIncludeQueryParameterType{agentpoolsitem.WORKSPACES_GETINCLUDEQUERYPARAMETERTYPE},
 		},
-	})
+	}
+	resp, err := ap.tfClient.Client.API.AgentPools().ByAgent_pool_id(ap.instance.Status.AgentPoolID).Get(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
 func needToUpdateAgentPool(instance *appv1alpha2.AgentPool) bool {
@@ -232,7 +258,7 @@ func needToUpdateAgentPool(instance *appv1alpha2.AgentPool) bool {
 func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentPoolInstance) error {
 	ap.log.Info("Reconcile Agent Pool", "msg", "reconciling agent pool")
 
-	var agentPool *tfc.AgentPool
+	var agentPool models.AgentPoolsable
 	var err error
 
 	defer func() {
@@ -249,8 +275,8 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 		// - Use conditions(https://maelvls.dev/kubernetes-conditions/)
 		// - Let Objects update their own status conditions
 		// - Simplify updateStatus method in a way it could be called anytime
-		if agentPool != nil && agentPool.ID != "" {
-			ap.instance.Status.AgentPoolID = agentPool.ID
+		if agentPool != nil && pointer.ValueOf(agentPool.GetId()) != "" {
+			ap.instance.Status.AgentPoolID = pointer.ValueOf(agentPool.GetId())
 			err = r.Status().Update(ctx, &ap.instance)
 			if err != nil {
 				ap.log.Error(err, "Agent Pool Controller", "msg", "update status with agent pool ID")
@@ -274,13 +300,13 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 			r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to create a new agent pool")
 			return err
 		}
-		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("successfully created a new agent pool with ID %s", agentPool.ID))
-		r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully created a new agent pool with ID %s", agentPool.ID)
+		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("successfully created a new agent pool with ID %s", pointer.ValueOf(agentPool.GetId())))
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully created a new agent pool with ID %s", pointer.ValueOf(agentPool.GetId()))
 	}
 
 	agentPool, err = r.readAgentPool(ctx, ap)
 	if err != nil {
-		if err == tfc.ErrResourceNotFound {
+		if errors.Is(err, tfc.ErrNotFound) {
 			ap.log.Info("Reconcile Agent Pool", "msg", "agent pool not found, creating a new agent pool with")
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "agent Pool ID %s not found, creating a new agent pool", ap.instance.Status.AgentPoolID)
 			agentPool, err = r.createAgentPool(ctx, ap)
@@ -289,8 +315,8 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 				r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to create a new agent pool")
 				return err
 			}
-			ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("successfully created a new agent pool with ID %s", agentPool.ID))
-			r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully created a new agent pool with ID %s", agentPool.ID)
+			ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("successfully created a new agent pool with ID %s", pointer.ValueOf(agentPool.GetId())))
+			r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully created a new agent pool with ID %s", pointer.ValueOf(agentPool.GetId()))
 		} else {
 			ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to read agent pool ID %s", ap.instance.Status.AgentPoolID))
 			r.Recorder.Eventf(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to read agent pool ID %s", ap.instance.Status.AgentPoolID)

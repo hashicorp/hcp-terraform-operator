@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/stateversions"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func OutputObjectName(name string) string {
@@ -63,13 +66,17 @@ func (r *WorkspaceReconciler) secretAvailable(ctx context.Context, instance *app
 
 // func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance, workspace *tfc.Workspace) error {
 func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstance) error {
-	workspace, err := w.tfClient.Client.Workspaces.ReadByID(ctx, w.instance.Status.WorkspaceID)
+	workspace, err := r.readWorkspace(ctx, w)
 	if err != nil {
 		w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to read workspace by ID %q", w.instance.Status.WorkspaceID))
 		return err
 	}
 
-	if workspace.CurrentStateVersion == nil {
+	var currentStateVersionID string
+	if sv := workspace.GetRelationships().GetCurrentStateVersion(); sv != nil && sv.GetData() != nil {
+		currentStateVersionID = pointer.ValueOf(sv.GetData().GetId())
+	}
+	if currentStateVersionID == "" {
 		return fmt.Errorf("current workspace state version is not available")
 	}
 
@@ -83,38 +90,47 @@ func (r *WorkspaceReconciler) setOutputs(ctx context.Context, w *workspaceInstan
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	opts := &tfc.StateVersionOutputsListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	query := &stateversions.ItemOutputsRequestBuilderGetQueryParameters{
+		Pagesize: new(int32(MaxPageSize)),
 	}
-	var outputs []*tfc.StateVersionOutput
+
+	var outputs []models.StateVersionOutputsable
 	for {
-		resp, err := w.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, opts)
+		resp, err := w.tfClient.Client.API.StateVersions().ByState_version_id(currentStateVersionID).Outputs().Get(ctx,
+			&abstractions.RequestConfiguration[stateversions.ItemOutputsRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
-			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", workspace.CurrentStateVersion.ID))
+			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to list outputs for state version %q", currentStateVersionID))
 			return err
 		}
-		outputs = append(outputs, resp.Items...)
-		if resp.NextPage == 0 {
+
+		outputs = append(outputs, resp.GetData()...)
+
+		next := nextPage(resp.GetMeta())
+		if next == 0 {
 			break
 		}
-		opts.PageNumber = resp.NextPage
+		query.Pagenumber = &next
 	}
 
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs {
+		name := ""
+		sensitive := false
+		if o.GetAttributes() != nil {
+			name = pointer.ValueOf(o.GetAttributes().GetName())
+			sensitive = pointer.ValueOf(o.GetAttributes().GetSensitive())
+		}
 		out, err := formatOutput(o)
 		if err != nil {
-			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+			w.log.Error(err, "Reconcile Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", name))
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
 			continue
 		}
-		if o.Sensitive {
-			sensitiveOutput[o.Name] = []byte(out)
+		if sensitive {
+			sensitiveOutput[name] = []byte(out)
 		} else {
-			nonSensitiveOutput[o.Name] = out
+			nonSensitiveOutput[name] = out
 		}
 	}
 

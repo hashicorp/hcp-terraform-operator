@@ -3,9 +3,10 @@
 
 package v1alpha2
 
-import (
-	tfc "github.com/hashicorp/go-tfe"
-)
+import "github.com/hashicorp/go-tfe/v2/api/models"
+
+// RunPostPlanAwaitingDecision is a run status that is missing from the go-tfe v2 status enum.
+const RunPostPlanAwaitingDecision = "post_plan_awaiting_decision"
 
 func (rs *RunStatus) RunCompleted() bool {
 	return runCompleted(rs.Status)
@@ -18,15 +19,15 @@ func (rs *PlanStatus) RunCompleted() bool {
 func runCompleted(status string) bool {
 	// The following Run statuses indicate the completion
 	switch status {
-	case string(tfc.RunApplied):
+	case models.APPLIED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
-	case string(tfc.RunPlannedAndFinished):
+	case models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
-	case string(tfc.RunErrored):
+	case models.ERRORED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
-	case string(tfc.RunCanceled):
+	case models.CANCELED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
-	case string(tfc.RunDiscarded):
+	case models.DISCARDED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
 	}
 
@@ -41,9 +42,9 @@ func (rs *RunStatus) RunApplied() bool {
 func runApplied(status string) bool {
 	// The following Run statuses indicate the completion
 	switch status {
-	case string(tfc.RunApplied):
+	case models.APPLIED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
-	case string(tfc.RunPlannedAndFinished):
+	case models.PLANNED_AND_FINISHED_RUNS_ATTRIBUTES_STATUS.String():
 		return true
 	}
 

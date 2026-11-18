@@ -5,10 +5,13 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -116,18 +119,22 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			// ADD A NEW TOKEN MANUALLY
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			tfClient.AgentTokens.Create(ctx, instance.Status.AgentPoolID, tfc.AgentTokenCreateOptions{
-				Description: tfc.String("DeleteMe"),
-			})
+			tokenAttrs := models.NewAuthenticationTokens_attributes()
+			tokenAttrs.SetDescription(new("DeleteMe"))
+			tokenData := models.NewAuthenticationTokens()
+			tokenData.SetAttributes(tokenAttrs)
+			tokenBody := models.NewAuthenticationTokensEnvelope()
+			tokenBody.SetData(tokenData)
+			_, _ = tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).AuthenticationTokens().Post(ctx, tokenBody, nil)
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				l, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
+				l, err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).AuthenticationTokens().Get(ctx, nil)
 				Expect(err).Should(Succeed())
 				Expect(l).ShouldNot(BeNil())
 				at := make(map[string]struct{})
-				for _, t := range l.Items {
-					at[t.ID] = struct{}{}
+				for _, t := range l.GetData() {
+					at[pointer.ValueOf(t.GetId())] = struct{}{}
 				}
 				for _, st := range instance.Status.AgentTokens {
 					if _, ok := at[st.ID]; !ok {
@@ -169,18 +176,18 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			// DELETE AGENT POOL FROM THE TFC AND WAIT FOR RECREATION
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-			Expect(tfClient.AgentPools.Delete(ctx, instance.Status.AgentPoolID)).Should(Succeed())
+			Expect(tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).Delete(ctx, nil)).Should(Succeed())
 			Eventually(func() bool {
-				_, err := tfClient.AgentPools.Read(ctx, instance.Status.AgentPoolID)
-				return err == tfc.ErrResourceNotFound
+				_, err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).Get(ctx, nil)
+				return errors.Is(err, tfc.ErrNotFound)
 			}).Should(BeTrue())
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				l, err := tfClient.AgentPools.List(ctx, instance.Spec.Organization, &tfc.AgentPoolListOptions{})
+				l, err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).AgentPools().Get(ctx, nil)
 				Expect(err).Should(Succeed())
 				Expect(l).ShouldNot(BeNil())
-				for _, a := range l.Items {
-					if a.Name == instance.Spec.Name && a.ID == instance.Status.AgentPoolID {
+				for _, p := range l.GetData() {
+					if pointer.ValueOf(p.GetAttributes().GetName()) == instance.Spec.Name && pointer.ValueOf(p.GetId()) == instance.Status.AgentPoolID {
 						return true
 					}
 				}
@@ -204,19 +211,19 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			// DELETE AGENT TOKENS AND WAIT FOR RECREATION
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 			for _, t := range instance.Status.AgentTokens {
-				err := tfClient.AgentTokens.Delete(ctx, t.ID)
+				err := tfClient.API.AuthenticationTokens().ById(t.ID).Delete(ctx, nil)
 				if err != nil {
-					if err == tfc.ErrResourceNotFound {
+					if errors.Is(err, tfc.ErrNotFound) {
 						continue
 					}
 				}
 			}
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				t, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
+				t, err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).AuthenticationTokens().Get(ctx, nil)
 				Expect(err).Should(Succeed())
 				Expect(t).ShouldNot(BeNil())
-				return len(t.Items) == len(instance.Spec.AgentTokens)
+				return len(t.GetData()) == len(instance.Spec.AgentTokens)
 			}).Should(BeTrue())
 
 			// VALIDATE SPEC AGAINST STATUS
@@ -262,7 +269,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			// ADD EMPTY AgentDeployment BLOCK
 			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{
-				Replicas: pointer.PointerOf(int32(3)),
+				Replicas: new(int32(3)),
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -347,9 +354,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{}
 			instance.Spec.AgentDeploymentAutoscaling = &appv1alpha2.AgentDeploymentAutoscaling{
-				MinReplicas:           pointer.PointerOf(int32(3)),
-				MaxReplicas:           pointer.PointerOf(int32(5)),
-				CooldownPeriodSeconds: pointer.PointerOf(int32(60)),
+				MinReplicas:           new(int32(3)),
+				MaxReplicas:           new(int32(5)),
+				CooldownPeriodSeconds: new(int32(60)),
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -359,9 +366,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
 			Expect(instance.Spec.AgentDeploymentAutoscaling).ToNot(BeNil())
 			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(BeNil())
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(pointer.PointerOf(int32(3))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(pointer.PointerOf(int32(60))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(new(int32(3))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(new(int32(5))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(new(int32(60))))
 		})
 
 		It("can autoscale agent deployments with seperate scale-up and scale-down periods", func() {
@@ -372,11 +379,11 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 
 			instance.Spec.AgentDeployment = &appv1alpha2.AgentDeployment{}
 			instance.Spec.AgentDeploymentAutoscaling = &appv1alpha2.AgentDeploymentAutoscaling{
-				MinReplicas: pointer.PointerOf(int32(3)),
-				MaxReplicas: pointer.PointerOf(int32(5)),
+				MinReplicas: new(int32(3)),
+				MaxReplicas: new(int32(5)),
 				CooldownPeriod: &appv1alpha2.AgentDeploymentAutoscalingCooldownPeriod{
-					ScaleUpSeconds:   pointer.PointerOf(int32(30)),
-					ScaleDownSeconds: pointer.PointerOf(int32(600)),
+					ScaleUpSeconds:   new(int32(30)),
+					ScaleDownSeconds: new(int32(600)),
 				},
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
@@ -387,10 +394,10 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 			Expect(instance.Spec.AgentDeployment.Spec).To(BeNil())
 			Expect(instance.Spec.AgentDeploymentAutoscaling).ToNot(BeNil())
 			Expect(instance.Spec.AgentDeploymentAutoscaling.TargetWorkspaces).To(BeNil())
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(pointer.PointerOf(int32(3))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod.ScaleUpSeconds).To(Equal(pointer.PointerOf(int32(30))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod.ScaleDownSeconds).To(Equal(pointer.PointerOf(int32(600))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(new(int32(3))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(new(int32(5))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod.ScaleUpSeconds).To(Equal(new(int32(30))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriod.ScaleDownSeconds).To(Equal(new(int32(600))))
 		})
 
 		It("can autoscale agent deployments by targeting specific workspaces", func() {
@@ -409,9 +416,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 					{WildcardName: "test-*"},
 					{ID: workspaceInstance.Status.WorkspaceID},
 				},
-				MinReplicas:           pointer.PointerOf(int32(3)),
-				MaxReplicas:           pointer.PointerOf(int32(5)),
-				CooldownPeriodSeconds: pointer.PointerOf(int32(60)),
+				MinReplicas:           new(int32(3)),
+				MaxReplicas:           new(int32(5)),
+				CooldownPeriodSeconds: new(int32(60)),
 			}
 			Expect(k8sClient.Update(ctx, instance)).Should(Succeed())
 
@@ -425,9 +432,9 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				{WildcardName: "test-*"},
 				{ID: workspaceInstance.Status.WorkspaceID},
 			}))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(pointer.PointerOf(int32(3))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(pointer.PointerOf(int32(5))))
-			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(pointer.PointerOf(int32(60))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MinReplicas).To(Equal(new(int32(3))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.MaxReplicas).To(Equal(new(int32(5))))
+			Expect(instance.Spec.AgentDeploymentAutoscaling.CooldownPeriodSeconds).To(Equal(new(int32(60))))
 
 			deleteWorkspace(workspaceInstance)
 		})
@@ -481,12 +488,12 @@ func validateAgentPoolTestTokens(ctx context.Context, instance *appv1alpha2.Agen
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		at, err := tfClient.AgentTokens.List(ctx, instance.Status.AgentPoolID)
+		at, err := tfClient.API.AgentPools().ByAgent_pool_id(instance.Status.AgentPoolID).AuthenticationTokens().Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(at).ShouldNot(BeNil())
-		ct := make([]string, len(at.Items))
-		for i, t := range at.Items {
-			ct[i] = t.ID
+		ct := make([]string, len(at.GetData()))
+		for i, t := range at.GetData() {
+			ct[i] = pointer.ValueOf(t.GetId())
 		}
 
 		kt := make([]string, len(instance.Status.AgentTokens))

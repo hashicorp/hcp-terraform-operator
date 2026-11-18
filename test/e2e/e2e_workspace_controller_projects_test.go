@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -72,8 +73,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.Projects.Delete(ctx, projectID)).Should(Succeed())
-		Expect(tfClient.Projects.Delete(ctx, projectID2)).Should(Succeed())
+		Expect(tfClient.API.Projects().ByProject_id(projectID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Projects().ByProject_id(projectID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Project", func() {
@@ -130,12 +131,18 @@ var _ = Describe("Workspace controller", Ordered, func() {
 })
 
 func createTestProject(projectName string) string {
-	prj, err := tfClient.Projects.Create(ctx, organization, tfc.ProjectCreateOptions{
-		Name: projectName,
-	})
+	attrs := models.NewProjects_attributes()
+	attrs.SetName(&projectName)
+	data := models.NewProjects()
+	data.SetTypeEscaped(new(models.PROJECTS_PROJECTS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewProjectsEnvelope()
+	body.SetData(data)
+	prj, err := tfClient.API.Organizations().ByOrganization_name(organization).Projects().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
 	Expect(prj).ShouldNot(BeNil())
-	return prj.ID
+	Expect(prj.GetData()).ShouldNot(BeNil())
+	return pointer.ValueOf(prj.GetData().GetId())
 }
 
 func isReconciledProjectByID(instance *appv1alpha2.Workspace) {
@@ -143,10 +150,11 @@ func isReconciledProjectByID(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		return ws.Project.ID == instance.Spec.Project.ID
+		Expect(ws.GetData()).ShouldNot(BeNil())
+		return pointer.ValueOf(ws.GetData().GetRelationships().GetProject().GetData().GetId()) == instance.Spec.Project.ID
 	}).Should(BeTrue())
 }
 
@@ -155,13 +163,16 @@ func isReconciledProjectByName(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		prj, err := tfClient.Projects.Read(ctx, ws.Project.ID)
+		Expect(ws.GetData()).ShouldNot(BeNil())
+		prj, err := tfClient.API.Projects().ByProject_id(pointer.ValueOf(ws.GetData().GetRelationships().GetProject().GetData().GetId())).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(prj).ShouldNot(BeNil())
-		return prj.Name == instance.Spec.Project.Name
+		Expect(prj.GetData()).ShouldNot(BeNil())
+		Expect(prj.GetData().GetAttributes()).ShouldNot(BeNil())
+		return pointer.ValueOf(prj.GetData().GetAttributes().GetName()) == instance.Spec.Project.Name
 	}).Should(BeTrue())
 }
 
@@ -170,13 +181,18 @@ func isReconciledDefaultProject(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		org, err := tfClient.Organizations.Read(ctx, instance.Spec.Organization)
+		Expect(ws.GetData()).ShouldNot(BeNil())
+		org, err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(org).ShouldNot(BeNil())
-		Expect(org.DefaultProject).ShouldNot(BeNil())
-		return org.DefaultProject.ID == ws.Project.ID && org.DefaultProject.ID == instance.Status.DefaultProjectID
+		Expect(org.GetData()).ShouldNot(BeNil())
+		Expect(org.GetData().GetRelationships()).ShouldNot(BeNil())
+		Expect(org.GetData().GetRelationships().GetDefaultProject()).ShouldNot(BeNil())
+		Expect(org.GetData().GetRelationships().GetDefaultProject().GetData()).ShouldNot(BeNil())
+		defaultProjectID := pointer.ValueOf(org.GetData().GetRelationships().GetDefaultProject().GetData().GetId())
+		return defaultProjectID == pointer.ValueOf(ws.GetData().GetRelationships().GetProject().GetData().GetId()) && defaultProjectID == instance.Status.DefaultProjectID
 	}).Should(BeTrue())
 }

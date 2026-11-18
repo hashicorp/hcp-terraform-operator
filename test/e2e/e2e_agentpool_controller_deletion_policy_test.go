@@ -4,10 +4,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -91,7 +93,7 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			ap, err := tfClient.AgentPools.Read(ctx, apID)
+			ap, err := tfClient.API.AgentPools().ByAgent_pool_id(apID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
 			Expect(ap).NotTo(BeNil())
 		})
@@ -110,8 +112,8 @@ var _ = Describe("Agent Pool controller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			ap, err := tfClient.AgentPools.Read(ctx, apID)
-			Expect(err).Should(Equal(tfc.ErrResourceNotFound))
+			ap, err := tfClient.API.AgentPools().ByAgent_pool_id(apID).Get(ctx, nil)
+			Expect(errors.Is(err, tfc.ErrNotFound)).To(BeTrue())
 			Expect(ap).To(BeNil())
 		})
 	})

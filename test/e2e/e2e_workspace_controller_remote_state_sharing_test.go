@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -40,12 +41,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 		workspace = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		wsName = fmt.Sprintf("%v-share", workspace)
 		wsName2 = fmt.Sprintf("%v-2", wsName)
-		wsID = createWorkspace(tfc.WorkspaceCreateOptions{
-			Name: &wsName,
-		}).ID
-		wsID2 = createWorkspace(tfc.WorkspaceCreateOptions{
-			Name: &wsName2,
-		}).ID
+		wsAttrs := models.NewWorkspaces_attributes()
+		wsAttrs.SetName(&wsName)
+		wsID = pointer.ValueOf(createWorkspace(wsAttrs).GetId())
+		wsAttrs2 := models.NewWorkspaces_attributes()
+		wsAttrs2.SetName(&wsName2)
+		wsID2 = pointer.ValueOf(createWorkspace(wsAttrs2).GetId())
 
 		// Create a new workspace object for each test
 		instance = &appv1alpha2.Workspace{
@@ -77,8 +78,8 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 	AfterEach(func() {
 		deleteWorkspace(instance)
-		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID)).Should(Succeed())
-		Expect(tfClient.Workspaces.DeleteByID(ctx, wsID2)).Should(Succeed())
+		Expect(tfClient.API.Workspaces().ByWorkspace_id(wsID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.Workspaces().ByWorkspace_id(wsID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Remote State Sharing", func() {
@@ -91,9 +92,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledGlobalRemoteStateSharing(instance)
 
 			// Manually change Global Remote State Sharing to false
-			_, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
-				GlobalRemoteState: tfc.Bool(false),
-			})
+			attrs := models.NewWorkspaces_attributes()
+			attrs.SetGlobalRemoteState(new(false))
+			data := models.NewWorkspaces()
+			data.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			data.SetAttributes(attrs)
+			body := models.NewWorkspacesEnvelope()
+			body.SetData(data)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Patch(ctx, body, nil)
 			Expect(err).Should(Succeed())
 			// Wait for restoration
 			isReconciledGlobalRemoteStateSharing(instance)
@@ -108,9 +114,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledGlobalRemoteStateSharing(instance)
 
 			// Manually change Global Remote State Sharing to true
-			_, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
-				GlobalRemoteState: tfc.Bool(true),
-			})
+			attrs := models.NewWorkspaces_attributes()
+			attrs.SetGlobalRemoteState(new(true))
+			data := models.NewWorkspaces()
+			data.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			data.SetAttributes(attrs)
+			body := models.NewWorkspacesEnvelope()
+			body.SetData(data)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Patch(ctx, body, nil)
 			Expect(err).Should(Succeed())
 			// Wait for restoration
 			isReconciledGlobalRemoteStateSharing(instance)
@@ -127,21 +138,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually delete the workspace from Remote State Sharing
-			err := tfClient.Workspaces.RemoveRemoteStateConsumers(ctx, instance.Status.WorkspaceID, tfc.WorkspaceRemoveRemoteStateConsumersOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: wsID},
-				},
-			})
+			err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Relationships().RemoteStateConsumers().Delete(ctx, remoteStateConsumers(wsID), nil)
 			Expect(err).Should(Succeed())
 			// Wait for restoration
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually add the workspace from Remote State Sharing
-			err = tfClient.Workspaces.AddRemoteStateConsumers(ctx, instance.Status.WorkspaceID, tfc.WorkspaceAddRemoteStateConsumersOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: wsID2},
-				},
-			})
+			err = tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Relationships().RemoteStateConsumers().Post(ctx, remoteStateConsumers(wsID2), nil)
 			Expect(err).Should(Succeed())
 			// Wait for restoration
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
@@ -158,21 +161,13 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually delete the workspace from Remote State Sharing
-			err := tfClient.Workspaces.RemoveRemoteStateConsumers(ctx, instance.Status.WorkspaceID, tfc.WorkspaceRemoveRemoteStateConsumersOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: wsID},
-				},
-			})
+			err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Relationships().RemoteStateConsumers().Delete(ctx, remoteStateConsumers(wsID), nil)
 			Expect(err).Should(Succeed())
 			// Wait for restoration
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
 
 			// Manually add the workspace from Remote State Sharing
-			err = tfClient.Workspaces.AddRemoteStateConsumers(ctx, instance.Status.WorkspaceID, tfc.WorkspaceAddRemoteStateConsumersOptions{
-				Workspaces: []*tfc.Workspace{
-					{ID: wsID2},
-				},
-			})
+			err = tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Relationships().RemoteStateConsumers().Post(ctx, remoteStateConsumers(wsID2), nil)
 			Expect(err).Should(Succeed())
 			// Wait for restoration
 			isReconciledRemoteStateSharingForWorkspaces(instance, wsID)
@@ -185,10 +180,12 @@ func isReconciledGlobalRemoteStateSharing(instance *appv1alpha2.Workspace) {
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+		ws, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(ws).ShouldNot(BeNil())
-		return ws.GlobalRemoteState == instance.Spec.RemoteStateSharing.AllWorkspaces
+		Expect(ws.GetData()).ShouldNot(BeNil())
+		Expect(ws.GetData().GetAttributes()).ShouldNot(BeNil())
+		return pointer.ValueOf(ws.GetData().GetAttributes().GetGlobalRemoteState()) == instance.Spec.RemoteStateSharing.AllWorkspaces
 	}).Should(BeTrue())
 }
 
@@ -197,14 +194,15 @@ func isReconciledRemoteStateSharingForWorkspaces(instance *appv1alpha2.Workspace
 
 	Eventually(func() bool {
 		Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-		rsc, err := tfClient.Workspaces.ListRemoteStateConsumers(ctx, instance.Status.WorkspaceID, &tfc.RemoteStateConsumersListOptions{})
+		rsc, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Relationships().RemoteStateConsumers().Get(ctx, nil)
 		Expect(err).Should(Succeed())
 		Expect(rsc).ShouldNot(BeNil())
-		if len(rsc.Items) == 0 {
+		items := rsc.GetData()
+		if len(items) == 0 {
 			return false
 		}
-		for _, r := range rsc.Items {
-			if r.ID == workspaceID && len(rsc.Items) == len(instance.Spec.RemoteStateSharing.Workspaces) {
+		for _, r := range items {
+			if pointer.ValueOf(r.GetId()) == workspaceID && len(items) == len(instance.Spec.RemoteStateSharing.Workspaces) {
 				return true
 			}
 		}
@@ -212,10 +210,29 @@ func isReconciledRemoteStateSharingForWorkspaces(instance *appv1alpha2.Workspace
 	}).Should(BeTrue())
 }
 
-func createWorkspace(o tfc.WorkspaceCreateOptions) *tfc.Workspace {
-	ws, err := tfClient.Workspaces.Create(ctx, organization, o)
+func createWorkspace(o models.Workspaces_attributesable) models.Workspacesable {
+	GinkgoHelper()
+	data := models.NewWorkspaces()
+	data.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+	data.SetAttributes(o)
+	body := models.NewWorkspacesEnvelope()
+	body.SetData(data)
+	resp, err := tfClient.API.Organizations().ByOrganization_name(organization).Workspaces().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
-	Expect(ws).ShouldNot(BeNil())
+	Expect(resp).ShouldNot(BeNil())
+	Expect(resp.GetData()).ShouldNot(BeNil())
+	return resp.GetData()
+}
 
-	return ws
+func remoteStateConsumers(ids ...string) models.WorkspacesIdentifierArrayDocumentable {
+	consumers := make([]models.WorkspacesIdentifierArrayDocument_dataable, 0, len(ids))
+	for _, id := range ids {
+		c := models.NewWorkspacesIdentifierArrayDocument_data()
+		c.SetId(new(id))
+		c.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+		consumers = append(consumers, c)
+	}
+	body := models.NewWorkspacesIdentifierArrayDocument()
+	body.SetData(consumers)
+	return body
 }

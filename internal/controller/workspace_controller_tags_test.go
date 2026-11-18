@@ -6,7 +6,6 @@ package controller
 import (
 	"testing"
 
-	tfc "github.com/hashicorp/go-tfe"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ func TestTagDifference(t *testing.T) {
 	cases := map[string]struct {
 		leftTags  map[string]bool
 		rightTags map[string]bool
-		expect    []*tfc.Tag
+		expect    []string
 	}{
 		"TagsDifference": {
 			leftTags: map[string]bool{
@@ -26,8 +25,8 @@ func TestTagDifference(t *testing.T) {
 			rightTags: map[string]bool{
 				"B": true,
 			},
-			expect: []*tfc.Tag{
-				{Name: "A"},
+			expect: []string{
+				"A",
 			},
 		},
 		"TagsUnintersectioned": {
@@ -39,9 +38,9 @@ func TestTagDifference(t *testing.T) {
 				"C": true,
 				"D": true,
 			},
-			expect: []*tfc.Tag{
-				{Name: "A"},
-				{Name: "B"},
+			expect: []string{
+				"A",
+				"B",
 			},
 		},
 		"TagsDifferenceWhenRightTagsIsEmpty": {
@@ -50,9 +49,9 @@ func TestTagDifference(t *testing.T) {
 				"B": true,
 			},
 			rightTags: make(map[string]bool),
-			expect: []*tfc.Tag{
-				{Name: "A"},
-				{Name: "B"},
+			expect: []string{
+				"A",
+				"B",
 			},
 		},
 		"TagsDifferenceWhenLeftTagsIsEmpty": {
@@ -61,7 +60,7 @@ func TestTagDifference(t *testing.T) {
 				"A": true,
 				"B": true,
 			},
-			expect: []*tfc.Tag{},
+			expect: []string{},
 		},
 		"TagsEqual": {
 			leftTags: map[string]bool{
@@ -72,12 +71,12 @@ func TestTagDifference(t *testing.T) {
 				"B": true,
 				"A": true,
 			},
-			expect: []*tfc.Tag{},
+			expect: []string{},
 		},
 		"TagsEqualEmpty": {
 			leftTags:  map[string]bool{},
 			rightTags: map[string]bool{},
-			expect:    []*tfc.Tag{},
+			expect:    []string{},
 		},
 	}
 

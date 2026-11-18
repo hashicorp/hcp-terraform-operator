@@ -6,7 +6,8 @@ package v1alpha2
 import (
 	"testing"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +19,7 @@ func TestValidateSpecTeamAccess(t *testing.T) {
 			Spec: ProjectSpec{
 				TeamAccess: []*ProjectTeamAccess{
 					{
-						Access: tfc.TeamProjectAccessCustom,
+						Access: models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 						Custom: &CustomProjectPermissions{
 							CreateWorkspace: true,
 						},
@@ -30,7 +31,7 @@ func TestValidateSpecTeamAccess(t *testing.T) {
 			Spec: ProjectSpec{
 				TeamAccess: []*ProjectTeamAccess{
 					{
-						Access: tfc.TeamProjectAccessAdmin,
+						Access: models.ADMIN_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 						Custom: nil,
 					},
 				},
@@ -50,7 +51,7 @@ func TestValidateSpecTeamAccess(t *testing.T) {
 			Spec: ProjectSpec{
 				TeamAccess: []*ProjectTeamAccess{
 					{
-						Access: tfc.TeamProjectAccessCustom,
+						Access: models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 						Custom: nil,
 					},
 				},
@@ -60,7 +61,7 @@ func TestValidateSpecTeamAccess(t *testing.T) {
 			Spec: ProjectSpec{
 				TeamAccess: []*ProjectTeamAccess{
 					{
-						Access: tfc.TeamProjectAccessAdmin,
+						Access: models.ADMIN_TEAMPROJECTS_ATTRIBUTES_ACCESS.String(),
 						Custom: &CustomProjectPermissions{
 							CreateWorkspace: true,
 						},

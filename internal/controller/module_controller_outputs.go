@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/stateversions"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func moduleOutputObjectName(name string) string {
@@ -51,11 +54,13 @@ func (r *ModuleReconciler) secretAvailable(ctx context.Context, instance *appv1a
 }
 
 func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) error {
-	workspace, err := m.tfClient.Client.Workspaces.ReadByID(ctx, m.instance.Status.WorkspaceID)
+	wsResp, err := m.tfClient.Client.API.Workspaces().ByWorkspace_id(m.instance.Status.WorkspaceID).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
-	if workspace.CurrentStateVersion == nil {
+	workspace := wsResp.GetData()
+	sv := workspace.GetRelationships().GetCurrentStateVersion()
+	if sv == nil || sv.GetData() == nil || pointer.ValueOf(sv.GetData().GetId()) == "" {
 		return fmt.Errorf("current workspace state version is not available")
 	}
 
@@ -69,37 +74,43 @@ func (r *ModuleReconciler) setOutputs(ctx context.Context, m *moduleInstance) er
 		return fmt.Errorf("secret %s is in use by different object thus it cannot be used to store outputs", oName)
 	}
 
-	opts := &tfc.StateVersionOutputsListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
-	}
-	var outputs []*tfc.StateVersionOutput
+	pageNumber := int32(InitPageNumber)
+	var outputs []models.StateVersionOutputsable
 	for {
-		resp, err := m.tfClient.Client.StateVersions.ListOutputs(ctx, workspace.CurrentStateVersion.ID, opts)
+		resp, err := m.tfClient.Client.API.StateVersions().
+			ByState_version_id(pointer.ValueOf(sv.GetData().GetId())).
+			Outputs().
+			Get(ctx, &abstractions.RequestConfiguration[stateversions.ItemOutputsRequestBuilderGetQueryParameters]{
+				QueryParameters: &stateversions.ItemOutputsRequestBuilderGetQueryParameters{
+					Pagesize:   new(int32(MaxPageSize)),
+					Pagenumber: &pageNumber,
+				},
+			})
 		if err != nil {
 			return err
 		}
-		outputs = append(outputs, resp.Items...)
-		if resp.NextPage == 0 {
+		outputs = append(outputs, resp.GetData()...)
+		next := nextPage(resp.GetMeta())
+		if next == 0 {
 			break
 		}
-		opts.PageNumber = resp.NextPage
+		pageNumber = next
 	}
 
 	nonSensitiveOutput := make(map[string]string)
 	sensitiveOutput := make(map[string][]byte)
 	for _, o := range outputs {
+		name := pointer.ValueOf(o.GetAttributes().GetName())
 		out, err := formatOutput(o)
 		if err != nil {
-			m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", o.Name))
+			m.log.Error(err, "Reconcile Module Outputs", "mgs", fmt.Sprintf("failed to marshal JSON for %q", name))
 			r.Recorder.Event(&m.instance, corev1.EventTypeWarning, "ReconcileOutputs", "failed to marshal JSON")
 			continue
 		}
-		if o.Sensitive {
-			sensitiveOutput[o.Name] = []byte(out)
+		if pointer.ValueOf(o.GetAttributes().GetSensitive()) {
+			sensitiveOutput[name] = []byte(out)
 		} else {
-			nonSensitiveOutput[o.Name] = out
+			nonSensitiveOutput[name] = out
 		}
 	}
 
@@ -160,8 +171,8 @@ func needToUpdateOutput(instance *appv1alpha2.Module) bool {
 	return status.Output == nil || status.Output.RunID != status.Run.ID
 }
 
-func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstance, workspace *tfc.Workspace) error {
-	if workspace.CurrentRun != nil {
+func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstance, workspace models.Workspacesable) error {
+	if cr := workspace.GetRelationships().GetCurrentRun(); cr != nil && cr.GetData() != nil && pointer.ValueOf(cr.GetData().GetId()) != "" {
 		if needToUpdateOutput(&m.instance) {
 			m.log.Info("Reconcile Module Outputs", "mgs", "creating or updating outputs")
 			err := r.setOutputs(ctx, m)
@@ -169,7 +180,7 @@ func (r *ModuleReconciler) reconcileOutputs(ctx context.Context, m *moduleInstan
 				return err
 			}
 			m.instance.Status.Output = &appv1alpha2.OutputStatus{
-				RunID: workspace.CurrentRun.ID,
+				RunID: pointer.ValueOf(cr.GetData().GetId()),
 			}
 			return nil
 		}

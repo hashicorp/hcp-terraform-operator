@@ -9,7 +9,7 @@ import (
 	"slices"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +18,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -90,15 +91,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
-					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+				return pointer.ValueOf(ws.GetVcsRepo().GetOauthTokenId()) == instance.Spec.VersionControl.OAuthTokenID &&
+					pointer.ValueOf(ws.GetVcsRepo().GetIdentifier()) == instance.Spec.VersionControl.Repository &&
+					pointer.ValueOf(ws.GetVcsRepo().GetBranch()) == instance.Spec.VersionControl.Branch
 			}).Should(BeTrue())
 		})
 
@@ -112,16 +113,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
-					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch &&
-					ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers
+				return pointer.ValueOf(ws.GetVcsRepo().GetOauthTokenId()) == instance.Spec.VersionControl.OAuthTokenID &&
+					pointer.ValueOf(ws.GetVcsRepo().GetIdentifier()) == instance.Spec.VersionControl.Repository &&
+					pointer.ValueOf(ws.GetVcsRepo().GetBranch()) == instance.Spec.VersionControl.Branch &&
+					pointer.ValueOf(ws.GetFileTriggersEnabled()) == instance.Spec.VersionControl.EnableFileTriggers
 			}).Should(BeTrue())
 		})
 
@@ -129,27 +130,31 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
 
-			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
-				VCSRepo: &tfc.VCSRepoOptions{
-					Branch: tfc.String("main"),
-				},
-				FileTriggersEnabled: tfc.Bool(true),
-			})
-			Expect(ws).ShouldNot(BeNil())
+			vcs := models.NewWorkspaces_attributes_vcsRepo()
+			vcs.SetBranch(new("main"))
+			attrs := models.NewWorkspaces_attributes()
+			attrs.SetVcsRepo(vcs)
+			attrs.SetFileTriggersEnabled(new(true))
+			patchData := models.NewWorkspaces()
+			patchData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			patchData.SetAttributes(attrs)
+			patchBody := models.NewWorkspacesEnvelope()
+			patchBody.SetData(patchData)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Patch(ctx, patchBody, nil)
 			Expect(err).Should(Succeed())
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
-					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch &&
-					ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers
+				return pointer.ValueOf(ws.GetVcsRepo().GetOauthTokenId()) == instance.Spec.VersionControl.OAuthTokenID &&
+					pointer.ValueOf(ws.GetVcsRepo().GetIdentifier()) == instance.Spec.VersionControl.Repository &&
+					pointer.ValueOf(ws.GetVcsRepo().GetBranch()) == instance.Spec.VersionControl.Branch &&
+					pointer.ValueOf(ws.GetFileTriggersEnabled()) == instance.Spec.VersionControl.EnableFileTriggers
 			}).Should(BeTrue())
 		})
 
@@ -157,21 +162,19 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
 			createWorkspaceResource(instance)
 
-			ws, err := tfClient.Workspaces.RemoveVCSConnectionByID(ctx, instance.Status.WorkspaceID)
-			Expect(err).Should(Succeed())
-			Expect(ws).ShouldNot(BeNil())
+			patchWorkspaceRaw(instance.Status.WorkspaceID, map[string]any{"vcs-repo": nil})
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.VCSRepo.OAuthTokenID == instance.Spec.VersionControl.OAuthTokenID &&
-					ws.VCSRepo.Identifier == instance.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instance.Spec.VersionControl.Branch
+				return pointer.ValueOf(ws.GetVcsRepo().GetOauthTokenId()) == instance.Spec.VersionControl.OAuthTokenID &&
+					pointer.ValueOf(ws.GetVcsRepo().GetIdentifier()) == instance.Spec.VersionControl.Repository &&
+					pointer.ValueOf(ws.GetVcsRepo().GetBranch()) == instance.Spec.VersionControl.Branch
 			}).Should(BeTrue())
 		})
 
@@ -184,10 +187,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				return ws.VCSRepo == nil
+				ws := resp.GetData().GetAttributes()
+				return ws.GetVcsRepo() == nil
 			}).Should(BeTrue())
 		})
 
@@ -202,16 +205,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Validate that all attributes are set correctly
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.VCSRepo.OAuthTokenID == instanceCopy.Spec.VersionControl.OAuthTokenID &&
-					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
-					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
+				return pointer.ValueOf(ws.GetVcsRepo().GetOauthTokenId()) == instanceCopy.Spec.VersionControl.OAuthTokenID &&
+					pointer.ValueOf(ws.GetVcsRepo().GetIdentifier()) == instanceCopy.Spec.VersionControl.Repository &&
+					pointer.ValueOf(ws.GetVcsRepo().GetBranch()) == instanceCopy.Spec.VersionControl.Branch &&
+					pointer.ValueOf(ws.GetSpeculativeEnabled()) == instanceCopy.Spec.VersionControl.SpeculativePlans
 			}).Should(BeTrue())
 
 			// Update the Kubernetes workspace object fields
@@ -224,16 +227,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Validate that all attributes are set correctly
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.VCSRepo.OAuthTokenID == instanceCopy.Spec.VersionControl.OAuthTokenID &&
-					ws.VCSRepo.Identifier == instanceCopy.Spec.VersionControl.Repository &&
-					ws.VCSRepo.Branch == instanceCopy.Spec.VersionControl.Branch &&
-					ws.SpeculativeEnabled == instanceCopy.Spec.VersionControl.SpeculativePlans
+				return pointer.ValueOf(ws.GetVcsRepo().GetOauthTokenId()) == instanceCopy.Spec.VersionControl.OAuthTokenID &&
+					pointer.ValueOf(ws.GetVcsRepo().GetIdentifier()) == instanceCopy.Spec.VersionControl.Repository &&
+					pointer.ValueOf(ws.GetVcsRepo().GetBranch()) == instanceCopy.Spec.VersionControl.Branch &&
+					pointer.ValueOf(ws.GetSpeculativeEnabled()) == instanceCopy.Spec.VersionControl.SpeculativePlans
 			}).Should(BeTrue())
 		})
 
@@ -286,34 +289,36 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
-					slices.Compare(ws.TriggerPatterns, instance.Spec.VersionControl.TriggerPatterns) == 0
+				return pointer.ValueOf(ws.GetFileTriggersEnabled()) == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.GetTriggerPatterns(), instance.Spec.VersionControl.TriggerPatterns) == 0
 			}).Should(BeTrue())
 
 			// Revert manual changes
-			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
-				TriggerPatterns: []string{
-					"/var/",
-				},
-			})
-			Expect(ws).ShouldNot(BeNil())
+			attrs := models.NewWorkspaces_attributes()
+			attrs.SetTriggerPatterns([]string{"/var/"})
+			patchData := models.NewWorkspaces()
+			patchData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			patchData.SetAttributes(attrs)
+			patchBody := models.NewWorkspacesEnvelope()
+			patchBody.SetData(patchData)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Patch(ctx, patchBody, nil)
 			Expect(err).Should(Succeed())
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
-					slices.Compare(ws.TriggerPatterns, instance.Spec.VersionControl.TriggerPatterns) == 0
+				return pointer.ValueOf(ws.GetFileTriggersEnabled()) == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.GetTriggerPatterns(), instance.Spec.VersionControl.TriggerPatterns) == 0
 			}).Should(BeTrue())
 		})
 
@@ -326,34 +331,36 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
-					slices.Compare(ws.TriggerPrefixes, instance.Spec.VersionControl.TriggerPrefixes) == 0
+				return pointer.ValueOf(ws.GetFileTriggersEnabled()) == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.GetTriggerPrefixes(), instance.Spec.VersionControl.TriggerPrefixes) == 0
 			}).Should(BeTrue())
 
 			// Revert manual changes
-			ws, err := tfClient.Workspaces.UpdateByID(ctx, instance.Status.WorkspaceID, tfc.WorkspaceUpdateOptions{
-				TriggerPrefixes: []string{
-					"/var/",
-				},
-			})
-			Expect(ws).ShouldNot(BeNil())
+			attrs := models.NewWorkspaces_attributes()
+			attrs.SetTriggerPrefixes([]string{"/var/"})
+			patchData := models.NewWorkspaces()
+			patchData.SetTypeEscaped(new(models.WORKSPACES_WORKSPACES_TYPE))
+			patchData.SetAttributes(attrs)
+			patchBody := models.NewWorkspacesEnvelope()
+			patchBody.SetData(patchData)
+			_, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Patch(ctx, patchBody, nil)
 			Expect(err).Should(Succeed())
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				Expect(ws).ShouldNot(BeNil())
-				if ws.VCSRepo == nil {
+				ws := resp.GetData().GetAttributes()
+				if ws.GetVcsRepo() == nil {
 					return false
 				}
-				return ws.FileTriggersEnabled == instance.Spec.VersionControl.EnableFileTriggers &&
-					slices.Compare(ws.TriggerPrefixes, instance.Spec.VersionControl.TriggerPrefixes) == 0
+				return pointer.ValueOf(ws.GetFileTriggersEnabled()) == instance.Spec.VersionControl.EnableFileTriggers &&
+					slices.Compare(ws.GetTriggerPrefixes(), instance.Spec.VersionControl.TriggerPrefixes) == 0
 			}).Should(BeTrue())
 		})
 	})

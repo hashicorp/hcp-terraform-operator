@@ -4,10 +4,13 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +20,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -86,7 +90,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			initWorkspaceID := instance.Status.WorkspaceID
 
 			// Delete the HCP Terraform workspace
-			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
+			Expect(tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Delete(ctx, nil)).Should(Succeed())
 
 			// Wait until the controller re-creates the workspace and updates Status.WorkspaceID with a new valid workspace ID
 			Eventually(func() bool {
@@ -103,7 +107,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			createWorkspaceResource(instance)
 
 			// Delete the HCP Terraform workspace
-			Expect(tfClient.Workspaces.DeleteByID(ctx, instance.Status.WorkspaceID)).Should(Succeed())
+			Expect(tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Delete(ctx, nil)).Should(Succeed())
 		})
 
 		It("can change workspace name", func() {
@@ -116,10 +120,10 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				return ws.Name == instance.Spec.Name
+				ws := resp.GetData().GetAttributes()
+				return pointer.ValueOf(ws.GetName()) == instance.Spec.Name
 			}).Should(BeTrue())
 		})
 
@@ -134,15 +138,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Validate that all attributes are set correctly
 			// Do not validate the Terraform version since it will be set to the latest available by default
 			Eventually(func() bool {
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				return ws.AutoApply == controller.ApplyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
-					ws.AutoApplyRunTrigger == controller.ApplyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
-					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
-					ws.Description == instanceCopy.Spec.Description &&
-					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&
-					ws.WorkingDirectory == instanceCopy.Spec.WorkingDirectory
+				ws := resp.GetData().GetAttributes()
+				return pointer.ValueOf(ws.GetAutoApply()) == controller.ApplyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					pointer.ValueOf(ws.GetAutoApplyRunTrigger()) == controller.ApplyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
+					pointer.ValueOf(ws.GetAllowDestroyPlan()) == instanceCopy.Spec.AllowDestroyPlan &&
+					pointer.ValueOf(ws.GetDescription()) == instanceCopy.Spec.Description &&
+					pointer.ValueOf(ws.GetExecutionMode()).String() == instanceCopy.Spec.ExecutionMode &&
+					pointer.ValueOf(ws.GetWorkingDirectory()) == instanceCopy.Spec.WorkingDirectory
 			}).Should(BeTrue())
 
 			// Update the Kubernetes workspace object fields(basic workspace attributes)
@@ -162,16 +166,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				return ws.AutoApply == controller.ApplyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
-					ws.AutoApplyRunTrigger == controller.ApplyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
-					ws.AllowDestroyPlan == instanceCopy.Spec.AllowDestroyPlan &&
-					ws.Description == instanceCopy.Spec.Description &&
-					ws.ExecutionMode == instanceCopy.Spec.ExecutionMode &&
-					ws.TerraformVersion == instanceCopy.Spec.TerraformVersion &&
-					ws.WorkingDirectory == instanceCopy.Spec.WorkingDirectory
+				ws := resp.GetData().GetAttributes()
+				return pointer.ValueOf(ws.GetAutoApply()) == controller.ApplyMethodToBool(instanceCopy.Spec.ApplyMethod) &&
+					pointer.ValueOf(ws.GetAutoApplyRunTrigger()) == controller.ApplyRunTriggerToBool(instanceCopy.Spec.ApplyRunTrigger) &&
+					pointer.ValueOf(ws.GetAllowDestroyPlan()) == instanceCopy.Spec.AllowDestroyPlan &&
+					pointer.ValueOf(ws.GetDescription()) == instanceCopy.Spec.Description &&
+					pointer.ValueOf(ws.GetExecutionMode()).String() == instanceCopy.Spec.ExecutionMode &&
+					pointer.ValueOf(ws.GetTerraformVersion()) == instanceCopy.Spec.TerraformVersion &&
+					pointer.ValueOf(ws.GetWorkingDirectory()) == instanceCopy.Spec.WorkingDirectory
 			}).Should(BeTrue())
 		})
 
@@ -186,19 +190,16 @@ var _ = Describe("Workspace controller", Ordered, func() {
 
 			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
-				ws, err := tfClient.Workspaces.ReadByID(ctx, instance.Status.WorkspaceID)
-				Expect(ws).ShouldNot(BeNil())
+				resp, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
+				ws := resp.GetData().GetAttributes()
 				return instance.Spec.TerraformVersion == "" &&
-					ws.TerraformVersion == instance.Status.TerraformVersion
+					pointer.ValueOf(ws.GetTerraformVersion()) == instance.Status.TerraformVersion
 			}).Should(BeTrue())
 		})
 
 		It("can handle workspace tags", func() {
-			expectTags := []tfc.Tag{
-				{Name: "kubernetes-operator"},
-				{Name: "env:dev"},
-			}
+			expectTags := []string{"kubernetes-operator", "env:dev"}
 
 			instance.Spec.Tags = []appv1alpha2.Tag{"kubernetes-operator"}
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -206,9 +207,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			// Make sure that the TFC Workspace has all desired tags
 			Eventually(func() bool {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
-				expectTags := []tfc.Tag{
-					{Name: "kubernetes-operator"},
-				}
+				expectTags := []string{"kubernetes-operator"}
 				return compareTags(wsTags, expectTags)
 			}).Should(BeTrue())
 
@@ -222,10 +221,19 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			// Delete some tags manually
-			err := tfClient.Workspaces.RemoveTags(ctx, instance.Status.WorkspaceID, tfc.WorkspaceRemoveTagsOptions{Tags: []*tfc.Tag{
-				{Name: "kubernetes-operator"},
-			}})
+			tagsBuilder := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).Relationships().Tags()
+			tags, err := tagsBuilder.Get(ctx, nil)
 			Expect(err).Should(Succeed())
+			for _, t := range tags.GetData() {
+				if pointer.ValueOf(t.GetAttributes().GetName()) == "kubernetes-operator" {
+					tag := models.NewTagsRemoveArrayDocument_data()
+					tag.SetId(t.GetId())
+					tag.SetTypeEscaped(new(models.TAGS_TAGSREMOVEARRAYDOCUMENT_DATA_TYPE))
+					body := models.NewTagsRemoveArrayDocument()
+					body.SetData([]models.TagsRemoveArrayDocument_dataable{tag})
+					Expect(tagsBuilder.Delete(ctx, body, nil)).Should(Succeed())
+				}
+			}
 			// Make sure the controller restores all tags
 			Eventually(func() bool {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
@@ -233,10 +241,14 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}).Should(BeTrue())
 
 			// Add some tags manually
-			err = tfClient.Workspaces.AddTags(ctx, instance.Status.WorkspaceID, tfc.WorkspaceAddTagsOptions{Tags: []*tfc.Tag{
-				{Name: "new-tag"},
-			}})
-			Expect(err).Should(Succeed())
+			tagAttrs := models.NewTagsCreateArrayDocument_data_attributes()
+			tagAttrs.SetName(new("new-tag"))
+			tag := models.NewTagsCreateArrayDocument_data()
+			tag.SetTypeEscaped(new(models.TAGS_TAGSCREATEARRAYDOCUMENT_DATA_TYPE))
+			tag.SetAttributes(tagAttrs)
+			body := models.NewTagsCreateArrayDocument()
+			body.SetData([]models.TagsCreateArrayDocument_dataable{tag})
+			Expect(tagsBuilder.Post(ctx, body, nil)).Should(Succeed())
 			// Make sure the controller restores all tags
 			Eventually(func() bool {
 				wsTags := listWorkspaceTags(instance.Status.WorkspaceID)
@@ -281,14 +293,14 @@ func deleteWorkspace(instance *appv1alpha2.Workspace) {
 
 	// Make sure that the HCP Terraform workspace is deleted
 	Eventually(func() bool {
-		err := tfClient.Workspaces.Delete(ctx, instance.Spec.Organization, instance.Spec.Name)
-		// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
-		return err == tfc.ErrResourceNotFound || err == nil
+		err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).Workspaces().ByWorkspace_name(instance.Spec.Name).Delete(ctx, nil)
+		// The HCP Terraform client will return the error 'NotFound' once the workspace does not exist
+		return errors.Is(err, tfc.ErrNotFound) || err == nil
 	}).Should(BeTrue())
 }
 
 // compareTags compares two slices of tags and returns 'true' if they are equal and 'false' otherwise
-func compareTags(aTags, bTags []tfc.Tag) bool {
+func compareTags(aTags, bTags []string) bool {
 	if len(aTags) != len(bTags) {
 		return false
 	}
@@ -297,7 +309,7 @@ func compareTags(aTags, bTags []tfc.Tag) bool {
 	for _, at := range aTags {
 		found := false
 		for _, bt := range bTags {
-			if at.Name == bt.Name {
+			if at == bt {
 				found = true
 			}
 		}
@@ -310,14 +322,9 @@ func compareTags(aTags, bTags []tfc.Tag) bool {
 }
 
 // listWorkspaceTags returns a list of all tags assigned to the workspace
-func listWorkspaceTags(workspaceID string) []tfc.Tag {
-	ws, err := tfClient.Workspaces.ReadByID(ctx, workspaceID)
-	Expect(ws).ShouldNot(BeNil())
+func listWorkspaceTags(workspaceID string) []string {
+	resp, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 	Expect(err).Should(Succeed())
-	tags := make([]tfc.Tag, len(ws.TagNames))
-	for i, t := range ws.TagNames {
-		tags[i] = tfc.Tag{Name: t}
-	}
 
-	return tags
+	return resp.GetData().GetAttributes().GetTagNames()
 }

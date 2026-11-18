@@ -4,7 +4,6 @@
 package v1alpha2
 
 import (
-	tfc "github.com/hashicorp/go-tfe"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,7 +19,7 @@ type CustomProjectPermissions struct {
 	//+kubebuilder:validation:Enum:=delete;read;update
 	//+kubebuilder:default:=read
 	//+optional
-	ProjectAccess tfc.ProjectSettingsPermissionType `json:"projectAccess,omitempty"`
+	ProjectAccess string `json:"projectAccess,omitempty"`
 	// Team management.
 	// Must be one of the following values: `manage`, `none`, `read`.
 	// Default: `none`.
@@ -28,7 +27,7 @@ type CustomProjectPermissions struct {
 	//+kubebuilder:validation:Enum:=manage;none;read
 	//+kubebuilder:default:=none
 	//+optional
-	TeamManagement tfc.ProjectTeamsPermissionType `json:"teamManagement,omitempty"`
+	TeamManagement string `json:"teamManagement,omitempty"`
 	// Allow users to create workspaces in the project.
 	// This grants read access to all workspaces in the project.
 	// Default: `false`.
@@ -63,7 +62,7 @@ type CustomProjectPermissions struct {
 	//+kubebuilder:validation:Enum:=apply;plan;read
 	//+kubebuilder:default:=read
 	//+optional
-	Runs tfc.WorkspaceRunsPermissionType `json:"runs,omitempty"`
+	Runs string `json:"runs,omitempty"`
 	// Manage Workspace Run Tasks.
 	// Default: `false`.
 	//
@@ -77,7 +76,7 @@ type CustomProjectPermissions struct {
 	//+kubebuilder:validation:Enum:=none;read
 	//+kubebuilder:default:=none
 	//+optional
-	SentinelMocks tfc.WorkspaceSentinelMocksPermissionType `json:"sentinelMocks,omitempty"`
+	SentinelMocks string `json:"sentinelMocks,omitempty"`
 	// State access.
 	// Must be one of the following values: `none`, `read`, `read-outputs`, `write`.
 	// Default: `none`.
@@ -85,7 +84,7 @@ type CustomProjectPermissions struct {
 	//+kubebuilder:validation:Enum:=none;read;read-outputs;write
 	//+kubebuilder:default:=none
 	//+optional
-	StateVersions tfc.WorkspaceStateVersionsPermissionType `json:"stateVersions,omitempty"`
+	StateVersions string `json:"stateVersions,omitempty"`
 	// Variable access.
 	// Must be one of the following values: `none`, `read`, `write`.
 	// Default: `none`.
@@ -93,7 +92,7 @@ type CustomProjectPermissions struct {
 	//+kubebuilder:validation:Enum:=none;read;write
 	//+kubebuilder:default:=none
 	//+optional
-	Variables tfc.WorkspaceVariablesPermissionType `json:"variables,omitempty"`
+	Variables string `json:"variables,omitempty"`
 }
 
 // HCP Terraform's access model is team-based. In order to perform an action within a HCP Terraform organization,
@@ -114,7 +113,7 @@ type ProjectTeamAccess struct {
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-project-permissions
 	//
 	//+kubebuilder:validation:Enum:=admin;custom;maintain;read;write
-	Access tfc.TeamProjectAccessType `json:"access"`
+	Access string `json:"access"`
 	// Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.
 	// More information:
 	//   - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-project-permissions

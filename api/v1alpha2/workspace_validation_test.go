@@ -6,7 +6,8 @@ package v1alpha2
 import (
 	"testing"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -132,7 +133,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						EmailAddresses: []string{
 							"user@mail.com",
 						},
@@ -145,7 +146,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						EmailUsers: []string{
 							"user@mail.com",
 						},
@@ -158,7 +159,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						EmailAddresses: []string{
 							"user@mail.com",
 						},
@@ -174,7 +175,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeGeneric,
+						Type:  models.GENERIC_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 					},
@@ -186,7 +187,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type: models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:  url,
 					},
 				},
@@ -197,7 +198,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeSlack,
+						Type: models.SLACK_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:  url,
 					},
 				},
@@ -208,21 +209,21 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "thisA",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						EmailAddresses: []string{
 							"user@mail.com",
 						},
 					},
 					{
 						Name: "thisB",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						EmailUsers: []string{
 							"user@mail.com",
 						},
 					},
 					{
 						Name: "thisC",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						EmailAddresses: []string{
 							"user@mail.com",
 						},
@@ -232,18 +233,18 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 					},
 					{
 						Name:  "thisD",
-						Type:  tfc.NotificationDestinationTypeGeneric,
+						Type:  models.GENERIC_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 					},
 					{
 						Name: "thisE",
-						Type: tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type: models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:  url,
 					},
 					{
 						Name: "thisF",
-						Type: tfc.NotificationDestinationTypeSlack,
+						Type: models.SLACK_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:  url,
 					},
 				},
@@ -264,7 +265,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 					},
 				},
 			},
@@ -274,7 +275,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeEmail,
+						Type: models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:  url,
 					},
 				},
@@ -285,7 +286,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeEmail,
+						Type:  models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 					},
 				},
@@ -296,7 +297,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeGeneric,
+						Type: models.GENERIC_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:  url,
 					},
 				},
@@ -307,7 +308,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeGeneric,
+						Type:  models.GENERIC_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 					},
 				},
@@ -318,7 +319,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeGeneric,
+						Type:  models.GENERIC_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 						EmailAddresses: []string{
@@ -333,7 +334,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeGeneric,
+						Type:  models.GENERIC_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 						EmailUsers: []string{
@@ -348,7 +349,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type:  models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:   url,
 						Token: token,
 					},
@@ -360,7 +361,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type: models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 					},
 				},
 			},
@@ -370,7 +371,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type:  models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 						EmailAddresses: []string{
@@ -385,7 +386,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type:  models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 						EmailUsers: []string{
@@ -400,7 +401,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type:  models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						URL:   url,
 						Token: token,
 					},
@@ -412,7 +413,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name: "this",
-						Type: tfc.NotificationDestinationTypeSlack,
+						Type: models.SLACK_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 					},
 				},
 			},
@@ -422,7 +423,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type:  models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 						EmailAddresses: []string{
@@ -437,7 +438,7 @@ func TestValidateWorkspaceSpecNotifications(t *testing.T) {
 				Notifications: []Notification{
 					{
 						Name:  "this",
-						Type:  tfc.NotificationDestinationTypeMicrosoftTeams,
+						Type:  models.MICROSOFTTEAMS_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 						Token: token,
 						URL:   url,
 						EmailUsers: []string{

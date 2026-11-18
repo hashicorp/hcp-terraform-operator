@@ -4,10 +4,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Project controller", Ordered, func() {
@@ -73,9 +76,9 @@ var _ = Describe("Project controller", Ordered, func() {
 
 		// Make sure that the HCP Terraform project is deleted
 		Eventually(func() bool {
-			err := tfClient.Projects.Delete(ctx, instance.Status.ID)
+			err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Delete(ctx, nil)
 			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
-			return err == tfc.ErrResourceNotFound || err == nil
+			return errors.Is(err, tfc.ErrNotFound) || err == nil
 		}).Should(BeTrue())
 	})
 
@@ -91,7 +94,7 @@ var _ = Describe("Project controller", Ordered, func() {
 			initProjectID := instance.Status.ID
 
 			// Delete the HCP Terraform project
-			Expect(tfClient.Projects.Delete(ctx, instance.Status.ID)).Should(Succeed())
+			Expect(tfClient.API.Projects().ByProject_id(instance.Status.ID).Delete(ctx, nil)).Should(Succeed())
 
 			// Wait until the controller re-creates the project and updates Status.ID with a new valid project ID
 			Eventually(func() bool {
@@ -112,10 +115,9 @@ var _ = Describe("Project controller", Ordered, func() {
 
 			// Wait until the controller updates HCP Terraform workspace
 			Eventually(func() bool {
-				prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
-				Expect(prj).ShouldNot(BeNil())
+				prj, err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
-				return prj.Name == instance.Status.Name
+				return pointer.ValueOf(prj.GetData().GetAttributes().GetName()) == instance.Status.Name
 			}).Should(BeTrue())
 		})
 		It("can revert external changes", func() {
@@ -123,21 +125,25 @@ var _ = Describe("Project controller", Ordered, func() {
 			createProject(instance)
 
 			// Change the HCP Terraform project name
-			prj, err := tfClient.Projects.Update(ctx, instance.Status.ID, tfc.ProjectUpdateOptions{
-				Name: tfc.String(fmt.Sprintf("%v-new", instance.Spec.Name)),
-			})
-			Expect(prj).ShouldNot(BeNil())
+			attrs := models.NewProjects_attributes()
+			attrs.SetName(new(fmt.Sprintf("%v-new", instance.Spec.Name)))
+			data := models.NewProjects()
+			data.SetTypeEscaped(new(models.PROJECTS_PROJECTS_TYPE))
+			data.SetId(&instance.Status.ID)
+			data.SetAttributes(attrs)
+			body := models.NewProjectsEnvelope()
+			body.SetData(data)
+			_, err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Patch(ctx, body, nil)
 			Expect(err).Should(Succeed())
 
 			// Wait until the controller updates HCP Terraform project
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, namespacedName, instance)
 				Expect(err).Should(Succeed())
-				prj, err := tfClient.Projects.Read(ctx, instance.Status.ID)
-				Expect(prj).ShouldNot(BeNil())
+				prj, err := tfClient.API.Projects().ByProject_id(instance.Status.ID).Get(ctx, nil)
 				Expect(err).Should(Succeed())
 
-				return prj.Name == instance.Status.Name
+				return pointer.ValueOf(prj.GetData().GetAttributes().GetName()) == instance.Status.Name
 			}).Should(BeTrue())
 		})
 	})

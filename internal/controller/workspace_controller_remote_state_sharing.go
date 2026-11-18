@@ -7,33 +7,41 @@ import (
 	"context"
 	"errors"
 
-	tfc "github.com/hashicorp/go-tfe"
-	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+
 	corev1 "k8s.io/api/core/v1"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func (r *WorkspaceReconciler) getWorkspaces(ctx context.Context, w *workspaceInstance) (map[string]string, error) {
 	o := make(map[string]string)
-
-	listOpts := &tfc.WorkspaceListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize:   MaxPageSize,
-			PageNumber: InitPageNumber,
-		},
+	query := &organizations.ItemWorkspacesRequestBuilderGetQueryParameters{
+		Pagesize:   new(int32(MaxPageSize)),
+		Pagenumber: new(int32(InitPageNumber)),
 	}
+
 	for {
-		ws, err := w.tfClient.Client.Workspaces.List(ctx, w.instance.Spec.Organization, listOpts)
+		ws, err := w.tfClient.Client.API.Organizations().ByOrganization_name(w.instance.Spec.Organization).Workspaces().Get(ctx,
+			&abstractions.RequestConfiguration[organizations.ItemWorkspacesRequestBuilderGetQueryParameters]{QueryParameters: query})
 		if err != nil {
 			return map[string]string{}, err
 		}
-		for _, w := range ws.Items {
-			o[w.ID] = w.ID
-			o[w.Name] = w.ID
+
+		for _, item := range ws.GetData() {
+			id := pointer.ValueOf(item.GetId())
+			o[id] = id
+			o[pointer.ValueOf(item.GetAttributes().GetName())] = id
 		}
-		if ws.NextPage == 0 {
+
+		next := nextPage(ws.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = ws.NextPage
+		query.Pagenumber = &next
 	}
 
 	return o, nil
@@ -56,8 +64,9 @@ func getWorkspaceID(workspaces map[string]string, instanceWorkspace *appv1alpha2
 	return "", errors.New("workspace ID not found")
 }
 
-func (r *WorkspaceReconciler) getInstanceRemoteStateSharing(ctx context.Context, w *workspaceInstance) ([]*tfc.Workspace, error) {
-	iw := []*tfc.Workspace{}
+// getInstanceRemoteStateSharing returns IDs of the workspaces the remote state is shared with.
+func (r *WorkspaceReconciler) getInstanceRemoteStateSharing(ctx context.Context, w *workspaceInstance) ([]string, error) {
+	iw := []string{}
 
 	if len(w.instance.Spec.RemoteStateSharing.Workspaces) == 0 {
 		return iw, nil
@@ -75,7 +84,7 @@ func (r *WorkspaceReconciler) getInstanceRemoteStateSharing(ctx context.Context,
 			r.Recorder.Event(&w.instance, corev1.EventTypeWarning, "ReconcileRemoteStateSharing", "Failed to get workspace ID")
 			return iw, err
 		}
-		iw = append(iw, &tfc.Workspace{ID: wID})
+		iw = append(iw, wID)
 	}
 
 	return iw, nil
@@ -95,10 +104,16 @@ func (r *WorkspaceReconciler) reconcileRemoteStateSharing(ctx context.Context, w
 	}
 
 	if len(instanceRemoteStateSharing) > 0 {
-		o := tfc.WorkspaceUpdateRemoteStateConsumersOptions{
-			Workspaces: instanceRemoteStateSharing,
+		consumers := make([]models.WorkspacesIdentifierArrayDocument_dataable, 0, len(instanceRemoteStateSharing))
+		for _, id := range instanceRemoteStateSharing {
+			c := models.NewWorkspacesIdentifierArrayDocument_data()
+			c.SetId(new(id))
+			c.SetTypeEscaped(new(models.WORKSPACES_WORKSPACESIDENTIFIERARRAYDOCUMENT_DATA_TYPE))
+			consumers = append(consumers, c)
 		}
-		err = w.tfClient.Client.Workspaces.UpdateRemoteStateConsumers(ctx, w.instance.Status.WorkspaceID, o)
+		body := models.NewWorkspacesIdentifierArrayDocument()
+		body.SetData(consumers)
+		err = w.tfClient.Client.API.Workspaces().ByWorkspace_id(w.instance.Status.WorkspaceID).Relationships().RemoteStateConsumers().Patch(ctx, body, nil)
 		if err != nil {
 			return err
 		}

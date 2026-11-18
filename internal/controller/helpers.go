@@ -12,12 +12,15 @@ import (
 	"strings"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 func doNotRequeue() (reconcile.Result, error) {
@@ -39,8 +42,17 @@ func requeueOnErr(err error) (reconcile.Result, error) {
 // - https://developer.hashicorp.com/terraform/language/expressions/types
 // When the output value is `null`(special value), TFC/E does not return it.
 // Thus, we do not catch it here.
-func formatOutput(o *tfc.StateVersionOutput) (string, error) {
-	switch x := o.Value.(type) {
+func formatOutput(o models.StateVersionOutputsable) (string, error) {
+	var value serialization.UntypedNodeable
+	if o != nil && o.GetAttributes() != nil {
+		value = o.GetAttributes().GetValue()
+	}
+	return formatOutputValue(untypedNodeValue(value))
+}
+
+// formatOutputValue formats a native Go representation of an output value (as returned by untypedNodeValue).
+func formatOutputValue(value any) (string, error) {
+	switch x := value.(type) {
 	case bool:
 		return strconv.FormatBool(x), nil
 	case float64:
@@ -48,11 +60,53 @@ func formatOutput(o *tfc.StateVersionOutput) (string, error) {
 	case string:
 		return x, nil
 	default:
-		b, err := json.Marshal(o.Value)
+		b, err := json.Marshal(value)
 		if err != nil {
 			return "", err
 		}
 		return string(b), nil
+	}
+}
+
+// untypedNodeValue converts a Kiota untyped node into its native Go representation:
+// bool, float64 (for all numbers), string, nil, []any and map[string]any.
+func untypedNodeValue(n serialization.UntypedNodeable) any {
+	switch x := n.(type) {
+	case nil:
+		return nil
+	case *serialization.UntypedBoolean:
+		return pointer.ValueOf(x.GetValue())
+	case *serialization.UntypedString:
+		return pointer.ValueOf(x.GetValue())
+	case *serialization.UntypedInteger:
+		return float64(pointer.ValueOf(x.GetValue()))
+	case *serialization.UntypedLong:
+		return float64(pointer.ValueOf(x.GetValue()))
+	case *serialization.UntypedFloat:
+		return float64(pointer.ValueOf(x.GetValue()))
+	case *serialization.UntypedDouble:
+		return pointer.ValueOf(x.GetValue())
+	case *serialization.UntypedNull:
+		return nil
+	case *serialization.UntypedArray:
+		items := x.GetValue()
+		a := make([]any, len(items))
+		for i, item := range items {
+			a[i] = untypedNodeValue(item)
+		}
+		return a
+	case *serialization.UntypedObject:
+		props := x.GetValue()
+		m := make(map[string]any, len(props))
+		for k, v := range props {
+			m[k] = untypedNodeValue(v)
+		}
+		return m
+	default:
+		if g, ok := x.(interface{ GetValue() any }); ok {
+			return g.GetValue()
+		}
+		return nil
 	}
 }
 
@@ -121,4 +175,38 @@ func useRunsEndpoint(version string) (bool, error) {
 	}
 
 	return false, fmt.Errorf("malformed TFE version %s", version)
+}
+
+// nextPage returns the next page number of a paginated response using its 'meta' object,
+// or zero if there are no more pages.
+func nextPage(meta any) int32 {
+	switch m := meta.(type) {
+	case interface{ GetPagination() models.Paginationable }:
+		if p := m.GetPagination(); p != nil {
+			return pointer.ValueOf(p.GetNextPage())
+		}
+	case interface {
+		GetPagination() models.PaginationWithoutTotalsable
+	}:
+		if p := m.GetPagination(); p != nil {
+			return pointer.ValueOf(p.GetNextPage())
+		}
+	}
+	return 0
+}
+
+// runAttributesStatus returns the run status of the given run attributes.
+// A status that the v2 enum cannot represent (e.g. `post_plan_awaiting_decision`) is
+// deserialized as nil; runStatusTransport preserves it as an additional attribute.
+func runAttributesStatus(a models.Runs_attributesable) string {
+	if a == nil {
+		return ""
+	}
+	if s := a.GetStatus(); s != nil {
+		return s.String()
+	}
+	if raw, ok := a.GetAdditionalData()[rawRunStatusKey].(*string); ok && raw != nil {
+		return *raw
+	}
+	return ""
 }

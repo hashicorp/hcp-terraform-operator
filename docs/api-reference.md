@@ -328,17 +328,17 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `projectAccess` _[ProjectSettingsPermissionType](#projectsettingspermissiontype)_ | Project access.<br />Must be one of the following values: `delete`, `read`, `update`.<br />Default: `read`. |
-| `teamManagement` _[ProjectTeamsPermissionType](#projectteamspermissiontype)_ | Team management.<br />Must be one of the following values: `manage`, `none`, `read`.<br />Default: `none`. |
+| `projectAccess` _string_ | Project access.<br />Must be one of the following values: `delete`, `read`, `update`.<br />Default: `read`. |
+| `teamManagement` _string_ | Team management.<br />Must be one of the following values: `manage`, `none`, `read`.<br />Default: `none`. |
 | `createWorkspace` _boolean_ | Allow users to create workspaces in the project.<br />This grants read access to all workspaces in the project.<br />Default: `false`. |
 | `deleteWorkspace` _boolean_ | Allows users to delete workspaces in the project.<br />Default: `false`. |
 | `moveWorkspace` _boolean_ | Allows users to move workspaces out of the project.<br />A user must have this permission on both the source and destination project to successfully move a workspace from one project to another.<br />Default: `false`. |
 | `lockWorkspace` _boolean_ | Allows users to manually lock the workspace to temporarily prevent runs.<br />When a workspace's execution mode is set to "local", users must have this permission to perform local CLI runs using the workspace's state.<br />Default: `false`. |
-| `runs` _[WorkspaceRunsPermissionType](#workspacerunspermissiontype)_ | Run access.<br />Must be one of the following values: `apply`, `plan`, `read`.<br />Default: `read`. |
+| `runs` _string_ | Run access.<br />Must be one of the following values: `apply`, `plan`, `read`.<br />Default: `read`. |
 | `runTasks` _boolean_ | Manage Workspace Run Tasks.<br />Default: `false`. |
-| `sentinelMocks` _[WorkspaceSentinelMocksPermissionType](#workspacesentinelmockspermissiontype)_ | Download Sentinel mocks.<br />Must be one of the following values: `none`, `read`.<br />Default: `none`. |
-| `stateVersions` _[WorkspaceStateVersionsPermissionType](#workspacestateversionspermissiontype)_ | State access.<br />Must be one of the following values: `none`, `read`, `read-outputs`, `write`.<br />Default: `none`. |
-| `variables` _[WorkspaceVariablesPermissionType](#workspacevariablespermissiontype)_ | Variable access.<br />Must be one of the following values: `none`, `read`, `write`.<br />Default: `none`. |
+| `sentinelMocks` _string_ | Download Sentinel mocks.<br />Must be one of the following values: `none`, `read`.<br />Default: `none`. |
+| `stateVersions` _string_ | State access.<br />Must be one of the following values: `none`, `read`, `read-outputs`, `write`.<br />Default: `none`. |
+| `variables` _string_ | Variable access.<br />Must be one of the following values: `none`, `read`, `write`.<br />Default: `none`. |
 
 
 #### DeletionPolicy
@@ -495,7 +495,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `name` _string_ | Notification name. |
-| `type` _[NotificationDestinationType](#notificationdestinationtype)_ | The type of the notification.<br />Must be one of the following values: `email`, `generic`, `microsoft-teams`, `slack`. |
+| `type` _string_ | The type of the notification.<br />Must be one of the following values: `email`, `generic`, `microsoft-teams`, `slack`. |
 | `enabled` _boolean_ | Whether the notification configuration should be enabled or not.<br />Default: `true`. |
 | `token` _string_ | The token of the notification. |
 | `triggers` _[NotificationTrigger](#notificationtrigger) array_ | The list of run events that will trigger notifications.<br />Trigger represents the different TFC notifications that can be sent as a run's progress transitions between different states.<br />There are two categories of triggers:<br />  - Health Events: `assessment:check_failure`, `assessment:drifted`, `assessment:failed`.<br />  - Run Events: `run:applying`, `run:completed`, `run:created`, `run:errored`, `run:needs_attention`, `run:planning`. |
@@ -620,7 +620,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `team` _[Team](#team)_ | Team to grant access.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/teams |
-| `access` _[TeamProjectAccessType](#teamprojectaccesstype)_ | There are two ways to choose which permissions a given team has on a project: fixed permission sets, and custom permissions.<br />Must be one of the following values: `admin`, `custom`, `maintain`, `read`, `write`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-project-permissions |
+| `access` _string_ | There are two ways to choose which permissions a given team has on a project: fixed permission sets, and custom permissions.<br />Must be one of the following values: `admin`, `custom`, `maintain`, `read`, `write`.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#project-permissions<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#general-project-permissions |
 | `custom` _[CustomProjectPermissions](#customprojectpermissions)_ | Custom permissions let you assign specific, finer-grained permissions to a team than the broader fixed permission sets provide.<br />More information:<br />  - https://developer.hashicorp.com/terraform/cloud-docs/users-teams-organizations/permissions#custom-project-permissions |
 
 

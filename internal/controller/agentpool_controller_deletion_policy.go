@@ -5,10 +5,11 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -30,11 +31,11 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 	case appv1alpha2.AgentPoolDeletionPolicy(appv1alpha2.DeletionPolicyDestroy):
 		// Try deleting the agent pool first. If it succeeds (meaning it's not associated with any workspace), nothing else needs to be done.
 		// Otherwise, scale down the agents to 0 and delete all tokens.
-		err := ap.tfClient.Client.AgentPools.Delete(ctx, ap.instance.Status.AgentPoolID)
+		err := ap.tfClient.Client.API.AgentPools().ByAgent_pool_id(ap.instance.Status.AgentPoolID).Delete(ctx, nil)
 		if err != nil {
 			// If agent pool wasn't found, it means it was deleted from the HCP Terraform bypass the operator.
 			// In this case, remove the finalizer and let Kubernetes remove the object permanently
-			if err == tfc.ErrResourceNotFound {
+			if errors.Is(err, tfc.ErrNotFound) {
 				ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("agent pool ID %s not found, remove finalizer", agentPoolFinalizer))
 				return r.removeFinalizer(ctx, ap)
 			}
@@ -72,8 +73,8 @@ func (r *AgentPoolReconciler) deleteAgentPool(ctx context.Context, ap *agentPool
 				tid = append(tid, token.ID)
 			}
 			for _, id := range tid {
-				err := ap.tfClient.Client.AgentTokens.Delete(ctx, id)
-				if err != nil && err != tfc.ErrResourceNotFound {
+				err := ap.tfClient.Client.API.AuthenticationTokens().ById(id).Delete(ctx, nil)
+				if err != nil && !errors.Is(err, tfc.ErrNotFound) {
 					ap.log.Error(err, "Reconcile Agent Pool", "msg", fmt.Sprintf("failed to remove token %s", id))
 					return err
 				}

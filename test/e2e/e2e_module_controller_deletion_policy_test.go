@@ -4,17 +4,22 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	tfc "github.com/hashicorp/go-tfe/v2"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/hashicorp/go-tfe/v2/api/models"
+
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Module сontroller", Ordered, func() {
@@ -22,7 +27,7 @@ var _ = Describe("Module сontroller", Ordered, func() {
 		instance       *appv1alpha2.Module
 		namespacedName = newNamespacedName()
 		workspaceName  = ""
-		workspace      *tfc.Workspace
+		workspaceID    string
 	)
 
 	BeforeAll(func() {
@@ -35,22 +40,26 @@ var _ = Describe("Module сontroller", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		var err error
 		workspaceName = fmt.Sprintf("kubernetes-operator-%v", randomNumber())
 		// Create a new HCP Terraform Workspace
-		workspace = createWorkspace(tfc.WorkspaceCreateOptions{
-			Name:          &workspaceName,
-			AutoApply:     tfc.Bool(true),
-			ExecutionMode: tfc.String("remote"),
-		})
+		wsAttrs := models.NewWorkspaces_attributes()
+		wsAttrs.SetName(&workspaceName)
+		wsAttrs.SetAutoApply(new(true))
+		wsAttrs.SetExecutionMode(new(models.REMOTE_WORKSPACES_ATTRIBUTES_EXECUTIONMODE))
+		workspaceID = pointer.ValueOf(createWorkspace(wsAttrs).GetId())
 
 		// Create TFC Workspace variables
-		_, err = tfClient.Variables.Create(ctx, workspace.ID, tfc.VariableCreateOptions{
-			Key:      tfc.String("name"),
-			Value:    tfc.String("Pluto"),
-			HCL:      tfc.Bool(false),
-			Category: tfc.Category(tfc.CategoryTerraform),
-		})
+		varAttrs := models.NewVars_attributes()
+		varAttrs.SetKey(new("name"))
+		varAttrs.SetValue(new("Pluto"))
+		varAttrs.SetHcl(new(false))
+		varAttrs.SetCategory(new(models.TERRAFORM_VARS_ATTRIBUTES_CATEGORY))
+		varData := models.NewVars()
+		varData.SetTypeEscaped(new(models.VARS_VARS_TYPE))
+		varData.SetAttributes(varAttrs)
+		varBody := models.NewVarsEnvelope()
+		varBody.SetData(varData)
+		_, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Vars().Post(ctx, varBody, nil)
 		Expect(err).Should(Succeed())
 		// Create a new module object for each test
 		instance = &appv1alpha2.Module{
@@ -97,16 +106,16 @@ var _ = Describe("Module сontroller", Ordered, func() {
 	AfterEach(func() {
 		// Make sure that the HCP Terraform workspace is deleted
 		Eventually(func() bool {
-			err := tfClient.Workspaces.DeleteByID(ctx, workspace.ID)
+			err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Delete(ctx, nil)
 			// The HCP Terraform client will return the error 'ResourceNotFound' once the workspace does not exist
-			return err == tfc.ErrResourceNotFound || err == nil
+			return errors.Is(err, tfc.ErrNotFound) || err == nil
 		}).Should(BeTrue())
 	})
 
 	Context("Module Deletion Policy", func() {
 		It("can handle no destroy on deletion and retain deleteion policy", func() {
 			// Create a new Module
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspaceID}
 			instance.Spec.DestroyOnDeletion = false
 			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyRetain
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
@@ -117,7 +126,7 @@ var _ = Describe("Module сontroller", Ordered, func() {
 					return false
 				}
 				return instance.Status.ObservedGeneration == instance.Generation &&
-					instance.Status.Run.Status == string(tfc.RunApplied)
+					instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -129,19 +138,22 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			ws, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(workspace).ShouldNot(BeNil())
+			currentRun := ws.GetData().GetRelationships().GetCurrentRun()
+			Expect(currentRun).ShouldNot(BeNil())
+			Expect(currentRun.GetData()).ShouldNot(BeNil())
+			currentRunID := pointer.ValueOf(currentRun.GetData().GetId())
+			Expect(currentRunID).ShouldNot(BeEmpty())
 
-			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			r, err := tfClient.API.Runs().ById(currentRunID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(r).ShouldNot(BeNil())
-			Expect(r.IsDestroy).To(BeFalse())
+			Expect(pointer.ValueOf(r.GetData().GetAttributes().GetIsDestroy())).To(BeFalse())
 		})
 
 		It("can handle no destroy on deletion and destroy deleteion policy", func() {
 			// Create a new Module
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspaceID}
 			instance.Spec.DestroyOnDeletion = false
 			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyDestroy
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
@@ -152,7 +164,7 @@ var _ = Describe("Module сontroller", Ordered, func() {
 					return false
 				}
 				return instance.Status.ObservedGeneration == instance.Generation &&
-					instance.Status.Run.Status == string(tfc.RunApplied)
+					instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -163,19 +175,22 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			ws, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(workspace).ShouldNot(BeNil())
+			currentRun := ws.GetData().GetRelationships().GetCurrentRun()
+			Expect(currentRun).ShouldNot(BeNil())
+			Expect(currentRun.GetData()).ShouldNot(BeNil())
+			currentRunID := pointer.ValueOf(currentRun.GetData().GetId())
+			Expect(currentRunID).ShouldNot(BeEmpty())
 
-			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			r, err := tfClient.API.Runs().ById(currentRunID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(r).ShouldNot(BeNil())
-			Expect(r.IsDestroy).To(BeTrue())
+			Expect(pointer.ValueOf(r.GetData().GetAttributes().GetIsDestroy())).To(BeTrue())
 		})
 
 		It("can handle destroy on deletion and retain deleteion policy", func() {
 			// Create a new Module
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspaceID}
 			instance.Spec.DestroyOnDeletion = true
 			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyRetain
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
@@ -186,7 +201,7 @@ var _ = Describe("Module сontroller", Ordered, func() {
 					return false
 				}
 				return instance.Status.ObservedGeneration == instance.Generation &&
-					instance.Status.Run.Status == string(tfc.RunApplied)
+					instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -197,19 +212,22 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			ws, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(workspace).ShouldNot(BeNil())
+			currentRun := ws.GetData().GetRelationships().GetCurrentRun()
+			Expect(currentRun).ShouldNot(BeNil())
+			Expect(currentRun.GetData()).ShouldNot(BeNil())
+			currentRunID := pointer.ValueOf(currentRun.GetData().GetId())
+			Expect(currentRunID).ShouldNot(BeEmpty())
 
-			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			r, err := tfClient.API.Runs().ById(currentRunID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(r).ShouldNot(BeNil())
-			Expect(r.IsDestroy).To(BeTrue())
+			Expect(pointer.ValueOf(r.GetData().GetAttributes().GetIsDestroy())).To(BeTrue())
 		})
 
 		It("can handle destroy on deletion and destroy deleteion policy", func() {
 			// Create a new Module
-			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspace.ID}
+			instance.Spec.Workspace = &appv1alpha2.ModuleWorkspace{ID: workspaceID}
 			instance.Spec.DestroyOnDeletion = true
 			instance.Spec.DeletionPolicy = appv1alpha2.ModuleDeletionPolicyDestroy
 			Expect(k8sClient.Create(ctx, instance)).Should(Succeed())
@@ -220,7 +238,7 @@ var _ = Describe("Module сontroller", Ordered, func() {
 					return false
 				}
 				return instance.Status.ObservedGeneration == instance.Generation &&
-					instance.Status.Run.Status == string(tfc.RunApplied)
+					instance.Status.Run.Status == string(models.APPLIED_RUNS_ATTRIBUTES_STATUS.String())
 			}).Should(BeTrue())
 
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
@@ -231,14 +249,17 @@ var _ = Describe("Module сontroller", Ordered, func() {
 				return kerrors.IsNotFound(err)
 			}).Should(BeTrue())
 
-			workspace, err := tfClient.Workspaces.ReadByID(ctx, workspace.ID)
+			ws, err := tfClient.API.Workspaces().ByWorkspace_id(workspaceID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(workspace).ShouldNot(BeNil())
+			currentRun := ws.GetData().GetRelationships().GetCurrentRun()
+			Expect(currentRun).ShouldNot(BeNil())
+			Expect(currentRun.GetData()).ShouldNot(BeNil())
+			currentRunID := pointer.ValueOf(currentRun.GetData().GetId())
+			Expect(currentRunID).ShouldNot(BeEmpty())
 
-			r, err := tfClient.Runs.Read(ctx, workspace.CurrentRun.ID)
+			r, err := tfClient.API.Runs().ById(currentRunID).Get(ctx, nil)
 			Expect(err).Should(Succeed())
-			Expect(r).ShouldNot(BeNil())
-			Expect(r.IsDestroy).To(BeTrue())
+			Expect(pointer.ValueOf(r.GetData().GetAttributes().GetIsDestroy())).To(BeTrue())
 		})
 	})
 

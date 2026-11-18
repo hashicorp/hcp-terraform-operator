@@ -7,7 +7,11 @@ import (
 	"fmt"
 	"time"
 
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	"github.com/hashicorp/go-tfe/v2/api/organizations/item/organizationmemberships"
+	"github.com/hashicorp/go-tfe/v2/api/workspaces"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -16,6 +20,7 @@ import (
 
 	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
 	"github.com/hashicorp/hcp-terraform-operator/internal/controller"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
 var _ = Describe("Workspace controller", Ordered, func() {
@@ -77,15 +82,15 @@ var _ = Describe("Workspace controller", Ordered, func() {
 	AfterEach(func() {
 		// Delete the Kubernetes workspace object and wait until the controller finishes the reconciliation after deletion of the object
 		deleteWorkspace(instance)
-		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID)).Should(Succeed())
-		Expect(tfClient.OrganizationMemberships.Delete(ctx, memberID2)).Should(Succeed())
+		Expect(tfClient.API.OrganizationMemberships().ByOrganization_membership_id(memberID).Delete(ctx, nil)).Should(Succeed())
+		Expect(tfClient.API.OrganizationMemberships().ByOrganization_membership_id(memberID2).Delete(ctx, nil)).Should(Succeed())
 	})
 
 	Context("Notifications", func() {
 		It("can create single notification", func() {
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
-				Type: tfc.NotificationDestinationTypeSlack,
+				Type: models.SLACK_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				URL:  webhookURL,
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -100,12 +105,12 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
-				Type: tfc.NotificationDestinationTypeSlack,
+				Type: models.SLACK_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				URL:  webhookURL,
 			})
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
-				Type:       tfc.NotificationDestinationTypeEmail,
+				Type:       models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -120,7 +125,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name: "slack",
-				Type: tfc.NotificationDestinationTypeSlack,
+				Type: models.SLACK_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				URL:  webhookURL,
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -129,11 +134,11 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			isNotificationsReconciled(instance)
 
 			// Delete notifications manually
-			notifications, err := tfClient.NotificationConfigurations.List(ctx, instance.Status.WorkspaceID, &tfc.NotificationConfigurationListOptions{})
+			notifications, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).NotificationConfigurations().Get(ctx, nil)
 			Expect(err).Should(Succeed())
 			Expect(notifications).ShouldNot(BeNil())
-			for _, n := range notifications.Items {
-				Expect(tfClient.NotificationConfigurations.Delete(ctx, n.ID)).Should(Succeed())
+			for _, n := range notifications.GetData() {
+				Expect(tfClient.API.NotificationConfigurations().ByNotification_configuration_id(pointer.ValueOf(n.GetId())).Delete(ctx, nil)).Should(Succeed())
 			}
 
 			// Validate reconciliation
@@ -146,7 +151,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
-				Type:       tfc.NotificationDestinationTypeEmail,
+				Type:       models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -167,7 +172,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:       "email",
-				Type:       tfc.NotificationDestinationTypeEmail,
+				Type:       models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				EmailUsers: []string{memberEmail},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -188,7 +193,7 @@ var _ = Describe("Workspace controller", Ordered, func() {
 			}
 			instance.Spec.Notifications = append(instance.Spec.Notifications, appv1alpha2.Notification{
 				Name:           "email",
-				Type:           tfc.NotificationDestinationTypeEmail,
+				Type:           models.EMAIL_NOTIFICATIONCONFIGURATIONS_ATTRIBUTES_DESTINATIONTYPE.String(),
 				EmailAddresses: []string{"user@example.com"},
 			})
 			// Create a new Kubernetes workspace object and wait until the controller finishes the reconciliation
@@ -204,55 +209,76 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 	Expect(k8sClient.Get(ctx, namespacedName, instance)).Should(Succeed())
 
 	memberships := make(map[string]string)
-	listOpts := &tfc.OrganizationMembershipListOptions{
-		ListOptions: tfc.ListOptions{
-			PageSize: controller.MaxPageSize,
-		},
-		Status: tfc.OrganizationMembershipInvited,
+	listQuery := &organizations.ItemOrganizationMembershipsRequestBuilderGetQueryParameters{
+		Pagesize:     new(int32(controller.MaxPageSize)),
+		Filterstatus: new(organizationmemberships.INVITED_GETFILTERSTATUSQUERYPARAMETERTYPE),
 	}
 	for {
-		list, err := tfClient.OrganizationMemberships.List(ctx, instance.Spec.Organization, listOpts)
+		list, err := tfClient.API.Organizations().ByOrganization_name(instance.Spec.Organization).OrganizationMemberships().Get(ctx,
+			&abstractions.RequestConfiguration[organizations.ItemOrganizationMembershipsRequestBuilderGetQueryParameters]{QueryParameters: listQuery})
 		Expect(err).Should(Succeed())
 		Expect(list).ShouldNot(BeNil())
 
-		for _, ms := range list.Items {
-			memberships[ms.User.ID] = ms.Email
+		for _, ms := range list.GetData() {
+			if ms.GetRelationships() == nil || ms.GetRelationships().GetUser() == nil || ms.GetRelationships().GetUser().GetData() == nil || ms.GetAttributes() == nil {
+				continue
+			}
+			memberships[pointer.ValueOf(ms.GetRelationships().GetUser().GetData().GetId())] = pointer.ValueOf(ms.GetAttributes().GetEmail())
 		}
-		if list.NextPage == 0 {
+		next := nextPage(list.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = list.NextPage
+		listQuery.Pagenumber = &next
 	}
 
 	Eventually(func() []appv1alpha2.Notification {
-		notifications, err := tfClient.NotificationConfigurations.List(ctx, instance.Status.WorkspaceID, &tfc.NotificationConfigurationListOptions{})
+		notifications, err := tfClient.API.Workspaces().ByWorkspace_id(instance.Status.WorkspaceID).NotificationConfigurations().Get(ctx,
+			&abstractions.RequestConfiguration[workspaces.ItemNotificationConfigurationsRequestBuilderGetQueryParameters]{
+				QueryParameters: &workspaces.ItemNotificationConfigurationsRequestBuilderGetQueryParameters{
+					Pagesize: new(int32(controller.MaxPageSize)),
+				},
+			})
 		Expect(err).Should(Succeed())
 		Expect(notifications).ShouldNot(BeNil())
 
 		// Do not use make()
 		// workspace must be nil if there are no triggers
 		var workspace []appv1alpha2.Notification
-		for _, n := range notifications.Items {
+		for _, n := range notifications.GetData() {
+			attrs := n.GetAttributes()
+			if attrs == nil {
+				continue
+			}
 			// Do not use make()
 			// t must be nil if there are no triggers
 			var t []appv1alpha2.NotificationTrigger
-			for _, v := range n.Triggers {
+			for _, v := range attrs.GetTriggers() {
 				t = append(t, appv1alpha2.NotificationTrigger(v))
 			}
+
 			// Do not use make()
 			// eu must be nil if there are no email users
 			var eu []string
-			for _, v := range n.EmailUsers {
-				eu = append(eu, memberships[v.ID])
+			if n.GetRelationships() != nil && n.GetRelationships().GetUsers() != nil {
+				for _, v := range n.GetRelationships().GetUsers().GetData() {
+					eu = append(eu, memberships[pointer.ValueOf(v.GetId())])
+				}
 			}
+
+			destinationType := ""
+			if attrs.GetDestinationType() != nil {
+				destinationType = attrs.GetDestinationType().String()
+			}
+
 			workspace = append(workspace, appv1alpha2.Notification{
-				Name:           n.Name,
-				Type:           n.DestinationType,
-				Enabled:        n.Enabled,
-				Token:          n.Token,
+				Name:           pointer.ValueOf(attrs.GetName()),
+				Type:           destinationType,
+				Enabled:        pointer.ValueOf(attrs.GetEnabled()),
+				Token:          pointer.ValueOf(attrs.GetToken()),
 				Triggers:       t,
-				URL:            n.URL,
-				EmailAddresses: n.EmailAddresses,
+				URL:            pointer.ValueOf(attrs.GetUrl()),
+				EmailAddresses: attrs.GetEmailAddresses(),
 				EmailUsers:     eu,
 			})
 		}
@@ -262,9 +288,16 @@ func isNotificationsReconciled(instance *appv1alpha2.Workspace) {
 }
 
 func createOrgMember(email string) string {
-	m, err := tfClient.OrganizationMemberships.Create(ctx, organization, tfc.OrganizationMembershipCreateOptions{Email: &email})
+	attrs := models.NewOrganizationMemberships_attributes()
+	attrs.SetEmail(&email)
+	data := models.NewOrganizationMemberships()
+	data.SetTypeEscaped(new(models.ORGANIZATIONMEMBERSHIPS_ORGANIZATIONMEMBERSHIPS_TYPE))
+	data.SetAttributes(attrs)
+	body := models.NewOrganizationMembershipsEnvelope()
+	body.SetData(data)
+	m, err := tfClient.API.Organizations().ByOrganization_name(organization).OrganizationMemberships().Post(ctx, body, nil)
 	Expect(err).Should(Succeed())
 	Expect(m).ShouldNot(BeNil())
-
-	return m.ID
+	Expect(m.GetData()).ShouldNot(BeNil())
+	return pointer.ValueOf(m.GetData().GetId())
 }

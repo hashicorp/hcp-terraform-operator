@@ -6,15 +6,41 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	tfc "github.com/hashicorp/go-tfe"
+	"github.com/hashicorp/go-tfe/v2/api/models"
+	"github.com/hashicorp/go-tfe/v2/api/organizations"
+	"github.com/hashicorp/go-tfe/v2/api/teamprojects"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	corev1 "k8s.io/api/core/v1"
+
+	appv1alpha2 "github.com/hashicorp/hcp-terraform-operator/api/v1alpha2"
+	"github.com/hashicorp/hcp-terraform-operator/internal/pointer"
 )
 
-func (r *ProjectReconciler) getInstanceTeamAccess(ctx context.Context, p *projectInstance) (map[string]*tfc.TeamProjectAccess, error) {
-	o := map[string]*tfc.TeamProjectAccess{}
+// projectTeamAccess is a team access to a project.
+// It is the plain comparable representation used to diff the spec against HCP Terraform.
+type projectTeamAccess struct {
+	ID     string
+	Access string
+	Custom appv1alpha2.CustomProjectPermissions
+}
+
+// setEnum converts a string into a generated Kiota enum value and sets it using a given setter.
+// If the value is not a known enum member, the raw string is sent as additional data instead,
+// so the API rejects it the same way it did with go-tfe v1, which did not validate values client-side.
+func setEnum[T any](parse func(string) (any, error), v string, set func(*T), extra map[string]any, key string) {
+	if r, err := parse(v); err == nil {
+		if t, ok := r.(*T); ok && t != nil {
+			set(t)
+			return
+		}
+	}
+	extra[key] = v
+}
+
+func (r *ProjectReconciler) getInstanceTeamAccess(ctx context.Context, p *projectInstance) (map[string]*projectTeamAccess, error) {
+	o := map[string]*projectTeamAccess{}
 
 	if p.instance.Spec.TeamAccess == nil {
 		return o, nil
@@ -33,61 +59,82 @@ func (r *ProjectReconciler) getInstanceTeamAccess(ctx context.Context, p *projec
 			return o, err
 		}
 
-		o[tID] = &tfc.TeamProjectAccess{
+		o[tID] = &projectTeamAccess{
 			Access: ta.Access,
-			Team: &tfc.Team{
-				ID: tID,
-			},
 		}
-		if ta.Access == tfc.TeamProjectAccessCustom {
-			o[tID].WorkspaceAccess = &tfc.TeamProjectAccessWorkspacePermissions{
-				WorkspaceRunsPermission:          ta.Custom.Runs,
-				WorkspaceSentinelMocksPermission: ta.Custom.SentinelMocks,
-				WorkspaceStateVersionsPermission: ta.Custom.StateVersions,
-				WorkspaceVariablesPermission:     ta.Custom.Variables,
-				WorkspaceCreatePermission:        ta.Custom.CreateWorkspace,
-				WorkspaceLockingPermission:       ta.Custom.LockWorkspace,
-				WorkspaceMovePermission:          ta.Custom.MoveWorkspace,
-				WorkspaceDeletePermission:        ta.Custom.DeleteWorkspace,
-				WorkspaceRunTasksPermission:      ta.Custom.RunTasks,
-			}
-			o[tID].ProjectAccess = &tfc.TeamProjectAccessProjectPermissions{
-				ProjectSettingsPermission: ta.Custom.ProjectAccess,
-				ProjectTeamsPermission:    ta.Custom.TeamManagement,
-			}
+		if ta.Access == models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String() && ta.Custom != nil {
+			o[tID].Custom = *ta.Custom
 		}
 	}
 
 	return o, nil
 }
 
-func (r *ProjectReconciler) getWorkspaceTeamAccess(ctx context.Context, p *projectInstance) (map[string]*tfc.TeamProjectAccess, error) {
-	o := map[string]*tfc.TeamProjectAccess{}
+func (r *ProjectReconciler) getWorkspaceTeamAccess(ctx context.Context, p *projectInstance) (map[string]*projectTeamAccess, error) {
+	o := map[string]*projectTeamAccess{}
 
-	listOpts := tfc.TeamProjectAccessListOptions{
-		ProjectID: p.instance.Status.ID,
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
-	}
+	pageNumber := int32(InitPageNumber)
 	for {
-		t, err := p.tfClient.Client.TeamProjectAccess.List(ctx, listOpts)
+		resp, err := p.tfClient.Client.API.TeamProjects().Get(ctx, &abstractions.RequestConfiguration[teamprojects.TeamProjectsRequestBuilderGetQueryParameters]{
+			QueryParameters: &teamprojects.TeamProjectsRequestBuilderGetQueryParameters{
+				Filterprojectid: new(p.instance.Status.ID),
+				Pagesize:        new(int32(MaxPageSize)),
+				Pagenumber:      &pageNumber,
+			},
+		})
 		if err != nil {
 			return o, err
 		}
-		for _, ta := range t.Items {
-			o[ta.Team.ID] = ta
+		for _, t := range resp.GetData() {
+			ta := &projectTeamAccess{ID: pointer.ValueOf(t.GetId())}
+			if a := t.GetAttributes(); a != nil {
+				if v := a.GetAccess(); v != nil {
+					ta.Access = v.String()
+				}
+				if pa := a.GetProjectAccess(); pa != nil {
+					if v := pa.GetSettings(); v != nil {
+						ta.Custom.ProjectAccess = v.String()
+					}
+					if v := pa.GetTeams(); v != nil {
+						ta.Custom.TeamManagement = v.String()
+					}
+				}
+				if wa := a.GetWorkspaceAccess(); wa != nil {
+					if v := wa.GetRuns(); v != nil {
+						ta.Custom.Runs = v.String()
+					}
+					if v := wa.GetSentinelMocks(); v != nil {
+						ta.Custom.SentinelMocks = v.String()
+					}
+					if v := wa.GetStateVersions(); v != nil {
+						ta.Custom.StateVersions = v.String()
+					}
+					if v := wa.GetVariables(); v != nil {
+						ta.Custom.Variables = v.String()
+					}
+					ta.Custom.CreateWorkspace = pointer.ValueOf(wa.GetCreate())
+					ta.Custom.LockWorkspace = pointer.ValueOf(wa.GetLocking())
+					ta.Custom.MoveWorkspace = pointer.ValueOf(wa.GetMove())
+					ta.Custom.DeleteWorkspace = pointer.ValueOf(wa.GetDelete())
+					ta.Custom.RunTasks = pointer.ValueOf(wa.GetRunTasks())
+				}
+			}
+			if team := t.GetRelationships().GetTeam(); team != nil && team.GetData() != nil {
+				o[pointer.ValueOf(team.GetData().GetId())] = ta
+			}
 		}
-		if t.NextPage == 0 {
+		next := nextPage(resp.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = t.NextPage
+		pageNumber = next
 	}
 	return o, nil
 }
 
-func (r *ProjectReconciler) getTeams(ctx context.Context, p *projectInstance) (map[string]*tfc.Team, error) {
-	teams := make(map[string]*tfc.Team)
+// getTeams returns teams of the instance team access as a map of the team name to the team ID.
+func (r *ProjectReconciler) getTeams(ctx context.Context, p *projectInstance) (map[string]string, error) {
+	teams := make(map[string]string)
 
 	fTeams := []string{}
 	for _, t := range p.instance.Spec.TeamAccess {
@@ -96,31 +143,39 @@ func (r *ProjectReconciler) getTeams(ctx context.Context, p *projectInstance) (m
 		}
 	}
 
-	listOpts := &tfc.TeamListOptions{
-		Names: fTeams,
-		ListOptions: tfc.ListOptions{
-			PageSize: MaxPageSize,
-		},
+	qp := &organizations.ItemTeamsRequestBuilderGetQueryParameters{
+		Pagesize: new(int32(MaxPageSize)),
 	}
+	if len(fTeams) > 0 {
+		qp.Filternames = new(strings.Join(fTeams, ","))
+	}
+	pageNumber := int32(InitPageNumber)
 	for {
-		tl, err := p.tfClient.Client.Teams.List(ctx, p.instance.Spec.Organization, listOpts)
+		qp.Pagenumber = &pageNumber
+		resp, err := p.tfClient.Client.API.Organizations().ByOrganization_name(p.instance.Spec.Organization).Teams().Get(ctx, &abstractions.RequestConfiguration[organizations.ItemTeamsRequestBuilderGetQueryParameters]{
+			QueryParameters: qp,
+		})
 		if err != nil {
 			return teams, err
 		}
-		for _, t := range tl.Items {
-			teams[t.Name] = t
+		for _, t := range resp.GetData() {
+			if t.GetAttributes() == nil {
+				continue
+			}
+			teams[pointer.ValueOf(t.GetAttributes().GetName())] = pointer.ValueOf(t.GetId())
 		}
-		if tl.NextPage == 0 {
+		next := nextPage(resp.GetMeta())
+		if next == 0 {
 			break
 		}
-		listOpts.PageNumber = tl.NextPage
+		pageNumber = next
 	}
 
 	return teams, nil
 }
 
-func teamProjectAccessDifference(a, b map[string]*tfc.TeamProjectAccess) map[string]*tfc.TeamProjectAccess {
-	d := make(map[string]*tfc.TeamProjectAccess)
+func teamProjectAccessDifference(a, b map[string]*projectTeamAccess) map[string]*projectTeamAccess {
+	d := make(map[string]*projectTeamAccess)
 
 	for k, v := range a {
 		if _, ok := b[k]; !ok {
@@ -131,16 +186,16 @@ func teamProjectAccessDifference(a, b map[string]*tfc.TeamProjectAccess) map[str
 	return d
 }
 
-func getTeamProjectAccessToCreate(specTeamAccess, projectTeamAccess map[string]*tfc.TeamProjectAccess) map[string]*tfc.TeamProjectAccess {
+func getTeamProjectAccessToCreate(specTeamAccess, projectTeamAccess map[string]*projectTeamAccess) map[string]*projectTeamAccess {
 	return teamProjectAccessDifference(specTeamAccess, projectTeamAccess)
 }
 
-func getTeamProjectAccessToDelete(specTeamAccess, projectTeamAccess map[string]*tfc.TeamProjectAccess) map[string]*tfc.TeamProjectAccess {
+func getTeamProjectAccessToDelete(specTeamAccess, projectTeamAccess map[string]*projectTeamAccess) map[string]*projectTeamAccess {
 	return teamProjectAccessDifference(projectTeamAccess, specTeamAccess)
 }
 
-func getTeamProjectAccessToUpdate(specTeamAccess, workspaceTeamAccess map[string]*tfc.TeamProjectAccess) map[string]*tfc.TeamProjectAccess {
-	ta := make(map[string]*tfc.TeamProjectAccess)
+func getTeamProjectAccessToUpdate(specTeamAccess, workspaceTeamAccess map[string]*projectTeamAccess) map[string]*projectTeamAccess {
+	ta := make(map[string]*projectTeamAccess)
 
 	if len(specTeamAccess) == 0 || len(workspaceTeamAccess) == 0 {
 		return ta
@@ -149,8 +204,8 @@ func getTeamProjectAccessToUpdate(specTeamAccess, workspaceTeamAccess map[string
 	for ik, iv := range specTeamAccess {
 		if wv, ok := workspaceTeamAccess[ik]; ok {
 			iv.ID = wv.ID
-			if iv.Access == tfc.TeamProjectAccessCustom {
-				if !cmp.Equal(iv, wv, cmpopts.IgnoreFields(tfc.TeamProjectAccess{}, "ID", "Team", "Project")) {
+			if iv.Access == models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String() {
+				if iv.Access != wv.Access || iv.Custom != wv.Custom {
 					ta[ik] = iv
 				}
 			} else {
@@ -164,38 +219,54 @@ func getTeamProjectAccessToUpdate(specTeamAccess, workspaceTeamAccess map[string
 	return ta
 }
 
-func (r *ProjectReconciler) createTeamProjectAccess(ctx context.Context, p *projectInstance, createTeamAccess map[string]*tfc.TeamProjectAccess) error {
-	projectID := p.instance.Status.ID
+func (r *ProjectReconciler) createTeamProjectAccess(ctx context.Context, p *projectInstance, createTeamAccess map[string]*projectTeamAccess) error {
 	for tID, v := range createTeamAccess {
-		option := tfc.TeamProjectAccessAddOptions{
-			Project: &tfc.Project{
-				ID: projectID,
-			},
-			Team: &tfc.Team{
-				ID: tID,
-			},
-			Access: v.Access,
+		attrs := models.NewTeamProjects_attributes()
+		setEnum(models.ParseTeamProjects_attributes_access, string(v.Access), attrs.SetAccess, attrs.GetAdditionalData(), "access")
+		if v.Access == models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String() {
+			pa := models.NewTeamProjects_attributes_projectAccess()
+			setEnum(models.ParseTeamProjects_attributes_projectAccess_settings, string(v.Custom.ProjectAccess), pa.SetSettings, pa.GetAdditionalData(), "settings")
+			setEnum(models.ParseTeamProjects_attributes_projectAccess_teams, string(v.Custom.TeamManagement), pa.SetTeams, pa.GetAdditionalData(), "teams")
+			attrs.SetProjectAccess(pa)
+
+			wa := models.NewTeamProjects_attributes_workspaceAccess()
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_runs, string(v.Custom.Runs), wa.SetRuns, wa.GetAdditionalData(), "runs")
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_sentinelMocks, string(v.Custom.SentinelMocks), wa.SetSentinelMocks, wa.GetAdditionalData(), "sentinel-mocks")
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_stateVersions, string(v.Custom.StateVersions), wa.SetStateVersions, wa.GetAdditionalData(), "state-versions")
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_variables, string(v.Custom.Variables), wa.SetVariables, wa.GetAdditionalData(), "variables")
+			wa.SetCreate(new(v.Custom.CreateWorkspace))
+			wa.SetLocking(new(v.Custom.LockWorkspace))
+			wa.SetMove(new(v.Custom.MoveWorkspace))
+			wa.SetDelete(new(v.Custom.DeleteWorkspace))
+			wa.SetRunTasks(new(v.Custom.RunTasks))
+			attrs.SetWorkspaceAccess(wa)
 		}
 
-		if v.Access == tfc.TeamProjectAccessCustom {
-			option.ProjectAccess = &tfc.TeamProjectAccessProjectPermissionsOptions{
-				Settings: &v.ProjectAccess.ProjectSettingsPermission,
-				Teams:    &v.ProjectAccess.ProjectTeamsPermission,
-			}
-			option.WorkspaceAccess = &tfc.TeamProjectAccessWorkspacePermissionsOptions{
-				Runs:          &v.WorkspaceAccess.WorkspaceRunsPermission,
-				SentinelMocks: &v.WorkspaceAccess.WorkspaceSentinelMocksPermission,
-				StateVersions: &v.WorkspaceAccess.WorkspaceStateVersionsPermission,
-				Variables:     &v.WorkspaceAccess.WorkspaceVariablesPermission,
-				Create:        &v.WorkspaceAccess.WorkspaceCreatePermission,
-				Locking:       &v.WorkspaceAccess.WorkspaceLockingPermission,
-				Move:          &v.WorkspaceAccess.WorkspaceMovePermission,
-				Delete:        &v.WorkspaceAccess.WorkspaceDeletePermission,
-				RunTasks:      &v.WorkspaceAccess.WorkspaceRunTasksPermission,
-			}
-		}
+		projectData := models.NewProjectsHasOne_data()
+		projectData.SetId(new(p.instance.Status.ID))
+		projectData.SetTypeEscaped(new(models.PROJECTS_PROJECTSIDENTIFIER_TYPE))
+		projectRel := models.NewProjectsHasOne()
+		projectRel.SetData(projectData)
 
-		_, err := p.tfClient.Client.TeamProjectAccess.Add(ctx, option)
+		teamData := models.NewTeamsIdentifier()
+		teamData.SetId(new(tID))
+		teamData.SetTypeEscaped(new(models.TEAMS_TEAMSIDENTIFIER_TYPE))
+		teamRel := models.NewTeamsHasOne()
+		teamRel.SetData(teamData)
+
+		rels := models.NewTeamProjects_relationships()
+		rels.SetProject(projectRel)
+		rels.SetTeam(teamRel)
+
+		data := models.NewTeamProjects()
+		data.SetTypeEscaped(new(models.TEAMPROJECTS_TEAMPROJECTS_TYPE))
+		data.SetAttributes(attrs)
+		data.SetRelationships(rels)
+
+		body := models.NewTeamProjectsEnvelope()
+		body.SetData(data)
+
+		_, err := p.tfClient.Client.API.TeamProjects().Post(ctx, body, nil)
 		if err != nil {
 			p.log.Error(err, "Reconcile Team Access", "msg", "failed to create a new team access")
 			return err
@@ -205,9 +276,9 @@ func (r *ProjectReconciler) createTeamProjectAccess(ctx context.Context, p *proj
 	return nil
 }
 
-func (r *ProjectReconciler) deleteTeamAccess(ctx context.Context, p *projectInstance, deleteTeamAccess map[string]*tfc.TeamProjectAccess) error {
+func (r *ProjectReconciler) deleteTeamAccess(ctx context.Context, p *projectInstance, deleteTeamAccess map[string]*projectTeamAccess) error {
 	for _, v := range deleteTeamAccess {
-		err := p.tfClient.Client.TeamProjectAccess.Remove(ctx, v.ID)
+		err := p.tfClient.Client.API.TeamProjects().ByTeam_project_id(v.ID).Delete(ctx, nil)
 		if err != nil {
 			p.log.Error(err, "Reconcile Team Access", "msg", "failed to delete team access")
 			return err
@@ -217,32 +288,40 @@ func (r *ProjectReconciler) deleteTeamAccess(ctx context.Context, p *projectInst
 	return nil
 }
 
-func (r *ProjectReconciler) updateTeamAccess(ctx context.Context, p *projectInstance, updateTeamAccess map[string]*tfc.TeamProjectAccess) error {
+func (r *ProjectReconciler) updateTeamAccess(ctx context.Context, p *projectInstance, updateTeamAccess map[string]*projectTeamAccess) error {
 	for _, v := range updateTeamAccess {
 		p.log.Info("Reconcile Team Access", "msg", "updating team access")
-		option := tfc.TeamProjectAccessUpdateOptions{
-			Access: &v.Access,
+
+		attrs := models.NewTeamProjects_attributes()
+		setEnum(models.ParseTeamProjects_attributes_access, string(v.Access), attrs.SetAccess, attrs.GetAdditionalData(), "access")
+		if v.Access == models.CUSTOM_TEAMPROJECTS_ATTRIBUTES_ACCESS.String() {
+			pa := models.NewTeamProjects_attributes_projectAccess()
+			setEnum(models.ParseTeamProjects_attributes_projectAccess_settings, string(v.Custom.ProjectAccess), pa.SetSettings, pa.GetAdditionalData(), "settings")
+			setEnum(models.ParseTeamProjects_attributes_projectAccess_teams, string(v.Custom.TeamManagement), pa.SetTeams, pa.GetAdditionalData(), "teams")
+			attrs.SetProjectAccess(pa)
+
+			wa := models.NewTeamProjects_attributes_workspaceAccess()
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_runs, string(v.Custom.Runs), wa.SetRuns, wa.GetAdditionalData(), "runs")
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_sentinelMocks, string(v.Custom.SentinelMocks), wa.SetSentinelMocks, wa.GetAdditionalData(), "sentinel-mocks")
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_stateVersions, string(v.Custom.StateVersions), wa.SetStateVersions, wa.GetAdditionalData(), "state-versions")
+			setEnum(models.ParseTeamProjects_attributes_workspaceAccess_variables, string(v.Custom.Variables), wa.SetVariables, wa.GetAdditionalData(), "variables")
+			wa.SetCreate(new(v.Custom.CreateWorkspace))
+			wa.SetLocking(new(v.Custom.LockWorkspace))
+			wa.SetMove(new(v.Custom.MoveWorkspace))
+			wa.SetDelete(new(v.Custom.DeleteWorkspace))
+			wa.SetRunTasks(new(v.Custom.RunTasks))
+			attrs.SetWorkspaceAccess(wa)
 		}
 
-		if v.Access == tfc.TeamProjectAccessCustom {
-			option.ProjectAccess = &tfc.TeamProjectAccessProjectPermissionsOptions{
-				Settings: &v.ProjectAccess.ProjectSettingsPermission,
-				Teams:    &v.ProjectAccess.ProjectTeamsPermission,
-			}
-			option.WorkspaceAccess = &tfc.TeamProjectAccessWorkspacePermissionsOptions{
-				Runs:          &v.WorkspaceAccess.WorkspaceRunsPermission,
-				SentinelMocks: &v.WorkspaceAccess.WorkspaceSentinelMocksPermission,
-				StateVersions: &v.WorkspaceAccess.WorkspaceStateVersionsPermission,
-				Variables:     &v.WorkspaceAccess.WorkspaceVariablesPermission,
-				Create:        &v.WorkspaceAccess.WorkspaceCreatePermission,
-				Locking:       &v.WorkspaceAccess.WorkspaceLockingPermission,
-				Move:          &v.WorkspaceAccess.WorkspaceMovePermission,
-				Delete:        &v.WorkspaceAccess.WorkspaceDeletePermission,
-				RunTasks:      &v.WorkspaceAccess.WorkspaceRunTasksPermission,
-			}
-		}
+		data := models.NewTeamProjects()
+		data.SetTypeEscaped(new(models.TEAMPROJECTS_TEAMPROJECTS_TYPE))
+		data.SetId(new(v.ID))
+		data.SetAttributes(attrs)
 
-		_, err := p.tfClient.Client.TeamProjectAccess.Update(ctx, v.ID, option)
+		body := models.NewTeamProjectsEnvelope()
+		body.SetData(data)
+
+		_, err := p.tfClient.Client.API.TeamProjects().ByTeam_project_id(v.ID).Patch(ctx, body, nil)
 		if err != nil {
 			p.log.Error(err, "Reconcile Team Access", "msg", "failed to update team access")
 			return err
