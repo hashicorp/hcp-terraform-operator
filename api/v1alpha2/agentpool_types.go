@@ -131,6 +131,22 @@ type AgentPoolSpec struct {
 	// API Token to be used for API calls.
 	Token Token `json:"token"`
 
+	// ExistingAgentPoolID references an agent pool that already exists in HCP Terraform, instead of
+	// having the controller create one. When set, the controller never calls the create API for this
+	// CR, even if status.agentPoolID is empty -- it reads the pool by this ID directly and adopts it.
+	//
+	// This matters when the custom resource's status can be lost independently of the pool itself
+	// (for example, the resource is recreated after a cluster rebuild): without this field, losing
+	// status.agentPoolID makes the controller attempt to create a brand new pool, which can leave the
+	// real, pre-existing pool -- and every workspace authorised on it -- orphaned under no CR at all.
+	//
+	// Set spec.name to match the existing pool's real name: if it differs, the controller will rename
+	// the adopted pool to spec.name on its next reconcile.
+	//
+	//+kubebuilder:validation:Pattern:="^apool-[a-zA-Z0-9]+$"
+	//+optional
+	ExistingAgentPoolID string `json:"existingAgentPoolID,omitempty"`
+
 	// List of the agent tokens to generate.
 	//
 	//+kubebuilder:validation:MinItems:=1
