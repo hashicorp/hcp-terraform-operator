@@ -204,6 +204,26 @@ func (r *AgentPoolReconciler) createAgentPool(ctx context.Context, ap *agentPool
 	return agentPool, nil
 }
 
+// adoptAgentPool reads a pre-existing agent pool by the ID given in spec.existingAgentPoolID and
+// populates status from it. The create API is never called on this path -- this is what makes it
+// safe to bind a CR to a pool that already has real workspaces and tokens on it.
+func (r *AgentPoolReconciler) adoptAgentPool(ctx context.Context, ap *agentPoolInstance) (*tfc.AgentPool, error) {
+	agentPool, err := ap.tfClient.Client.AgentPools.ReadWithOptions(ctx, ap.instance.Spec.ExistingAgentPoolID, &tfc.AgentPoolReadOptions{
+		Include: []tfc.AgentPoolIncludeOpt{
+			tfc.AgentPoolWorkspaces,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("spec.existingAgentPoolID %q could not be read: %w", ap.instance.Spec.ExistingAgentPoolID, err)
+	}
+
+	ap.instance.Status = appv1alpha2.AgentPoolStatus{
+		AgentPoolID: agentPool.ID,
+	}
+
+	return agentPool, nil
+}
+
 func (r *AgentPoolReconciler) updateAgentPool(ctx context.Context, ap *agentPoolInstance, agentPool *tfc.AgentPool) (*tfc.AgentPool, error) {
 	options := tfc.AgentPoolUpdateOptions{
 		Name: tfc.String(ap.instance.Spec.Name),
@@ -276,6 +296,17 @@ func (r *AgentPoolReconciler) reconcileAgentPool(ctx context.Context, ap *agentP
 		}
 		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("successfully created a new agent pool with ID %s", agentPool.ID))
 		r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully created a new agent pool with ID %s", agentPool.ID)
+	} else if ap.instance.Status.AgentPoolID == "" && ap.instance.IsExistingPoolReference() {
+		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("status.agentPoolID is empty, adopting existing agent pool %s", ap.instance.Spec.ExistingAgentPoolID))
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Adopting existing agent pool %s instead of creating one", ap.instance.Spec.ExistingAgentPoolID)
+		agentPool, err = r.adoptAgentPool(ctx, ap)
+		if err != nil {
+			ap.log.Error(err, "Reconcile Agent Pool", "msg", "failed to adopt existing agent pool")
+			r.Recorder.Event(&ap.instance, corev1.EventTypeWarning, "ReconcileAgentPool", "Failed to adopt existing agent pool")
+			return err
+		}
+		ap.log.Info("Reconcile Agent Pool", "msg", fmt.Sprintf("successfully adopted existing agent pool %s", agentPool.ID))
+		r.Recorder.Eventf(&ap.instance, corev1.EventTypeNormal, "ReconcileAgentPool", "Successfully adopted existing agent pool %s", agentPool.ID)
 	}
 
 	agentPool, err = r.readAgentPool(ctx, ap)
